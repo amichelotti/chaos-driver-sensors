@@ -1,7 +1,7 @@
 /*
  *	BasicSensor.h
- *	!CHOAS
- *	Created by Bisegni Claudio.
+ *	!CHAOS
+ *	Created by Andrea Michelotti
  *
  *    	Copyright 2012 INFN, National Institute of Nuclear Physics
  *
@@ -21,9 +21,14 @@
 #define ChaosRTControlUnit_BasicSensor_h
 
 #include <chaos/cu_toolkit/ControlManager/RTAbstractControlUnit.h>
-
+#include <driver/sensors/core/SensorDriverInterface.h>
+#define MAX_DATASET_SIZE 256
 class BasicSensor : public chaos::cu::control_manager::RTAbstractControlUnit {
-	PUBLISHABLE_CONTROL_UNIT_INTERFACE(BasicSensor)
+	PUBLISHABLE_CONTROL_UNIT_INTERFACE(BasicSensor);
+    
+    SensorDriverInterface*driver;
+    std::vector<int> output_size;
+    std::vector<int> input_size;
 public:
     /*!
      Construct a new CU with full constructor

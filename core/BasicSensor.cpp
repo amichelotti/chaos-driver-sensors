@@ -1,7 +1,7 @@
 /*
  *	BasicSensor.cpp
  *	!CHAOS
- *	Created automatically
+ *	Created by Andrea Michelotti
  *
  *    	Copyright 2012 INFN, National Institute of Nuclear Physics
  *
@@ -19,7 +19,7 @@
  */
 
 #include "BasicSensor.h"
-#include "BasicSensorDriver.h"
+#include "AbstractSensorDriver.h"
 
 using namespace chaos;
 using namespace chaos::common::data::cache;
@@ -37,12 +37,18 @@ PUBLISHABLE_CONTROL_UNIT_IMPLEMENTATION(BasicSensor)
 BasicSensor::BasicSensor(const string& _control_unit_id, const string& _control_unit_param, const ControlUnitDriverList& _control_unit_drivers):
 RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers) {
 
+    driver=new SensorDriverInterface(getAccessoInstanceByIndex(0));
+    assert(driver);
 }
 
 /*
  Destructor
  */
 BasicSensor::~BasicSensor() {
+    if(driver){
+        delete driver;
+        driver = NULL;
+    }
 
 }
 
@@ -53,58 +59,26 @@ The api that can be called withi this method are listed into
 (chaosframework/Documentation/html/group___control___unit___definition___api.html)
 */
 void BasicSensor::unitDefineActionAndDataset() throw(chaos::CException) {
-    //insert your definition code here
-    /*
+    int ret;
+    ddDataSet_t dd[MAX_DATASET_SIZE];
+    ret=driver->getDataset(dd,MAX_DATASET_SIZE);
+    for(int cnt=0;cnt<ret;cnt++){
+        BasicSensorLDBG_<<"adding attribute:"<<dd[cnt].name<<","<<dd[cnt].desc<<","<<dd[cnt].type<<","<<dd[cnt].dir<<","<<dd[cnt].maxsize;
+        if(dd[cnt].dir==chaos::DataType::Input){
+            input_size.push_back(dd[cnt].maxsize);
+        } else if(dd[cnt].dir==chaos::DataType::Output){
+            output_size.push_back(dd[cnt].maxsize);
 
-    addAttributeToDataSet("<my_double_variable_name>", // this is the name of the variable that is shown in interfaces and in MDS
-			      "variable Description",
-			      DataType::TYPE_DOUBLE,
-			      DataType::Output);
+        }
+        addAttributeToDataSet(dd[cnt].name,
+                              dd[cnt].desc,
+                              dd[cnt].type,
+                              dd[cnt].dir,
+                              dd[cnt].maxsize
+                              );
 
-
-	 addAttributeToDataSet("<my_int32_variable>",
-			      "variable Description",
-			      DataType::TYPE_INT32,
-			      DataType::Output);
-
-	 addAttributeToDataSet("<my_int64_variable>",
-			      "variable Description",
-			      DataType::TYPE_INT64,
-			      DataType::Output);
-
-	 addAttributeToDataSet("<my_string_variable name>",
-			      "variable Description",
-			      DataType::TYPE_STRING,
-			      DataType::Output,256); // max string size
-
-
-	 addAttributeToDataSet("< my_buffer name>",
-			      "variable Description",
-			      DataType::TYPE_BYTEARRAY,
-			      DataType::Output,
-			      10000000); // max buffer size
-
-	 addActionDescritionInstance<BasicSensor>(this,
-						       &BasicSensor::my_custom_action,
-						       "customFunctionName,
-						       "custom function desctiption");
-
-    */
-
-    //add two int32_t channel for example
-
-    //output channel
-    addAttributeToDataSet("out_1",
-                          "Int32 output channel",
-                          DataType::TYPE_INT32,
-                          DataType::Output);
-
-    //input channel
-    addAttributeToDataSet("in_1",
-                          "Int32 output channel",
-                          DataType::TYPE_INT32,
-                          DataType::Input);
-}
+    }
+  }
 
 
 //!Define custom control unit attribute
@@ -115,8 +89,6 @@ void BasicSensor::unitDefineCustomAttribute() {
 //!Initialize the Custom Control Unit
 void BasicSensor::unitInit() throw(chaos::CException) {
 
-  //check the value set on MDS for in_1 channel
-  //int32_t in_1 = getAttributeCache()->getValue<int32_t>(DOMAIN_INPUT, "in_1");
 
 }
 
@@ -128,20 +100,16 @@ void BasicSensor::unitStart() throw(chaos::CException) {
 //!Execute the Control Unit work
 void BasicSensor::unitRun() throw(chaos::CException) {
   //get the output attribute pointer form the internal cache
-  int32_t *out_1_ptr = getAttributeCache()->getRWPtr<int32_t>(DOMAIN_OUTPUT, "out_1");
-
-  //construct the drivesr message
-  auto_ptr<DrvMsg> driver_message((DrvMsg*)std::calloc(sizeof(DrvMsg), 1));
-
-  //set the opcode for get value from the driver
-  driver_message->opcode = BasicSensorDriverOpcode_GET_CH_1;
-
-  //associate the driver message input data to output attribute pointer
-  driver_message->resultData = out_1_ptr;
-
-  //send message to the driver, at index 0, in async
-  getAccessoInstanceByIndex(0)->send(driver_message.get());
-
+    std::vector<int>::iterator i;
+    int cnt;
+    for(i=output_size.begin(),cnt=0;i!=output_size.end();i++,cnt++){
+        char buffer[*i];
+        if(driver->readChannel(buffer,cnt,*i)){
+            BasicSensorLDBG_<<"reading output channel "<<cnt<<", size :"<<*i;
+            getAttributeCache()->setOutputAttributeValue(cnt, (void*)buffer, *i);
+        }
+    }
+  
   //! set output dataset as changed
   getAttributeCache()->setOutputDomainAsChanged();
 }
@@ -163,43 +131,6 @@ void BasicSensor::unitInputAttributePreChangeHandler() throw(chaos::CException) 
 
 //! attribute changed handler
 void BasicSensor::unitInputAttributeChangedHandler() throw(chaos::CException) {
-
-  //array to managed the changed attribute list
-  std::vector<chaos::cu::control_manager::VariableIndexType> changed_input_attribute;
-
-  //check what attribute has changed
-  getAttributeCache()->getChangedInputAttributeIndex(changed_input_attribute);
-
-  if(changed_input_attribute.size()) {
-    //scsan the changed index
-    for (std::vector<chaos::cu::control_manager::VariableIndexType>::iterator it = changed_input_attribute.begin();
-      it != changed_input_attribute.end();
-      it++) {
-        switch(*it) {
-          case 0: {//int_1 attribute
-            const int32_t *in_1 = getAttributeCache()->getROPtr<int32_t>(DOMAIN_INPUT, "in_1");
-
-            //construct the drivesr message
-            auto_ptr<DrvMsg> driver_message((DrvMsg*)std::calloc(sizeof(DrvMsg), 1));
-
-            //set the opcode for get value from the driver
-            driver_message->opcode = BasicSensorDriverOpcode_SET_CH_1;
-
-            //associate the driver message input data to output attribute pointer
-            driver_message->inputData = (int32_t*)in_1;
-            driver_message->inputDataLength = sizeof(int32_t);
-            //send message to the driver, at index 0, in async
-            getAccessoInstanceByIndex(0)->send(driver_message.get());
-
-            break;
-          }
-          default:
-          break;
-        }
-      }
-      //reset the chagned index
-      getAttributeCache()->resetChangedInputIndex();
-  }
 }
 
 /*

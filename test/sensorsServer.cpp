@@ -28,8 +28,8 @@ ChaosCLI --metadata-server mds_url:5000 --deviceid device_name --print-dataset [
 the set of the input channel can be done (for simple format) using the following command:
 ChaosCLI --metadata-server mds_url:5000 --deviceid device_name --op 9 --rt-attr-val in_1:value
 */
-#include "BasicSensor.h"
-#include "BasicSensorDriver.h"
+#include "driver/sensors/core/BasicSensor.h"
+#include "driver/sensors/models/VTemperatureDriver.h"
 
 #include <string>
 
@@ -47,18 +47,14 @@ int main(int argc, char *argv[])
 	string tmp_device_id;
 	control_manager::AbstractControlUnit::ControlUnitDriverList driver_list;
 	try {
-		// allocate the instance and inspector for driver
-		MATERIALIZE_INSTANCE_AND_INSPECTOR(BasicSensorDriver)
-
-		// register the thriver within cu-toolkit
-		DriverManager::getInstance()->registerDriver(BasicSensorDriverInstancer, BasicSensorDriverInspector);
-
 		// initialize the control unit toolkit
 		ChaosCUToolkit::getInstance()->init(argc, argv);
 
-		// register the control unit class
-		ChaosCUToolkit::getInstance()->registerControlUnit<BasicSensor>();
+		// allocate the instance and inspector for driver
+		REGISTER_DRIVER(,VTemperatureDriver);
 
+        REGISTER_CU(BasicSensor);
+		
 		// start control unit toolkit until someone will close it
 		ChaosCUToolkit::getInstance()->start();
 	} catch (CException& ex) {

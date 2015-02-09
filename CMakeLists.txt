@@ -1,22 +1,27 @@
 cmake_minimum_required(VERSION 2.6)
 include($ENV{CHAOS_BUNDLE}/tools/project_template/CMakeChaos.txt)
 
-SET(BasicSensor_src core/main.cpp core/BasicSensor.cpp core/BasicSensorDriver.cpp )
+SET(sensors_src core/BasicSensor.cpp core/AbstractSensorDriver.cpp core/SensorDriverInterface.cpp models/VTemperatureDriver.cpp)
 
-SET(BasicSensorClient_src test/BasicSensorClient.cpp )
+SET(BasicSensorClient_src test/sensorsClient.cpp)
 
-ADD_EXECUTABLE(BasicSensor ${BasicSensor_src})
-ADD_EXECUTABLE(BasicSensorClient ${BasicSensorClient_src})
+ ADD_EXECUTABLE(sensorsServer test/sensorsServer)
+ ADD_EXECUTABLE(sensorsClient test/sensorsClient)
 
 IF(BUILD_FORCE_STATIC)
   SET(CMAKE_EXE_LINKER_FLAGS "-static -Wl,--whole-archive -lchaos_common -Wl,--no-whole-archive")
-TARGET_LINK_LIBRARIES(BasicSensor chaos_cutoolkit ${FrameworkLib})
-TARGET_LINK_LIBRARIES(BasicSensorClient chaos_uitoolkit ${FrameworkLib})
+   ADD_LIBRARY(chaos_driver_sensors STATIC ${sensors_src})		 
+
 ELSE()
-TARGET_LINK_LIBRARIES(BasicSensor chaos_cutoolkit chaos_common ${FrameworkLib})
-TARGET_LINK_LIBRARIES(BasicSensorClient chaos_uitoolkit chaos_common ${FrameworkLib})
+    ADD_LIBRARY(chaos_driver_sensors SHARED ${sensors_src})		 
+
 ENDIF()
 
+ TARGET_LINK_LIBRARIES(chaos_driver_sensors chaos_cutoolkit chaos_common ${FrameworkLib})
+ TARGET_LINK_LIBRARIES(sensorsServer chaos_driver_sensors chaos_cutoolkit chaos_common ${FrameworkLib})
+ TARGET_LINK_LIBRARIES(sensorsClient chaos_uitoolkit chaos_common ${FrameworkLib})
 
-INSTALL_TARGETS(/bin BasicSensor)
-INSTALL_TARGETS(/bin BasicSensorClient)
+ INSTALL_TARGETS(/bin sensorsServer)
+ INSTALL_TARGETS(/bin sensorsClient)
+ INSTALL_TARGETS(/lib chaos_driver_sensors)
+
