@@ -42,8 +42,8 @@ RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drive
     driver_nchannels=driver->getDataset(dd,MAX_DATASET_SIZE);
     driver_dataset=0;
     if(driver_nchannels>0){
-        driver_dataset = new ddDataSet_t[driver_nchannels] ();
-        assert(driver_dataset);
+      driver_dataset = new ddDataSet_t[driver_nchannels] ();
+      assert(driver_dataset);
     }
 }
 
@@ -71,7 +71,7 @@ The api that can be called withi this method are listed into
 */
 void BasicSensor::unitDefineActionAndDataset() throw(chaos::CException) {
     int ret;
-    
+    BasicSensorLAPP_ << "UnitDefine";
     ret=driver->getDataset(driver_dataset,driver_nchannels);
     for(int cnt=0;cnt<ret;cnt++){
         BasicSensorLDBG_<<"adding attribute:"<<driver_dataset[cnt].name<<","<<driver_dataset[cnt].desc<<","<<driver_dataset[cnt].type<<","<<driver_dataset[cnt].dir<<","<<driver_dataset[cnt].maxsize;
@@ -89,6 +89,14 @@ void BasicSensor::unitDefineActionAndDataset() throw(chaos::CException) {
                               );
 
     }
+    
+    /*        addAttributeToDataSet("ciccio",
+                              "pippo",
+                              ( chaos::DataType::DataType)0,
+			      (chaos::DataType::DataSetAttributeIOAttribute)0,0
+                              );
+    */
+
   }
 
 
@@ -113,6 +121,7 @@ void BasicSensor::unitRun() throw(chaos::CException) {
   //get the output attribute pointer form the internal cache
     std::vector<int>::iterator i;
     int cnt;
+    //BasicSensorLAPP_<<"UnitRun";
     for(i=output_size.begin(),cnt=0;i!=output_size.end();i++,cnt++){
         char buffer[*i];
         if(driver->readChannel(buffer,cnt,*i)){
