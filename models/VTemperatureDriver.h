@@ -33,7 +33,7 @@ DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(VTemperatureDriver)
  */
 class VTemperatureDriver:public AbstractSensorDriver{
 
-	
+	int counter;
 public:
 	VTemperatureDriver();
 	~VTemperatureDriver();

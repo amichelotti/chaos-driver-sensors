@@ -45,7 +45,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		32C9764A17D4955400F76D3F /* sensors */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = sensors; sourceTree = BUILT_PRODUCTS_DIR; };
+		32C9764A17D4955400F76D3F /* sensorsServer */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = sensorsServer; sourceTree = BUILT_PRODUCTS_DIR; };
 		53CC48781A874A2100DA2B24 /* BasicSensor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BasicSensor.h; path = core/BasicSensor.h; sourceTree = "<group>"; };
 		53CC487A1A874A2100DA2B24 /* BasicSensor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BasicSensor.cpp; path = core/BasicSensor.cpp; sourceTree = "<group>"; };
 		53CC487F1A879EEA00DA2B24 /* AbstractSensorDriver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AbstractSensorDriver.cpp; path = core/AbstractSensorDriver.cpp; sourceTree = "<group>"; };
@@ -88,7 +88,7 @@
 		32C9764B17D4955400F76D3F /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				32C9764A17D4955400F76D3F /* sensors */,
+				32C9764A17D4955400F76D3F /* sensorsServer */,
 				53CC489A1A89037500DA2B24 /* sensorsServer copy */,
 				53CC48A01A8903C900DA2B24 /* libchaos_driver_sensors.dylib */,
 			);
@@ -163,7 +163,7 @@
 			);
 			name = sensorsServer;
 			productName = sensors;
-			productReference = 32C9764A17D4955400F76D3F /* sensors */;
+			productReference = 32C9764A17D4955400F76D3F /* sensorsServer */;
 			productType = "com.apple.product-type.tool";
 		};
 		53CC488E1A89037500DA2B24 /* sensorsClient */ = {
@@ -302,6 +302,7 @@
 					"$(SRCROOT)/../../",
 					"$(SRCROOT)/../../usr/local/include",
 				);
+				LD_RUNPATH_SEARCH_PATHS = "$(SRCROOT)/../../usr/local/lib/";
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../usr/local/lib";
 				OTHER_LDFLAGS = (
 					"-lboost_chrono",
@@ -350,6 +351,7 @@
 					"$(SRCROOT)/../../",
 					"$(SRCROOT)/../../usr/local/include",
 				);
+				LD_RUNPATH_SEARCH_PATHS = "$(SRCROOT)/../../usr/local/lib/";
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../usr/local/lib";
 				OTHER_LDFLAGS = (
 					"-lboost_chrono",

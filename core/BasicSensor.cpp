@@ -36,9 +36,15 @@ PUBLISHABLE_CONTROL_UNIT_IMPLEMENTATION(BasicSensor)
  */
 BasicSensor::BasicSensor(const string& _control_unit_id, const string& _control_unit_param, const ControlUnitDriverList& _control_unit_drivers):
 RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers) {
-
+    ddDataSet_t dd[MAX_DATASET_SIZE];
     driver=new SensorDriverInterface(getAccessoInstanceByIndex(0));
     assert(driver);
+    driver_nchannels=driver->getDataset(dd,MAX_DATASET_SIZE);
+    driver_dataset=0;
+    if(driver_nchannels>0){
+        driver_dataset = new ddDataSet_t[driver_nchannels] ();
+        assert(driver_dataset);
+    }
 }
 
 /*
@@ -46,8 +52,13 @@ RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drive
  */
 BasicSensor::~BasicSensor() {
     if(driver){
+        driver->sensorDeinit();
         delete driver;
         driver = NULL;
+    }
+    if(driver_dataset){
+        delete(driver_dataset);
+        driver_dataset=0;
     }
 
 }
@@ -60,21 +71,21 @@ The api that can be called withi this method are listed into
 */
 void BasicSensor::unitDefineActionAndDataset() throw(chaos::CException) {
     int ret;
-    ddDataSet_t dd[MAX_DATASET_SIZE];
-    ret=driver->getDataset(dd,MAX_DATASET_SIZE);
+    
+    ret=driver->getDataset(driver_dataset,driver_nchannels);
     for(int cnt=0;cnt<ret;cnt++){
-        BasicSensorLDBG_<<"adding attribute:"<<dd[cnt].name<<","<<dd[cnt].desc<<","<<dd[cnt].type<<","<<dd[cnt].dir<<","<<dd[cnt].maxsize;
-        if(dd[cnt].dir==chaos::DataType::Input){
-            input_size.push_back(dd[cnt].maxsize);
-        } else if(dd[cnt].dir==chaos::DataType::Output){
-            output_size.push_back(dd[cnt].maxsize);
+        BasicSensorLDBG_<<"adding attribute:"<<driver_dataset[cnt].name<<","<<driver_dataset[cnt].desc<<","<<driver_dataset[cnt].type<<","<<driver_dataset[cnt].dir<<","<<driver_dataset[cnt].maxsize;
+        if(driver_dataset[cnt].dir==chaos::DataType::Input){
+            input_size.push_back(driver_dataset[cnt].maxsize);
+        } else if(driver_dataset[cnt].dir==chaos::DataType::Output){
+            output_size.push_back(driver_dataset[cnt].maxsize);
 
         }
-        addAttributeToDataSet(dd[cnt].name,
-                              dd[cnt].desc,
-                              dd[cnt].type,
-                              dd[cnt].dir,
-                              dd[cnt].maxsize
+        addAttributeToDataSet(driver_dataset[cnt].name,
+                              driver_dataset[cnt].desc,
+                              driver_dataset[cnt].type,
+                              driver_dataset[cnt].dir,
+                              driver_dataset[cnt].maxsize
                               );
 
     }

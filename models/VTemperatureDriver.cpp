@@ -22,7 +22,7 @@
 #include <string>
 
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
-
+#include <math.h>
 #include <boost/lexical_cast.hpp>
 
 namespace cu_driver = chaos::cu::driver_manager::driver;
@@ -48,6 +48,7 @@ CLOSE_REGISTER_PLUGIN
 //GET_PLUGIN_CLASS_DEFINITION
 //we need to define the driver with alias version and a class that implement it
 VTemperatureDriver::VTemperatureDriver(){
+    counter=0;
 }
 //default descrutcor
 VTemperatureDriver::~VTemperatureDriver() {
@@ -55,11 +56,35 @@ VTemperatureDriver::~VTemperatureDriver() {
 }
 
 int VTemperatureDriver::readChannel(void *buffer,int addr,int bcount){
+    counter++;
+    counter=counter%100;
+    switch(addr){
+        case 0:{
+            double*pnt=(double*)buffer;
+
+            srand(time(NULL));
+            int rnd=rand();
+            pnt[0] = (rnd*1.0/RAND_MAX)*10.0 +25;
+            VTemperatureDriverLDBG_<<"reading channel :"<<addr<<" Virtual Random Temp:"<<pnt[0];
+
+            return 1;
+        }
+        case 1:{
+            int32_t* pnt=(int32_t*)buffer;
+            pnt[0] = counter;
+            VTemperatureDriverLDBG_<<"reading channel :"<<addr<<" Virtual Ramp Temp:"<<pnt[0];
+
+            return 1;
+        }
+        case 2:{
+            double*pnt=(double*)buffer;
+            pnt[0] = 100.0*sin((6.28*counter)/100);
+            VTemperatureDriverLDBG_<<"reading channel :"<<addr<<" Virtual Periodic Temp:"<<pnt[0];
+
+            return 1;
+        }
+    }
     
-    int rnd=rand();
-    double *pnt=(double*)buffer;
-    pnt[0] = (rnd/RAND_MAX)*10.0 +25;
-    VTemperatureDriverLDBG_<<"reading channel :"<<addr<<" Virtual Temp:"<<pnt[0];
     return 1;
     
 }
@@ -70,7 +95,7 @@ int VTemperatureDriver::writeChannel(void *buffer,int addr,int bcount){
 }
 
 int VTemperatureDriver::sensorInit(void *buffer,int sizeb){
-    VTemperatureDriverLDBG_<<"Initialization string:"<<buffer;
+    VTemperatureDriverLDBG_<<"Initialization string: \""<<buffer<<"\"";
 
     return 0;
 }
@@ -81,12 +106,24 @@ int VTemperatureDriver::sensorDeinit(){
 }
 
 int VTemperatureDriver::getDataset(ddDataSet_t*data,int sizen){
-    data[0].name="TEMP";
+    data[0].name="RNDTEMP";
     data[0].desc="Virtual random temperature";
     data[0].type=chaos::DataType::TYPE_DOUBLE;
     data[0].dir=chaos::DataType::Output;
     data[0].maxsize=sizeof(double);
-    return 1;
+    
+    data[1].name="RAMPTEMP";
+    data[1].desc="Virtual ramp temperature";
+    data[1].type=chaos::DataType::TYPE_INT32;
+    data[1].dir=chaos::DataType::Output;
+    data[1].maxsize=sizeof(int32_t);
+    
+    data[2].name="SINTEMP";
+    data[2].desc="Virtual periodic temperature";
+    data[2].type=chaos::DataType::TYPE_DOUBLE;
+    data[2].dir=chaos::DataType::Output;
+    data[2].maxsize=sizeof(double);
+    return 3;
 
 }
 
