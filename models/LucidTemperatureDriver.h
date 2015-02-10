@@ -1,6 +1,6 @@
 /*
  *	LucidTemperatureDriver.h
- *  Software emulated temperature driver
+ *  Lucit RTD temperature driver
  *	!CHOAS
  *	Created by Andrea Michelotti
  *
@@ -18,8 +18,8 @@
  *    	See the License for the specific language governing permissions and
  *    	limitations under the License.
  */
-#ifndef VTEMPERATURE_h
-#define VTEMPERATURE_h
+#ifndef VLUCIDTEMPERATURE_h
+#define VLUCIDTEMPERATURE_h
 
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <driver/sensors/core/AbstractSensorDriver.h>
