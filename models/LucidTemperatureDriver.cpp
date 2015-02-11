@@ -72,13 +72,21 @@ int LucidTemperatureDriver::readChannel(void *buffer,int addr,int bcount){
   double*pnt=(double*)buffer;
   //add more
   if(addr<2){
-
+    int canale,ret;
     char ch[8];
     sprintf(ch,"CH%d:",addr);
-    snprintf(cmd,sizeof(cmd),"./LucidIoCtrl -d%s -tT -c%d -r",dev.c_str(),addr);
-  
+    snprintf(cmd,sizeof(cmd),"/usr/bin/LucidIoCtrl -d%s -tT -c%d -r",dev.c_str(),addr);
+    LucidTemperatureDriverLDBG_<<"LucidControl command:"<<cmd;
     std::string lista=GetStdoutFromCommand(cmd);
-    pnt[addr]= atof((lista.substr((lista.find( ch )+4), (lista.size() - lista.find( ch )))).c_str());
+    LucidTemperatureDriverLDBG_<<"LucidControl answer:"<<lista;
+    ///    pnt[addr]= atof((lista.substr((lista.find( ch )+4), (lista.size() - lista.find( ch )))).c_str());
+    if((ret=sscanf(lista.c_str(),"CH%d:%lf",&canale,pnt))==2){
+      LucidTemperatureDriverLDBG_<<"LucidControl channel:"<<canale<<" temp:"<<*pnt;
+    } else {
+      LucidTemperatureDriverLERR_<<"LucidControl error parsing";
+      return 0;
+    }
+    
     return 1;
     
   }
