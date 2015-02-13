@@ -70,6 +70,13 @@
                  */
                 int getDataset(ddDataSet_t*data,int sizen);
 
+		/**
+		   \brief return the size in byte of the dataset
+		   \return the size of the dataset if success, zero otherwise
+		*/
+		int getDataSetSize();
+
+
                 
             };
             

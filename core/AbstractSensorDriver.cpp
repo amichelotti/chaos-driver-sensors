@@ -94,11 +94,23 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult AbstractSensorDriver::exec
         case AbstractSensorDriverOpcode_GET_DATASET:{
             int res;
             ddDataSet_t*dataset=(ddDataSet_t*)cmd->resultData;
-        
-            res=getDataset(dataset,cmd->resultDataLength);
-            cmd->ret = res;
+
+            cmd->ret = getDataSet(dataset,cmd->resultDataLength);
+        }
+        break;
+        case AbstractSensorDriverOpcode_GET_DATASETSIZE:{
+            cmd->ret = datasetSize;
+
         }
         break;
 	}
 	return result;
+}
+
+int AbstractSensorDriver::getDataSetSize(){
+  return datasetSize;
+}
+int AbstractSensorDriver::getDataSet(ddDataSet_t*data,int sizeb){
+  return memcpy(data,dataSet,size<datasetSize?size:datasetSize);
+
 }

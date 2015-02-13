@@ -38,12 +38,12 @@ OPEN_CU_DRIVER_PLUGIN_CLASS_DEFINITION(VTemperatureDriver, 1.0.0,VTemperatureDri
 REGISTER_CU_DRIVER_PLUGIN_CLASS_INIT_ATTRIBUTE(VTemperatureDriver, http_address/dnsname:port)
 CLOSE_CU_DRIVER_PLUGIN_CLASS_DEFINITION
 
-//register the two plugin
-//OPEN_REGISTER_PLUGIN
-//REGISTER_PLUGIN(VTemperatureDriver)
-//CLOSE_REGISTER_PLUGIN
 
-
+DEF_SENSOR_DATASET
+DEF_SENSOR_CHANNEL("RNDTEMP","Virtual random temperature",chaos::DataType::TYPE_DOUBLE,chaos::DataType::Output,sizeof(double))
+DEF_SENSOR_CHANNEL("RAMPTEMP","Virtual ramp temperature",chaos::DataType::TYPE_INT32,chaos::DataType::Output,sizeof(int32_t))
+DEF_SENSOR_CHANNEL("SINTEMP","Virtual periodic temperature",chaos::DataType::TYPE_DOUBLE,chaos::DataType::Output,sizeof(double))
+ENDEF_SENSOR_DATASET
 
 //GET_PLUGIN_CLASS_DEFINITION
 //we need to define the driver with alias version and a class that implement it
@@ -105,26 +105,6 @@ int VTemperatureDriver::sensorDeinit(){
     return 1;
 }
 
-int VTemperatureDriver::getDataset(ddDataSet_t*data,int sizen){
-    data[0].name="RNDTEMP";
-    data[0].desc="Virtual random temperature";
-    data[0].type=chaos::DataType::TYPE_DOUBLE;
-    data[0].dir=chaos::DataType::Output;
-    data[0].maxsize=sizeof(double);
-    
-    data[1].name="RAMPTEMP";
-    data[1].desc="Virtual ramp temperature";
-    data[1].type=chaos::DataType::TYPE_INT32;
-    data[1].dir=chaos::DataType::Output;
-    data[1].maxsize=sizeof(int32_t);
-    
-    data[2].name="SINTEMP";
-    data[2].desc="Virtual periodic temperature";
-    data[2].type=chaos::DataType::TYPE_DOUBLE;
-    data[2].dir=chaos::DataType::Output;
-    data[2].maxsize=sizeof(double);
-    return 3;
 
-}
 
 

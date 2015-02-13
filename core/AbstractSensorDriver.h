@@ -27,9 +27,10 @@ namespace cu_driver = chaos::cu::driver_manager::driver;
 typedef enum AbstractSensorDriverOpcode{
 	AbstractSensorDriverOpcode_READ_CHANNEL = cu_driver::OpcodeType::OP_USER,
 	AbstractSensorDriverOpcode_WRITE_CHANNEL,
-    AbstractSensorDriverOpcode_GET_DATASET,
-    AbstractSensorDriverOpcode_INIT,
-    AbstractSensorDriverOpcode_DEINIT
+	AbstractSensorDriverOpcode_GET_DATASET,
+	AbstractSensorDriverOpcode_GET_DATASETSIZE,
+	AbstractSensorDriverOpcode_INIT,
+	AbstractSensorDriverOpcode_DEINIT
 
 } AbstractSensorDriverOpcode;
 
@@ -42,13 +43,26 @@ typedef struct ddDataSet {
     int maxsize;
 } ddDataSet_t;
 
+#define DEF_SENSOR_DATASET \
+  ddDataSet_t AbstractSensorDriver::dataSet[]={
+
+
+#define DEF_SENSOR_CHANNEL(_name,_desc,_dir,_type,_size)	\
+  {.name=_name,							\
+    .desc=_desc,\
+    .dir=_dir,	\
+    .type=_type,\
+.maxsize=_size},
+#define ENDDEF_SENSOR_DATASET };int AbstractSensorDriver::datasetSize=sizeof(dataSet);
 /*
  driver definition
  */
 class AbstractSensorDriver:ADD_CU_DRIVER_PLUGIN_SUPERCLASS {
-	int32_t i32_out_1_value;
+
 	void driverInit(const char *initParameter) throw(chaos::CException);
 	void driverDeinit() throw(chaos::CException);
+	static ddDataSet_t dataSet[];
+	static int datasetSize;
 public:
 	AbstractSensorDriver();
 	~AbstractSensorDriver();
@@ -87,16 +101,19 @@ public:
      */
     virtual int sensorDeinit()=0;
     /**
-     \brief return the dataset of the sensor in *data, 
-     deallocate after use
-     \param sizen[in] max number of objects
-     \param data[out] dataset array
-     \return the number of sets, negative if error
+       \brief return the size in byte of the dataset
+       \return the size of the dataset if success, zero otherwise
      */
-    virtual int getDataset(ddDataSet_t*data,int sizen)=0;
-    
-    
-    
+    virtual int getDataSetSize();
+
+    /**
+       \brief return the dataset copying max size bytes
+       \param data[out] array of data
+       \param sizeb[in] max byte to copy
+       \return the size of the dataset if success, zero otherwise
+     */
+
+    virtual int getDataset(ddDataSet_t*data,int sizeb);
 };
 
 #endif /* defined(__ControlUnitTest__DummyDriver__) */

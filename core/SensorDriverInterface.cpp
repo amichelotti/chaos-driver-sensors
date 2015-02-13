@@ -81,7 +81,21 @@ int SensorDriverInterface::getDataset(ddDataSet_t*data,int sizen){
 
     LDBG_<<"getDataset,func ret:"<<size<<",accessor ret "<<ret2;
     return size;
+   
+}
+
+
+int SensorDriverInterface::getDatasetSize(){
+  int size,ret2;
+    message.resultData = 0;
+    message.resultDataLength = 0;
+    message.opcode =AbstractSensorDriverOpcode_GET_DATASETSIZE;
+    message.inputDataLength=0;
+    ret2=accessor->send(&message);
+    size=message.ret;
+
+    LDBG_<<"getDatasetSize,func ret:"<<size<<",accessor ret "<<ret2;
+    return size;
     
 
 }
-

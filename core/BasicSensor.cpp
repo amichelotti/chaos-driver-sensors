@@ -120,18 +120,20 @@ void BasicSensor::unitStart() throw(chaos::CException) {
 void BasicSensor::unitRun() throw(chaos::CException) {
   //get the output attribute pointer form the internal cache
     std::vector<int>::iterator i;
-    int cnt;
+    int cnt,changed=0;
     //BasicSensorLAPP_<<"UnitRun";
     for(i=output_size.begin(),cnt=0;i!=output_size.end();i++,cnt++){
         char buffer[*i];
         if(driver->readChannel(buffer,cnt,*i)){
+	  changed++;
             BasicSensorLDBG_<<"reading output channel "<<cnt<<", size :"<<*i;
             getAttributeCache()->setOutputAttributeValue(cnt, (void*)buffer, *i);
         }
     }
   
   //! set output dataset as changed
-  getAttributeCache()->setOutputDomainAsChanged();
+    if(changed)
+      getAttributeCache()->setOutputDomainAsChanged();
 }
 
 //!Execute the Control Unit work
