@@ -44,7 +44,7 @@ typedef struct ddDataSet {
 } ddDataSet_t;
 
 #define DEF_SENSOR_DATASET \
-  ddDataSet_t AbstractSensorDriver::dataSet[]={
+  static ddDataSet_t dataSet[]={
 
 
 #define DEF_SENSOR_CHANNEL(_name,_desc,_dir,_type,_size)	\
@@ -53,18 +53,22 @@ typedef struct ddDataSet {
     .dir=_dir,	\
     .type=_type,\
 .maxsize=_size},
-#define ENDDEF_SENSOR_DATASET };int AbstractSensorDriver::datasetSize=sizeof(dataSet);
+#define ENDDEF_SENSOR_DATASET };
+#define INIT_SENSOR_DATASET setDataSet(dataSet,sizeof(dataSet));
 /*
  driver definition
  */
+
 class AbstractSensorDriver:ADD_CU_DRIVER_PLUGIN_SUPERCLASS {
 
 	void driverInit(const char *initParameter) throw(chaos::CException);
 	void driverDeinit() throw(chaos::CException);
-	static ddDataSet_t dataSet[];
-	static int datasetSize;
+protected:
+    ddDataSet_t *dataset;
+    int datasetSize;
 public:
 	AbstractSensorDriver();
+
 	~AbstractSensorDriver();
     //! Execute a command
 	cu_driver::MsgManagmentResultType::MsgManagmentResult execOpcode(cu_driver::DrvMsgPtr cmd);
@@ -104,7 +108,7 @@ public:
        \brief return the size in byte of the dataset
        \return the size of the dataset if success, zero otherwise
      */
-    virtual int getDataSetSize();
+     int getDatasetSize();
 
     /**
        \brief return the dataset copying max size bytes
@@ -113,7 +117,9 @@ public:
        \return the size of the dataset if success, zero otherwise
      */
 
-    virtual int getDataset(ddDataSet_t*data,int sizeb);
+    int getDataset(ddDataSet_t*data,int sizeb);
+    
+    void setDataSet(ddDataSet_t*data,int sizeb);
 };
 
 #endif /* defined(__ControlUnitTest__DummyDriver__) */

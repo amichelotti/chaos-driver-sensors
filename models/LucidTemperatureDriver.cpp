@@ -38,11 +38,16 @@ OPEN_CU_DRIVER_PLUGIN_CLASS_DEFINITION(LucidTemperatureDriver, 1.0.0,LucidTemper
 REGISTER_CU_DRIVER_PLUGIN_CLASS_INIT_ATTRIBUTE(LucidTemperatureDriver, http_address/dnsname:port)
 CLOSE_CU_DRIVER_PLUGIN_CLASS_DEFINITION
 
+DEF_SENSOR_DATASET
+DEF_SENSOR_CHANNEL("TEMP0","Lucid Control RTD Channel0",chaos::DataType::Output,chaos::DataType::TYPE_DOUBLE,sizeof(double))
+DEF_SENSOR_CHANNEL("TEMP1","Lucid Control RTD Channel1",chaos::DataType::Output,chaos::DataType::TYPE_DOUBLE,sizeof(int32_t))
+ENDDEF_SENSOR_DATASET
 
 
 //GET_PLUGIN_CLASS_DEFINITION
 //we need to define the driver with alias version and a class that implement it
 LucidTemperatureDriver::LucidTemperatureDriver(){
+    INIT_SENSOR_DATASET;
 
 }
 std::string GetStdoutFromCommand(std::string cmd) {
@@ -90,7 +95,9 @@ int LucidTemperatureDriver::readChannel(void *buffer,int addr,int bcount){
     return 1;
     
   }
+    return 0;
 }
+
 int LucidTemperatureDriver::writeChannel(void *buffer,int addr,int bcount){
     LucidTemperatureDriverLDBG_<<"writing channel :"<<addr<<" Virtual Temp, not implemented";
 
@@ -109,22 +116,5 @@ int LucidTemperatureDriver::sensorDeinit(){
     return 1;
 }
 
-int LucidTemperatureDriver::getDataset(ddDataSet_t*data,int sizen){
-    data[0].name="TEMP0";
-    data[0].desc="Lucid Control RTD Channel0";
-    data[0].type=chaos::DataType::TYPE_DOUBLE;
-    data[0].dir=chaos::DataType::Output;
-    data[0].maxsize=sizeof(double);
-   
-    data[1].name="TEMP1";
-    data[1].desc="Lucid Control RTD Channel1";
-    data[1].type=chaos::DataType::TYPE_DOUBLE;
-    data[1].dir=chaos::DataType::Output;
-    data[1].maxsize=sizeof(double);
-    // add more
-
-   return 2;
-
-}
 
 

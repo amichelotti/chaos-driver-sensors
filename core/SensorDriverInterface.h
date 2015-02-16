@@ -14,7 +14,7 @@
 #include <chaos/cu_toolkit/driver_manager/driver/DriverTypes.h>
 #include <chaos/cu_toolkit/driver_manager/driver/DriverAccessor.h>
 
-            class SensorDriverInterface:public AbstractSensorDriver {
+            class SensorDriverInterface:public AbstractSensorDriver{
                 
             protected:
                 cu_driver::DrvMsg message;
@@ -74,7 +74,7 @@
 		   \brief return the size in byte of the dataset
 		   \return the size of the dataset if success, zero otherwise
 		*/
-		int getDataSetSize();
+		int getDatasetSize();
 
 
                 

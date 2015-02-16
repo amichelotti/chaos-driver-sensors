@@ -71,15 +71,7 @@ public:
      \return 0 if success, error otherwise
      */
     int sensorDeinit();
-    /**
-     \brief return the dataset of the sensor in *data, 
-     deallocate after use
-     \param sizen[in] max number of objects
-     \param data[out] dataset array
-     \return the number of sets, negative if error
-     */
-    int getDataset(ddDataSet_t*data,int sizen);
-    
+       
     
     
 };

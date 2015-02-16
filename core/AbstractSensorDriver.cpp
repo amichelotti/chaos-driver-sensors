@@ -92,14 +92,13 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult AbstractSensorDriver::exec
             break;
         }
         case AbstractSensorDriverOpcode_GET_DATASET:{
-            int res;
             ddDataSet_t*dataset=(ddDataSet_t*)cmd->resultData;
 
-            cmd->ret = getDataSet(dataset,cmd->resultDataLength);
+            cmd->ret = getDataset(dataset,cmd->resultDataLength);
         }
         break;
         case AbstractSensorDriverOpcode_GET_DATASETSIZE:{
-            cmd->ret = datasetSize;
+            cmd->ret = getDatasetSize();
 
         }
         break;
@@ -107,10 +106,16 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult AbstractSensorDriver::exec
 	return result;
 }
 
-int AbstractSensorDriver::getDataSetSize(){
+int AbstractSensorDriver::getDatasetSize(){
   return datasetSize;
 }
-int AbstractSensorDriver::getDataSet(ddDataSet_t*data,int sizeb){
-  return memcpy(data,dataSet,size<datasetSize?size:datasetSize);
+int AbstractSensorDriver::getDataset(ddDataSet_t*data,int sizeb){
+    int ret=sizeb<datasetSize?sizeb:getDatasetSize();
+    memcpy(data,dataset,ret);
+    return ret;
 
+}
+void AbstractSensorDriver::setDataSet(ddDataSet_t*data,int sizeb){
+    dataset = data;
+    datasetSize=sizeb;
 }

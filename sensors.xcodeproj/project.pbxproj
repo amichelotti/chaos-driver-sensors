@@ -21,6 +21,7 @@
 		53CC48A51A8903EC00DA2B24 /* SensorDriverInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 53CC48831A87C63D00DA2B24 /* SensorDriverInterface.cpp */; };
 		53CC48A61A8903EC00DA2B24 /* AbstractSensorDriver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 53CC487F1A879EEA00DA2B24 /* AbstractSensorDriver.cpp */; };
 		53CC48A71A8903EC00DA2B24 /* BasicSensor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 53CC487A1A874A2100DA2B24 /* BasicSensor.cpp */; };
+		53CC48AA1A9231D700DA2B24 /* LucidTemperatureDriver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 53CC48A91A9231D700DA2B24 /* LucidTemperatureDriver.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -58,6 +59,8 @@
 		53CC488A1A89032A00DA2B24 /* sensorsClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sensorsClient.cpp; path = test/sensorsClient.cpp; sourceTree = "<group>"; };
 		53CC489A1A89037500DA2B24 /* sensorsServer copy */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "sensorsServer copy"; sourceTree = BUILT_PRODUCTS_DIR; };
 		53CC48A01A8903C900DA2B24 /* libchaos_driver_sensors.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libchaos_driver_sensors.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		53CC48A81A9231D700DA2B24 /* LucidTemperatureDriver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LucidTemperatureDriver.h; path = models/LucidTemperatureDriver.h; sourceTree = "<group>"; };
+		53CC48A91A9231D700DA2B24 /* LucidTemperatureDriver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LucidTemperatureDriver.cpp; path = models/LucidTemperatureDriver.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -121,6 +124,8 @@
 		53CC48881A88E6E100DA2B24 /* models */ = {
 			isa = PBXGroup;
 			children = (
+				53CC48A81A9231D700DA2B24 /* LucidTemperatureDriver.h */,
+				53CC48A91A9231D700DA2B24 /* LucidTemperatureDriver.cpp */,
 				53CC48851A88E6D400DA2B24 /* VTemperatureDriver.h */,
 				53CC48861A88E6D400DA2B24 /* VTemperatureDriver.cpp */,
 			);
@@ -234,6 +239,7 @@
 			files = (
 				53CC48801A879EEA00DA2B24 /* AbstractSensorDriver.cpp in Sources */,
 				53CC48871A88E6D400DA2B24 /* VTemperatureDriver.cpp in Sources */,
+				53CC48AA1A9231D700DA2B24 /* LucidTemperatureDriver.cpp in Sources */,
 				53CC48841A87C63D00DA2B24 /* SensorDriverInterface.cpp in Sources */,
 				53CC488B1A89032A00DA2B24 /* sensorsServer.cpp in Sources */,
 				53CC487C1A874A2100DA2B24 /* BasicSensor.cpp in Sources */,
@@ -599,6 +605,7 @@
 				53CC48A31A8903C900DA2B24 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

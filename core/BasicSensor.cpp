@@ -107,7 +107,7 @@ void BasicSensor::unitDefineCustomAttribute() {
 
 //!Initialize the Custom Control Unit
 void BasicSensor::unitInit() throw(chaos::CException) {
-
+getAttributeCache()->resetChangedInputIndex();
 
 }
 
@@ -153,6 +153,22 @@ void BasicSensor::unitInputAttributePreChangeHandler() throw(chaos::CException) 
 
 //! attribute changed handler
 void BasicSensor::unitInputAttributeChangedHandler() throw(chaos::CException) {
+    std::vector<VariableIndexType> changed;
+    std::vector<VariableIndexType>::iterator j;
+    getAttributeCache()->getChangedInputAttributeIndex(changed);
+    //BasicSensorLAPP_<<"UnitRun";
+    
+    for(j=changed.begin();j!=changed.end();j++){
+        const char** buffer;
+        
+        getAttributeCache()->getReadonlyCachedAttributeValue<char>(DOMAIN_INPUT, *j, &buffer);
+        if(driver->writeChannel(buffer,*j,input_size[*j])){
+            BasicSensorLDBG_<<"writing output channel "<<*j<<", size :"<<input_size[*j];
+        }
+    }
+    getAttributeCache()->resetChangedInputIndex();
+
+
 }
 
 /*

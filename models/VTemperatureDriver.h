@@ -18,13 +18,13 @@
  *    	See the License for the specific language governing permissions and
  *    	limitations under the License.
  */
-#ifndef VTEMPERATURE_h
-#define VTEMPERATURE_h
+#ifndef VTEMPERATUREDRIVER_h
+#define VTEMPERATUREDRIVER_h
 
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <driver/sensors/core/AbstractSensorDriver.h>
 #include <chaos/common/data/DatasetDB.h>
-
+#include <stdint.h>
 namespace cu_driver = chaos::cu::driver_manager::driver;
 DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(VTemperatureDriver)
 
@@ -34,6 +34,9 @@ DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(VTemperatureDriver)
 class VTemperatureDriver:public AbstractSensorDriver{
 
 	int counter;
+    double freq;
+    int32_t points;
+    int32_t sinpoint;
 public:
 	VTemperatureDriver();
 	~VTemperatureDriver();
@@ -70,17 +73,7 @@ public:
      \return 0 if success, error otherwise
      */
     int sensorDeinit();
-    /**
-     \brief return the dataset of the sensor in *data, 
-     deallocate after use
-     \param sizen[in] max number of objects
-     \param data[out] dataset array
-     \return the number of sets, negative if error
-     */
-    int getDataset(ddDataSet_t*data,int sizen);
-    
-    
-    
+        
 };
 
 #endif /* defined(__ControlUnitTest__DummyDriver__) */
