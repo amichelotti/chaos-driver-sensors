@@ -50,10 +50,11 @@ ENDDEF_SENSOR_DATASET
 //GET_PLUGIN_CLASS_DEFINITION
 //we need to define the driver with alias version and a class that implement it
 VTemperatureDriver::VTemperatureDriver(){
-    INIT_SENSOR_DATASET;
+  INIT_SENSOR_DATASET;
     counter=0;
     freq = 1.0;
     sinpoint=0;
+    points=100.0;
 }
 //default descrutcor
 VTemperatureDriver::~VTemperatureDriver() {
@@ -85,7 +86,11 @@ int VTemperatureDriver::readChannel(void *buffer,int addr,int bcount){
         case 2:{
             double*pnt=(double*)buffer;
             sinpoint++;
-            pnt[0] = points*sin((6.28*freq)*sinpoint/points);
+	    if(points>0){
+	      pnt[0] = points*sin((6.28*freq)*sinpoint/points);
+	    } else {
+	      VTemperatureDriverLERR_<<"reading channel :"<<addr<<" Virtual Periodic Temp, invalid number of points:"<<points;
+	    }
             sinpoint=sinpoint%points;
             VTemperatureDriverLDBG_<<"reading channel :"<<addr<<" Virtual Periodic Temp:"<<pnt[0];
 

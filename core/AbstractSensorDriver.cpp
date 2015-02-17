@@ -1,7 +1,7 @@
 /*
- *	DummyDriver.h
- *	!CHOAS
- *	Created by Bisegni Claudio.
+ *	AbstractSensorDriver.cpp
+ *	!CHAOS
+ *	Created by Andrea Michelotti
  *
  *    	Copyright 2013 INFN, National Institute of Nuclear Physics
  *

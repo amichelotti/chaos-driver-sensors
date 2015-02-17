@@ -28,7 +28,7 @@ class BasicSensor : public chaos::cu::control_manager::RTAbstractControlUnit {
     
     SensorDriverInterface*driver;
     ddDataSet_t*driver_dataset;
-    int driver_nchannels;
+    int driver_dataset_size;
     std::vector<int> output_size;
     std::vector<int> input_size;
 public:

@@ -36,15 +36,16 @@ PUBLISHABLE_CONTROL_UNIT_IMPLEMENTATION(BasicSensor)
  */
 BasicSensor::BasicSensor(const string& _control_unit_id, const string& _control_unit_param, const ControlUnitDriverList& _control_unit_drivers):
 RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers) {
-    ddDataSet_t dd[MAX_DATASET_SIZE];
-    driver=new SensorDriverInterface(getAccessoInstanceByIndex(0));
-    assert(driver);
-    driver_nchannels=driver->getDataset(dd,MAX_DATASET_SIZE);
-    driver_dataset=0;
-    if(driver_nchannels>0){
-      driver_dataset = new ddDataSet_t[driver_nchannels] ();
-      assert(driver_dataset);
-    }
+
+  driver=new SensorDriverInterface(getAccessoInstanceByIndex(0));
+
+  assert(driver);
+  driver_dataset_size=driver->getDatasetSize();
+  driver_dataset=0;
+  if(driver_dataset_size>0){
+    driver_dataset = (ddDataSet_t *)malloc( driver_dataset_size);
+    assert(driver_dataset);
+  }
 }
 
 /*
@@ -57,7 +58,7 @@ BasicSensor::~BasicSensor() {
         driver = NULL;
     }
     if(driver_dataset){
-        delete(driver_dataset);
+        free(driver_dataset);
         driver_dataset=0;
     }
 
@@ -72,8 +73,9 @@ The api that can be called withi this method are listed into
 void BasicSensor::unitDefineActionAndDataset() throw(chaos::CException) {
     int ret;
     BasicSensorLAPP_ << "UnitDefine";
-    ret=driver->getDataset(driver_dataset,driver_nchannels);
-    for(int cnt=0;cnt<ret;cnt++){
+    ret=driver->getDataset(driver_dataset,driver_dataset_size);
+    
+    for(int cnt=0;cnt<ret/sizeof(ddDataSet_t);cnt++){
         BasicSensorLDBG_<<"adding attribute:"<<driver_dataset[cnt].name<<","<<driver_dataset[cnt].desc<<","<<driver_dataset[cnt].type<<","<<driver_dataset[cnt].dir<<","<<driver_dataset[cnt].maxsize;
         if(driver_dataset[cnt].dir==chaos::DataType::Input){
             input_size.push_back(driver_dataset[cnt].maxsize);
@@ -90,13 +92,6 @@ void BasicSensor::unitDefineActionAndDataset() throw(chaos::CException) {
 
     }
     
-    /*        addAttributeToDataSet("ciccio",
-                              "pippo",
-                              ( chaos::DataType::DataType)0,
-			      (chaos::DataType::DataSetAttributeIOAttribute)0,0
-                              );
-    */
-
   }
 
 
