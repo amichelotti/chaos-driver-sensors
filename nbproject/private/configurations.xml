@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="95">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <df root="." name="0">
+      <df name="build">
+      </df>
+      <df name="CMakeFiles">
+        <df name="2.8.12.2">
+          <df name="CompilerIdC">
+            <in>CMakeCCompilerId.c</in>
+          </df>
+          <df name="CompilerIdCXX">
+            <in>CMakeCXXCompilerId.cpp</in>
+          </df>
+        </df>
+        <df name="chaos_driver_sensors.dir">
+          <df name="core">
+          </df>
+          <df name="models">
+          </df>
+        </df>
+        <df name="CMakeTmp">
+        </df>
+        <df name="Progress">
+        </df>
+        <df name="sensorsClient.dir">
+          <df name="test">
+          </df>
+        </df>
+        <df name="sensorsServer.dir">
+          <df name="test">
+          </df>
+        </df>
+      </df>
+      <df name="conf">
+      </df>
+      <df name="core">
+        <in>AbstractSensorDriver.cpp</in>
+        <in>AbstractSensorDriver.h</in>
+        <in>BasicSensor.cpp</in>
+        <in>BasicSensor.h</in>
+        <in>SensorDriverInterface.cpp</in>
+        <in>SensorDriverInterface.h</in>
+      </df>
+      <df name="models">
+        <in>LucidTemperatureDriver.cpp</in>
+        <in>LucidTemperatureDriver.h</in>
+        <in>VTemperatureDriver.cpp</in>
+        <in>VTemperatureDriver.h</in>
+        <in>ZBSensorCollector.cpp</in>
+        <in>ZBSensorCollector.h</in>
+        <in>ZBSensorNode.cpp</in>
+        <in>ZBSensorNode.h</in>
+        <in>ZBSensorNodeC.cpp</in>
+        <in>ZBSensorNodeC.h</in>
+        <in>ZBSensorNodeD.cpp</in>
+        <in>ZBSensorNodeD.h</in>
+        <in>ZBSensorNodeS.cpp</in>
+        <in>ZBSensorNodeS.h</in>
+        <in>plugins.cpp</in>
+      </df>
+      <df name="sensors.xcodeproj">
+        <df name="project.xcworkspace">
+        </df>
+      </df>
+      <df name="test">
+        <in>sensorsClient.cpp</in>
+        <in>sensorsServer.cpp</in>
+      </df>
+    </df>
+  </logicalFolder>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="Default" type="0">
+      <toolsSet>
+        <developmentServer>localhost</developmentServer>
+        <platform>2</platform>
+      </toolsSet>
+      <compile>
+        <compiledirpicklist>
+          <compiledirpicklistitem>.</compiledirpicklistitem>
+          <compiledirpicklistitem>${AUTO_FOLDER}</compiledirpicklistitem>
+        </compiledirpicklist>
+        <compiledir>${AUTO_FOLDER}</compiledir>
+        <compilecommandpicklist>
+          <compilecommandpicklistitem>${MAKE} ${ITEM_NAME}.o</compilecommandpicklistitem>
+          <compilecommandpicklistitem>${AUTO_COMPILE}</compilecommandpicklistitem>
+        </compilecommandpicklist>
+        <compilecommand>${AUTO_COMPILE}</compilecommand>
+      </compile>
+      <dbx_gdbdebugger version="1">
+        <gdb_pathmaps>
+        </gdb_pathmaps>
+        <gdb_interceptlist>
+          <gdbinterceptoptions gdb_all="false" gdb_unhandled="true" gdb_unexpected="true"/>
+        </gdb_interceptlist>
+        <gdb_options>
+          <DebugOptions>
+          </DebugOptions>
+        </gdb_options>
+        <gdb_buildfirst gdb_buildfirst_overriden="false" gdb_buildfirst_old="false"/>
+      </dbx_gdbdebugger>
+      <nativedebugger version="1">
+        <engine>gdb</engine>
+      </nativedebugger>
+      <runprofile version="9">
+        <runcommandpicklist>
+          <runcommandpicklistitem>"${OUTPUT_PATH}"</runcommandpicklistitem>
+        </runcommandpicklist>
+        <runcommand>"${OUTPUT_PATH}"</runcommand>
+        <rundir>.</rundir>
+        <buildfirst>false</buildfirst>
+        <terminal-type>0</terminal-type>
+        <remove-instrumentation>0</remove-instrumentation>
+        <environment>
+        </environment>
+      </runprofile>
+    </conf>
+  </confs>
+</configurationDescriptor>

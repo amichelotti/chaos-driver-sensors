@@ -48,11 +48,7 @@ typedef struct ddDataSet {
 
 
 #define DEF_SENSOR_CHANNEL(_name,_desc,_dir,_type,_size)	\
-  {.name=_name,							\
-    .desc=_desc,\
-    .dir=_dir,	\
-    .type=_type,\
-.maxsize=_size},
+  {_name,_desc,_dir, _type,_size},
 #define ENDDEF_SENSOR_DATASET };
 #define INIT_SENSOR_DATASET setDataSet(dataSet,sizeof(dataSet));
 /*
