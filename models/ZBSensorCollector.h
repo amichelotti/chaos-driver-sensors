@@ -43,7 +43,7 @@ typedef struct nodedata{
 class ZBSensorCollector:public chaos::common::utility::Singleton<ZBSensorCollector>{
 
     double zbsensors_channel[MAX_ZB_SENSOR_CHANNELS];
-    common::serial::PosixSerialComm *serial;
+    ::common::serial::PosixSerialComm *serial;
     int exit;
     std::map<int ,std::queue< zbnodedata_t > * > zb_queue;
     boost::thread* collector_thread;

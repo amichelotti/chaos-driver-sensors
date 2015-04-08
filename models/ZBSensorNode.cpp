@@ -56,7 +56,7 @@ int ZBSensorNode::sensorInit(void *buffer,int sizeb){
                 ser = pnt;
             break;
             case 2:
-                id = atoi(pnt);
+                id = strtoul(pnt,0,0);
                 break;
             default:
                 break;

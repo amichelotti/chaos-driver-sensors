@@ -19,8 +19,8 @@
  *    	See the License for the specific language governing permissions and
  *    	limitations under the License.
  */
-#ifndef _ZBSENSORNODEC_H
-#define _ZBSENSORNODEC_H
+#ifndef _ZBSENSORNODES_H
+#define _ZBSENSORNODES_H
 
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <driver/sensors/core/AbstractSensorDriver.h>
@@ -29,7 +29,6 @@
 #include <stdint.h>
 namespace cu_driver = chaos::cu::driver_manager::driver;
 DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(ZBSensorNodeS)
-#define SENSOR_CHANNELS 3
 
 /*
  driver definition
