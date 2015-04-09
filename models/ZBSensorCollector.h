@@ -35,10 +35,12 @@ DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(ZBSensorCollector)
 
 
 typedef struct nodedata{
-    double sensor[16];
+    int uid;
+    double sensor[MAX_ZB_SENSOR_CHANNELS];
+    int nsensors;
     char data[16];
     char hour[16];
-    nodedata(){*data=0;*hour=0;}
+    nodedata(){*data=0;*hour=0;uid=0;nsensors=0;}
 } zbnodedata_t;
 class ZBSensorCollector:public chaos::common::utility::Singleton<ZBSensorCollector>{
 

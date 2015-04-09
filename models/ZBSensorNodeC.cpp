@@ -68,7 +68,7 @@ ZBSensorNodeC::~ZBSensorNodeC() {
 
 int ZBSensorNodeC::readChannel(void *buffer,int addr,int bcount){
     zbnodedata_t value=collector->getNode(id);
-    if(*value.data!=0){
+    if(value.nsensors>0){
         ppm = value.sensor[0];
         ZBSensorNodeCLDBG_<<"Reading PPM:"<<ppm<<" date:"<<value.data<<" hour:"<<value.hour;
 

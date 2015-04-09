@@ -52,7 +52,7 @@ S 3 23.69 -> La sonda di temperatura superficiale numero 3 ha rilevato Temperatu
 
                     
     E 3 C 1 25567 01/04/2015 12:00
-                              
+    E 1 C 1 25567 01/04/2015 12:00
 Come interpretarla: (Dedicata ai sensori per misure concentrazione CO2)
                     
 E 3 -> Stringa spedita dall'EndNode 3
@@ -65,26 +65,33 @@ C 1 25567 -> Il sensore per la concentrazione di CO2 numero 1 ha rilevato una co
 
 void ZBSensorCollector::init(std::string param){
     exit =0;
-   serial = new common::serial::PosixSerialComm(param,9600,0,8,1,0,MAX_BUF,MAX_BUF);
-   assert(serial);
-   collector_thread = new boost::thread(boost::bind(&ZBSensorCollector::updateStatus,this));
-   assert(collector_thread);
+   if(serial==NULL){
+    serial = new common::serial::PosixSerialComm(param,9600,0,8,1,0,MAX_BUF,MAX_BUF);
+    assert(serial);
+    serial->init();
+   }
+    if(collector_thread==NULL){
+        collector_thread = new boost::thread(boost::bind(&ZBSensorCollector::updateStatus,this));
+        assert(collector_thread);
+    }
 }
 
 void ZBSensorCollector::deinit(){
-    exit =1;
-    if(serial){
-        delete serial;
-        serial = NULL;
+    if(exit==0){
+        exit =1;
+        if(serial){
+            delete serial;
+            serial = NULL;
+        }
+        if(collector_thread){
+            delete collector_thread;
+            collector_thread =NULL;
+        }
+         std::map<int ,std::queue<zbnodedata_t> * >::iterator i;
+         for(i=zb_queue.begin();i!=zb_queue.end();i++){
+             delete (i->second);
+         }
     }
-    if(collector_thread){
-        delete collector_thread;
-        collector_thread =NULL;
-    }
-     std::map<int ,std::queue<zbnodedata_t> * >::iterator i;
-     for(i=zb_queue.begin();i!=zb_queue.end();i++){
-         delete (i->second);
-     }
 }
 
 ZBSensorCollector::ZBSensorCollector(){
@@ -104,20 +111,26 @@ ZBSensorCollector::~ZBSensorCollector() {
 void ZBSensorCollector::updateStatus(){
     char buffer[MAX_BUF];
     int cnt=0;
+    ZBSensorCollectorLDBG_ << "update status thread started";
     while(exit==0){
         if(serial->read(&buffer[cnt],1)>0){
-          if(buffer[cnt]=='\n'){
+          if(buffer[cnt]=='\n' || buffer[cnt]=='\r'){
             int node=0;
             int channel=0; 
             int parsecnt=0;
             int uid=0;
+            int sensors=0;
             buffer[cnt]=0;
-            zbnodedata_t data;
+            zbnodedata_t data[MAX_ZB_SENSOR_CHANNELS];
+            
             ZBSensorCollectorLDBG_ << "received buffer:\""<<buffer<<"\"";
             char *pnt=strtok(buffer," ");
             while((pnt!=NULL)&& (*pnt!=0)){
                 if(*pnt == 'E'){
                     parsecnt=0;
+                } else if((*pnt == 'C') || (*pnt == 'D') || (*pnt == 'S')){
+                   
+                    parsecnt=2;
                 }
                 switch(parsecnt){
                     case 0:
@@ -125,41 +138,45 @@ void ZBSensorCollector::updateStatus(){
                     case 1:
                         //get node
                         node = atoi(pnt);
-                       ZBSensorCollectorLDBG_<<"node"<<node;
+                       ZBSensorCollectorLDBG_<<"node:"<<node;
 
                         break;
                     case 2:
                         // type;
+                        sensors++;
                         break;
                     case 3:
                     // get the channel
                         channel = atoi(pnt);
                         uid = (node<<8) | channel&0xFF; 
+                        ZBSensorCollectorLDBG_<<"channel:"<<channel<<" uid:"<<uid;
                         if(uid==0) {
                            ZBSensorCollectorLERR_ << "bad uid something is going wrong:"<<buffer;
                            *pnt=0;
                            continue;
                         } else {
                             if(zb_queue.find(uid)==zb_queue.end()){
+                                ZBSensorCollectorLDBG_<<"new queue created for sensor:"<<uid;
                                 zb_queue[uid]=new std::queue<zbnodedata_t>();
                             }
                         }
-                       
+                        data[sensors-1].uid=uid;
+
                         break;
                     default:
                     // get the values
-                        if(parsecnt<7){
+                        if(parsecnt<MAX_ZB_SENSOR_CHANNELS+4){
                             if(strchr(pnt,'/')){
-                                strncpy(data.data,pnt,16);
+                                strncpy(data[sensors-1].data,pnt,16);
                             } else if(strchr(pnt,':')){
-                                strncpy(data.hour,pnt,16);
-                                zb_queue[uid]->push(data);
-                                ZBSensorCollectorLDBG_ << "pushing:\""<<pnt<<"\" in queue of sensorid:"<<uid;
-
+                                strncpy(data[sensors-1].hour,pnt,16);
+                                
                             } else {
-                                data.sensor[parsecnt-3]=atof(pnt);
-                                ZBSensorCollectorLDBG_ << "acquiring sensor:\""<<parsecnt-3<<"\" in queue of sensorid:"<<uid<< " value:"<< data.sensor[parsecnt-3];
-
+                                if(parsecnt-4 >= 0 ){
+                                    data[sensors-1].sensor[parsecnt-4]=atof(pnt);
+                                    data[sensors-1].nsensors++;
+                                    ZBSensorCollectorLDBG_ << "acquiring sensor "<<sensors<<" channel:\""<<channel<<"\" in queue of sensorid:"<<uid<< " value:"<< data[sensors-1].sensor[parsecnt-4];
+                                }
                             }
                         }
                         break;
@@ -168,8 +185,20 @@ void ZBSensorCollector::updateStatus(){
             
             parsecnt++;
             pnt=strtok(NULL," ");
-                
-            }  
+            }
+            if(*(data[sensors-1].data)!=0){
+                int cnt,cntt;
+                for(cnt=0;cnt<sensors;cnt++){
+                    strncpy(data[cnt].data,data[sensors-1].data,16);
+                    strncpy(data[cnt].hour,data[sensors-1].hour,16);
+                    zb_queue[uid]->push(data[cnt]);
+                    
+                    ZBSensorCollectorLDBG_ << "pushing "<<data[cnt].nsensors<<" sensors, acquired at:\""<<data[cnt].data<<"\" in queue of sensorid:"<<data[cnt].uid;
+                    for(cntt=0;cntt<data[cnt].nsensors;cntt++){
+                        ZBSensorCollectorLDBG_ << "\t-"<<data[cnt].sensor[cntt];
+                    }
+                }
+            }
              
                cnt =0;
          }
@@ -181,6 +210,8 @@ void ZBSensorCollector::updateStatus(){
               
         }
     }
+        ZBSensorCollectorLDBG_ << "update status thread exit";
+
 }
 
 zbnodedata_t ZBSensorCollector::getNode(int id){

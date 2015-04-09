@@ -54,9 +54,11 @@ int ZBSensorNode::sensorInit(void *buffer,int sizeb){
         switch(cnt){
             case 1:
                 ser = pnt;
+              ZBSensorNodeLDBG_<<"Using serial:"<<ser;  
             break;
             case 2:
                 id = strtoul(pnt,0,0);
+                 ZBSensorNodeLDBG_<<"ID:"<<id;  
                 break;
             default:
                 break;

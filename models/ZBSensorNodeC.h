@@ -29,7 +29,6 @@
 #include <stdint.h>
 namespace cu_driver = chaos::cu::driver_manager::driver;
 DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(ZBSensorNodeC)
-#define SENSOR_CHANNELS 3
 
 /*
  driver definition

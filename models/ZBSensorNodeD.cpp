@@ -72,7 +72,7 @@ ZBSensorNodeD::~ZBSensorNodeD() {
 int ZBSensorNodeD::readChannel(void *buffer,int addr,int bcount){
     zbnodedata_t value =collector->getNode(id);
     
-    if(!*value.data){
+    if(value.nsensors>0){
         temp = value.sensor[0];
         humidity=  value.sensor[1];
 
