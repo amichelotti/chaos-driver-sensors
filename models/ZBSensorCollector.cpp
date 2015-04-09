@@ -191,7 +191,7 @@ void ZBSensorCollector::updateStatus(){
                 for(cnt=0;cnt<sensors;cnt++){
                     strncpy(data[cnt].data,data[sensors-1].data,16);
                     strncpy(data[cnt].hour,data[sensors-1].hour,16);
-                    zb_queue[uid]->push(data[cnt]);
+                    zb_queue[data[cnt].uid]->push(data[cnt]);
                     
                     ZBSensorCollectorLDBG_ << "pushing "<<data[cnt].nsensors<<" sensors, acquired at:\""<<data[cnt].data<<"\" in queue of sensorid:"<<data[cnt].uid;
                     for(cntt=0;cntt<data[cnt].nsensors;cntt++){
