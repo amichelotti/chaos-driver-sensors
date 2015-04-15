@@ -2131,9 +2131,7 @@
         <rebuildPropChanged>false</rebuildPropChanged>
       </toolsSet>
       <flagsDictionary>
-        <element flagsID="0" commonFlags="-O2"/>
-        <element flagsID="1" commonFlags="-O3 -fPIC -O2"/>
-        <element flagsID="2" commonFlags="-fPIC -O2"/>
+        <element flagsID="0" commonFlags="-O3 -fPIC -O2"/>
       </flagsDictionary>
       <codeAssistance>
       </codeAssistance>
@@ -14557,16 +14555,10 @@
             flavor2="4">
       </item>
       <item path="core/AbstractSensorDriver.cpp" ex="false" tool="1" flavor2="4">
-        <ccTool flags="2">
-        </ccTool>
       </item>
       <item path="core/BasicSensor.cpp" ex="false" tool="1" flavor2="4">
-        <ccTool flags="2">
-        </ccTool>
       </item>
       <item path="core/SensorDriverInterface.cpp" ex="false" tool="1" flavor2="4">
-        <ccTool flags="2">
-        </ccTool>
       </item>
       <folder path="0/core">
         <ccTool>
@@ -15544,59 +15536,49 @@
         </ccTool>
       </folder>
       <item path="models/LucidTemperatureDriver.cpp" ex="false" tool="1" flavor2="4">
-        <ccTool flags="2">
-        </ccTool>
       </item>
       <item path="models/VTemperatureDriver.cpp" ex="false" tool="1" flavor2="4">
-        <ccTool flags="2">
-        </ccTool>
       </item>
       <item path="models/ZBSensorCollector.cpp" ex="false" tool="1" flavor2="4">
-        <ccTool flags="1">
+        <ccTool flags="0">
           <preprocessorList>
             <Elem>NDEBUG</Elem>
           </preprocessorList>
         </ccTool>
       </item>
       <item path="models/ZBSensorNode.cpp" ex="false" tool="1" flavor2="4">
-        <ccTool flags="1">
+        <ccTool flags="0">
           <preprocessorList>
             <Elem>NDEBUG</Elem>
           </preprocessorList>
         </ccTool>
       </item>
       <item path="models/ZBSensorNodeC.cpp" ex="false" tool="1" flavor2="4">
-        <ccTool flags="1">
+        <ccTool flags="0">
           <preprocessorList>
             <Elem>NDEBUG</Elem>
           </preprocessorList>
         </ccTool>
       </item>
       <item path="models/ZBSensorNodeD.cpp" ex="false" tool="1" flavor2="0">
-        <ccTool flags="1">
+        <ccTool flags="0">
           <preprocessorList>
             <Elem>NDEBUG</Elem>
           </preprocessorList>
         </ccTool>
       </item>
       <item path="models/ZBSensorNodeS.cpp" ex="false" tool="1" flavor2="0">
-        <ccTool flags="1">
+        <ccTool flags="0">
           <preprocessorList>
             <Elem>NDEBUG</Elem>
           </preprocessorList>
         </ccTool>
       </item>
       <item path="models/plugins.cpp" ex="false" tool="1" flavor2="4">
-        <ccTool flags="2">
-        </ccTool>
       </item>
       <item path="test/sensorsClient.cpp" ex="false" tool="1" flavor2="4">
-        <ccTool flags="0">
-        </ccTool>
       </item>
       <item path="test/sensorsServer.cpp" ex="false" tool="1" flavor2="4">
-        <ccTool flags="0">
-        </ccTool>
       </item>
     </conf>
   </confs>

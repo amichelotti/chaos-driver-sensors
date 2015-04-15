@@ -68,7 +68,9 @@ void ZBSensorCollector::init(std::string param){
    if(serial==NULL){
     serial = new common::serial::PosixSerialComm(param,9600,0,8,1,0,MAX_BUF,MAX_BUF);
     assert(serial);
-    serial->init();
+    if(serial->init()!=0){
+      throw chaos::CException(-1, "Cannot initialize serial device:"+param, __FUNCTION__);
+    }
    }
     if(collector_thread==NULL){
         collector_thread = new boost::thread(boost::bind(&ZBSensorCollector::updateStatus,this));
