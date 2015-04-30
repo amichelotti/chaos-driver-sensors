@@ -1,7 +1,7 @@
 /*
-*	main.cpp
-*	!CHOAS
-*	Created by Bisegni Claudio.
+*	sensorServer.cpp
+*	!CHAOS
+*	Created by Andrea Michelotti
 *
 *    	Copyright 2012 INFN, National Institute of Nuclear Physics
 *
@@ -45,7 +45,6 @@ using namespace chaos::cu::driver_manager;
 int main(int argc, char *argv[])
 {
 	string tmp_device_id;
-	control_manager::AbstractControlUnit::ControlUnitDriverList driver_list;
 	try {
 		// initialize the control unit toolkit
 		ChaosCUToolkit::getInstance()->init(argc, argv);

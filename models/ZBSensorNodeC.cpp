@@ -67,17 +67,18 @@ ZBSensorNodeC::~ZBSensorNodeC() {
 }
 
 int ZBSensorNodeC::readChannel(void *buffer,int addr,int bcount){
-    zbnodedata_t value=collector->getNode(id);
+    int ret=0;
+    zbnodedata_t value=collector->getNode(id | ('C'<<16));
     if(value.nsensors>0){
         ppm = value.sensor[0];
         ZBSensorNodeCLDBG_<<"Reading PPM:"<<ppm<<" date:"<<value.data<<" hour:"<<value.hour;
-
+        ret=1;
     }
    
     double*pnt=(double*)buffer;
     *pnt =ppm;
    
-    return 1;
+    return ret;
     
 }
 int ZBSensorNodeC::writeChannel(void *buffer,int addr,int bcount){

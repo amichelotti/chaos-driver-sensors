@@ -1,8 +1,8 @@
 
 /*
- *	UIToolkitCMDLineExample.cpp
- *	!CHOAS
- *	Created by Bisegni Claudio.
+ *	sensorClient.cpp
+ *	!CHAOS
+ *	Created by Andrea Michelotti
  *
  *    	Copyright 2012 INFN, National Institute of Nuclear Physics
  *

@@ -70,13 +70,14 @@ ZBSensorNodeD::~ZBSensorNodeD() {
 }
 
 int ZBSensorNodeD::readChannel(void *buffer,int addr,int bcount){
-    zbnodedata_t value =collector->getNode(id);
+    int ret=0;
+    zbnodedata_t value =collector->getNode(id | ('D'<<16));
     
     if(value.nsensors>0){
         temp = value.sensor[0];
         humidity=  value.sensor[1];
 
-        
+        ret = 1;
         ZBSensorNodeDLDBG_<<"Reading TEMP:"<<temp<<" umidity:"<<humidity<<" date:"<<value.data<<" hour:"<<value.hour;
 
     }
@@ -88,7 +89,7 @@ int ZBSensorNodeD::readChannel(void *buffer,int addr,int bcount){
       *pnt =humidity;
     }
     
-    return 1;
+    return ret;
     
 }
 int ZBSensorNodeD::writeChannel(void *buffer,int addr,int bcount){

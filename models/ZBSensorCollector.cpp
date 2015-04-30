@@ -123,6 +123,7 @@ void ZBSensorCollector::updateStatus(){
             int uid=0;
             int sensors=0;
             buffer[cnt]=0;
+            int type;
             zbnodedata_t data[MAX_ZB_SENSOR_CHANNELS];
             
             ZBSensorCollectorLDBG_ << "received buffer:\""<<buffer<<"\"";
@@ -145,20 +146,21 @@ void ZBSensorCollector::updateStatus(){
                         break;
                     case 2:
                         // type;
+                        type = *pnt;
                         sensors++;
                         break;
                     case 3:
                     // get the channel
                         channel = atoi(pnt);
-                        uid = (node<<8) | channel&0xFF; 
-                        ZBSensorCollectorLDBG_<<"channel:"<<channel<<" uid:"<<uid;
+                        uid = (type << 16) | (node<<8) | channel&0xFF; 
+                        ZBSensorCollectorLDBG_<<"channel:"<<channel<<" uid:"<<std::hex<<uid<<std::dec;
                         if(uid==0) {
                            ZBSensorCollectorLERR_ << "bad uid something is going wrong:"<<buffer;
                            *pnt=0;
                            continue;
                         } else {
                             if(zb_queue.find(uid)==zb_queue.end()){
-                                ZBSensorCollectorLDBG_<<"new queue created for sensor:"<<uid;
+                                ZBSensorCollectorLDBG_<<"new queue created for sensor:"<<std::hex<<uid<<std::dec;
                                 zb_queue[uid]=new std::queue<zbnodedata_t>();
                             }
                         }
@@ -219,6 +221,7 @@ void ZBSensorCollector::updateStatus(){
 zbnodedata_t ZBSensorCollector::getNode(int id){
     std::map<int ,std::queue<zbnodedata_t> * >::iterator i=zb_queue.find(id);
     zbnodedata_t ret;
+     ZBSensorCollectorLDBG_<<"get Node id:"<<std::hex<<id<<std::dec;
     if(i != zb_queue.end()){
         if(!i->second->empty()){
             ret=i->second->front();

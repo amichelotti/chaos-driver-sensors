@@ -10,24 +10,8 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group name="CHAOS">
-            <file>file:/home/michelo/chaos_bundle/driver/sensors/models/ZBSensorCollector.cpp</file>
-            <file>file:/home/michelo/chaos_bundle/driver/sensors/models/ZBSensorNodeC.h</file>
-            <file>file:/home/michelo/chaos_bundle/driver/sensors/models/ZBSensorNodeD.cpp</file>
-            <file>file:/home/michelo/chaos_bundle/driver/sensors/core/AbstractSensorDriver.h</file>
-            <file>file:/home/michelo/chaos_bundle/driver/sensors/models/ZBSensorNodeC.cpp</file>
-            <file>file:/home/michelo/chaos_bundle/driver/sensors/CMakeLists.txt</file>
-            <file>file:/home/michelo/chaos_bundle/driver/sensors/models/ZBSensorNodeS.cpp</file>
-            <file>file:/home/michelo/chaos_bundle/driver/sensors/core/BasicSensor.h</file>
+            <file>file:/home/michelo/chaos_bundle/driver/sensors/models/LucidTemperatureDriver.h</file>
             <file>file:/home/michelo/chaos_bundle/driver/sensors/models/LucidTemperatureDriver.cpp</file>
-            <file>file:/home/michelo/chaos_bundle/driver/sensors/core/AbstractSensorDriver.cpp</file>
-            <file>file:/home/michelo/chaos_bundle/driver/sensors/models/ZBSensorCollector.h</file>
-            <file>file:/home/michelo/chaos_bundle/driver/sensors/models/VTemperatureDriver.cpp</file>
-            <file>file:/home/michelo/chaos_bundle/chaosframework/chaos/common/utility/Singleton.h</file>
-            <file>file:/home/michelo/chaos_bundle/driver/sensors/models/VTemperatureDriver.h</file>
-            <file>file:/home/michelo/chaos_bundle/driver/sensors/models/ZBSensorNode.cpp</file>
-            <file>file:/home/michelo/chaos_bundle/driver/sensors/models/ZBSensorNode.h</file>
-            <file>file:/home/michelo/chaos_bundle/driver/sensors/models/ZBSensorNodeS.h</file>
-            <file>file:/home/michelo/chaos_bundle/driver/sensors/models/ZBSensorNodeD.h</file>
         </group>
     </open-files>
 </project-private>
