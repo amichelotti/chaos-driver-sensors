@@ -66,12 +66,16 @@ C 1 25567 -> Il sensore per la concentrazione di CO2 numero 1 ha rilevato una co
 void ZBSensorCollector::init(std::string param){
     exit =0;
    if(serial==NULL){
+    
     serial = new common::serial::PosixSerialComm(param,9600,0,8,1,0,MAX_BUF,MAX_BUF);
     assert(serial);
     if(serial->init()!=0){
       throw chaos::CException(-1, "Cannot initialize serial device:"+param, __FUNCTION__);
     }
    }
+    ZBSensorCollectorLDBG_ << "Initialized serial :"<<param<<" pnt:"<<serial;
+    char test;
+    serial->write(&test,1);
     if(collector_thread==NULL){
         collector_thread = new boost::thread(boost::bind(&ZBSensorCollector::updateStatus,this));
         assert(collector_thread);
@@ -113,7 +117,7 @@ ZBSensorCollector::~ZBSensorCollector() {
 void ZBSensorCollector::updateStatus(){
     char buffer[MAX_BUF];
     int cnt=0;
-    ZBSensorCollectorLDBG_ << "update status thread started";
+    ZBSensorCollectorLDBG_ << "update status thread started.";
     while(exit==0){
         if(serial->read(&buffer[cnt],1)>0){
           if(buffer[cnt]=='\n' || buffer[cnt]=='\r'){
@@ -221,7 +225,7 @@ void ZBSensorCollector::updateStatus(){
 zbnodedata_t ZBSensorCollector::getNode(int id){
     std::map<int ,std::queue<zbnodedata_t> * >::iterator i=zb_queue.find(id);
     zbnodedata_t ret;
-     ZBSensorCollectorLDBG_<<"get Node id:"<<std::hex<<id<<std::dec;
+  //   ZBSensorCollectorLDBG_<<"get Node id:"<<std::hex<<id<<std::dec;
     if(i != zb_queue.end()){
         if(!i->second->empty()){
             ret=i->second->front();
