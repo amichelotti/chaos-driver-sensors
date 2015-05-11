@@ -72,9 +72,15 @@ void ZBSensorCollector::init(std::string param){
     if(serial->init()!=0){
       throw chaos::CException(-1, "Cannot initialize serial device:"+param, __FUNCTION__);
     }
-   }
     ZBSensorCollectorLDBG_ << "Initialized serial :"<<param<<" pnt:"<<serial;
-    char test;
+   } else {
+    ZBSensorCollectorLDBG_ << "Already Initialized serial :"<<param<<" pnt:"<<serial;
+
+   }
+    
+    char test[2];
+    test[0]='\n';
+    test[1]='\r';
     serial->write(&test,1);
     if(collector_thread==NULL){
         collector_thread = new boost::thread(boost::bind(&ZBSensorCollector::updateStatus,this));
@@ -120,7 +126,7 @@ void ZBSensorCollector::updateStatus(){
     ZBSensorCollectorLDBG_ << "update status thread started.";
     while(exit==0){
         if(serial->read(&buffer[cnt],1)>0){
-          if(buffer[cnt]=='\n' || buffer[cnt]=='\r'){
+          if((cnt==(sizeof(buffer)-1)) || buffer[cnt]=='\n' || buffer[cnt]=='\r') {
             int node=0;
             int channel=0; 
             int parsecnt=0;
@@ -128,11 +134,17 @@ void ZBSensorCollector::updateStatus(){
             int sensors=0;
             buffer[cnt]=0;
             int type;
+            int cntt;
+            char*pnt;
             zbnodedata_t data[MAX_ZB_SENSOR_CHANNELS];
             
-            ZBSensorCollectorLDBG_ << "received buffer:\""<<buffer<<"\"";
-            char *pnt=strtok(buffer," ");
-            while((pnt!=NULL)&& (*pnt!=0)){
+            pnt = buffer;
+            for(pnt=buffer;(pnt<buffer+cnt)&&(*pnt!='E');pnt++);
+            ZBSensorCollectorLDBG_ << "received buffer["<<cnt<<","<<strlen(buffer)<<"]:\""<<pnt<<"\"";
+    
+            pnt=strtok(pnt," ");
+            
+            while((pnt!=NULL)/*&& (*pnt!=0)*/){
                 if(*pnt == 'E'){
                     parsecnt=0;
                 } else if((*pnt == 'C') || (*pnt == 'D') || (*pnt == 'S')){
@@ -210,11 +222,7 @@ void ZBSensorCollector::updateStatus(){
              
                cnt =0;
          }
-          if(cnt<sizeof(buffer)){
-            cnt++;
-          } else {
-            cnt =0;
-          }
+          cnt++;
               
         }
     }
