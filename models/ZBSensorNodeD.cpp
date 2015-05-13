@@ -27,7 +27,7 @@
 
 DEF_SENSOR_DATASET
 DEF_SENSOR_CHANNEL("TEMP","Temperatura",chaos::DataType::Output,chaos::DataType::TYPE_DOUBLE,sizeof(double))
-DEF_SENSOR_CHANNEL("UMIDITY","Umidita'",chaos::DataType::Output,chaos::DataType::TYPE_DOUBLE,sizeof(double))
+DEF_SENSOR_CHANNEL("HUMIDITY","Umidita'",chaos::DataType::Output,chaos::DataType::TYPE_DOUBLE,sizeof(double))
 
 ENDDEF_SENSOR_DATASET
         
@@ -61,6 +61,7 @@ CLOSE_CU_DRIVER_PLUGIN_CLASS_DEFINITION
 ZBSensorNodeD::ZBSensorNodeD(){
     temp=0;
     humidity=0;
+    updated=0;
     INIT_SENSOR_DATASET;
 
 }
@@ -70,18 +71,18 @@ ZBSensorNodeD::~ZBSensorNodeD() {
 }
 
 int ZBSensorNodeD::readChannel(void *buffer,int addr,int bcount){
-    int ret=0;
     zbnodedata_t value =collector->getNode(id | ('D'<<16));
     
     if(value.nsensors>0){
         temp = value.sensor[0];
         humidity=  value.sensor[1];
-
-        ret = 1;
-        ZBSensorNodeDLDBG_<<"Reading TEMP:"<<temp<<" umidity:"<<humidity<<" date:"<<value.data<<" hour:"<<value.hour;
-
+        updated=value.nsensors;
+        ZBSensorNodeDLDBG_<<std::hex<<id<<std::dec<<"]Reading addr:"<<addr<<"sensors:"<<value.nsensors<<" TEMP:"<<temp<<" humidity:"<<humidity<<" date:"<<value.data<<" hour:"<<value.hour;
+    } else {
+        if(updated)
+            updated--;
     }
-    
+
     double*pnt=(double*)buffer;
     if(addr==0){
       *pnt =temp;
@@ -89,7 +90,7 @@ int ZBSensorNodeD::readChannel(void *buffer,int addr,int bcount){
       *pnt =humidity;
     }
     
-    return ret;
+    return updated;
     
 }
 int ZBSensorNodeD::writeChannel(void *buffer,int addr,int bcount){

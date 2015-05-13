@@ -169,7 +169,7 @@ void ZBSensorCollector::updateStatus(){
                     // get the channel
                         channel = atoi(pnt);
                         uid = (type << 16) | (node<<8) | channel&0xFF; 
-                        ZBSensorCollectorLDBG_<<"channel:"<<channel<<" uid:"<<std::hex<<uid<<std::dec;
+                        ZBSensorCollectorLDBG_<<"channel:"<<channel<<"node:"<<node<<" type:"<<type<<" uid:"<<std::hex<<uid<<std::dec;
                         if(uid==0) {
                            ZBSensorCollectorLERR_ << "bad uid something is going wrong:"<<buffer;
                            *pnt=0;
@@ -195,7 +195,7 @@ void ZBSensorCollector::updateStatus(){
                                 if(parsecnt-4 >= 0 ){
                                     data[sensors-1].sensor[parsecnt-4]=atof(pnt);
                                     data[sensors-1].nsensors++;
-                                    ZBSensorCollectorLDBG_ << "acquiring sensor "<<sensors<<" channel:\""<<channel<<"\" in queue of sensorid:"<<uid<< " value:"<< data[sensors-1].sensor[parsecnt-4];
+                                    ZBSensorCollectorLDBG_ << "acquiring sensor "<<sensors<<" channel:\""<<channel<<"\" in queue of sensorid:"<<std::hex<<uid<<std::dec<< " value:"<< data[sensors-1].sensor[parsecnt-4];
                                 }
                             }
                         }

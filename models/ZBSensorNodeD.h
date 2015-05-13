@@ -36,6 +36,7 @@ DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(ZBSensorNodeD)
 class ZBSensorNodeD:public ZBSensorNode{
 
     double temp,humidity;
+    int updated;
 public:
 	ZBSensorNodeD();
 	~ZBSensorNodeD();
