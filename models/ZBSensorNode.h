@@ -31,7 +31,7 @@
 
 namespace cu_driver = chaos::cu::driver_manager::driver;
 #define ZBMAXSENSORS 256
-class ZBSensorNode:public AbstractSensorDriver{
+class ZBSensorNode:public ::driver::sensors::AbstractSensorDriver{
 
     protected:
     ZBSensorCollector *collector;

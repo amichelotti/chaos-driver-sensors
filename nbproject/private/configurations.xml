@@ -13,6 +13,22 @@
             <in>CMakeCXXCompilerId.cpp</in>
           </df>
         </df>
+        <df name="chaos_driver_sensors.dir">
+          <df name="core">
+          </df>
+          <df name="models">
+          </df>
+        </df>
+        <df name="CMakeTmp">
+        </df>
+        <df name="sensorsClient.dir">
+          <df name="test">
+          </df>
+        </df>
+        <df name="sensorsServer.dir">
+          <df name="test">
+          </df>
+        </df>
       </df>
       <df name="conf">
       </df>
@@ -25,6 +41,70 @@
         <in>SensorDriverInterface.h</in>
       </df>
       <df name="models">
+        <df name="ZBArduino">
+          <df name="doc">
+          </df>
+          <df name="WSN Node">
+            <df name="Coordinator">
+              <df name="Mia soluzione Java">
+                <df name="TouschekApplication Jar">
+                  <df name="lib">
+                  </df>
+                </df>
+                <df name="TouschekCoordinatorApp">
+                  <df name="src">
+                    <df name="pack">
+                    </df>
+                  </df>
+                </df>
+                <df name="UDPServer">
+                </df>
+              </df>
+              <df name="Soluzione CHAOS">
+              </df>
+            </df>
+            <df name="EndNode1">
+            </df>
+            <df name="EndNode2">
+            </df>
+            <df name="EndNode3">
+            </df>
+            <df name="EndNode4">
+            </df>
+            <df name="EndNode5">
+            </df>
+            <df name="lib">
+              <df name="dht11">
+                <df name="dht11_test">
+                </df>
+                <in>dht11.cpp</in>
+                <in>dht11.h</in>
+              </df>
+              <df name="OneWire">
+                <df name="examples">
+                  <df name="DS18x20_Temperature">
+                  </df>
+                  <df name="DS2408_Switch">
+                  </df>
+                  <df name="DS250x_PROM">
+                  </df>
+                </df>
+                <in>OneWire.cpp</in>
+                <in>OneWire.h</in>
+              </df>
+              <df name="SD2403RTC">
+                <df name="utility">
+                  <in>twi.c</in>
+                  <in>twi.h</in>
+                </df>
+                <in>SD2403RTC.cpp</in>
+                <in>SD2403RTC.h</in>
+                <in>Wire.cpp</in>
+                <in>Wire.h</in>
+              </df>
+            </df>
+          </df>
+        </df>
         <in>LucidTemperatureDriver.cpp</in>
         <in>LucidTemperatureDriver.h</in>
         <in>VTemperatureDriver.cpp</in>

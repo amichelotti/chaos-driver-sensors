@@ -26,7 +26,7 @@
 #include <boost/lexical_cast.hpp>
 
 namespace cu_driver = chaos::cu::driver_manager::driver;
-
+using namespace ::driver::sensors;
 #define AbstractSensorDriverLAPP_		LAPP_ << "[AbstractSensorDriver] "
 #define AbstractSensorDriverLDBG_		LDBG_ << "[AbstractSensorDriver] "
 #define AbstractSensorDriverLERR_		LERR_ << "[AbstractSensorDriver] "

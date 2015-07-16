@@ -13,7 +13,7 @@
 
 
 
-
+using namespace ::driver::sensors;
 
 int SensorDriverInterface::readChannel(void *buffer,int addr,int bcount){
     

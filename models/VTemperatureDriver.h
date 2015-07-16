@@ -31,7 +31,7 @@ DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(VTemperatureDriver)
 /*
  driver definition
  */
-class VTemperatureDriver:public AbstractSensorDriver{
+class VTemperatureDriver:public ::driver::sensors::AbstractSensorDriver{
 
 	int counter;
     double freq;

@@ -23,7 +23,11 @@
 
 namespace cu_driver = chaos::cu::driver_manager::driver;
 
-
+namespace driver {
+    
+    namespace sensors {
+        
+    
 typedef enum AbstractSensorDriverOpcode{
 	AbstractSensorDriverOpcode_READ_CHANNEL = cu_driver::OpcodeType::OP_USER,
 	AbstractSensorDriverOpcode_WRITE_CHANNEL,
@@ -44,7 +48,7 @@ typedef struct ddDataSet {
 } ddDataSet_t;
 
 #define DEF_SENSOR_DATASET \
-  static ddDataSet_t dataSet[]={
+  static ::driver::sensors::ddDataSet_t dataSet[]={
 
 
 #define DEF_SENSOR_CHANNEL(_name,_desc,_dir,_type,_size)	\
@@ -117,5 +121,6 @@ public:
     
     void setDataSet(ddDataSet_t*data,int sizeb);
 };
-
+    }
+}
 #endif /* defined(__ControlUnitTest__DummyDriver__) */

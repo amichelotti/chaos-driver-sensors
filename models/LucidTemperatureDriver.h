@@ -31,7 +31,7 @@ DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(LucidTemperatureDriver)
 /*
  driver definition
  */
-class LucidTemperatureDriver:public AbstractSensorDriver{
+class LucidTemperatureDriver:public ::driver::sensors::AbstractSensorDriver{
 
 
   std::string dev;
