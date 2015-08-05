@@ -13,6 +13,22 @@
             <in>CMakeCXXCompilerId.cpp</in>
           </df>
         </df>
+        <df name="chaos_driver_sensors.dir">
+          <df name="core">
+          </df>
+          <df name="models">
+          </df>
+        </df>
+        <df name="CMakeTmp">
+        </df>
+        <df name="sensorsClient.dir">
+          <df name="test">
+          </df>
+        </df>
+        <df name="sensorsServer.dir">
+          <df name="test">
+          </df>
+        </df>
       </df>
       <df name="conf">
       </df>
@@ -36,22 +52,6 @@
                   </df>
                 </df>
                 <df name="TouschekCoordinatorApp">
-                  <df name="build">
-                    <df name="classes">
-                      <df name="pack">
-                      </df>
-                    </df>
-                    <df name="empty">
-                    </df>
-                    <df name="generated-sources">
-                      <df name="ap-source-output">
-                      </df>
-                    </df>
-                  </df>
-                  <df name="dist">
-                    <df name="lib">
-                    </df>
-                  </df>
                   <df name="src">
                     <df name="pack">
                     </df>
