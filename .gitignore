@@ -69,3 +69,5 @@ ChaosMDSLite/RefServer.jardesc
 *.json
 ccs/ChaosControlStudio/NodeCommander/nbproject/private/private.xml
 ccs/ChaosControlStudio/NodeSearch/nbproject/private/private.xml
+/models/ZBArduino/WSN Node/Coordinator/Mia soluzione Java/TouschekCoordinatorApp/dist/
+/models/ZBArduino/WSN Node/Coordinator/Mia soluzione Java/TouschekCoordinatorApp/nbproject/private/

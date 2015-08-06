@@ -72,7 +72,7 @@ int ZBSensorNodeS::readChannel(void *buffer,int addr,int bcount){
     zbnodedata_t value=collector->getNode(id | ('S'<<16));
     if(value.nsensors>0){
         temp = value.sensor[0];
-        ZBSensorNodeSLDBG_<<"Reading TEMP:"<<temp<<" date:"<<value.data<<" hour:"<<value.hour;
+        ZBSensorNodeSLDBG_<<std::hex<<id<<std::dec<<"] Reading TEMP:"<<temp<<" date:"<<value.data<<" hour:"<<value.hour;
         ret=1;
     }
    
