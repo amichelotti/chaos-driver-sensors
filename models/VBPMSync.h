@@ -33,10 +33,7 @@ DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(VBPMSync)
  */
 class VBPMSync:public ::driver::sensors::AbstractSensorDriver{
 
-	int counter;
-    double freq;
-    int32_t points;
-    int32_t sinpoint;
+	
 public:
 	VBPMSync();
 	~VBPMSync();

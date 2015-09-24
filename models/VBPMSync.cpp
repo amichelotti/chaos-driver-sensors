@@ -82,10 +82,7 @@ ENDDEF_SENSOR_DATASET
 //we need to define the driver with alias version and a class that implement it
 VBPMSync::VBPMSync(){
   INIT_SENSOR_DATASET;
-    counter=0;
-    freq = 1.0;
-    sinpoint=0;
-    points=100.0;
+   
 }
 //default descrutcor
 VBPMSync::~VBPMSync() {

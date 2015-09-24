@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.6)
 project(sensors)
 include($ENV{CHAOS_BUNDLE}/tools/project_template/CMakeChaos.txt)
 
-SET(sensors_src core/BasicSensor.cpp core/AbstractSensorDriver.cpp core/SensorDriverInterface.cpp models/ZBSensorCollector.cpp models/ZBSensorNode.cpp models/ZBSensorNodeC.cpp models/ZBSensorNodeD.cpp models/ZBSensorNodeS.cpp models/VTemperatureDriver.cpp models/LucidTemperatureDriver.cpp models/plugins.cpp)
+SET(sensors_src core/BasicSensor.cpp core/AbstractSensorDriver.cpp core/SensorDriverInterface.cpp models/ZBSensorCollector.cpp models/ZBSensorNode.cpp models/ZBSensorNodeC.cpp models/ZBSensorNodeD.cpp models/ZBSensorNodeS.cpp models/VTemperatureDriver.cpp models/VBPMSync.cpp models/LucidTemperatureDriver.cpp models/plugins.cpp)
 
 SET(BasicSensorClient_src test/sensorsClient.cpp)
 
