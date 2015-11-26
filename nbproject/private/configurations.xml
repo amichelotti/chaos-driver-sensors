@@ -13,24 +13,6 @@
             <in>CMakeCXXCompilerId.cpp</in>
           </df>
         </df>
-        <df name="chaos_driver_sensors.dir">
-          <df name="core">
-          </df>
-          <df name="models">
-          </df>
-        </df>
-        <df name="CMakeTmp">
-        </df>
-        <df name="Progress">
-        </df>
-        <df name="sensorsClient.dir">
-          <df name="test">
-          </df>
-        </df>
-        <df name="sensorsServer.dir">
-          <df name="test">
-          </df>
-        </df>
       </df>
       <df name="conf">
       </df>

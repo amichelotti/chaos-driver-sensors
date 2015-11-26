@@ -1426,6 +1426,7 @@
               <itemPath>../../chaosframework/chaos/common/batch_command/BatchCommand.cpp</itemPath>
               <itemPath>../../chaosframework/chaos/common/batch_command/BatchCommand.h</itemPath>
               <itemPath>../../chaosframework/chaos/common/batch_command/BatchCommandConstants.h</itemPath>
+              <itemPath>../../chaosframework/chaos/common/batch_command/BatchCommandDescription.h</itemPath>
               <itemPath>../../chaosframework/chaos/common/batch_command/BatchCommandExecutor.cpp</itemPath>
               <itemPath>../../chaosframework/chaos/common/batch_command/BatchCommandExecutor.h</itemPath>
               <itemPath>../../chaosframework/chaos/common/batch_command/BatchCommandSandbox.cpp</itemPath>
@@ -1637,9 +1638,12 @@
               <itemPath>../../chaosframework/chaos/common/direct_io/DirectIOClient.h</itemPath>
               <itemPath>../../chaosframework/chaos/common/direct_io/DirectIOClientConnection.cpp</itemPath>
               <itemPath>../../chaosframework/chaos/common/direct_io/DirectIOClientConnection.h</itemPath>
+              <itemPath>../../chaosframework/chaos/common/direct_io/DirectIOClientConnectionMetricCollector.h</itemPath>
+              <itemPath>../../chaosframework/chaos/common/direct_io/DirectIOClientConnectionSharedMetricIO.h</itemPath>
               <itemPath>../../chaosframework/chaos/common/direct_io/DirectIODataPack.h</itemPath>
               <itemPath>../../chaosframework/chaos/common/direct_io/DirectIODispatcher.cpp</itemPath>
               <itemPath>../../chaosframework/chaos/common/direct_io/DirectIODispatcher.h</itemPath>
+              <itemPath>../../chaosframework/chaos/common/direct_io/DirectIODispatcherMetricCollector.h</itemPath>
               <itemPath>../../chaosframework/chaos/common/direct_io/DirectIOEndpointHandler.h</itemPath>
               <itemPath>../../chaosframework/chaos/common/direct_io/DirectIOForwarder.h</itemPath>
               <itemPath>../../chaosframework/chaos/common/direct_io/DirectIOHandler.h</itemPath>
@@ -1742,6 +1746,9 @@
               <itemPath>../../chaosframework/chaos/common/message/MDSMessageChannel.h</itemPath>
               <itemPath>../../chaosframework/chaos/common/message/MessageChannel.cpp</itemPath>
               <itemPath>../../chaosframework/chaos/common/message/MessageChannel.h</itemPath>
+              <itemPath>../../chaosframework/chaos/common/message/MessageRequestFuture.h</itemPath>
+              <itemPath>../../chaosframework/chaos/common/message/MultiAddressMessageChannel.h</itemPath>
+              <itemPath>../../chaosframework/chaos/common/message/MultiAddressMessageRequestFuture.h</itemPath>
               <itemPath>../../chaosframework/chaos/common/message/NodeMessageChannel.h</itemPath>
               <itemPath>../../chaosframework/chaos/common/message/PerformanceNodeChannel.cpp</itemPath>
               <itemPath>../../chaosframework/chaos/common/message/PerformanceNodeChannel.h</itemPath>
@@ -1794,10 +1801,12 @@
               <itemPath>../../chaosframework/chaos/common/rpc/ChaosRpc.h</itemPath>
               <itemPath>../../chaosframework/chaos/common/rpc/RpcClient.cpp</itemPath>
               <itemPath>../../chaosframework/chaos/common/rpc/RpcClient.h</itemPath>
+              <itemPath>../../chaosframework/chaos/common/rpc/RpcClientMetricCollector.h</itemPath>
               <itemPath>../../chaosframework/chaos/common/rpc/RpcMessageForwarder.h</itemPath>
               <itemPath>../../chaosframework/chaos/common/rpc/RpcServer.cpp</itemPath>
               <itemPath>../../chaosframework/chaos/common/rpc/RpcServer.h</itemPath>
               <itemPath>../../chaosframework/chaos/common/rpc/RpcServerHandler.h</itemPath>
+              <itemPath>../../chaosframework/chaos/common/rpc/RpcServerMetricCollector.h</itemPath>
             </logicalFolder>
             <logicalFolder name="sync_rpc" displayName="sync_rpc" projectFiles="true">
               <itemPath>../../chaosframework/chaos/common/sync_rpc/ChaosSyncRpc.h</itemPath>
@@ -1815,8 +1824,10 @@
               <itemPath>../../chaosframework/chaos/common/thread/WaitSemaphore.h</itemPath>
             </logicalFolder>
             <logicalFolder name="utility" displayName="utility" projectFiles="true">
+              <itemPath>../../chaosframework/chaos/common/utility/AggregatedCheckList.h</itemPath>
               <itemPath>../../chaosframework/chaos/common/utility/ArrayPointer.h</itemPath>
               <itemPath>../../chaosframework/chaos/common/utility/Atomic.h</itemPath>
+              <itemPath>../../chaosframework/chaos/common/utility/CheckList.h</itemPath>
               <itemPath>../../chaosframework/chaos/common/utility/Delegate.h</itemPath>
               <itemPath>../../chaosframework/chaos/common/utility/InetUtility.h</itemPath>
               <itemPath>../../chaosframework/chaos/common/utility/InizializableService.cpp</itemPath>
@@ -2097,6 +2108,7 @@
       </df>
       <df name="models">
         <in>LucidTemperatureDriver.cpp</in>
+        <in>VBPMSync.cpp</in>
         <in>VTemperatureDriver.cpp</in>
         <in>ZBSensorCollector.cpp</in>
         <in>ZBSensorNode.cpp</in>
@@ -2141,7 +2153,7 @@
           <buildCommandWorkingDir>.</buildCommandWorkingDir>
           <buildCommand>${MAKE} -f Makefile</buildCommand>
           <cleanCommand>${MAKE} -f Makefile clean</cleanCommand>
-          <executablePath></executablePath>
+          <executablePath>build/sensorsServer</executablePath>
         </makeTool>
       </makefileType>
       <item path="../../chaosframework/chaos/common/action/ActionDescriptor.cpp"
@@ -14606,6 +14618,8 @@
           </incDir>
           <preprocessorList>
             <Elem>BOOST_ALL_DYN_LINK</Elem>
+            <Elem>CHAOS</Elem>
+            <Elem>NDEBUG</Elem>
           </preprocessorList>
         </ccTool>
       </folder>
@@ -15550,6 +15564,10 @@
         <ccTool flags="1">
         </ccTool>
       </item>
+      <item path="models/VBPMSync.cpp" ex="false" tool="1" flavor2="0">
+        <ccTool flags="1">
+        </ccTool>
+      </item>
       <item path="models/VTemperatureDriver.cpp" ex="false" tool="1" flavor2="4">
         <ccTool flags="1">
         </ccTool>
@@ -15579,13 +15597,11 @@
         </ccTool>
       </item>
       <item path="test/sensorsClient.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool flags="0">
+        </ccTool>
       </item>
       <item path="test/sensorsServer.cpp" ex="false" tool="1" flavor2="4">
         <ccTool flags="0">
-          <preprocessorList>
-            <Elem>CHAOS</Elem>
-            <Elem>NDEBUG</Elem>
-          </preprocessorList>
         </ccTool>
       </item>
     </conf>
