@@ -1308,19 +1308,19 @@
               <logicalFolder name="CommandManager"
                              displayName="CommandManager"
                              projectFiles="true">
-                <itemPath>../../chaos-arm-linux-2.6-static-release/include/chaos/cu_toolkit/CommandManager/CommandManager.h</itemPath>
+                <itemPath>../../chaos-arm-linux-2.6-static-release/include/chaos/cu_toolkit/command_manager/CommandManager.h</itemPath>
               </logicalFolder>
               <logicalFolder name="ControlManager"
                              displayName="ControlManager"
                              projectFiles="true">
-                <itemPath>../../chaos-arm-linux-2.6-static-release/include/chaos/cu_toolkit/ControlManager/AbstractControlUnit.h</itemPath>
-                <itemPath>../../chaos-arm-linux-2.6-static-release/include/chaos/cu_toolkit/ControlManager/AttributeSharedCacheWrapper.h</itemPath>
-                <itemPath>../../chaos-arm-linux-2.6-static-release/include/chaos/cu_toolkit/ControlManager/ControlManager.h</itemPath>
-                <itemPath>../../chaos-arm-linux-2.6-static-release/include/chaos/cu_toolkit/ControlManager/RTAbstractControlUnit.h</itemPath>
-                <itemPath>../../chaos-arm-linux-2.6-static-release/include/chaos/cu_toolkit/ControlManager/WorkUnitManagement.h</itemPath>
+                <itemPath>../../chaos-arm-linux-2.6-static-release/include/chaos/cu_toolkit/control_manager/AbstractControlUnit.h</itemPath>
+                <itemPath>../../chaos-arm-linux-2.6-static-release/include/chaos/cu_toolkit/control_manager/AttributeSharedCacheWrapper.h</itemPath>
+                <itemPath>../../chaos-arm-linux-2.6-static-release/include/chaos/cu_toolkit/control_manager/ControlManager.h</itemPath>
+                <itemPath>../../chaos-arm-linux-2.6-static-release/include/chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h</itemPath>
+                <itemPath>../../chaos-arm-linux-2.6-static-release/include/chaos/cu_toolkit/control_manager/WorkUnitManagement.h</itemPath>
               </logicalFolder>
               <logicalFolder name="DataManager" displayName="DataManager" projectFiles="true">
-                <itemPath>../../chaos-arm-linux-2.6-static-release/include/chaos/cu_toolkit/DataManager/KeyDataStorage.h</itemPath>
+                <itemPath>../../chaos-arm-linux-2.6-static-release/include/chaos/cu_toolkit/data_manager/KeyDataStorage.h</itemPath>
               </logicalFolder>
               <logicalFolder name="driver_manager"
                              displayName="driver_manager"
@@ -1857,29 +1857,29 @@
             <logicalFolder name="CommandManager"
                            displayName="CommandManager"
                            projectFiles="true">
-              <itemPath>../../chaosframework/chaos/cu_toolkit/CommandManager/CommandManager.cpp</itemPath>
-              <itemPath>../../chaosframework/chaos/cu_toolkit/CommandManager/CommandManager.h</itemPath>
-              <itemPath>../../chaosframework/chaos/cu_toolkit/CommandManager/CommandManagerDefaultAdapters.h</itemPath>
+              <itemPath>../../chaosframework/chaos/cu_toolkit/command_manager/CommandManager.cpp</itemPath>
+              <itemPath>../../chaosframework/chaos/cu_toolkit/command_manager/CommandManager.h</itemPath>
+              <itemPath>../../chaosframework/chaos/cu_toolkit/command_manager/CommandManagerDefaultAdapters.h</itemPath>
             </logicalFolder>
             <logicalFolder name="ControlManager"
                            displayName="ControlManager"
                            projectFiles="true">
-              <itemPath>../../chaosframework/chaos/cu_toolkit/ControlManager/AbstractControlUnit.cpp</itemPath>
-              <itemPath>../../chaosframework/chaos/cu_toolkit/ControlManager/AbstractControlUnit.h</itemPath>
-              <itemPath>../../chaosframework/chaos/cu_toolkit/ControlManager/AttributeSharedCacheWrapper.cpp</itemPath>
-              <itemPath>../../chaosframework/chaos/cu_toolkit/ControlManager/AttributeSharedCacheWrapper.h</itemPath>
-              <itemPath>../../chaosframework/chaos/cu_toolkit/ControlManager/ControlManager.cpp</itemPath>
-              <itemPath>../../chaosframework/chaos/cu_toolkit/ControlManager/ControlManager.h</itemPath>
-              <itemPath>../../chaosframework/chaos/cu_toolkit/ControlManager/RTAbstractControlUnit.cpp</itemPath>
-              <itemPath>../../chaosframework/chaos/cu_toolkit/ControlManager/RTAbstractControlUnit.h</itemPath>
-              <itemPath>../../chaosframework/chaos/cu_toolkit/ControlManager/WorkUnitManagement.cpp</itemPath>
-              <itemPath>../../chaosframework/chaos/cu_toolkit/ControlManager/WorkUnitManagement.h</itemPath>
+              <itemPath>../../chaosframework/chaos/cu_toolkit/control_manager/AbstractControlUnit.cpp</itemPath>
+              <itemPath>../../chaosframework/chaos/cu_toolkit/control_manager/AbstractControlUnit.h</itemPath>
+              <itemPath>../../chaosframework/chaos/cu_toolkit/control_manager/AttributeSharedCacheWrapper.cpp</itemPath>
+              <itemPath>../../chaosframework/chaos/cu_toolkit/control_manager/AttributeSharedCacheWrapper.h</itemPath>
+              <itemPath>../../chaosframework/chaos/cu_toolkit/control_manager/ControlManager.cpp</itemPath>
+              <itemPath>../../chaosframework/chaos/cu_toolkit/control_manager/ControlManager.h</itemPath>
+              <itemPath>../../chaosframework/chaos/cu_toolkit/control_manager/RTAbstractControlUnit.cpp</itemPath>
+              <itemPath>../../chaosframework/chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h</itemPath>
+              <itemPath>../../chaosframework/chaos/cu_toolkit/control_manager/WorkUnitManagement.cpp</itemPath>
+              <itemPath>../../chaosframework/chaos/cu_toolkit/control_manager/WorkUnitManagement.h</itemPath>
             </logicalFolder>
             <logicalFolder name="DataManager" displayName="DataManager" projectFiles="true">
-              <itemPath>../../chaosframework/chaos/cu_toolkit/DataManager/DataManager.cpp</itemPath>
-              <itemPath>../../chaosframework/chaos/cu_toolkit/DataManager/DataManager.h</itemPath>
-              <itemPath>../../chaosframework/chaos/cu_toolkit/DataManager/KeyDataStorage.cpp</itemPath>
-              <itemPath>../../chaosframework/chaos/cu_toolkit/DataManager/KeyDataStorage.h</itemPath>
+              <itemPath>../../chaosframework/chaos/cu_toolkit/data_manager/DataManager.cpp</itemPath>
+              <itemPath>../../chaosframework/chaos/cu_toolkit/data_manager/DataManager.h</itemPath>
+              <itemPath>../../chaosframework/chaos/cu_toolkit/data_manager/KeyDataStorage.cpp</itemPath>
+              <itemPath>../../chaosframework/chaos/cu_toolkit/data_manager/KeyDataStorage.h</itemPath>
             </logicalFolder>
             <logicalFolder name="driver_manager"
                            displayName="driver_manager"
@@ -11651,12 +11651,12 @@
           </incDir>
         </ccTool>
       </item>
-      <item path="../../chaosframework/chaos/cu_toolkit/CommandManager/CommandManager.cpp"
+      <item path="../../chaosframework/chaos/cu_toolkit/command_manager/CommandManager.cpp"
             ex="false"
             tool="1"
             flavor2="4">
       </item>
-      <item path="../../chaosframework/chaos/cu_toolkit/ControlManager/AbstractControlUnit.cpp"
+      <item path="../../chaosframework/chaos/cu_toolkit/control_manager/AbstractControlUnit.cpp"
             ex="false"
             tool="1"
             flavor2="4">
@@ -11822,7 +11822,7 @@
           </incDir>
         </ccTool>
       </item>
-      <item path="../../chaosframework/chaos/cu_toolkit/ControlManager/AttributeSharedCacheWrapper.cpp"
+      <item path="../../chaosframework/chaos/cu_toolkit/control_manager/AttributeSharedCacheWrapper.cpp"
             ex="false"
             tool="1"
             flavor2="4">
@@ -11920,7 +11920,7 @@
           </incDir>
         </ccTool>
       </item>
-      <item path="../../chaosframework/chaos/cu_toolkit/ControlManager/ControlManager.cpp"
+      <item path="../../chaosframework/chaos/cu_toolkit/control_manager/ControlManager.cpp"
             ex="false"
             tool="1"
             flavor2="4">
@@ -12096,7 +12096,7 @@
           </incDir>
         </ccTool>
       </item>
-      <item path="../../chaosframework/chaos/cu_toolkit/ControlManager/RTAbstractControlUnit.cpp"
+      <item path="../../chaosframework/chaos/cu_toolkit/control_manager/RTAbstractControlUnit.cpp"
             ex="false"
             tool="1"
             flavor2="4">
@@ -12232,7 +12232,7 @@
           </incDir>
         </ccTool>
       </item>
-      <item path="../../chaosframework/chaos/cu_toolkit/ControlManager/WorkUnitManagement.cpp"
+      <item path="../../chaosframework/chaos/cu_toolkit/control_manager/WorkUnitManagement.cpp"
             ex="false"
             tool="1"
             flavor2="4">
@@ -12406,7 +12406,7 @@
           </incDir>
         </ccTool>
       </item>
-      <item path="../../chaosframework/chaos/cu_toolkit/DataManager/DataManager.cpp"
+      <item path="../../chaosframework/chaos/cu_toolkit/data_manager/DataManager.cpp"
             ex="false"
             tool="1"
             flavor2="4">
@@ -12554,7 +12554,7 @@
           </incDir>
         </ccTool>
       </item>
-      <item path="../../chaosframework/chaos/cu_toolkit/DataManager/KeyDataStorage.cpp"
+      <item path="../../chaosframework/chaos/cu_toolkit/data_manager/KeyDataStorage.cpp"
             ex="false"
             tool="1"
             flavor2="4">

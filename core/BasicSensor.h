@@ -20,7 +20,7 @@
 #ifndef ChaosRTControlUnit_BasicSensor_h
 #define ChaosRTControlUnit_BasicSensor_h
 
-#include <chaos/cu_toolkit/ControlManager/RTAbstractControlUnit.h>
+#include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
 #include <driver/sensors/core/SensorDriverInterface.h>
 #define MAX_DATASET_SIZE 256
 class BasicSensor : public chaos::cu::control_manager::RTAbstractControlUnit {
