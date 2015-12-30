@@ -30,7 +30,7 @@ ChaosCLI --metadata-server mds_url:5000 --deviceid device_name --op 9 --rt-attr-
 */
 #include "driver/sensors/core/BasicSensor.h"
 #include "driver/sensors/models/VTemperatureDriver.h"
-
+#include <driver/sensors/models/VBPMSync.h>
 #include <string>
 
 #include <chaos/cu_toolkit/ChaosCUToolkit.h>
@@ -51,6 +51,7 @@ int main(int argc, char *argv[])
 
 		// allocate the instance and inspector for driver
 		REGISTER_DRIVER(,VTemperatureDriver);
+		REGISTER_DRIVER(,VBPMSync);
 
         REGISTER_CU(BasicSensor);
 		

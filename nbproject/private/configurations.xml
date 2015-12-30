@@ -107,6 +107,8 @@
         </df>
         <in>LucidTemperatureDriver.cpp</in>
         <in>LucidTemperatureDriver.h</in>
+        <in>VBPMSync.cpp</in>
+        <in>VBPMSync.h</in>
         <in>VTemperatureDriver.cpp</in>
         <in>VTemperatureDriver.h</in>
         <in>ZBSensorCollector.cpp</in>

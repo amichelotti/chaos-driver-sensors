@@ -12,5 +12,6 @@
         <group name="CHAOS">
             <file>file:/home/michelo/chaos_bundle_master/driver/sensors/models/ZBSensorCollector.cpp</file>
         </group>
+        <group name="CHAOS_BUNDLE_DEVELOPMENT"/>
     </open-files>
 </project-private>
