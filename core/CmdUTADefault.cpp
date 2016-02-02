@@ -108,9 +108,9 @@ void CmdUTADefault::acquireHandler() {
 	uint64_t tmp_uint64 = 0;
 	CMDCU_ << "Acquiring data";
         
-        driver[UTA_TERMOMETER_DRIVER]->readChannel(&temp[0],0,sizeof(double));
-        driver[UTA_TERMOMETER_DRIVER]->readChannel(&temp[1],1,sizeof(double));
-        CMDCUDBG_<<"TEMP0:"<<temp[0]<<" TEMP1:"<<temp[1];
+        driver[UTA_TERMOMETER_DRIVER]->readChannel(temp[0],0,sizeof(double));
+        driver[UTA_TERMOMETER_DRIVER]->readChannel(temp[1],1,sizeof(double));
+        CMDCUDBG_<<"TEMP0:"<<*temp[0]<<" TEMP1:"<<*temp[1];
 	//force output dataset as changed
 	getAttributeCache()->setOutputDomainAsChanged();
 }

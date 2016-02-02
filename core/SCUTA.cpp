@@ -133,14 +133,16 @@ void driver::sensor::SCUTA::unitInit() throw(CException) {
 // Abstract method for the start of the control unit
 void driver::sensor::SCUTA::unitStart() throw(CException) {
       double *shutter;
+      double val=5;
   DPRINT("initializing shutters to 50%");
 
 shutter= getAttributeCache()->getRWPtr<double>(DOMAIN_OUTPUT, "I_SHUTTER");
   *shutter = 50;
   shutter= getAttributeCache()->getRWPtr<double>(DOMAIN_OUTPUT, "O_SHUTTER");
   *shutter = 50;
-  driver[UTA_SHUTTER_DRIVER]->writeChannel(shutter,0,sizeof(double));
-  driver[UTA_SHUTTER_DRIVER]->writeChannel(shutter,1,sizeof(double));
+  
+  driver[UTA_SHUTTER_DRIVER]->writeChannel(&val,0,sizeof(double));
+  driver[UTA_SHUTTER_DRIVER]->writeChannel(&val,1,sizeof(double));
   getAttributeCache()->setOutputDomainAsChanged();
 }
 

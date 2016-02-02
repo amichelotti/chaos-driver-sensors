@@ -66,7 +66,7 @@ void driver::sensor::CmdUTAShutter::setHandler(c_data::CDataWrapper *data) {
         
         id=data->getInt32Value("id");
         val=data->getDoubleValue("set");
-	if(id<0 || id>=2){
+	if(id<0 || id>=3){
             DERR("ID \"%d\" out of range",id);
             BC_END_RUNNIG_PROPERTY
 	  return;
@@ -76,9 +76,10 @@ void driver::sensor::CmdUTAShutter::setHandler(c_data::CDataWrapper *data) {
             BC_END_RUNNIG_PROPERTY;
 	  return;
         }
-        
+        *shutter[id] =val;
+        val=(val/100)*10.0; // value between 0 and 10
         driver[UTA_SHUTTER_DRIVER]->writeChannel(&val,id,sizeof(double));
-        *shutter[id] = val;
+         
 	BC_EXEC_RUNNIG_PROPERTY;
 
 }
