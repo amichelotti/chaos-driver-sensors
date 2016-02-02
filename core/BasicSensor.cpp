@@ -24,6 +24,7 @@
 using namespace chaos;
 using namespace chaos::common::data::cache;
 using namespace chaos::cu::driver_manager::driver;
+using namespace ::driver::sensor;
 
 PUBLISHABLE_CONTROL_UNIT_IMPLEMENTATION(BasicSensor)
 
@@ -71,12 +72,12 @@ void BasicSensor::unitDefineActionAndDataset() throw(chaos::CException) {
   driver_dataset_size=driver->getDatasetSize();
   driver_dataset=0;
   if(driver_dataset_size>0){
-    driver_dataset = (::driver::sensors::ddDataSet_t *)malloc( driver_dataset_size);
+    driver_dataset = (ddDataSet_t *)malloc( driver_dataset_size);
     assert(driver_dataset);
   }
     ret=driver->getDataset(driver_dataset,driver_dataset_size);
     
-    for(int cnt=0;cnt<ret/sizeof(::driver::sensors::ddDataSet_t);cnt++){
+    for(int cnt=0;cnt<ret/sizeof(ddDataSet_t);cnt++){
         BasicSensorLDBG_<<"adding attribute:"<<driver_dataset[cnt].name<<","<<driver_dataset[cnt].desc<<","<<driver_dataset[cnt].type<<","<<driver_dataset[cnt].dir<<","<<driver_dataset[cnt].maxsize;
         if(driver_dataset[cnt].dir==chaos::DataType::Input){
             input_size.push_back(driver_dataset[cnt].maxsize);

@@ -13,8 +13,10 @@
 #include <driver/sensors/core/AbstractSensorDriver.h>
 #include <chaos/cu_toolkit/driver_manager/driver/DriverTypes.h>
 #include <chaos/cu_toolkit/driver_manager/driver/DriverAccessor.h>
-
-class SensorDriverInterface:public ::driver::sensors::AbstractSensorDriver{
+namespace driver{
+    
+    namespace sensor{
+    class SensorDriverInterface:public ::driver::sensor::AbstractSensorDriver{
                 
             protected:
                 cu_driver::DrvMsg message;
@@ -68,7 +70,7 @@ class SensorDriverInterface:public ::driver::sensors::AbstractSensorDriver{
                  \param data[out] dataset array
                  \return the number of sets, negative if error
                  */
-                int getDataset(::driver::sensors::ddDataSet_t*data,int sizen);
+                int getDataset(::driver::sensor::ddDataSet_t*data,int sizen);
 
 		/**
 		   \brief return the size in byte of the dataset
@@ -81,6 +83,6 @@ class SensorDriverInterface:public ::driver::sensors::AbstractSensorDriver{
             };
             
     
-
+    }}
 
 #endif /* defined(__modbus__SensorDriverInterface__) */

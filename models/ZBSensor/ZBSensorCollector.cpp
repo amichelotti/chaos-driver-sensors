@@ -17,10 +17,11 @@
  *    	See the License for the specific language governing permissions and
  *    	limitations under the License.
  */
-#include <driver/sensors/models/ZBSensorCollector.h>
+#include <driver/sensors/models/ZBSensor/ZBSensorCollector.h>
 #include <boost/bind.hpp>
 #include <stdlib.h>
 #include <string>
+using namespace driver::sensor::model;
 
 #define MAX_BUF 8192
 

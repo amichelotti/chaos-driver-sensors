@@ -2,9 +2,11 @@ cmake_minimum_required(VERSION 2.6)
 project(chaos_driver_sensors)
 include($ENV{CHAOS_BUNDLE}/tools/project_template/CMakeChaos.txt)
 
-SET(sensors_src core/BasicSensor.cpp core/AbstractSensorDriver.cpp core/SensorDriverInterface.cpp models/ZBSensorCollector.cpp models/ZBSensorNode.cpp models/ZBSensorNodeC.cpp models/ZBSensorNodeD.cpp models/ZBSensorNodeS.cpp models/VTemperatureDriver.cpp models/VBPMSync.cpp models/LucidTemperatureDriver.cpp models/plugins.cpp)
+SET(sensors_src core/BasicSensor.cpp core/AbstractSensorDriver.cpp core/SensorDriverInterface.cpp core/SCUTA.cpp core/CmdUTAShutter.cpp core/CmdUTADefault.cpp models/plugins.cpp)
 
 SET(BasicSensorClient_src test/sensorsClient.cpp)
+
+ADD_SUBDIRECTORY(models)
 
  ADD_EXECUTABLE(sensorsServer test/sensorsServer)
  ADD_EXECUTABLE(sensorsClient test/sensorsClient)
@@ -19,8 +21,8 @@ ELSE()
 ENDIF()
 
  TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_common common_serial ${FrameworkLib})
- TARGET_LINK_LIBRARIES(sensorsServer ${PROJECT_NAME} chaos_cutoolkit chaos_common common_serial ${FrameworkLib})
- TARGET_LINK_LIBRARIES(sensorsClient chaos_uitoolkit chaos_common ${FrameworkLib})
+ TARGET_LINK_LIBRARIES(sensorsServer ${PROJECT_NAME} ${DRIVERS_LIB} chaos_cutoolkit chaos_common common_serial ${FrameworkLib} )
+ TARGET_LINK_LIBRARIES(sensorsClient chaos_uitoolkit chaos_common ${DRIVERS_LIB} ${FrameworkLib})
 
  INSTALL_TARGETS(/bin sensorsServer)
  INSTALL_TARGETS(/bin sensorsClient)

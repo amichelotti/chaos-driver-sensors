@@ -1,7 +1,8 @@
 /*
- *	LucidTemperatureDriver.h
- *  Lucit RTD temperature driver
- *	!CHOAS
+ *	ZBSensorNodeC.h
+ *      Class for ZB sensor nodes of class C
+
+ *	!CHAOS
  *	Created by Andrea Michelotti
  *
  *    	Copyright 2013 INFN, National Institute of Nuclear Physics
@@ -18,26 +19,28 @@
  *    	See the License for the specific language governing permissions and
  *    	limitations under the License.
  */
-#ifndef VLUCIDTEMPERATURE_h
-#define VLUCIDTEMPERATURE_h
+#ifndef _ZBSENSORNODEC_H
+#define _ZBSENSORNODEC_H
 
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <driver/sensors/core/AbstractSensorDriver.h>
 #include <chaos/common/data/DatasetDB.h>
-
+#include <driver/sensors/models/ZBSensor/ZBSensorNode.h>
+#include <stdint.h>
 namespace cu_driver = chaos::cu::driver_manager::driver;
-DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(LucidTemperatureDriver)
+            DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(ZBSensorNodeC)
 
-/*
- driver definition
- */
-class LucidTemperatureDriver:public ::driver::sensors::AbstractSensorDriver{
+namespace driver {
+    namespace sensor {
+        namespace model {
 
 
-  std::string dev;
+class ZBSensorNodeC:public ZBSensorNode{
+
+    double ppm;
 public:
-	LucidTemperatureDriver();
-	~LucidTemperatureDriver();
+	ZBSensorNodeC();
+	~ZBSensorNodeC();
     //! Execute a command
         /**
          \brief Read a channel from the physical sensor
@@ -57,23 +60,7 @@ public:
      */
     int writeChannel(void *buffer,int addr,int bcount);
     
-    /**
-     \brief init the sensor
-     \param buffer[in] initialisation opaque parameter
-     \return 0 if success, error otherwise
-     
-     */
-    int sensorInit(void *buffer,int sizeb);
-    
-    /**
-     \brief deinit the sensor
-     \param buffer[in] initialisation opaque parameter
-     \return 0 if success, error otherwise
-     */
-    int sensorDeinit();
-       
-    
-    
+   
 };
-
-#endif /* defined(__ControlUnitTest__DummyDriver__) */
+        }}}
+#endif 

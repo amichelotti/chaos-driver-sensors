@@ -13,7 +13,7 @@
 
 
 
-using namespace ::driver::sensors;
+using namespace ::driver::sensor;
 
 int SensorDriverInterface::readChannel(void *buffer,int addr,int bcount){
     
@@ -25,7 +25,7 @@ int SensorDriverInterface::readChannel(void *buffer,int addr,int bcount){
     message.resultData = (void*)buffer;
     ret2=accessor->send(&message);
     ret=message.ret;
-    LDBG_<<"readChannel addr:"<<addr<<", count:"<<bcount<<",func ret:"<<ret<<",accessor ret "<<ret2;
+//    LDBG_<<"readChannel addr:"<<addr<<", count:"<<bcount<<",func ret:"<<ret<<",accessor ret "<<ret2;
     return ret;
     
 }

@@ -17,11 +17,10 @@
  *    	See the License for the specific language governing permissions and
  *    	limitations under the License.
  */
-#include <driver/sensors/models/LucidTemperatureDriver.h>
+#include <driver/sensors/models/LucidControl/LucidTemperatureDriver.h>
 #include <stdlib.h>
 #include <string>
 
-#include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <math.h>
 #include <boost/lexical_cast.hpp>
 
@@ -30,17 +29,20 @@ namespace cu_driver = chaos::cu::driver_manager::driver;
 #define LucidTemperatureDriverLAPP_		LAPP_ << "[LucidTemperatureDriver] "
 #define LucidTemperatureDriverLDBG_		LDBG_ << "[LucidTemperatureDriver] "
 #define LucidTemperatureDriverLERR_		LERR_ << "[LucidTemperatureDriver] "
-
+using namespace driver::sensor::model;
 
 //GET_PLUGIN_CLASS_DEFINITION
 //we need only to define the driver because we don't are makeing a plugin
-OPEN_CU_DRIVER_PLUGIN_CLASS_DEFINITION(LucidTemperatureDriver, 1.0.0,LucidTemperatureDriver)
-REGISTER_CU_DRIVER_PLUGIN_CLASS_INIT_ATTRIBUTE(LucidTemperatureDriver, http_address/dnsname:port)
+OPEN_CU_DRIVER_PLUGIN_CLASS_DEFINITION(LucidTemperatureDriver, 1.0.0,::driver::sensor::model::LucidTemperatureDriver)
+REGISTER_CU_DRIVER_PLUGIN_CLASS_INIT_ATTRIBUTE(::driver::sensor::model::LucidTemperatureDriver, http_address/dnsname:port)
 CLOSE_CU_DRIVER_PLUGIN_CLASS_DEFINITION
 
 DEF_SENSOR_DATASET
 DEF_SENSOR_CHANNEL("TEMP0","Lucid Control RTD Channel0",chaos::DataType::Output,chaos::DataType::TYPE_DOUBLE,sizeof(double))
-DEF_SENSOR_CHANNEL("TEMP1","Lucid Control RTD Channel1",chaos::DataType::Output,chaos::DataType::TYPE_DOUBLE,sizeof(int32_t))
+DEF_SENSOR_CHANNEL("TEMP1","Lucid Control RTD Channel1",chaos::DataType::Output,chaos::DataType::TYPE_DOUBLE,sizeof(double))
+DEF_SENSOR_CHANNEL("TEMP2","Lucid Control RTD Channel2",chaos::DataType::Output,chaos::DataType::TYPE_DOUBLE,sizeof(double))
+DEF_SENSOR_CHANNEL("TEMP3","Lucid Control RTD Channel3",chaos::DataType::Output,chaos::DataType::TYPE_DOUBLE,sizeof(double))
+
 ENDDEF_SENSOR_DATASET
 
 
@@ -76,7 +78,7 @@ int LucidTemperatureDriver::readChannel(void *buffer,int addr,int bcount){
   char cmd[256];
   double*pnt=(double*)buffer;
   //add more
-  if(addr<2){
+  if(addr<4){
     int canale,ret;
     char ch[8];
     sprintf(ch,"CH%d:",addr);

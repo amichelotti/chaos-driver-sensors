@@ -12,6 +12,35 @@
         <group name="CHAOS">
             <file>file:/home/michelo/chaos_bundle_master/driver/sensors/models/ZBSensorCollector.cpp</file>
         </group>
-        <group name="CHAOS_BUNDLE_DEVELOPMENT"/>
+        <group name="CHAOS_BUNDLE_DEVELOPMENT">
+            <file>file:/hw/chaos_bundle/driver/sensors/models/ZBSensor/ZBSensorCollector.cpp</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/models/ZBSensor/ZBSensorNode.cpp</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/models/Simulator/VTemperatureDriver.h</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/models/CMakeLists.txt</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/models/ZBSensor/ZBSensorNode.h</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/models/LucidControl/LucidOutputDriver.h</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/test/sensorsServer.cpp</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/core/BasicSensor.cpp</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/models/LucidControl/LucidOutputDriver.cpp</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/models/ZBSensor/CMakeLists.txt</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/core/BasicSensor.h</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/models/Simulator/CMakeLists.txt</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/models/ZBSensor/ZBSensorCollector.h</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/core/SensorDriverInterface.h</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/models/plugins.cpp</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/CMakeLists.txt</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/models/ZBSensor/ZBSensorNodeD.h</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/models/Simulator/VTemperatureDriver.cpp</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/models/ZBSensor/ZBSensorNodeS.h</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/models/ZBSensor/ZBSensorNodeC.h</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/models/LucidControl/LucidTemperatureDriver.h</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/models/LucidControl/CMakeLists.txt</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/models/LucidControl/LucidTemperatureDriver.cpp</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/core/AbstractSensorDriver.h</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/core/SensorDriverInterface.cpp</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/models/ZBSensor/ZBSensorNodeC.cpp</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/models/ZBSensor/ZBSensorNodeD.cpp</file>
+            <file>file:/hw/chaos_bundle/driver/sensors/core/AbstractSensorDriver.cpp</file>
+        </group>
     </open-files>
 </project-private>

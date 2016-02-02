@@ -1,7 +1,6 @@
 /*
- *	ZBSensorNodeD.h
- *      Class for ZB sensor nodes of class C
-
+ *	LucidOutputDriver.h
+ *  Lucit RTD temperature driver
  *	!CHAOS
  *	Created by Andrea Michelotti
  *
@@ -19,27 +18,31 @@
  *    	See the License for the specific language governing permissions and
  *    	limitations under the License.
  */
-#ifndef _ZBSENSORNODED_H
-#define _ZBSENSORNODED_H
+#ifndef VLUCIDOUTPUT_h
+#define VLUCIDOUTPUT_h
 
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <driver/sensors/core/AbstractSensorDriver.h>
 #include <chaos/common/data/DatasetDB.h>
-#include <driver/sensors/models/ZBSensorNode.h>
-#include <stdint.h>
+
 namespace cu_driver = chaos::cu::driver_manager::driver;
-DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(ZBSensorNodeD)
+DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(LucidOutputDriver)
+
+namespace driver {
+    namespace sensor {
+        
+        namespace model {
 
 /*
  driver definition
  */
-class ZBSensorNodeD:public ZBSensorNode{
+class LucidOutputDriver:public ::driver::sensor::AbstractSensorDriver{
 
-    double temp,humidity;
-    int updated;
+
+  std::string dev;
 public:
-	ZBSensorNodeD();
-	~ZBSensorNodeD();
+	LucidOutputDriver();
+	~LucidOutputDriver();
     //! Execute a command
         /**
          \brief Read a channel from the physical sensor
@@ -59,7 +62,25 @@ public:
      */
     int writeChannel(void *buffer,int addr,int bcount);
     
-   
+    /**
+     \brief init the sensor
+     \param buffer[in] initialisation opaque parameter
+     \return 0 if success, error otherwise
+     
+     */
+    int sensorInit(void *buffer,int sizeb);
+    
+    /**
+     \brief deinit the sensor
+     \param buffer[in] initialisation opaque parameter
+     \return 0 if success, error otherwise
+     */
+    int sensorDeinit();
+       
+    
+    
 };
-
-#endif 
+        }
+    }
+}
+#endif /* defined(__ControlUnitTest__DummyDriver__) */

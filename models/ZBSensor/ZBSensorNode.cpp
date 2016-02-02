@@ -17,7 +17,7 @@
  *    	See the License for the specific language governing permissions and
  *    	limitations under the License.
  */
-#include <driver/sensors/models/ZBSensorNode.h>
+#include <driver/sensors/models/ZBSensor/ZBSensorNode.h>
 #include <stdlib.h>
 #include <string>
 
@@ -27,6 +27,7 @@
 #define MAX_BUF 8192
 
 namespace cu_driver = chaos::cu::driver_manager::driver;
+using namespace driver::sensor::model;
 
 #define ZBSensorNodeLAPP_		LAPP_ << "[ZBSensorNode] "
 #define ZBSensorNodeLDBG_		LDBG_ << "[ZBSensorNode] "
