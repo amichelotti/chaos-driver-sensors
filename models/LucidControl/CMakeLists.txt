@@ -13,7 +13,7 @@ ELSE()
 
 ENDIF()
 SET(DRIVERS_LIB ${DRIVERS_LIB} ${PROJECT_NAME} PARENT_SCOPE)
- TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_common common_serial ${FrameworkLib})
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_driver_sensors chaos_common common_serial ${FrameworkLib})
 FILE(GLOB src *.h)    
 INSTALL(FILES ${src} DESTINATION include/driver/sensors/models/LucidControl ) 
 
