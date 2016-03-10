@@ -28,7 +28,8 @@
 
 namespace c_data = chaos::common::data;
 namespace chaos_batch = chaos::common::batch_command;
-using namespace  ::driver::sensor;
+namespace  driver{
+  namespace sensor {
 BATCH_COMMAND_OPEN_DESCRIPTION_ALIAS(,CmdUTAShutter,"shutter",
                                                           "Set the given shutter to a percentage of open",
                                                           "72882f3e-35da-11e5-985f-334fcd6dff23")
@@ -37,11 +38,11 @@ BATCH_COMMAND_ADD_DOUBLE_PARAM("set", "percentage of open [0=close,100=totally o
 BATCH_COMMAND_CLOSE_DESCRIPTION()
 
 // return the implemented handler
-uint8_t ::driver::sensor::CmdUTAShutter::implementedHandler(){
+uint8_t CmdUTAShutter::implementedHandler(){
     return chaos_batch::HandlerType::HT_Set | chaos_batch::HandlerType::HT_Acquisition;
 }
 
-void ::driver::sensor::CmdUTAShutter::setHandler(c_data::CDataWrapper *data) {
+void CmdUTAShutter::setHandler(c_data::CDataWrapper *data) {
     chaos::common::data::RangeValueInfo current_sp_attr_info;
     chaos::common::data::RangeValueInfo attributeInfo;
 	CmdUTADefault::setHandler(data);
@@ -84,9 +85,10 @@ void ::driver::sensor::CmdUTAShutter::setHandler(c_data::CDataWrapper *data) {
 
 }
 
-void ::driver::sensor::CmdUTAShutter::acquireHandler() {
+void CmdUTAShutter::acquireHandler() {
 	//force output dataset as changed
 	getAttributeCache()->setOutputDomainAsChanged();
         BC_END_RUNNIG_PROPERTY;
         
 }
+  }}

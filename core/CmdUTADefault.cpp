@@ -32,7 +32,8 @@ using namespace chaos::common::data;
 using namespace chaos::common::batch_command;
 using namespace chaos::cu::control_manager::slow_command;
 
-using namespace ::driver::sensor;
+namespace driver {
+  namespace sensor {
 BATCH_COMMAND_OPEN_DESCRIPTION(,CmdUTADefault,
 			       "Default method",
 			       "4403149a-35df-11e5-b1f7-7f8214ad6212")
@@ -114,3 +115,4 @@ void CmdUTADefault::acquireHandler() {
 	//force output dataset as changed
 	getAttributeCache()->setOutputDomainAsChanged();
 }
+  }}
