@@ -32,8 +32,8 @@ using namespace chaos::common::data;
 using namespace chaos::common::batch_command;
 using namespace chaos::cu::control_manager::slow_command;
 
-using namespace driver::sensor;
-BATCH_COMMAND_OPEN_DESCRIPTION(driver::sensor::,CmdUTADefault,
+using namespace ::driver::sensor;
+BATCH_COMMAND_OPEN_DESCRIPTION(,CmdUTADefault,
 			       "Default method",
 			       "4403149a-35df-11e5-b1f7-7f8214ad6212")
 BATCH_COMMAND_CLOSE_DESCRIPTION()
@@ -84,7 +84,7 @@ void CmdUTADefault::setHandler(c_data::CDataWrapper *data) {
             throw chaos::CException(-1, "Cannot retrieve driver", __FUNCTION__);
         }
     
-        driver[cnt]= new driver::sensor::SensorDriverInterface(accessor);
+        driver[cnt]= new ::driver::sensor::SensorDriverInterface(accessor);
     
         if (driver[cnt]== NULL) {
           throw chaos::CException(-2, "Cannot retrieve driver", __FUNCTION__);

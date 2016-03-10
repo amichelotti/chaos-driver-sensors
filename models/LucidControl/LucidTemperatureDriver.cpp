@@ -29,7 +29,7 @@ namespace cu_driver = chaos::cu::driver_manager::driver;
 #define LucidTemperatureDriverLAPP_		LAPP_ << "[LucidTemperatureDriver] "
 #define LucidTemperatureDriverLDBG_		LDBG_ << "[LucidTemperatureDriver] "
 #define LucidTemperatureDriverLERR_		LERR_ << "[LucidTemperatureDriver] "
-using namespace driver::sensor::model;
+using namespace ::driver::sensor::model;
 
 //GET_PLUGIN_CLASS_DEFINITION
 //we need only to define the driver because we don't are makeing a plugin

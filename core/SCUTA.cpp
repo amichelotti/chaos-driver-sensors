@@ -28,7 +28,6 @@
 
 
 using namespace chaos;
-
 using namespace chaos::common::data;
 using namespace chaos::common::batch_command;
 
@@ -45,7 +44,7 @@ PUBLISHABLE_CONTROL_UNIT_IMPLEMENTATION(::driver::sensor::SCUTA)
 /*
  Construct a new CU with an identifier
  */
-driver::sensor::SCUTA::SCUTA(const string &_control_unit_id,
+  ::driver::sensor::SCUTA::SCUTA(const string &_control_unit_id,
                                                                           const string &_control_unit_param,
                                                                           const ControlUnitDriverList &_control_unit_drivers)
     :
@@ -63,7 +62,7 @@ driver::sensor::SCUTA::SCUTA(const string &_control_unit_id,
 /*
  Base destructor
  */
-driver::sensor::SCUTA::~SCUTA() {
+::driver::sensor::SCUTA::~SCUTA() {
   int cnt;
   for(cnt=0;cnt<UTA_DRIVERS;cnt++){
     if(driver[cnt]){
@@ -77,7 +76,7 @@ driver::sensor::SCUTA::~SCUTA() {
 /*
  Return the default configuration
  */
-void driver::sensor::SCUTA::unitDefineActionAndDataset() throw(chaos::CException) {
+void ::driver::sensor::SCUTA::unitDefineActionAndDataset() throw(chaos::CException) {
   //install all command
   installCommand(BATCH_COMMAND_GET_DESCRIPTION(CmdUTADefault), true);
   installCommand(BATCH_COMMAND_GET_DESCRIPTION(CmdUTAShutter));
@@ -106,12 +105,12 @@ void driver::sensor::SCUTA::unitDefineActionAndDataset() throw(chaos::CException
 
 }
 
-void driver::sensor::SCUTA::unitDefineCustomAttribute() {
+void ::driver::sensor::SCUTA::unitDefineCustomAttribute() {
 
 }
 
 // Abstract method for the initialization of the control unit
-void driver::sensor::SCUTA::unitInit() throw(CException) {
+void ::driver::sensor::SCUTA::unitInit() throw(CException) {
   int cnt;
   DPRINT("initializing");
   
@@ -121,7 +120,7 @@ void driver::sensor::SCUTA::unitInit() throw(CException) {
       throw chaos::CException(-1, "Cannot retrieve driver", __FUNCTION__);
     }
     
-    driver[cnt] = new driver::sensor::SensorDriverInterface(accessor);
+    driver[cnt] = new ::driver::sensor::SensorDriverInterface(accessor);
     if (driver[cnt] == NULL) {
       throw chaos::CException(-2, "Cannot allocate driver resources", __FUNCTION__);
     }
@@ -131,7 +130,7 @@ void driver::sensor::SCUTA::unitInit() throw(CException) {
 }
 
 // Abstract method for the start of the control unit
-void driver::sensor::SCUTA::unitStart() throw(CException) {
+void ::driver::sensor::SCUTA::unitStart() throw(CException) {
       double *shutter;
       double val=5;
   DPRINT("initializing shutters to 50%");
@@ -147,12 +146,12 @@ shutter= getAttributeCache()->getRWPtr<double>(DOMAIN_OUTPUT, "I_SHUTTER");
 }
 
 // Abstract method for the stop of the control unit
-void driver::sensor::SCUTA::unitStop() throw(CException) {
+void ::driver::sensor::SCUTA::unitStop() throw(CException) {
 
 }
 
 // Abstract method for the deinit of the control unit
-void driver::sensor::SCUTA::unitDeinit() throw(CException) {
+void ::driver::sensor::SCUTA::unitDeinit() throw(CException) {
 
 }
 
