@@ -37,6 +37,7 @@ PUBLISHABLE_CONTROL_UNIT_IMPLEMENTATION(BasicSensor)
  */
 BasicSensor::BasicSensor(const string& _control_unit_id, const string& _control_unit_param, const ControlUnitDriverList& _control_unit_drivers):
 RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers) {
+   BasicSensorLAPP_ << "Created";
 
     driver=NULL;
 }
