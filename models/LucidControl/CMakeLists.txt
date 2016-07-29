@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
 project(chaos_driver_sensors_lucidcontrol)
-include($ENV{CHAOS_BUNDLE}/tools/project_template/CMakeChaos.txt)
 
 SET(sensors_src LucidTemperatureDriver.cpp LucidOutputDriver.cpp)
 

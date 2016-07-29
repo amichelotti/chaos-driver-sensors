@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
 project(chaos_driver_sensors_ZB)
-include($ENV{CHAOS_BUNDLE}/tools/project_template/CMakeChaos.txt)
 
 SET(sensors_src ZBSensorCollector.cpp ZBSensorNode.cpp ZBSensorNodeC.cpp ZBSensorNodeD.cpp ZBSensorNodeS.cpp)
 
