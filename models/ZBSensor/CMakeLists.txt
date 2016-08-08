@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
 project(chaos_driver_sensors_ZB)
-include($ENV{CHAOS_BUNDLE}/tools/project_template/CMakeChaos.txt)
 
 SET(sensors_src ZBSensorCollector.cpp ZBSensorNode.cpp ZBSensorNodeC.cpp ZBSensorNodeD.cpp ZBSensorNodeS.cpp)
 
@@ -13,7 +12,7 @@ ELSE()
 
 ENDIF()
 SET(DRIVERS_LIB ${DRIVERS_LIB} ${PROJECT_NAME} PARENT_SCOPE)
- TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_common common_serial ${FrameworkLib})
+ TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_driver_sensors chaos_cutoolkit chaos_common common_serial ${FrameworkLib})
 FILE(GLOB src *.h)    
 INSTALL(FILES ${src} DESTINATION include/driver/sensors/models/ZBSensor ) 
 
