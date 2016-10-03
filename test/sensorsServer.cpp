@@ -28,32 +28,45 @@ ChaosCLI --metadata-server mds_url:5000 --deviceid device_name --print-dataset [
 the set of the input channel can be done (for simple format) using the following command:
 ChaosCLI --metadata-server mds_url:5000 --deviceid device_name --op 9 --rt-attr-val in_1:value
 */
-#include "driver/sensors/core/BasicSensor.h"
-#include "driver/sensors/models/VTemperatureDriver.h"
-#include <driver/sensors/models/VBPMSync.h>
+#include <driver/sensors/core/BasicSensor.h>
+#include <driver/sensors/models/Simulator/VTemperatureDriver.h>
+#include <driver/sensors/models/LucidControl/LucidOutputDriver.h>
+
+#include <driver/sensors/models/LucidControl/LucidTemperatureDriver.h>
+#include <driver/sensors/models/ZBSensor/ZBSensorCollector.h>
+#include <driver/sensors/models/ZBSensor/ZBSensorNode.h>
+#include <driver/sensors/models/ZBSensor/ZBSensorNodeC.h>
+#include <driver/sensors/models/ZBSensor/ZBSensorNodeD.h>
+#include <driver/sensors/models/ZBSensor/ZBSensorNodeS.h>
 #include <string>
 
 #include <chaos/cu_toolkit/ChaosCUToolkit.h>
 
-
 using namespace chaos;
 using namespace chaos::cu;
 using namespace chaos::cu::driver_manager;
+using namespace ::driver::sensor;
+using namespace ::driver::sensor::model;
 
 #define OPT_CUSTOM_DEVICE_ID "device_id"
 
 int main(int argc, char *argv[])
 {
-	string tmp_device_id;
+	std::string tmp_device_id;
 	try {
 		// initialize the control unit toolkit
 		ChaosCUToolkit::getInstance()->init(argc, argv);
 
 		// allocate the instance and inspector for driver
 		REGISTER_DRIVER(,VTemperatureDriver);
-		REGISTER_DRIVER(,VBPMSync);
+		REGISTER_DRIVER(,LucidTemperatureDriver);
+		REGISTER_DRIVER(,LucidOutputDriver);
 
-        REGISTER_CU(BasicSensor);
+                //REGISTER_DRIVER(,ZBSensorCollector);
+                    REGISTER_DRIVER(,ZBSensorNodeC);
+            REGISTER_DRIVER(,ZBSensorNodeD);
+            REGISTER_DRIVER(,ZBSensorNodeS);
+        REGISTER_CU(::driver::sensor::BasicSensor);
 		
 		// start control unit toolkit until someone will close it
 		ChaosCUToolkit::getInstance()->start();

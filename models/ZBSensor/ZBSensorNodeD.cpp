@@ -17,13 +17,14 @@
  *    	See the License for the specific language governing permissions and
  *    	limitations under the License.
  */
-#include <driver/sensors/models/ZBSensorNodeD.h>
+#include <driver/sensors/models/ZBSensor/ZBSensorNodeD.h>
 #include <stdlib.h>
 #include <string>
 
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <math.h>
 #include <boost/lexical_cast.hpp>
+using namespace driver::sensor::model;
 
 DEF_SENSOR_DATASET
 DEF_SENSOR_CHANNEL("TEMP","Temperatura",chaos::DataType::Output,chaos::DataType::TYPE_DOUBLE,sizeof(double))
@@ -50,8 +51,8 @@ namespace cu_driver = chaos::cu::driver_manager::driver;
 
 //GET_PLUGIN_CLASS_DEFINITION
 //we need only to define the driver because we don't are makeing a plugin
-OPEN_CU_DRIVER_PLUGIN_CLASS_DEFINITION(ZBSensorNodeD, 1.0.0,ZBSensorNodeD)
-REGISTER_CU_DRIVER_PLUGIN_CLASS_INIT_ATTRIBUTE(ZBSensorNodeD, http_address/dnsname:port)
+OPEN_CU_DRIVER_PLUGIN_CLASS_DEFINITION(ZBSensorNodeD, 1.0.0,::driver::sensor::model::ZBSensorNodeD)
+REGISTER_CU_DRIVER_PLUGIN_CLASS_INIT_ATTRIBUTE(::driver::sensor::model::ZBSensorNodeD, http_address/dnsname:port)
 CLOSE_CU_DRIVER_PLUGIN_CLASS_DEFINITION
 
 

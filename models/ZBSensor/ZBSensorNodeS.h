@@ -1,7 +1,8 @@
 /*
- *	VTemperatureDriver.h
- *  Software emulated temperature driver
- *	!CHOAS
+ *	ZBSensorNodeS.h
+ *      Class for ZB sensor nodes of class C
+
+ *	!CHAOS
  *	Created by Andrea Michelotti
  *
  *    	Copyright 2013 INFN, National Institute of Nuclear Physics
@@ -18,28 +19,30 @@
  *    	See the License for the specific language governing permissions and
  *    	limitations under the License.
  */
-#ifndef VTEMPERATUREDRIVER_h
-#define VTEMPERATUREDRIVER_h
+#ifndef _ZBSENSORNODES_H
+#define _ZBSENSORNODES_H
 
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <driver/sensors/core/AbstractSensorDriver.h>
 #include <chaos/common/data/DatasetDB.h>
+#include <driver/sensors/models/ZBSensor/ZBSensorNode.h>
+
 #include <stdint.h>
 namespace cu_driver = chaos::cu::driver_manager::driver;
-DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(VTemperatureDriver)
 
-/*
- driver definition
- */
-class VTemperatureDriver:public ::driver::sensors::AbstractSensorDriver{
+            DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(ZBSensorNodeS)
 
-	int counter;
-    double freq;
-    int32_t points;
-    int32_t sinpoint;
+namespace driver {
+    namespace sensor {
+        namespace model {
+
+
+class ZBSensorNodeS:public ZBSensorNode{
+
+    double temp;
 public:
-	VTemperatureDriver();
-	~VTemperatureDriver();
+	ZBSensorNodeS();
+	~ZBSensorNodeS();
     //! Execute a command
         /**
          \brief Read a channel from the physical sensor
@@ -59,21 +62,8 @@ public:
      */
     int writeChannel(void *buffer,int addr,int bcount);
     
-    /**
-     \brief init the sensor
-     \param buffer[in] initialisation opaque parameter
-     \return 0 if success, error otherwise
-     
-     */
-    int sensorInit(void *buffer,int sizeb);
-    
-    /**
-     \brief deinit the sensor
-     \param buffer[in] initialisation opaque parameter
-     \return 0 if success, error otherwise
-     */
-    int sensorDeinit();
-        
+   
 };
+        }}}
 
-#endif /* defined(__ControlUnitTest__DummyDriver__) */
+#endif 

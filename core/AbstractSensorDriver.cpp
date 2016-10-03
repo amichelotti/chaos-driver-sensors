@@ -26,7 +26,7 @@
 #include <boost/lexical_cast.hpp>
 
 namespace cu_driver = chaos::cu::driver_manager::driver;
-using namespace ::driver::sensors;
+using namespace ::driver::sensor;
 #define AbstractSensorDriverLAPP_		LAPP_ << "[AbstractSensorDriver] "
 #define AbstractSensorDriverLDBG_		LDBG_ << "[AbstractSensorDriver] "
 #define AbstractSensorDriverLERR_		LERR_ << "[AbstractSensorDriver] "
@@ -64,7 +64,7 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult AbstractSensorDriver::exec
             int ch=cmd->parm[0];
             int sizeb=cmd->parm[1];
             cmd->resultDataLength= sizeb;
-            AbstractSensorDriverLDBG_<<"Read channel:"<<ch<<" size:"<<sizeb;
+//            AbstractSensorDriverLDBG_<<"Read channel:"<<ch<<" size:"<<sizeb;
             cmd->ret=readChannel(cmd->resultData,ch,sizeb);
             break;
         }
@@ -74,7 +74,7 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult AbstractSensorDriver::exec
             int sizeb=cmd->parm[1];
 
             cmd->inputDataLength= sizeb;
-            AbstractSensorDriverLDBG_<<"Write channel:"<<ch<<" size:"<<sizeb;
+       //     AbstractSensorDriverLDBG_<<"Write channel:"<<ch<<" size:"<<sizeb;
             cmd->ret=writeChannel(cmd->inputData,ch,sizeb);
             break;
         }

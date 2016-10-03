@@ -24,6 +24,7 @@
 using namespace chaos;
 using namespace chaos::common::data::cache;
 using namespace chaos::cu::driver_manager::driver;
+using namespace ::driver::sensor;
 
 PUBLISHABLE_CONTROL_UNIT_IMPLEMENTATION(BasicSensor)
 
@@ -36,16 +37,9 @@ PUBLISHABLE_CONTROL_UNIT_IMPLEMENTATION(BasicSensor)
  */
 BasicSensor::BasicSensor(const string& _control_unit_id, const string& _control_unit_param, const ControlUnitDriverList& _control_unit_drivers):
 RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers) {
+   BasicSensorLAPP_ << "Created";
 
-  driver=new SensorDriverInterface(getAccessoInstanceByIndex(0));
-
-  assert(driver);
-  driver_dataset_size=driver->getDatasetSize();
-  driver_dataset=0;
-  if(driver_dataset_size>0){
-    driver_dataset = (::driver::sensors::ddDataSet_t *)malloc( driver_dataset_size);
-    assert(driver_dataset);
-  }
+    driver=NULL;
 }
 
 /*
@@ -73,9 +67,18 @@ The api that can be called withi this method are listed into
 void BasicSensor::unitDefineActionAndDataset() throw(chaos::CException) {
     int ret;
     BasicSensorLAPP_ << "UnitDefine";
+    driver=new SensorDriverInterface(getAccessoInstanceByIndex(0));
+
+  assert(driver);
+  driver_dataset_size=driver->getDatasetSize();
+  driver_dataset=0;
+  if(driver_dataset_size>0){
+    driver_dataset = (ddDataSet_t *)malloc( driver_dataset_size);
+    assert(driver_dataset);
+  }
     ret=driver->getDataset(driver_dataset,driver_dataset_size);
     
-    for(int cnt=0;cnt<ret/sizeof(::driver::sensors::ddDataSet_t);cnt++){
+    for(int cnt=0;cnt<ret/sizeof(ddDataSet_t);cnt++){
         BasicSensorLDBG_<<"adding attribute:"<<driver_dataset[cnt].name<<","<<driver_dataset[cnt].desc<<","<<driver_dataset[cnt].type<<","<<driver_dataset[cnt].dir<<","<<driver_dataset[cnt].maxsize;
         if(driver_dataset[cnt].dir==chaos::DataType::Input){
             input_size.push_back(driver_dataset[cnt].maxsize);

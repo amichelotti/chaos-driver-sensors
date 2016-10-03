@@ -32,8 +32,10 @@ namespace cu_driver = chaos::cu::driver_manager::driver;
 DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(ZBSensorCollector)
 #define MAX_ZB_SENSOR_CHANNELS 64
 
-
-
+namespace driver {
+    namespace sensor {
+        namespace model {
+    
 typedef struct nodedata{
     int uid;
     double sensor[MAX_ZB_SENSOR_CHANNELS];
@@ -62,5 +64,5 @@ public:
   
         
 };
-
+        }}}
 #endif /* defined(__ControlUnitTest__DummyDriver__) */

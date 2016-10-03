@@ -23,11 +23,15 @@
 #include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
 #include <driver/sensors/core/SensorDriverInterface.h>
 #define MAX_DATASET_SIZE 256
+namespace driver{
+    
+    namespace sensor{
+            
 class BasicSensor : public chaos::cu::control_manager::RTAbstractControlUnit {
 	PUBLISHABLE_CONTROL_UNIT_INTERFACE(BasicSensor);
     
     SensorDriverInterface*driver;
-    ::driver::sensors::ddDataSet_t*driver_dataset;
+    ddDataSet_t*driver_dataset;
     int driver_dataset_size;
     std::vector<int> output_size;
     std::vector<int> input_size;
@@ -87,5 +91,5 @@ protected:
 		*/
 		void unitInputAttributeChangedHandler() throw(chaos::CException);
 };
-
+    }}
 #endif

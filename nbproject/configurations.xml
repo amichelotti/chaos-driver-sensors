@@ -2107,14 +2107,6 @@
         <in>SensorDriverInterface.cpp</in>
       </df>
       <df name="models">
-        <in>LucidTemperatureDriver.cpp</in>
-        <in>VBPMSync.cpp</in>
-        <in>VTemperatureDriver.cpp</in>
-        <in>ZBSensorCollector.cpp</in>
-        <in>ZBSensorNode.cpp</in>
-        <in>ZBSensorNodeC.cpp</in>
-        <in>ZBSensorNodeD.cpp</in>
-        <in>ZBSensorNodeS.cpp</in>
         <in>plugins.cpp</in>
       </df>
       <df name="test">
@@ -2151,7 +2143,7 @@
       <makefileType>
         <makeTool>
           <buildCommandWorkingDir>.</buildCommandWorkingDir>
-          <buildCommand>${MAKE} -f Makefile</buildCommand>
+          <buildCommand>${MAKE} -f Makefile install</buildCommand>
           <cleanCommand>${MAKE} -f Makefile clean</cleanCommand>
           <executablePath>build/sensorsServer</executablePath>
         </makeTool>
@@ -15560,38 +15552,6 @@
           </incDir>
         </ccTool>
       </folder>
-      <item path="models/LucidTemperatureDriver.cpp" ex="false" tool="1" flavor2="4">
-        <ccTool flags="1">
-        </ccTool>
-      </item>
-      <item path="models/VBPMSync.cpp" ex="false" tool="1" flavor2="0">
-        <ccTool flags="1">
-        </ccTool>
-      </item>
-      <item path="models/VTemperatureDriver.cpp" ex="false" tool="1" flavor2="4">
-        <ccTool flags="1">
-        </ccTool>
-      </item>
-      <item path="models/ZBSensorCollector.cpp" ex="false" tool="1" flavor2="4">
-        <ccTool flags="1">
-        </ccTool>
-      </item>
-      <item path="models/ZBSensorNode.cpp" ex="false" tool="1" flavor2="4">
-        <ccTool flags="1">
-        </ccTool>
-      </item>
-      <item path="models/ZBSensorNodeC.cpp" ex="false" tool="1" flavor2="4">
-        <ccTool flags="1">
-        </ccTool>
-      </item>
-      <item path="models/ZBSensorNodeD.cpp" ex="false" tool="1" flavor2="4">
-        <ccTool flags="1">
-        </ccTool>
-      </item>
-      <item path="models/ZBSensorNodeS.cpp" ex="false" tool="1" flavor2="4">
-        <ccTool flags="1">
-        </ccTool>
-      </item>
       <item path="models/plugins.cpp" ex="false" tool="1" flavor2="4">
         <ccTool flags="1">
         </ccTool>

@@ -23,15 +23,18 @@
 
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <driver/sensors/core/AbstractSensorDriver.h>
-#include <driver/sensors/models/ZBSensorCollector.h>
+#include <driver/sensors/models/ZBSensor/ZBSensorCollector.h>
 
-#include <chaos/common/data/DatasetDB.h>
 #include <stdint.h>
 #include <common/serial/core/PosixSerialComm.h>
 
 namespace cu_driver = chaos::cu::driver_manager::driver;
 #define ZBMAXSENSORS 256
-class ZBSensorNode:public ::driver::sensors::AbstractSensorDriver{
+namespace driver {
+    namespace sensor {
+        namespace model {
+            
+    class ZBSensorNode:public ::driver::sensor::AbstractSensorDriver {
 
     protected:
     ZBSensorCollector *collector;
@@ -48,5 +51,6 @@ public:
     int sensorDeinit();
         
 };
+        }}}
 
 #endif /* defined(__ControlUnitTest__DummyDriver__) */

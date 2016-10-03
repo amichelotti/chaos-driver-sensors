@@ -37,90 +37,118 @@
         <in>AbstractSensorDriver.h</in>
         <in>BasicSensor.cpp</in>
         <in>BasicSensor.h</in>
+        <in>CmdUTADefault.cpp</in>
+        <in>CmdUTADefault.h</in>
+        <in>CmdUTAShutter.cpp</in>
+        <in>CmdUTAShutter.h</in>
+        <in>SCUTA.cpp</in>
+        <in>SCUTA.h</in>
         <in>SensorDriverInterface.cpp</in>
         <in>SensorDriverInterface.h</in>
       </df>
       <df name="models">
-        <df name="ZBArduino">
-          <df name="doc">
+        <df name="CMakeFiles">
+        </df>
+        <df name="LucidControl">
+          <df name="CMakeFiles">
+            <df name="chaos_driver_sensors_lucidcontrol.dir">
+            </df>
           </df>
-          <df name="WSN Node">
-            <df name="Coordinator">
-              <df name="Mia soluzione Java">
-                <df name="TouschekApplication Jar">
-                  <df name="lib">
-                  </df>
-                </df>
-                <df name="TouschekCoordinatorApp">
-                  <df name="src">
-                    <df name="pack">
+          <in>LucidOutputDriver.cpp</in>
+          <in>LucidOutputDriver.h</in>
+          <in>LucidTemperatureDriver.cpp</in>
+          <in>LucidTemperatureDriver.h</in>
+        </df>
+        <df name="Simulator">
+          <df name="CMakeFiles">
+            <df name="chaos_driver_sensors_simulator.dir">
+            </df>
+          </df>
+          <in>VTemperatureDriver.cpp</in>
+          <in>VTemperatureDriver.h</in>
+        </df>
+        <df name="UTA_ED36">
+        </df>
+        <df name="ZBSensor">
+          <df name="CMakeFiles">
+            <df name="chaos_driver_sensors_ZB.dir">
+            </df>
+          </df>
+          <df name="ZBArduino">
+            <df name="doc">
+            </df>
+            <df name="WSN Node">
+              <df name="Coordinator">
+                <df name="Mia soluzione Java">
+                  <df name="TouschekApplication Jar">
+                    <df name="lib">
                     </df>
                   </df>
-                </df>
-                <df name="UDPServer">
-                </df>
-              </df>
-              <df name="Soluzione CHAOS">
-              </df>
-            </df>
-            <df name="EndNode1">
-            </df>
-            <df name="EndNode2">
-            </df>
-            <df name="EndNode3">
-            </df>
-            <df name="EndNode4">
-            </df>
-            <df name="EndNode5">
-            </df>
-            <df name="lib">
-              <df name="dht11">
-                <df name="dht11_test">
-                </df>
-                <in>dht11.cpp</in>
-                <in>dht11.h</in>
-              </df>
-              <df name="OneWire">
-                <df name="examples">
-                  <df name="DS18x20_Temperature">
+                  <df name="TouschekCoordinatorApp">
+                    <df name="src">
+                      <df name="pack">
+                      </df>
+                    </df>
                   </df>
-                  <df name="DS2408_Switch">
-                  </df>
-                  <df name="DS250x_PROM">
+                  <df name="UDPServer">
                   </df>
                 </df>
-                <in>OneWire.cpp</in>
-                <in>OneWire.h</in>
-              </df>
-              <df name="SD2403RTC">
-                <df name="utility">
-                  <in>twi.c</in>
-                  <in>twi.h</in>
+                <df name="Soluzione CHAOS">
                 </df>
-                <in>SD2403RTC.cpp</in>
-                <in>SD2403RTC.h</in>
-                <in>Wire.cpp</in>
-                <in>Wire.h</in>
+              </df>
+              <df name="EndNode1">
+              </df>
+              <df name="EndNode2">
+              </df>
+              <df name="EndNode3">
+              </df>
+              <df name="EndNode4">
+              </df>
+              <df name="EndNode5">
+              </df>
+              <df name="lib">
+                <df name="dht11">
+                  <df name="dht11_test">
+                  </df>
+                  <in>dht11.cpp</in>
+                  <in>dht11.h</in>
+                </df>
+                <df name="OneWire">
+                  <df name="examples">
+                    <df name="DS18x20_Temperature">
+                    </df>
+                    <df name="DS2408_Switch">
+                    </df>
+                    <df name="DS250x_PROM">
+                    </df>
+                  </df>
+                  <in>OneWire.cpp</in>
+                  <in>OneWire.h</in>
+                </df>
+                <df name="SD2403RTC">
+                  <df name="utility">
+                    <in>twi.c</in>
+                    <in>twi.h</in>
+                  </df>
+                  <in>SD2403RTC.cpp</in>
+                  <in>SD2403RTC.h</in>
+                  <in>Wire.cpp</in>
+                  <in>Wire.h</in>
+                </df>
               </df>
             </df>
           </df>
+          <in>ZBSensorCollector.cpp</in>
+          <in>ZBSensorCollector.h</in>
+          <in>ZBSensorNode.cpp</in>
+          <in>ZBSensorNode.h</in>
+          <in>ZBSensorNodeC.cpp</in>
+          <in>ZBSensorNodeC.h</in>
+          <in>ZBSensorNodeD.cpp</in>
+          <in>ZBSensorNodeD.h</in>
+          <in>ZBSensorNodeS.cpp</in>
+          <in>ZBSensorNodeS.h</in>
         </df>
-        <in>LucidTemperatureDriver.cpp</in>
-        <in>LucidTemperatureDriver.h</in>
-        <in>VBPMSync.cpp</in>
-        <in>VBPMSync.h</in>
-        <in>VTemperatureDriver.cpp</in>
-        <in>VTemperatureDriver.h</in>
-        <in>ZBSensorCollector.cpp</in>
-        <in>ZBSensorCollector.h</in>
-        <in>ZBSensorNode.cpp</in>
-        <in>ZBSensorNode.h</in>
-        <in>ZBSensorNodeC.cpp</in>
-        <in>ZBSensorNodeC.h</in>
-        <in>ZBSensorNodeD.cpp</in>
-        <in>ZBSensorNodeD.h</in>
-        <in>ZBSensorNodeS.cpp</in>
-        <in>ZBSensorNodeS.h</in>
         <in>plugins.cpp</in>
       </df>
       <df name="sensors.xcodeproj">

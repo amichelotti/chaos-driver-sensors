@@ -17,7 +17,7 @@
  *    	See the License for the specific language governing permissions and
  *    	limitations under the License.
  */
-#include <driver/sensors/models/VTemperatureDriver.h>
+#include <driver/sensors/models/Simulator/VTemperatureDriver.h>
 #include <stdlib.h>
 #include <string>
 
@@ -26,6 +26,7 @@
 #include <boost/lexical_cast.hpp>
 
 namespace cu_driver = chaos::cu::driver_manager::driver;
+using namespace driver::sensor::model;
 
 #define VTemperatureDriverLAPP_		LAPP_ << "[VTemperatureDriver] "
 #define VTemperatureDriverLDBG_		LDBG_ << "[VTemperatureDriver] "
@@ -34,8 +35,8 @@ namespace cu_driver = chaos::cu::driver_manager::driver;
 
 //GET_PLUGIN_CLASS_DEFINITION
 //we need only to define the driver because we don't are makeing a plugin
-OPEN_CU_DRIVER_PLUGIN_CLASS_DEFINITION(VTemperatureDriver, 1.0.0,VTemperatureDriver)
-REGISTER_CU_DRIVER_PLUGIN_CLASS_INIT_ATTRIBUTE(VTemperatureDriver, http_address/dnsname:port)
+OPEN_CU_DRIVER_PLUGIN_CLASS_DEFINITION(VTemperatureDriver, 1.0.0,::driver::sensor::model::VTemperatureDriver)
+REGISTER_CU_DRIVER_PLUGIN_CLASS_INIT_ATTRIBUTE(::driver::sensor::model::VTemperatureDriver, http_address/dnsname:port)
 CLOSE_CU_DRIVER_PLUGIN_CLASS_DEFINITION
 
 
