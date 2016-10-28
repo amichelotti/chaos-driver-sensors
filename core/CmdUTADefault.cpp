@@ -92,7 +92,7 @@ void CmdUTADefault::setHandler(c_data::CDataWrapper *data) {
         }
     }
     
-	BC_NORMAL_RUNNIG_PROPERTY
+	BC_NORMAL_RUNNING_PROPERTY
 }
 
     // Aquire the necessary data for the command
