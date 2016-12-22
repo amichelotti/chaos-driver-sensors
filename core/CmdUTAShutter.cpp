@@ -81,7 +81,7 @@ void CmdUTAShutter::setHandler(c_data::CDataWrapper *data) {
         val=(val/100)*10.0; // value between 0 and 10
         driver[UTA_SHUTTER_DRIVER]->writeChannel(&val,id,sizeof(double));
          
-	BC_EXEC_RUNNING_PROPERTY;
+	BC_NORMAL_RUNNING_PROPERTY;
 
 }
 
