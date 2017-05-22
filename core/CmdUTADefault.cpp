@@ -27,6 +27,8 @@
 #define CMDCU_ INFO_LOG(CmdUTADefault)
 #define CMDCUDBG_ DBG_LOG(CmdUTADefault)
 #define CMDCUERR_ ERR_LOG(CmdUTADefault)
+#include <chaos/common/data/cache/AbstractSharedDomainCache.h>
+using namespace chaos::common::data::cache;
 
 using namespace chaos::common::data;
 using namespace chaos::common::batch_command;

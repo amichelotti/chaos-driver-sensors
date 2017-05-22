@@ -26,6 +26,7 @@
 #include "CmdUTADefault.h"
 #include "CmdUTAShutter.h"
 
+#include <chaos/common/data/cache/AbstractSharedDomainCache.h>
 
 using namespace chaos;
 using namespace chaos::common::data;
@@ -33,6 +34,7 @@ using namespace chaos::common::batch_command;
 
 using namespace chaos::cu::control_manager::slow_command;
 using namespace chaos::cu::driver_manager::driver;
+using namespace chaos::common::data::cache;
 
 
 #define SCCUAPP INFO_LOG(SCUTA)
