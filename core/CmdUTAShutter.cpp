@@ -54,14 +54,14 @@ void CmdUTAShutter::setHandler(c_data::CDataWrapper *data) {
         if(!data ||
 	   !data->hasKey("id")) {
             DERR("no id is given");
-            	BC_END_RUNNIG_PROPERTY
+            	BC_END_RUNNING_PROPERTY
 		return;
         }
         
         if(!data ||
 	   !data->hasKey("set")) {
             DERR("no set is given");
-            	BC_END_RUNNIG_PROPERTY
+            	BC_END_RUNNING_PROPERTY
 		return;
         }
         
@@ -69,26 +69,26 @@ void CmdUTAShutter::setHandler(c_data::CDataWrapper *data) {
         val=data->getDoubleValue("set");
 	if(id<0 || id>=3){
             DERR("ID \"%d\" out of range",id);
-            BC_END_RUNNIG_PROPERTY
+            BC_END_RUNNING_PROPERTY
 	  return;
         }
         if(val<0 || val>100){
             DERR("shutter value \"%f\" out of range",val);
-            BC_END_RUNNIG_PROPERTY;
+            BC_END_RUNNING_PROPERTY;
 	  return;
         }
         *shutter[id] =val;
         val=(val/100)*10.0; // value between 0 and 10
         driver[UTA_SHUTTER_DRIVER]->writeChannel(&val,id,sizeof(double));
          
-	BC_EXEC_RUNNIG_PROPERTY;
+	BC_NORMAL_RUNNING_PROPERTY;
 
 }
 
 void CmdUTAShutter::acquireHandler() {
 	//force output dataset as changed
 	getAttributeCache()->setOutputDomainAsChanged();
-        BC_END_RUNNIG_PROPERTY;
+        BC_END_RUNNING_PROPERTY;
         
 }
   }}

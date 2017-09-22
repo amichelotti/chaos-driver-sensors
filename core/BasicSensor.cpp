@@ -94,6 +94,7 @@ void BasicSensor::unitDefineActionAndDataset() throw(chaos::CException) {
                               );
 
     }
+
     
   }
 
@@ -111,6 +112,7 @@ getAttributeCache()->resetChangedInputIndex();
 
 //!Execute the work, this is called with a determinated delay, it must be as fast as possible
 void BasicSensor::unitStart() throw(chaos::CException) {
+    setDefaultScheduleDelay(1000000);
 
 }
 

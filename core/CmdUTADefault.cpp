@@ -27,6 +27,8 @@
 #define CMDCU_ INFO_LOG(CmdUTADefault)
 #define CMDCUDBG_ DBG_LOG(CmdUTADefault)
 #define CMDCUERR_ ERR_LOG(CmdUTADefault)
+#include <chaos/common/data/cache/AbstractSharedDomainCache.h>
+using namespace chaos::common::data::cache;
 
 using namespace chaos::common::data;
 using namespace chaos::common::batch_command;
@@ -92,7 +94,7 @@ void CmdUTADefault::setHandler(c_data::CDataWrapper *data) {
         }
     }
     
-	BC_NORMAL_RUNNIG_PROPERTY
+	BC_NORMAL_RUNNING_PROPERTY
 }
 
     // Aquire the necessary data for the command
