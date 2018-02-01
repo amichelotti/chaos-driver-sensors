@@ -6,6 +6,7 @@ models/ZBSensor/ZBArduino/WSN Node/lib/dht11
 models/ZBSensor/ZBArduino/WSN Node/lib/OneWire
 models/ZBSensor/ZBArduino/WSN Node/lib/SD2403RTC
 models/ZBSensor/ZBArduino/WSN Node/lib/SD2403RTC/utility
-/usr/local/chaos/chaos-distrib/include
+../../chaosframework/usr/local/include
 models
 models/cameras/Basler
+/opt/pylon5/include/

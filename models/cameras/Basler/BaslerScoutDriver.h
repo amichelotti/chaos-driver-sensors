@@ -18,14 +18,15 @@
  *    	See the License for the specific language governing permissions and
  *    	limitations under the License.
  */
-#ifndef VTEMPERATUREDRIVER_h
-#define VTEMPERATUREDRIVER_h
+#ifndef BASLERDRIVER_h
+#define BASLERDRIVER_h
 
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <driver/sensors/core/AbstractSensorDriver.h>
 #include <chaos/common/data/DatasetDB.h>
 #include <stdint.h>
 namespace cu_driver = chaos::cu::driver_manager::driver;
+#include <pylon/PylonIncludes.h>
 
 /*
  driver definition
@@ -39,10 +40,9 @@ namespace driver {
 
 class BaslerScoutDriver:public ::driver::sensor::AbstractSensorDriver{
 
-	int counter;
-    double freq;
-    int32_t points;
-    int32_t sinpoint;
+    // This smart pointer will receive the grab result data.
+     Pylon::CGrabResultPtr ptrGrabResult;
+     Pylon::CInstantCamera* camera;
 public:
 	BaslerScoutDriver();
 	~BaslerScoutDriver();
