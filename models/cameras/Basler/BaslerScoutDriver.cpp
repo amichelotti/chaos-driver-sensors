@@ -17,14 +17,17 @@
  *    	See the License for the specific language governing permissions and
  *    	limitations under the License.
  */
-#include <driver/sensors/models/Simulator/BaslerScoutDriver.h>
+#include <driver/sensors/models/cameras/Basler/BaslerScoutDriver.h>
 #include <stdlib.h>
 #include <string>
 
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <math.h>
 #include <boost/lexical_cast.hpp>
+// use the pylon driver
+#include <pylon/ConfigurationEventHandler.h>
 
+using namespace Pylon;
 namespace cu_driver = chaos::cu::driver_manager::driver;
 using namespace driver::sensor::model;
 
@@ -39,84 +42,200 @@ OPEN_CU_DRIVER_PLUGIN_CLASS_DEFINITION(BaslerScoutDriver, 1.0.0,::driver::sensor
 REGISTER_CU_DRIVER_PLUGIN_CLASS_INIT_ATTRIBUTE(::driver::sensor::model::BaslerScoutDriver, http_address/dnsname:port)
 CLOSE_CU_DRIVER_PLUGIN_CLASS_DEFINITION
 
+class CConfigurationEventPrinter : public CConfigurationEventHandler
+{
+                                              public:
+                                              void OnAttach( CInstantCamera& /*camera*/)
+{
+                                              BaslerScoutDriverLDBG_ << "OnAttach event";
+                                              }
 
-DEF_SENSOR_DATASET
-DEF_SENSOR_CHANNEL("RNDTEMP","Virtual random temperature",chaos::DataType::Output,chaos::DataType::TYPE_DOUBLE,sizeof(double))
-DEF_SENSOR_CHANNEL("RAMPTEMP","Virtual ramp temperature",chaos::DataType::Output,chaos::DataType::TYPE_INT32,sizeof(int32_t))
-DEF_SENSOR_CHANNEL("SINTEMP","Virtual periodic temperature",chaos::DataType::Output,chaos::DataType::TYPE_DOUBLE,sizeof(double))
-DEF_SENSOR_CHANNEL("FREQ","Virtual periodic frequency",chaos::DataType::Input,chaos::DataType::TYPE_DOUBLE,sizeof(double))
-DEF_SENSOR_CHANNEL("POINTS","Virtual periodic points",chaos::DataType::Input,chaos::DataType::TYPE_INT32,sizeof(int32_t))
-ENDDEF_SENSOR_DATASET
+                                              void OnAttached( CInstantCamera& camera)
+{
+                                              BaslerScoutDriverLDBG_<< "OnAttached event for device " << camera.GetDeviceInfo().GetModelName() ;
+                                              }
 
+                                              void OnOpen( CInstantCamera& camera)
+{
+                                              BaslerScoutDriverLDBG_<< "OnOpen event for device " << camera.GetDeviceInfo().GetModelName() ;
+                                              }
+
+                                              void OnOpened( CInstantCamera& camera)
+{
+                                              BaslerScoutDriverLDBG_<< "OnOpened event for device " << camera.GetDeviceInfo().GetModelName() ;
+                                              }
+
+                                              void OnGrabStart( CInstantCamera& camera)
+{
+                                              BaslerScoutDriverLDBG_<< "OnGrabStart event for device " << camera.GetDeviceInfo().GetModelName() ;
+                                              }
+
+                                              void OnGrabStarted( CInstantCamera& camera)
+{
+                                              BaslerScoutDriverLDBG_<< "OnGrabStarted event for device " << camera.GetDeviceInfo().GetModelName() ;
+                                              }
+
+                                              void OnGrabStop( CInstantCamera& camera)
+{
+                                              BaslerScoutDriverLDBG_<< "OnGrabStop event for device " << camera.GetDeviceInfo().GetModelName() ;
+                                              }
+
+                                              void OnGrabStopped( CInstantCamera& camera)
+{
+                                              BaslerScoutDriverLDBG_<< "OnGrabStopped event for device " << camera.GetDeviceInfo().GetModelName() ;
+                                              }
+
+                                              void OnClose( CInstantCamera& camera)
+{
+                                              BaslerScoutDriverLDBG_<< "OnClose event for device " << camera.GetDeviceInfo().GetModelName() ;
+                                              }
+
+                                              void OnClosed( CInstantCamera& camera)
+{
+                                              BaslerScoutDriverLDBG_<< "OnClosed event for device " << camera.GetDeviceInfo().GetModelName() ;
+                                              }
+
+                                              void OnDestroy( CInstantCamera& camera)
+{
+                                              BaslerScoutDriverLDBG_<< "OnDestroy event for device " << camera.GetDeviceInfo().GetModelName() ;
+                                              }
+
+                                              void OnDestroyed( CInstantCamera& /*camera*/)
+{
+                                              BaslerScoutDriverLDBG_<< "OnDestroyed event" ;
+                                              }
+
+                                              void OnDetach( CInstantCamera& camera)
+{
+                                              BaslerScoutDriverLDBG_<< "OnDetach event for device " << camera.GetDeviceInfo().GetModelName() ;
+                                              }
+
+                                              void OnDetached( CInstantCamera& camera)
+{
+                                              BaslerScoutDriverLDBG_<< "OnDetached event for device " << camera.GetDeviceInfo().GetModelName() ;
+                                              }
+
+                                              void OnGrabError( CInstantCamera& camera, const String_t errorMessage)
+{
+                                              BaslerScoutDriverLDBG_<< "OnGrabError event for device " << camera.GetDeviceInfo().GetModelName() ;
+                                              BaslerScoutDriverLDBG_<< "Error Message: " << errorMessage  ;
+                                              }
+
+                                              void OnCameraDeviceRemoved( CInstantCamera& camera)
+{
+                                              BaslerScoutDriverLDBG_<< "OnCameraDeviceRemoved event for device " << camera.GetDeviceInfo().GetModelName() ;
+                                              }
+                                              };
+
+class CCameraEventPrinter : public CCameraEventHandler
+{
+public:
+    virtual void OnCameraEvent( CInstantCamera& camera, intptr_t userProvidedId, GenApi::INode* pNode)
+    {
+        BaslerScoutDriverLDBG_<<  "OnCameraEvent event for device " << camera.GetDeviceInfo().GetModelName() ;
+        BaslerScoutDriverLDBG_<<  "User provided ID: " << userProvidedId ;
+        BaslerScoutDriverLDBG_<<  "Event data node name: " << pNode->GetName() ;
+        GenApi::CValuePtr ptrValue( pNode );
+        if ( ptrValue.IsValid() )
+        {
+            BaslerScoutDriverLDBG_<<  "Event node data: " << ptrValue->ToString();
+        }
+    }
+};
 //GET_PLUGIN_CLASS_DEFINITION
 //we need to define the driver with alias version and a class that implement it
-BaslerScoutDriver::BaslerScoutDriver(){
-  INIT_SENSOR_DATASET;
-    counter=0;
-    freq = 1.0;
-    sinpoint=0;
-    points=100.0;
+BaslerScoutDriver::BaslerScoutDriver():camera(NULL){
+    PylonInitialize();
+
 }
 //default descrutcor
 BaslerScoutDriver::~BaslerScoutDriver() {
-
+    if(camera){
+        delete camera;
+    }
 }
 
 int BaslerScoutDriver::readChannel(void *buffer,int addr,int bcount){
-    counter++;
-    counter=counter%100;
-    
-    switch(addr){
-        case 0:{
-            double*pnt=(double*)buffer;
 
-            srand(time(NULL));
-            int rnd=rand();
-            pnt[0] = (rnd*1.0/RAND_MAX)*10.0 +25;
-            BaslerScoutDriverLDBG_<<"reading channel :"<<addr<<" Virtual Random Temp:"<<pnt[0];
 
-            return 1;
-        }
-        case 1:{
-            int32_t* pnt=(int32_t*)buffer;
-            pnt[0] = counter;
-            BaslerScoutDriverLDBG_<<"reading channel :"<<addr<<" Virtual Ramp Temp:"<<pnt[0];
-
-            return 1;
-        }
-        case 2:{
-            double*pnt=(double*)buffer;
-            sinpoint++;
-	    if(points>0){
-	      pnt[0] = points*sin((6.28*freq)*sinpoint/points);
-	    } else {
-	      BaslerScoutDriverLERR_<<"reading channel :"<<addr<<" Virtual Periodic Temp, invalid number of points:"<<points;
-	    }
-            sinpoint=sinpoint%points;
-            BaslerScoutDriverLDBG_<<"reading channel :"<<addr<<" Virtual Periodic Temp:"<<pnt[0];
-
-            return 1;
-        }
+    if ( camera->WaitForFrameTriggerReady( 1000, TimeoutHandling_ThrowException)){
+        camera->ExecuteSoftwareTrigger();
     }
-    
-    return 1;
+
+
+
+    while(camera->GetGrabResultWaitObject().Wait( 0) == 0){
+        WaitObject::Sleep( 100);
+    }
+    int nBuffersInQueue = 0;
+    while( camera->RetrieveResult( 0, ptrGrabResult, TimeoutHandling_Return))
+    {
+        if ( ptrGrabResult->GetNumberOfSkippedImages())
+        {
+            BaslerScoutDriverLDBG_<< "Skipped " << ptrGrabResult->GetNumberOfSkippedImages() << " image.";
+        }
+        if (ptrGrabResult->GrabSucceeded()){
+            // Access the image data.
+            BaslerScoutDriverLDBG_<<"SizeX: " << ptrGrabResult->GetWidth() ;
+            BaslerScoutDriverLDBG_<<"SizeY: " << ptrGrabResult->GetHeight();
+            const uint8_t *pImageBuffer = (uint8_t *) ptrGrabResult->GetBuffer();
+            //      cout << "Gray value of first pixel: " << (uint32_t) pImageBuffer[0] << endl << endl;
+            int size_ret=(bcount<ptrGrabResult->GetImageSize())?bcount:ptrGrabResult->GetImageSize();
+            memcpy(buffer,pImageBuffer,size_ret);
+            return size_ret;
+
+        }
+        else
+        {
+            BaslerScoutDriverLERR_<< "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription();
+        }
+
+        nBuffersInQueue++;
+    }
+
+    BaslerScoutDriverLDBG_<<"Retrieved " << nBuffersInQueue << " grab results from output queue.";
+
+    return 0;
     
 }
 int BaslerScoutDriver::writeChannel(void *buffer,int addr,int bcount){
     BaslerScoutDriverLDBG_<<"writing channel :"<<addr<<" bcount:"<<bcount;
-    if(addr==0){
-        freq=*(double*)buffer;
-        return 1;
-    }
-    if(addr==1){
-        points=*(int32_t*)buffer;
-        return 1;
-    }
+
     return 0;
 }
 
 int BaslerScoutDriver::sensorInit(void *buffer,int sizeb){
     BaslerScoutDriverLDBG_<<"Initialization string: \""<<buffer<<"\"";
+    // simple initialization
+    if(camera==NULL){
+        // Create an instant camera object for the camera device found first.
+
+        camera = new CInstantCamera(CTlFactory::GetInstance().CreateFirstDevice());
+        // Register the standard configuration event handler for enabling software triggering.
+        // The software trigger configuration handler replaces the default configuration
+        // as all currently registered configuration handlers are removed by setting the registration mode to RegistrationMode_ReplaceAll.
+        camera->RegisterConfiguration( new CSoftwareTriggerConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
+        // For demonstration purposes only, add sample configuration event handlers to print out information
+        // about camera use and image grabbing.
+        camera->RegisterConfiguration( new CConfigurationEventPrinter, RegistrationMode_Append, Cleanup_Delete);
+        //camera->RegisterImageEventHandler( new CCameraEventPrinter, RegistrationMode_Append, Cleanup_Delete);
+        // Print the model name of the camera.
+        BaslerScoutDriverLDBG_<< "Using device " << camera->GetDeviceInfo().GetModelName();
+
+        // The MaxNumBuffer parameter can be used to control the count of buffers
+        // allocated for grabbing. The default value of this parameter is 10.
+        camera->MaxNumBuffer = 15;
+
+        // Open the camera.
+        camera->Open();
+
+        camera->StartGrabbing( GrabStrategy_LatestImages);
+
+
+
+
+    }
+
 
     return 0;
 }
