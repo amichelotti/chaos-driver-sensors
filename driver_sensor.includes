@@ -1,12 +1,4 @@
-core
-models/LucidControl
-models/Simulator
-models/ZBSensor
-models/ZBSensor/ZBArduino/WSN Node/lib/dht11
-models/ZBSensor/ZBArduino/WSN Node/lib/OneWire
-models/ZBSensor/ZBArduino/WSN Node/lib/SD2403RTC
-models/ZBSensor/ZBArduino/WSN Node/lib/SD2403RTC/utility
+../../chaosframework
+.
 ../../chaosframework/usr/local/include
-models
-models/cameras/Basler
-/opt/pylon5/include/
+
