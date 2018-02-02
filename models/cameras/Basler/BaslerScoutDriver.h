@@ -26,13 +26,14 @@
 #include <chaos/common/data/DatasetDB.h>
 #include <stdint.h>
 namespace cu_driver = chaos::cu::driver_manager::driver;
-#include <pylon/PylonIncludes.h>
 
 /*
  driver definition
  */
 DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(BaslerScoutDriver)
-
+namespace Pylon{
+  class CInstantCamera;
+};
 namespace driver {
     namespace sensor {
         namespace model {
@@ -41,7 +42,6 @@ namespace driver {
 class BaslerScoutDriver:public ::driver::sensor::AbstractSensorDriver{
 
     // This smart pointer will receive the grab result data.
-     Pylon::CGrabResultPtr ptrGrabResult;
      Pylon::CInstantCamera* camera;
 public:
 	BaslerScoutDriver();

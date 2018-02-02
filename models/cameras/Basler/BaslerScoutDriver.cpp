@@ -23,6 +23,8 @@
 
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <math.h>
+#include <pylon/PylonIncludes.h>
+
 #include <boost/lexical_cast.hpp>
 // use the pylon driver
 #include <pylon/ConfigurationEventHandler.h>
@@ -157,6 +159,7 @@ BaslerScoutDriver::~BaslerScoutDriver() {
 
 int BaslerScoutDriver::readChannel(void *buffer,int addr,int bcount){
 
+    Pylon::CGrabResultPtr ptrGrabResult;
 
     if ( camera->WaitForFrameTriggerReady( 1000, TimeoutHandling_ThrowException)){
         camera->ExecuteSoftwareTrigger();
