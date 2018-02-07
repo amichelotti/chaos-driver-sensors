@@ -147,7 +147,8 @@ public:
 //GET_PLUGIN_CLASS_DEFINITION
 //we need to define the driver with alias version and a class that implement it
 BaslerScoutDriver::BaslerScoutDriver():camera(NULL){
-    PylonInitialize();
+
+    BaslerScoutDriverLDBG_<<  "Created Driver";
 
 }
 //default descrutcor
@@ -159,7 +160,11 @@ BaslerScoutDriver::~BaslerScoutDriver() {
 
 int BaslerScoutDriver::readChannel(void *buffer,int addr,int bcount){
 
+    if(camera==NULL){
+        return -1;
+    }
     Pylon::CGrabResultPtr ptrGrabResult;
+    BaslerScoutDriverLDBG_<<  "read channel "<<addr;
 
     if ( camera->WaitForFrameTriggerReady( 1000, TimeoutHandling_ThrowException)){
         camera->ExecuteSoftwareTrigger();
@@ -208,35 +213,61 @@ int BaslerScoutDriver::writeChannel(void *buffer,int addr,int bcount){
 }
 
 int BaslerScoutDriver::sensorInit(void *buffer,int sizeb){
-    BaslerScoutDriverLDBG_<<"Initialization string: \""<<buffer<<"\"";
+    BaslerScoutDriverLDBG_<<"Initialization";
     // simple initialization
-    if(camera==NULL){
-        // Create an instant camera object for the camera device found first.
+    try {
+        if(camera==NULL){
+            PylonInitialize();
+            BaslerScoutDriverLDBG_<<  "Pylon driver initialized";
+            // Create an instant camera object for the camera device found first.
+            BaslerScoutDriverLDBG_<<"getting  camera informations ..";
+            IPylonDevice* pdev=CTlFactory::GetInstance().CreateFirstDevice();
+            if(pdev){
+                BaslerScoutDriverLDBG_<<" Model:"<< pdev->GetDeviceInfo().GetModelName();
+            } else {
+                BaslerScoutDriverLERR_<< "cannot create instance";
+                return -1;
+            }
+            BaslerScoutDriverLDBG_<<"creating camera";
 
-        camera = new CInstantCamera(CTlFactory::GetInstance().CreateFirstDevice());
-        // Register the standard configuration event handler for enabling software triggering.
-        // The software trigger configuration handler replaces the default configuration
-        // as all currently registered configuration handlers are removed by setting the registration mode to RegistrationMode_ReplaceAll.
-        camera->RegisterConfiguration( new CSoftwareTriggerConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
-        // For demonstration purposes only, add sample configuration event handlers to print out information
-        // about camera use and image grabbing.
-        camera->RegisterConfiguration( new CConfigurationEventPrinter, RegistrationMode_Append, Cleanup_Delete);
-        //camera->RegisterImageEventHandler( new CCameraEventPrinter, RegistrationMode_Append, Cleanup_Delete);
-        // Print the model name of the camera.
-        BaslerScoutDriverLDBG_<< "Using device " << camera->GetDeviceInfo().GetModelName();
+            camera = new CInstantCamera(pdev);
+            BaslerScoutDriverLDBG_<<"created camera";
 
-        // The MaxNumBuffer parameter can be used to control the count of buffers
-        // allocated for grabbing. The default value of this parameter is 10.
-        camera->MaxNumBuffer = 15;
+            // Register the standard configuration event handler for enabling software triggering.
+            // The software trigger configuration handler replaces the default configuration
+            // as all currently registered configuration handlers are removed by setting the registration mode to RegistrationMode_ReplaceAll.
+            camera->RegisterConfiguration( new CSoftwareTriggerConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
+            BaslerScoutDriverLDBG_<<"trigger configuration handler installed";
 
-        // Open the camera.
-        camera->Open();
+            // For demonstration purposes only, add sample configuration event handlers to print out information
+            // about camera use and image grabbing.
+            camera->RegisterConfiguration( new CConfigurationEventPrinter, RegistrationMode_Append, Cleanup_Delete);
+            BaslerScoutDriverLDBG_<<"event  handler installed";
 
-        camera->StartGrabbing( GrabStrategy_LatestImages);
+            //camera->RegisterImageEventHandler( new CCameraEventPrinter, RegistrationMode_Append, Cleanup_Delete);
+            // Print the model name of the camera.
+            BaslerScoutDriverLDBG_<< "Using device " << camera->GetDeviceInfo().GetModelName();
+
+            // The MaxNumBuffer parameter can be used to control the count of buffers
+            // allocated for grabbing. The default value of this parameter is 10.
+            camera->MaxNumBuffer = 15;
+            BaslerScoutDriverLDBG_<<"Open camera";
+
+            // Open the camera.
+            camera->Open();
+            BaslerScoutDriverLDBG_<<"Start Grabbing";
+
+            camera->StartGrabbing( GrabStrategy_LatestImages);
 
 
 
 
+        }
+    } catch  (const GenericException &e){
+        // Error handling.
+        BaslerScoutDriverLERR_<<  "An exception occurred.";
+        BaslerScoutDriverLERR_<< e.GetDescription();
+        return -2;
     }
 
 
