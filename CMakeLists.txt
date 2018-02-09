@@ -1,6 +1,18 @@
 cmake_minimum_required(VERSION 2.6)
 project(chaos_driver_sensors)
+
 FILE(GLOB sensors_src core/*.cpp)
+SET(camera_src "")
+SET(camera_lib "")
+IF(OPENCV)
+  FILE(GLOB camera_src models/camera/*.cpp)
+  FILE(REMOVE models/camera/UnitServerIgnore)
+  SET(camera_lib ${OPENCV}/lib/opencv_core.so)
+  ADD_DEFINITION(-DCAMERA)
+ELSE()
+  FILE(WRITE models/camera/UnitServerIgnore "disabled ${PROJECT_NAME}")
+ENDIF()
+
 # SET(sensors_src core/BasicSensor.cpp core/AbstractSensorDriver.cpp core/SensorDriverInterface.cpp core/SCUTA.cpp core/CmdUTAShutter.cpp core/CmdUTADefault.cpp models/plugins.cpp)
 
 SET(BasicSensorClient_src test/sensorsClient.cpp)
@@ -8,14 +20,14 @@ SET(BasicSensorClient_src test/sensorsClient.cpp)
 
 IF(BUILD_FORCE_STATIC)
   SET(CMAKE_EXE_LINKER_FLAGS "-static -Wl,--whole-archive -lchaos_common -Wl,--no-whole-archive")
-   ADD_LIBRARY(${PROJECT_NAME} STATIC ${sensors_src})		 
+   ADD_LIBRARY(${PROJECT_NAME} STATIC ${sensors_src} ${camera_src})		 
 
 ELSE()
-    ADD_LIBRARY(${PROJECT_NAME} SHARED ${sensors_src})		 
+    ADD_LIBRARY(${PROJECT_NAME} SHARED ${sensors_src} ${camera_src})		 
 
 ENDIF()
 
- TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_common common_serial ${FrameworkLib})
+ TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_common common_serial ${FrameworkLib} ${camera_lib})
 
 ADD_SUBDIRECTORY(models)
 

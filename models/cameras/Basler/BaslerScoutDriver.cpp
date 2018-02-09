@@ -184,12 +184,14 @@ int BaslerScoutDriver::readChannel(void *buffer,int addr,int bcount){
         }
         if (ptrGrabResult->GrabSucceeded()){
             // Access the image data.
-            BaslerScoutDriverLDBG_<<"SizeX: " << ptrGrabResult->GetWidth() ;
-            BaslerScoutDriverLDBG_<<"SizeY: " << ptrGrabResult->GetHeight();
+
             const uint8_t *pImageBuffer = (uint8_t *) ptrGrabResult->GetBuffer();
             //      cout << "Gray value of first pixel: " << (uint32_t) pImageBuffer[0] << endl << endl;
             int size_ret=(bcount<ptrGrabResult->GetImageSize())?bcount:ptrGrabResult->GetImageSize();
             memcpy(buffer,pImageBuffer,size_ret);
+            BaslerScoutDriverLDBG_<<"SizeX: " << ptrGrabResult->GetWidth() ;
+            BaslerScoutDriverLDBG_<<"SizeY: " << ptrGrabResult->GetHeight();
+            BaslerScoutDriverLDBG_<<"Image Raw Size: " << size_ret ;
             return size_ret;
 
         }
