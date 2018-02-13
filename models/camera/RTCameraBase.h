@@ -27,7 +27,7 @@
 namespace driver{
     
     namespace sensor{
-            
+         namespace camera{
 class RTCameraBase : public chaos::cu::control_manager::RTAbstractControlUnit {
 	PUBLISHABLE_CONTROL_UNIT_INTERFACE(RTCameraBase);
 
@@ -93,5 +93,5 @@ protected:
 		*/
 		void unitInputAttributeChangedHandler() throw(chaos::CException);
 };
-    }}
+    }}}
 #endif

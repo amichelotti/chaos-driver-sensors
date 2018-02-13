@@ -17,7 +17,7 @@
  *    	See the License for the specific language governing permissions and
  *    	limitations under the License.
  */
-#include <driver/sensors/models/cameras/Basler/BaslerScoutDriver.h>
+#include <driver/sensors/models/camera/Basler/BaslerScoutDriver.h>
 #include <stdlib.h>
 #include <string>
 
@@ -31,8 +31,7 @@
 
 using namespace Pylon;
 namespace cu_driver = chaos::cu::driver_manager::driver;
-using namespace driver::sensor::model;
-
+using namespace ::driver::sensor::camera;
 #define BaslerScoutDriverLAPP_		LAPP_ << "[BaslerScoutDriver] "
 #define BaslerScoutDriverLDBG_		LDBG_ << "[BaslerScoutDriver] "
 #define BaslerScoutDriverLERR_		LERR_ << "[BaslerScoutDriver] "
@@ -40,8 +39,8 @@ using namespace driver::sensor::model;
 
 //GET_PLUGIN_CLASS_DEFINITION
 //we need only to define the driver because we don't are makeing a plugin
-OPEN_CU_DRIVER_PLUGIN_CLASS_DEFINITION(BaslerScoutDriver, 1.0.0,::driver::sensor::model::BaslerScoutDriver)
-REGISTER_CU_DRIVER_PLUGIN_CLASS_INIT_ATTRIBUTE(::driver::sensor::model::BaslerScoutDriver, http_address/dnsname:port)
+OPEN_CU_DRIVER_PLUGIN_CLASS_DEFINITION(BaslerScoutDriver, 1.0.0,::driver::sensor::camera::BaslerScoutDriver)
+REGISTER_CU_DRIVER_PLUGIN_CLASS_INIT_ATTRIBUTE(::driver::sensor::camera::BaslerScoutDriver, http_address/dnsname:port)
 CLOSE_CU_DRIVER_PLUGIN_CLASS_DEFINITION
 
 class CConfigurationEventPrinter : public CConfigurationEventHandler
@@ -187,11 +186,20 @@ int BaslerScoutDriver::readChannel(void *buffer,int addr,int bcount){
 
             const uint8_t *pImageBuffer = (uint8_t *) ptrGrabResult->GetBuffer();
             //      cout << "Gray value of first pixel: " << (uint32_t) pImageBuffer[0] << endl << endl;
-            int size_ret=(bcount<ptrGrabResult->GetImageSize())?bcount:ptrGrabResult->GetImageSize();
-            memcpy(buffer,pImageBuffer,size_ret);
+
+
             BaslerScoutDriverLDBG_<<"SizeX: " << ptrGrabResult->GetWidth() ;
             BaslerScoutDriverLDBG_<<"SizeY: " << ptrGrabResult->GetHeight();
+            CPylonImage target;
+            CImageFormatConverter converter;
+            converter.OutputPixelFormat=PixelType_RGB8packed;
+            converter.OutputBitAlignment=OutputBitAlignment_MsbAligned;
+            converter.Convert(target,ptrGrabResult);
+
+            int size_ret=(bcount<target.GetImageSize())?bcount:target.GetImageSize();
+            memcpy(buffer,target.GetBuffer(),size_ret);
             BaslerScoutDriverLDBG_<<"Image Raw Size: " << size_ret ;
+
             return size_ret;
 
         }

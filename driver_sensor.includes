@@ -2,3 +2,4 @@
 .
 ../../chaosframework/usr/local/include
 /opt/pylon5/include
+models/cameras

@@ -36,7 +36,7 @@ namespace Pylon{
 };
 namespace driver {
     namespace sensor {
-        namespace model {
+        namespace camera {
     
 
 class BaslerScoutDriver:public ::driver::sensor::AbstractSensorDriver{

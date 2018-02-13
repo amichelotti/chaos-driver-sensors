@@ -39,7 +39,9 @@ ChaosCLI --metadata-server mds_url:5000 --deviceid device_name --op 9 --rt-attr-
 #include <driver/sensors/models/ZBSensor/ZBSensorNodeD.h>
 #include <driver/sensors/models/ZBSensor/ZBSensorNodeS.h>
 #include <string>
-
+#ifdef CAMERA
+#include <driver/sensors/models/camera/RTCameraBase.h>
+#endif
 #include <chaos/cu_toolkit/ChaosCUToolkit.h>
 
 using namespace chaos;
@@ -52,30 +54,31 @@ using namespace ::driver::sensor::model;
 
 int main(int argc, char *argv[])
 {
-	std::string tmp_device_id;
-	try {
-		// initialize the control unit toolkit
-		ChaosCUToolkit::getInstance()->init(argc, argv);
+    std::string tmp_device_id;
+    try {
+        // initialize the control unit toolkit
+        ChaosCUToolkit::getInstance()->init(argc, argv);
 
-		// allocate the instance and inspector for driver
-		REGISTER_DRIVER(,VTemperatureDriver);
-		REGISTER_DRIVER(,LucidTemperatureDriver);
-		REGISTER_DRIVER(,LucidOutputDriver);
+        // allocate the instance and inspector for driver
+        REGISTER_DRIVER(,VTemperatureDriver);
+        REGISTER_DRIVER(,LucidTemperatureDriver);
+        REGISTER_DRIVER(,LucidOutputDriver);
 
-                //REGISTER_DRIVER(,ZBSensorCollector);
-                    REGISTER_DRIVER(,ZBSensorNodeC);
-            REGISTER_DRIVER(,ZBSensorNodeD);
-            REGISTER_DRIVER(,ZBSensorNodeS);
+        //REGISTER_DRIVER(,ZBSensorCollector);
+        REGISTER_DRIVER(,ZBSensorNodeC);
+        REGISTER_DRIVER(,ZBSensorNodeD);
+        REGISTER_DRIVER(,ZBSensorNodeS);
         REGISTER_CU(::driver::sensor::BasicSensor);
-		
-		// start control unit toolkit until someone will close it
-		ChaosCUToolkit::getInstance()->start();
-	} catch (CException& ex) {
-		DECODE_CHAOS_EXCEPTION(ex)
-	} catch (program_options::error &e){
-		cerr << "Unable to parse command line: " << e.what() << endl;
-	} catch (...){
-		cerr << "unexpected exception caught.. " << endl;
-	}
-	return 0;
+        REGISTER_CU(::driver::sensor::camera::RTCameraBase);
+
+        // start control unit toolkit until someone will close it
+        ChaosCUToolkit::getInstance()->start();
+    } catch (CException& ex) {
+        DECODE_CHAOS_EXCEPTION(ex)
+    } catch (program_options::error &e){
+        cerr << "Unable to parse command line: " << e.what() << endl;
+    } catch (...){
+        cerr << "unexpected exception caught.. " << endl;
+    }
+    return 0;
 }

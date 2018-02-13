@@ -19,16 +19,17 @@
  */
 
 #include "RTCameraBase.h"
-#include "AbstractSensorDriver.h"
+#include <driver/sensors/core/AbstractSensorDriver.h>
 #include <chaos/cu_toolkit/control_manager/AttributeSharedCacheWrapper.h>
 #include <opencv/cv.h>
+#include <opencv2/highgui/highgui.hpp>
 
 using namespace chaos;
 using namespace chaos::common::data::cache;
 using namespace chaos::cu::driver_manager::driver;
-using namespace ::driver::sensor;
+using namespace ::driver::sensor::camera;
 using namespace chaos::cu::control_manager;
-
+using namespace cv;
 PUBLISHABLE_CONTROL_UNIT_IMPLEMENTATION(RTCameraBase)
 
 #define RTCameraBaseLAPP_		LAPP_ << "[RTCameraBase] "
@@ -118,8 +119,15 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
     int ret;
     int size=*sizex*(*sizey)*(std::max(*depth/8,1));
     ret=driver->readChannel(framebuf,0,size);
-    cv::Mat image;
-    image.create(*sizex, *sizey, CV_8UC1);
+     cv::Mat image(*sizex,*sizey,CV_8UC1,framebuf,Mat::AUTO_STEP);
+    if(image.empty()){
+          RTCameraBaseLERR_"cannot convert image";
+           return;
+     }
+    namedWindow("Captura",WINDOW_AUTOSIZE);
+    imshow( "Captura", image );
+
+
       getAttributeCache()->setOutputDomainAsChanged();
 }
 

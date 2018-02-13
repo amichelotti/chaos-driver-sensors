@@ -1,3 +1,4 @@
+CMakeLists.txt
 core/AbstractCameraDriver.cpp
 core/AbstractCameraDriver.h
 core/AbstractSensorDriver.cpp
@@ -8,8 +9,6 @@ core/CmdUTADefault.cpp
 core/CmdUTADefault.h
 core/CmdUTAShutter.cpp
 core/CmdUTAShutter.h
-core/RTCameraBase.cpp
-core/RTCameraBase.h
 core/SCUTA.cpp
 core/SCUTA.h
 core/SensorDriverInterface.cpp
@@ -66,9 +65,11 @@ models/ZBSensor/ZBSensorNodeS.cpp
 models/ZBSensor/ZBSensorNodeS.cpp
 models/ZBSensor/ZBSensorNodeS.h
 models/ZBSensor/ZBSensorNodeS.h
-models/cameras/Basler/BaslerScoutDriver.cpp
-models/cameras/Basler/BaslerScoutDriver.h
-models/cameras/Basler/CMakeLists.txt
+models/camera/Basler/BaslerScoutDriver.cpp
+models/camera/Basler/BaslerScoutDriver.h
+models/camera/Basler/CMakeLists.txt
+models/camera/RTCameraBase.cpp
+models/camera/RTCameraBase.h
 models/plugins.cpp
 models/plugins.cpp
 test/sensorsClient.cpp
