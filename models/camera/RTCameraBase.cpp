@@ -101,11 +101,14 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     }
     depth=cc->getROPtr<int32_t>(DOMAIN_INPUT, "DEPTH");
     mode=cc->getROPtr<int32_t>(DOMAIN_INPUT, "MODE");
-    framebuf=cc->getRWPtr<uint8_t>(DOMAIN_OUTPUT, "FRAMEBUFFER");
+    framebuf_out=cc->getRWPtr<uint8_t>(DOMAIN_OUTPUT, "FRAMEBUFFER");
     cc->setOutputAttributeNewSize("FRAMEBUFFER",*sizex*(*sizey)*(std::max(*depth/8,1)),true);
     if(driver->sensorInit(0,0)!=0){
         throw chaos::CException(-1,"cannot initialize camera",__PRETTY_FUNCTION__);
     }
+    int size=*sizex*(*sizey)*(std::max(*depth/8,1));
+
+    framebuf = (uint8_t*)malloc(size);
     RTCameraBaseLDBG_<<"Starting acquiring imagex "<<*sizex<<"x"<<*sizey<<" depth:"<<*depth<<" bits";
 }
 
@@ -120,15 +123,19 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
     int ret;
     int size=*sizex*(*sizey)*(std::max(*depth/8,1));
     ret=driver->readChannel(framebuf,0,size);
-     cv::Mat image(*sizex,*sizey,CV_8UC1,framebuf,Mat::AUTO_STEP);
+    RTCameraBaseLDBG_<<" raw image read:"<<ret;
+     cv::Mat image(*sizey,*sizex,CV_8UC1,framebuf);
     if(image.empty()){
           RTCameraBaseLERR_"cannot convert image";
            return;
      }
     std::vector<uchar> buf;
-    bool code = cv::imencode(".jpg", image, buf );
+    bool code = cv::imencode(".png", image, buf );
     uchar* result = reinterpret_cast<uchar*> (&buf[0]);
-    memcpy(framebuf,result,buf.size());
+    RTCameraBaseLDBG_<<" jpeg image encoded:"<<buf.size();
+    getAttributeCache()->setOutputAttributeNewSize("FRAMEBUFFER", buf.size());
+
+    memcpy(framebuf_out,result,buf.size());
     //    namedWindow("Captura",WINDOW_AUTOSIZE);
     //    imshow( "Captura", image );
 
@@ -143,7 +150,10 @@ void RTCameraBase::unitStop() throw(chaos::CException) {
 
 //!Deinit the Control Unit
 void RTCameraBase::unitDeinit() throw(chaos::CException) {
-
+    if(framebuf){
+        free(framebuf);
+        framebuf=0;
+    }
 }
 
 //! pre imput attribute change

@@ -46,7 +46,7 @@ protected:
         const int32_t *sizex,*sizey,*depth;
         const int32_t* mode;
         uint8_t* framebuf;
-
+        uint8_t* framebuf_out;
         SensorDriverInterface*driver;
 		/*!
 		Define the Control Unit Dataset and Actions

@@ -193,6 +193,8 @@ int BaslerScoutDriver::readChannel(void *buffer,int addr,int bcount){
             CPylonImage target;
             CImageFormatConverter converter;
             converter.OutputPixelFormat=PixelType_RGB8packed;
+           // converter.OutputPixelFormat=PixelType_BGR8packed;
+          //  converter.OutputPixelFormat=PixelType_Mono8;
             converter.OutputBitAlignment=OutputBitAlignment_MsbAligned;
             converter.Convert(target,ptrGrabResult);
 

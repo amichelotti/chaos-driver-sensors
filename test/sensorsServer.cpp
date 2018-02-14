@@ -40,7 +40,7 @@ ChaosCLI --metadata-server mds_url:5000 --deviceid device_name --op 9 --rt-attr-
 #include <driver/sensors/models/ZBSensor/ZBSensorNodeS.h>
 #include <string>
 #ifdef CAMERA
-#include <driver/sensors/models/camera/RTCameraBase.h>
+//#include <driver/sensors/models/camera/RTCameraBase.h>
 #endif
 #include <chaos/cu_toolkit/ChaosCUToolkit.h>
 
@@ -68,9 +68,9 @@ int main(int argc, char *argv[])
         REGISTER_DRIVER(,ZBSensorNodeC);
         REGISTER_DRIVER(,ZBSensorNodeD);
         REGISTER_DRIVER(,ZBSensorNodeS);
-        REGISTER_CU(::driver::sensor::BasicSensor);
+       /* REGISTER_CU(::driver::sensor::BasicSensor);
         REGISTER_CU(::driver::sensor::camera::RTCameraBase);
-
+*/
         // start control unit toolkit until someone will close it
         ChaosCUToolkit::getInstance()->start();
     } catch (CException& ex) {
