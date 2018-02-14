@@ -23,6 +23,7 @@
 #include <chaos/cu_toolkit/control_manager/AttributeSharedCacheWrapper.h>
 #include <opencv/cv.h>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core/core.hpp>
 
 using namespace chaos;
 using namespace chaos::common::data::cache;
@@ -124,8 +125,12 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
           RTCameraBaseLERR_"cannot convert image";
            return;
      }
-    namedWindow("Captura",WINDOW_AUTOSIZE);
-    imshow( "Captura", image );
+    std::vector<uchar> buf;
+    bool code = cv::imencode(".jpg", image, buf );
+    uchar* result = reinterpret_cast<uchar*> (&buf[0]);
+    memcpy(framebuf,result,buf.size());
+    //    namedWindow("Captura",WINDOW_AUTOSIZE);
+    //    imshow( "Captura", image );
 
 
       getAttributeCache()->setOutputDomainAsChanged();
