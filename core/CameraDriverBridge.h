@@ -20,6 +20,7 @@
 #ifndef __ASTRACTCAMERABRIDGE_H__
 #define __ASTRACTCAMERABRIDGE_H__
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
+#include <driver/sensors/core/AbstractCameraDriver.h>
 namespace cu_driver = chaos::cu::driver_manager::driver;
 
 namespace driver {
@@ -27,15 +28,11 @@ namespace driver {
 namespace sensor {
 namespace camera{
 
-class AbstractCameraDriver;
+  class CameraDriverBridge:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, AbstractCameraDriver {
 
-class CameraDriverBridge:public AbstractCameraDriver, ADD_CU_DRIVER_PLUGIN_SUPERCLASS {
 
-    void driverInit(const char *initParameter) throw(chaos::CException);
-    void driverDeinit() throw(chaos::CException);
 protected:
 
-    AbstractCameraDriver* camera;
 public:
     CameraDriverBridge();
 

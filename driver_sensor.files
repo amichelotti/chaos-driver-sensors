@@ -5,6 +5,10 @@ core/AbstractSensorDriver.cpp
 core/AbstractSensorDriver.h
 core/BasicSensor.cpp
 core/BasicSensor.h
+core/CameraDriverBridge.cpp
+core/CameraDriverBridge.h
+core/CameraDriverInterface.cpp
+core/CameraDriverInterface.h
 core/CmdUTADefault.cpp
 core/CmdUTADefault.h
 core/CmdUTAShutter.cpp

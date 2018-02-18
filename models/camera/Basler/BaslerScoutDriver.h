@@ -22,7 +22,7 @@
 #define BASLERDRIVER_h
 
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
-#include <driver/sensors/core/AbstractSensorDriver.h>
+#include <driver/sensors/core/CameraDriverBridge.h>
 #include <chaos/common/data/DatasetDB.h>
 #include <stdint.h>
 namespace cu_driver = chaos::cu::driver_manager::driver;
@@ -39,46 +39,42 @@ namespace driver {
         namespace camera {
     
 
-class BaslerScoutDriver:public ::driver::sensor::AbstractSensorDriver{
+class BaslerScoutDriver:public ::driver::sensor::camera::CameraDriverBridge {
 
+
+ protected:
+  void driverInit(const char *initParameter) throw(chaos::CException) ;
+
+
+  void driverDeinit() throw(chaos::CException) ;
     // This smart pointer will receive the grab result data.
      Pylon::CInstantCamera* camera;
+     uint32_t shots;
+     void*framebuf;
+     cameraGrabCallBack fn;
 public:
 	BaslerScoutDriver();
 	~BaslerScoutDriver();
-    //! Execute a command
-        /**
-         \brief Read a channel from the physical sensor
-         \param buffer[out] destination buffer
-         \param addr[in] channel address or identification
-         \param bcout[in] buffer count
-         \return the number of succesful read items, negative error
+    int setImageProperties(uint32_t width,uint32_t height,uint32_t opencvImageType);
 
-         */
-    int readChannel(void *buffer,int addr,int bcount);
-    /**
-     \brief Write a channel from the physical sensor
-     \param buffer[out] destination buffer
-     \param addr[in] channel address or identification
-     \param bcout[in] buffer count
-     \return the number of succesful written items, negative error
-     */
-    int writeChannel(void *buffer,int addr,int bcount);
-    
-    /**
-     \brief init the sensor
-     \param buffer[in] initialisation opaque parameter
-     \return 0 if success, error otherwise
-     
-     */
-    int sensorInit(void *buffer,int sizeb);
-    
-    /**
-     \brief deinit the sensor
-     \param buffer[in] initialisation opaque parameter
-     \return 0 if success, error otherwise
-     */
-    int sensorDeinit();
+     int getImageProperties(uint32_t& width,uint32_t& height,uint32_t& opencvImageType);
+
+
+     int setCameraProperty(const std::string& propname,uint32_t val);
+
+     int getCameraProperty(const std::string& propname,uint32_t& val);
+
+     int getCameraProperties(std::vector<std::string >& proplist);
+
+     int startGrab(uint32_t shots,void*framebuf=NULL,cameraGrabCallBack=NULL);
+
+     int waitGrab(uint32_t timeout_ms);
+
+     int stopGrab();
+
+     int cameraInit(void *buffer,uint32_t sizeb);
+
+     int cameraDeinit();
         
 };
         }}}

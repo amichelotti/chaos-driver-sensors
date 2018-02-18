@@ -1,9 +1,9 @@
 /*
- *	CameraDriverInterface.h
- *	!CHAOS driver STUB
+ *	AbstracCameraDriver.h
+ *	!CHAOS
  *	Created by Andrea Michelotti
  *  Abstraction of a simple sensor driver
- *    	Copyright 2017 INFN, National Institute of Nuclear Physics
+ *    	Copyright 2018 INFN, National Institute of Nuclear Physics
  *
  *    	Licensed under the Apache License, Version 2.0 (the "License");
  *    	you may not use this file except in compliance with the License.
@@ -17,36 +17,16 @@
  *    	See the License for the specific language governing permissions and
  *    	limitations under the License.
  */
-#ifndef __ASTRACTCAMERADRIVERINTERFACE_H__
-#define __ASTRACTCAMERADRIVERINTERFACE_H__
+#ifndef __ASTRACTCAMERADRIVER_H__
+#define __ASTRACTCAMERADRIVER_H__
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
-#include <driver/sensors/core/AbstractCameraDriver.h>
-#include <chaos/cu_toolkit/driver_manager/driver/DriverTypes.h>
-#include <chaos/cu_toolkit/driver_manager/driver/DriverAccessor.h>
-namespace chaos_driver=::chaos::cu::driver_manager::driver;
+namespace cu_driver = chaos::cu::driver_manager::driver;
+#include <string>
+#include <vector>
 namespace driver {
-
 namespace sensor {
 namespace camera{
-typedef enum CameraDriverInterfaceOpcode{
-    // x,y,opencv encoding
-    CameraDriverInterfaceOpcode_SET_IMAGE_PROP = chaos_driver::OpcodeType::OP_USER,
-    CameraDriverInterfaceOpcode_GET_IMAGE_PROP,
-    CameraDriverInterfaceOpcode_SET_PROP,
-    CameraDriverInterfaceOpcode_GET_PROP,
-    CameraDriverInterfaceOpcode_GET_PROPERTIES,
-    CameraDriverInterfaceOpcode_START_GRAB,
-    CameraDriverInterfaceOpcode_WAIT_GRAB,
-    CameraDriverInterfaceOpcode_STOP_GRAB,
-    CameraDriverInterfaceOpcode_INIT,
-    CameraDriverInterfaceOpcode_DEINIT
 
-} CameraDriverInterfaceOpcode;
-
-
-/*
- driver definition
- */
 
 /**
 
@@ -57,30 +37,17 @@ typedef enum CameraDriverInterfaceOpcode{
     \param error[in] an error occurred, or 0 if grabbing ok
 
 */
-
-typedef struct {
-    uint32_t arg0;
-    uint32_t arg1;
-    uint32_t arg2;
-    int result;
-    void*buffer;
-    void*fn;
-    char* str; //strings
-    int strl; //len
-} camera_params_t;
-
-class CameraDriverInterface: public AbstractCameraDriver {
+typedef void (*cameraGrabCallBack)(void*buf,uint32_t blen,uint32_t width,uint32_t heigth, uint32_t error) ;
 
 
-protected:
-    chaos_driver::DrvMsg message;
-    chaos_driver::DriverAccessor* accessor;
+ class AbstractCameraDriver{
+
+
 
 public:
-    CameraDriverInterface(chaos_driver::DriverAccessor*_accessor):accessor(_accessor){};
+   AbstractCameraDriver(){}
 
-    ~CameraDriverInterface();
-
+    //! Execute a command
     /**
          \brief Set Image properties, width, height, image type (opencv encoding), if the camera supports this feature the image will be resized as requested
          \param width[in] requested image width
@@ -88,7 +55,7 @@ public:
          \param opencvImageType[in] requested pixel encoding, opencv types
          \return 0 if success
          */
-    virtual int setImageProperties(uint32_t width,uint32_t height,uint32_t opencvImageType);
+    virtual int setImageProperties(uint32_t width,uint32_t height,uint32_t opencvImageType)=0;
     /**
      \brief Get Image properties, width, height, image type (opencv encoding)
      \param width[out] requested image width
@@ -96,7 +63,7 @@ public:
      \param opencvImageType[out] requested pixel encoding, opencv types
      \return 0 if success
      */
-    virtual int getImageProperties(uint32_t& width,uint32_t& height,uint32_t& opencvImageType);
+    virtual int getImageProperties(uint32_t& width,uint32_t& height,uint32_t& opencvImageType)=0;
     
 
     /**
@@ -105,21 +72,21 @@ public:
      \param val[in] value
      \return 0 if success
      */
-    virtual int setCameraProperty(const std::string& propname,uint32_t val);
+    virtual int setCameraProperty(const std::string& propname,uint32_t val)=0;
     /**
  \brief Get Camera property
      \param propname[in] property name
      \param val[out] value
  \return 0 if success
  */
-    virtual int getCameraProperty(const std::string& propname,uint32_t& val);
+    virtual int getCameraProperty(const std::string& propname,uint32_t& val)=0;
 
     /**
      \brief Get Ima properties
          \param proplist[out] lists of camera properties
      \return 0 if success
      */
-    virtual int getCameraProperties(std::vector<std::string >& proplist);
+    virtual int getCameraProperties(std::vector<std::string >& proplist)=0;
 
     /**
      \brief Start Image Grabbing
@@ -128,34 +95,34 @@ public:
      \param callback[in] callback when grab a new image
      \return 0 if success
      */
-    virtual int startGrab(uint32_t shots,void*framebuf=NULL,cameraGrabCallBack=NULL);
+    virtual int startGrab(uint32_t shots,void*framebuf=NULL,cameraGrabCallBack c=NULL)=0;
 
     /**
      \brief Wait Image Grabbing
      \param timeout[in] timeout in ms to wait (0 waits indefinitively)
      \return 0 if success
      */
-    virtual int waitGrab(uint32_t timeout_ms);
+    virtual int waitGrab(uint32_t timeout_ms)=0;
 
     /**
      \brief Stop Image Grabbing
 
      \return 0 if success
      */
-    virtual int stopGrab();
+    virtual int stopGrab()=0;
     /**
      \brief init the sensor
      \param buffer[in] initialisation opaque parameter
      \return 0 if success, error otherwise
      */
-    virtual int cameraInit(void *buffer,uint32_t sizeb);
+    virtual int cameraInit(void *buffer,uint32_t sizeb)=0;
     
     /**
      \brief deinit the sensor
      \param buffer[in] initialisation opaque parameter
      \return 0 if success, error otherwise
      */
-    virtual int cameraDeinit();
+    virtual int cameraDeinit()=0;
 
 };
 }

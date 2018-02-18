@@ -34,11 +34,6 @@ using namespace ::driver::sensor::camera;
 #define CameraDriverBridgeLERR_		LERR_ << "[CameraDriverBridge] "
 
 
-//GET_PLUGIN_CLASS_DEFINITION
-//we need to define the driver with alias version and a class that implement it
-//default constructor definition
-DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR(CameraDriverBridge) {
-}
 
 
 //default descrutcor
@@ -60,14 +55,14 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
             uint32_t height=in->arg1;
             uint32_t opencvImageType=in->arg2;
 
-            out->result=camera->setImageProperties(width,height,opencvImageType);
+            out->result=setImageProperties(width,height,opencvImageType);
             break;
         }
     case CameraDriverInterfaceOpcode_GET_IMAGE_PROP:{
         uint32_t width;
         uint32_t height;
         uint32_t opencvImageType;
-        out->result=camera->getImageProperties(width,height,opencvImageType);
+        out->result=getImageProperties(width,height,opencvImageType);
         out->arg0=width;
         out->arg1=height;
         out->arg2=opencvImageType;
@@ -77,20 +72,20 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
         case CameraDriverInterfaceOpcode_SET_PROP:{
             const char*pnt=in->str;
             uint32_t val=in->arg0;
-            out->result=camera->setCameraProperty(pnt,val);
+            out->result=setCameraProperty(pnt,val);
             break;
         }
     case CameraDriverInterfaceOpcode_GET_PROP:{
         const char*pnt=in->str;
         uint32_t val;
-        out->result=camera->getCameraProperty(pnt,val);
+        out->result=getCameraProperty(pnt,val);
         out->arg0=val;
         break;
     }
     case CameraDriverInterfaceOpcode_GET_PROPERTIES:{
         std::vector<std::string> props;
 
-        out->result=camera->getCameraProperties(props);
+        out->result=getCameraProperties(props);
         // calc len
         int maxlen=0;
         out->str=0;

@@ -43,6 +43,14 @@ OPEN_CU_DRIVER_PLUGIN_CLASS_DEFINITION(BaslerScoutDriver, 1.0.0,::driver::sensor
 REGISTER_CU_DRIVER_PLUGIN_CLASS_INIT_ATTRIBUTE(::driver::sensor::camera::BaslerScoutDriver, http_address/dnsname:port)
 CLOSE_CU_DRIVER_PLUGIN_CLASS_DEFINITION
 
+void BaslerScoutDriver::driverInit(const char *initParameter) throw(chaos::CException) {
+    BaslerScoutDriverLAPP_ << "Init driver ";
+}
+
+void BaslerScoutDriver::driverDeinit() throw(chaos::CException) {
+    BaslerScoutDriverLAPP_ << "Deinit driver";
+
+}
 class CConfigurationEventPrinter : public CConfigurationEventHandler
 {
                                               public:
@@ -145,7 +153,7 @@ public:
 };
 //GET_PLUGIN_CLASS_DEFINITION
 //we need to define the driver with alias version and a class that implement it
-BaslerScoutDriver::BaslerScoutDriver():camera(NULL){
+BaslerScoutDriver::BaslerScoutDriver():camera(NULL),shots(0),framebuf(NULL),fn(NULL){
 
     BaslerScoutDriverLDBG_<<  "Created Driver";
 
@@ -157,74 +165,8 @@ BaslerScoutDriver::~BaslerScoutDriver() {
     }
 }
 
-int BaslerScoutDriver::readChannel(void *buffer,int addr,int bcount){
 
-    if(camera==NULL){
-        return -1;
-    }
-    Pylon::CGrabResultPtr ptrGrabResult;
-    BaslerScoutDriverLDBG_<<  "read channel "<<addr;
-
-    if ( camera->WaitForFrameTriggerReady( 1000, TimeoutHandling_ThrowException)){
-        camera->ExecuteSoftwareTrigger();
-    }
-
-
-
-    while(camera->GetGrabResultWaitObject().Wait( 0) == 0){
-        WaitObject::Sleep( 100);
-    }
-    int nBuffersInQueue = 0;
-    while( camera->RetrieveResult( 0, ptrGrabResult, TimeoutHandling_Return))
-    {
-        if ( ptrGrabResult->GetNumberOfSkippedImages())
-        {
-            BaslerScoutDriverLDBG_<< "Skipped " << ptrGrabResult->GetNumberOfSkippedImages() << " image.";
-        }
-        if (ptrGrabResult->GrabSucceeded()){
-            // Access the image data.
-
-            const uint8_t *pImageBuffer = (uint8_t *) ptrGrabResult->GetBuffer();
-            //      cout << "Gray value of first pixel: " << (uint32_t) pImageBuffer[0] << endl << endl;
-
-
-            BaslerScoutDriverLDBG_<<"SizeX: " << ptrGrabResult->GetWidth() ;
-            BaslerScoutDriverLDBG_<<"SizeY: " << ptrGrabResult->GetHeight();
-            CPylonImage target;
-            CImageFormatConverter converter;
-            converter.OutputPixelFormat=PixelType_RGB8packed;
-           // converter.OutputPixelFormat=PixelType_BGR8packed;
-          //  converter.OutputPixelFormat=PixelType_Mono8;
-            converter.OutputBitAlignment=OutputBitAlignment_MsbAligned;
-            converter.Convert(target,ptrGrabResult);
-
-            int size_ret=(bcount<target.GetImageSize())?bcount:target.GetImageSize();
-            memcpy(buffer,target.GetBuffer(),size_ret);
-            BaslerScoutDriverLDBG_<<"Image Raw Size: " << size_ret ;
-
-            return size_ret;
-
-        }
-        else
-        {
-            BaslerScoutDriverLERR_<< "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription();
-        }
-
-        nBuffersInQueue++;
-    }
-
-    BaslerScoutDriverLDBG_<<"Retrieved " << nBuffersInQueue << " grab results from output queue.";
-
-    return 0;
-    
-}
-int BaslerScoutDriver::writeChannel(void *buffer,int addr,int bcount){
-    BaslerScoutDriverLDBG_<<"writing channel :"<<addr<<" bcount:"<<bcount;
-
-    return 0;
-}
-
-int BaslerScoutDriver::sensorInit(void *buffer,int sizeb){
+int BaslerScoutDriver::cameraInit(void *buffer,uint32_t sizeb){
     BaslerScoutDriverLDBG_<<"Initialization";
     // simple initialization
     try {
@@ -267,10 +209,6 @@ int BaslerScoutDriver::sensorInit(void *buffer,int sizeb){
 
             // Open the camera.
             camera->Open();
-            BaslerScoutDriverLDBG_<<"Start Grabbing";
-
-            camera->StartGrabbing( GrabStrategy_LatestImages);
-
 
 
 
@@ -286,11 +224,97 @@ int BaslerScoutDriver::sensorInit(void *buffer,int sizeb){
     return 0;
 }
 
-int BaslerScoutDriver::sensorDeinit(){
+int BaslerScoutDriver::cameraDeinit(){
     BaslerScoutDriverLDBG_<<"deinit";
-    return 1;
+    return 0;
 }
 
 
+int BaslerScoutDriver::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
+  BaslerScoutDriverLDBG_<<"Start Grabbing";
+  shots=_shots;
+  framebuf=_framebuf;
+  fn=_fn;
+  camera->StartGrabbing( GrabStrategy_LatestImages);
+
+}
+
+int BaslerScoutDriver::waitGrab(uint32_t timeout_ms){
+      if(camera==NULL){
+        return -1;
+    }
+    Pylon::CGrabResultPtr ptrGrabResult;
+
+    if ( camera->WaitForFrameTriggerReady( 1000, TimeoutHandling_ThrowException)){
+        camera->ExecuteSoftwareTrigger();
+    }
 
 
+
+    while(camera->GetGrabResultWaitObject().Wait( 0) == 0){
+        WaitObject::Sleep( 100);
+    }
+    int nBuffersInQueue = 0;
+    while( camera->RetrieveResult( 0, ptrGrabResult, TimeoutHandling_Return))
+    {
+        if ( ptrGrabResult->GetNumberOfSkippedImages())
+        {
+            BaslerScoutDriverLDBG_<< "Skipped " << ptrGrabResult->GetNumberOfSkippedImages() << " image.";
+        }
+        if (ptrGrabResult->GrabSucceeded()){
+            // Access the image data.
+
+            const uint8_t *pImageBuffer = (uint8_t *) ptrGrabResult->GetBuffer();
+            //      cout << "Gray value of first pixel: " << (uint32_t) pImageBuffer[0] << endl << endl;
+
+
+            BaslerScoutDriverLDBG_<<"SizeX: " << ptrGrabResult->GetWidth() ;
+            BaslerScoutDriverLDBG_<<"SizeY: " << ptrGrabResult->GetHeight();
+           // CPylonImage target;
+           // CImageFormatConverter converter;
+           // converter.OutputPixelFormat=PixelType_RGB8packed;
+           // converter.OutputPixelFormat=PixelType_BGR8packed;
+          //  converter.OutputPixelFormat=PixelType_Mono8;
+          //  converter.OutputBitAlignment=OutputBitAlignment_MsbAligned;
+            //converter.Convert(target,ptrGrabResult);
+
+           // int size_ret=(bcount<target.GetImageSize())?bcount:target.GetImageSize();
+//            memcpy(buffer,target.GetBuffer(),size_ret);
+
+//             int size_ret=(bcount<= ptrGrabResult->GetImageSize())?bcount: ptrGrabResult->GetImageSize();
+	    int size_ret=ptrGrabResult->GetImageSize();
+             memcpy(framebuf,pImageBuffer,size_ret);
+            BaslerScoutDriverLDBG_<<"Image Raw Size: " << size_ret ;
+
+            return size_ret;
+
+        }
+        else
+        {
+            BaslerScoutDriverLERR_<< "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription();
+        }
+
+        nBuffersInQueue++;
+    }
+
+    BaslerScoutDriverLDBG_<<"Retrieved " << nBuffersInQueue << " grab results from output queue.";
+
+    return 0;
+
+}
+int BaslerScoutDriver::stopGrab(){}
+
+int  BaslerScoutDriver::setImageProperties(uint32_t width,uint32_t height,uint32_t opencvImageType){
+}
+
+int  BaslerScoutDriver::getImageProperties(uint32_t& width,uint32_t& height,uint32_t& opencvImageType){
+}
+
+
+int  BaslerScoutDriver::setCameraProperty(const std::string& propname,uint32_t val){
+}
+
+int  BaslerScoutDriver::getCameraProperty(const std::string& propname,uint32_t& val){}
+
+int  BaslerScoutDriver::getCameraProperties(std::vector<std::string >& proplist){
+}

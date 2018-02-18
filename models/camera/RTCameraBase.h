@@ -21,13 +21,14 @@
 #define ChaosRTControlUnit_RTCameraBase_h
 
 #include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
-#include <driver/sensors/core/SensorDriverInterface.h>
+
 #define DEFAULT_RESOLUTION 640*480*3
 
 namespace driver{
     
     namespace sensor{
          namespace camera{
+	   class CameraDriverInterface;
 class RTCameraBase : public chaos::cu::control_manager::RTAbstractControlUnit {
 	PUBLISHABLE_CONTROL_UNIT_INTERFACE(RTCameraBase);
 
@@ -47,7 +48,7 @@ protected:
         const int32_t* mode;
         uint8_t* framebuf;
         uint8_t* framebuf_out;
-        SensorDriverInterface*driver;
+        CameraDriverInterface*driver;
 		/*!
 		Define the Control Unit Dataset and Actions
 		*/

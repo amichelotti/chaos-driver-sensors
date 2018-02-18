@@ -24,7 +24,7 @@
 #include <opencv/cv.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>
-
+#include <driver/sensors/core/CameraDriverInterface.h>
 using namespace chaos;
 using namespace chaos::common::data::cache;
 using namespace chaos::cu::driver_manager::driver;
@@ -52,7 +52,7 @@ RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drive
  */
 RTCameraBase::~RTCameraBase() {
     if(driver){
-        driver->sensorDeinit();
+        driver->cameraDeinit();
         delete driver;
         driver = NULL;
     }
@@ -90,7 +90,7 @@ void RTCameraBase::unitDefineCustomAttribute() {
 //!Initialize the Custom Control Unit
 void RTCameraBase::unitInit() throw(chaos::CException) {
     AttributeSharedCacheWrapper * cc=getAttributeCache();
-    driver=new SensorDriverInterface(getAccessoInstanceByIndex(0));
+    driver=new CameraDriverInterface(getAccessoInstanceByIndex(0));
 
     //breanch number and soft reset
 
@@ -103,7 +103,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     mode=cc->getROPtr<int32_t>(DOMAIN_INPUT, "MODE");
     framebuf_out=cc->getRWPtr<uint8_t>(DOMAIN_OUTPUT, "FRAMEBUFFER");
     cc->setOutputAttributeNewSize("FRAMEBUFFER",*sizex*(*sizey)*(std::max(*depth/8,1)),true);
-    if(driver->sensorInit(0,0)!=0){
+    if(driver->cameraInit(0,0)!=0){
         throw chaos::CException(-1,"cannot initialize camera",__PRETTY_FUNCTION__);
     }
     int size=*sizex*(*sizey)*(std::max(*depth/8,1));
@@ -115,6 +115,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
 //!Execute the work, this is called with a determinated delay, it must be as fast as possible
 void RTCameraBase::unitStart() throw(chaos::CException) {
 
+  driver->startGrab(0,framebuf,NULL);
 }
 
 //!Execute the Control Unit work
@@ -122,7 +123,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
   //get the output attribute pointer form the internal cache
     int ret;
     int size=*sizex*(*sizey)*(std::max(*depth/8,1));
-    ret=driver->readChannel(framebuf,0,size);
+    ret=driver->waitGrab(0);
     RTCameraBaseLDBG_<<" raw image read:"<<ret;
      cv::Mat image(*sizey,*sizex,CV_8UC1,framebuf);
     if(image.empty()){
