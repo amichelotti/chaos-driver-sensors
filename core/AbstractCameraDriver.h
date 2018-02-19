@@ -39,7 +39,19 @@ namespace camera{
 */
 typedef void (*cameraGrabCallBack)(void*buf,uint32_t blen,uint32_t width,uint32_t heigth, uint32_t error) ;
 
+enum TriggerModes {
+    CAMERA_TRIGGER_CONTINOUS,
+    CAMERA_TRIGGER_SINGLE,
+    CAMERA_TRIGGER_SOFT,
+    CAMERA_TRIGGER_HW
 
+} ;
+enum GrabStrategy {
+    CAMERA_ONE_BY_ONE, // images processed in their original arrival
+    CAMERA_LATEST_ONLY, // just last image
+    CAMERA_LATEST, // keep last images (number is defined by NIMAGES)
+    CAMERA_INCOMING // start grabbing just after the SW is waiting for
+} ;
  class AbstractCameraDriver{
 
 

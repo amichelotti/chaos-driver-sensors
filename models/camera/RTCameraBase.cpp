@@ -69,6 +69,8 @@ The api that can be called withi this method are listed into
 void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
     addAttributeToDataSet("IMAGEX","X image size",chaos::DataType::TYPE_INT32,chaos::DataType::Input);
     addAttributeToDataSet("IMAGEY","Y image size",chaos::DataType::TYPE_INT32,chaos::DataType::Input);
+    addAttributeToDataSet("OFFSETX","AreaOfInterest Offset X (if supported)",chaos::DataType::TYPE_INT32,chaos::DataType::Input);
+    addAttributeToDataSet("OFFSETY","AreaOfInterest Offset Y (if supported)",chaos::DataType::TYPE_INT32,chaos::DataType::Input);
     addAttributeToDataSet("DEPTH","Pixel depth",chaos::DataType::TYPE_INT32,chaos::DataType::Input);
     addAttributeToDataSet("SHUTTER","Shutter",chaos::DataType::TYPE_INT32,chaos::DataType::Input);
     addAttributeToDataSet("BRIGHTNESS","Brightness %",chaos::DataType::TYPE_INT32,chaos::DataType::Input);
@@ -123,7 +125,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
   //get the output attribute pointer form the internal cache
     int ret;
     int size=*sizex*(*sizey)*(std::max(*depth/8,1));
-    ret=driver->waitGrab(0);
+    ret=driver->waitGrab(5000);
     RTCameraBaseLDBG_<<" raw image read:"<<ret;
      cv::Mat image(*sizey,*sizex,CV_8UC1,framebuf);
     if(image.empty()){

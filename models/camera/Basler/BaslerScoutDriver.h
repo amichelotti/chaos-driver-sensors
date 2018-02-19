@@ -33,24 +33,34 @@ namespace cu_driver = chaos::cu::driver_manager::driver;
 DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(BaslerScoutDriver)
 namespace Pylon{
   class CInstantCamera;
+
 };
 namespace driver {
     namespace sensor {
         namespace camera {
-    
+        class CConfigurationEvent;
+
+#define CAM_DEFAULT_WIDTH 659
+#define CAM_DEFAULT_HEIGTH 494
 
 class BaslerScoutDriver:public ::driver::sensor::camera::CameraDriverBridge {
 
 
+   chaos::common::data::CDataWrapper* props;
  protected:
-  void driverInit(const char *initParameter) throw(chaos::CException) ;
+ void driverInit(const char *initParameter) throw(chaos::CException);
+ void driverInit(const chaos::common::data::CDataWrapper& json) throw(chaos::CException);
 
 
   void driverDeinit() throw(chaos::CException) ;
     // This smart pointer will receive the grab result data.
      Pylon::CInstantCamera* camera;
+     TriggerModes tmode; //0 continous, 1 software,2 hw,3 singleshot
+     GrabStrategy gstrategy;
+
      uint32_t shots;
      void*framebuf;
+
      cameraGrabCallBack fn;
 public:
 	BaslerScoutDriver();
@@ -76,6 +86,7 @@ public:
 
      int cameraDeinit();
         
+     friend class CConfigurationEvent;
 };
         }}}
 #endif /* defined(__ControlUnitTest__DummyDriver__) */

@@ -17,10 +17,9 @@
  *    	See the License for the specific language governing permissions and
  *    	limitations under the License.
  */
-#include "CameraDriverBridge.h"
 #include <stdlib.h>
 #include <string>
-#include <driver/sensors/core/AbstractCameraDriver.h>
+#include <driver/sensors/core/CameraDriverBridge.h>
 
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 
@@ -33,10 +32,13 @@ using namespace ::driver::sensor::camera;
 #define CameraDriverBridgeLDBG_		LDBG_ << "[CameraDriverBridge] "
 #define CameraDriverBridgeLERR_		LERR_ << "[CameraDriverBridge] "
 
+DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera, CameraDriverBridge) {
+
+}
 
 
 
-//default descrutcor
+//default destructor
 CameraDriverBridge::~CameraDriverBridge() {
 
 }
