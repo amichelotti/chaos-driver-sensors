@@ -42,9 +42,15 @@ using namespace ::driver::sensor::camera;
 OPEN_CU_DRIVER_PLUGIN_CLASS_DEFINITION(BaslerScoutDriver, 1.0.0,::driver::sensor::camera::BaslerScoutDriver)
 REGISTER_CU_DRIVER_PLUGIN_CLASS_INIT_ATTRIBUTE(::driver::sensor::camera::BaslerScoutDriver, http_address/dnsname:port)
 CLOSE_CU_DRIVER_PLUGIN_CLASS_DEFINITION
+OPEN_REGISTER_PLUGIN
+REGISTER_PLUGIN(::driver::sensor::camera::BaslerScoutDriver)
+CLOSE_REGISTER_PLUGIN
+
 
 void BaslerScoutDriver::driverInit(const char *initParameter) throw(chaos::CException){
-    CHAOS_ASSERT(0);
+    BaslerScoutDriverLAPP_ << "Initializing  driver:"<<initParameter;
+    props->reset();
+
 }
 
 void BaslerScoutDriver::driverInit(const chaos::common::data::CDataWrapper& json) throw(chaos::CException){
