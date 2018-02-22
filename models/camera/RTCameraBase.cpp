@@ -91,6 +91,7 @@ void RTCameraBase::unitDefineCustomAttribute() {
 
 //!Initialize the Custom Control Unit
 void RTCameraBase::unitInit() throw(chaos::CException) {
+    int ret;
     AttributeSharedCacheWrapper * cc=getAttributeCache();
     driver=new CameraDriverInterface(getAccessoInstanceByIndex(0));
 
@@ -105,8 +106,8 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     mode=cc->getROPtr<int32_t>(DOMAIN_INPUT, "MODE");
     framebuf_out=cc->getRWPtr<uint8_t>(DOMAIN_OUTPUT, "FRAMEBUFFER");
     cc->setOutputAttributeNewSize("FRAMEBUFFER",*sizex*(*sizey)*(std::max(*depth/8,1)),true);
-    if(driver->cameraInit(0,0)!=0){
-        throw chaos::CException(-1,"cannot initialize camera",__PRETTY_FUNCTION__);
+    if((ret=driver->cameraInit(0,0))!=0){
+        throw chaos::CException(ret,"cannot initialize camera",__PRETTY_FUNCTION__);
     }
     int size=*sizex*(*sizey)*(std::max(*depth/8,1));
 

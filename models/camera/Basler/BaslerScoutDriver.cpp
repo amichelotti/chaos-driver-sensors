@@ -314,6 +314,9 @@ int BaslerScoutDriver::cameraInit(void *buffer,uint32_t sizeb){
         BaslerScoutDriverLERR_<<  "An exception occurred.";
         BaslerScoutDriverLERR_<< e.GetDescription();
         return -2;
+    } catch(...){
+        BaslerScoutDriverLERR_<<  "An exception occurred.";
+        return -3;
     }
 
 

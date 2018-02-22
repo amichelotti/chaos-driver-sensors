@@ -28,6 +28,7 @@ using namespace ::driver::sensor::camera;
 camera_params_t ret;\
 camera_params_t idata;\
 message.opcode = op; \
+CameraDriverInterfaceLDBG_<<"STUB Opcode:"<<op;\
 message.inputData=(void*)&idata;\
 message.inputDataLength=sizeof(camera_params_t);\
 message.resultDataLength=sizeof(camera_params_t);\
@@ -199,6 +200,7 @@ int CameraDriverInterface::stopGrab(){
 }
 int CameraDriverInterface::cameraInit(void *buffer,uint32_t sizeb){
     PREPARE_OP(CameraDriverInterfaceOpcode_INIT);
+
     idata.buffer=buffer;
     idata.arg0=sizeb;
     SEND_AND_RETURN;

@@ -50,7 +50,7 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
 	cu_driver::MsgManagmentResultType::MsgManagmentResult result = cu_driver::MsgManagmentResultType::MMR_EXECUTED;
     camera_params_t *in = (camera_params_t *)cmd->inputData;
     camera_params_t *out = (camera_params_t *)cmd->resultData;
-
+    CameraDriverBridgeLDBG_ <<" SKELETON Opcode:"<<cmd->opcode;
 	switch(cmd->opcode) {
         case CameraDriverInterfaceOpcode_SET_IMAGE_PROP:{
             uint32_t width=in->arg0;
@@ -106,8 +106,27 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
         }
         break;
     }
+    case CameraDriverInterfaceOpcode_INIT:{
+        out->result=cameraInit(in->buffer,in->arg0);
+        break;
+    }
 
-
+    case CameraDriverInterfaceOpcode_DEINIT:{
+        out->result=cameraDeinit();
+        break;
+    }
+    case CameraDriverInterfaceOpcode_START_GRAB:{
+        out->result=startGrab(in->arg0,in->buffer,(cameraGrabCallBack)in->fn);
+        break;
+    }
+    case CameraDriverInterfaceOpcode_WAIT_GRAB:{
+        out->result=waitGrab(in->arg0);
+        break;
+    }
+    case CameraDriverInterfaceOpcode_STOP_GRAB:{
+        out->result=stopGrab();
+        break;
+    }
 	}
 	return result;
 }
