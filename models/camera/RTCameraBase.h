@@ -44,11 +44,13 @@ public:
     ~RTCameraBase();
 
 protected:
-        const int32_t *sizex,*sizey,*depth;
+        const int32_t *sizex,*sizey,*depth,*offsetx,*offsety;
         const int32_t* mode;
         uint8_t* framebuf;
         uint8_t* framebuf_out;
+         char*fmt;
         CameraDriverInterface*driver;
+        bool setProp(const std::string &name, int32_t value, uint32_t size);
 		/*!
 		Define the Control Unit Dataset and Actions
 		*/
@@ -93,6 +95,8 @@ protected:
 		is called
 		*/
 		void unitInputAttributeChangedHandler() throw(chaos::CException);
+
+
 };
     }}}
 #endif

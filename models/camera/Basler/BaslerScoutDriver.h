@@ -62,6 +62,7 @@ class BaslerScoutDriver:public ::driver::sensor::camera::CameraDriverBridge {
      void*framebuf;
 
      cameraGrabCallBack fn;
+     int propsToCamera(Pylon::CInstantCamera& camera,chaos::common::data::CDataWrapper*p);
 public:
 	BaslerScoutDriver();
 	~BaslerScoutDriver();
