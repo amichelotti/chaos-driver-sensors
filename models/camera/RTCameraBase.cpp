@@ -170,7 +170,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     brightness=cc->getRWPtr<double>(DOMAIN_INPUT, "BRIGHTNESS");
     contrast=cc->getRWPtr<double>(DOMAIN_INPUT, "CONTRAST");
     sharpness=cc->getRWPtr<double>(DOMAIN_INPUT, "SHARPNESS");
-    gain==cc->getRWPtr<double>(DOMAIN_INPUT, "GAIN");
+    gain=cc->getRWPtr<double>(DOMAIN_INPUT, "GAIN");
 
     if((ret=driver->cameraInit(0,0))!=0){
         throw chaos::CException(ret,"cannot initialize camera",__PRETTY_FUNCTION__);
