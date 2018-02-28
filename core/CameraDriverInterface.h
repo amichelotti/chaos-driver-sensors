@@ -62,6 +62,7 @@ typedef struct {
     uint32_t arg0;
     uint32_t arg1;
     uint32_t arg2;
+    double farg;
     int result;
     void*buffer;
     void*fn;
@@ -102,18 +103,31 @@ public:
     /**
      \brief Set Camera property
      \param propname[in] property name
-     \param val[in] value
+     \param val[in] integer value
      \return 0 if success
      */
     virtual int setCameraProperty(const std::string& propname,uint32_t val);
     /**
+     \brief Set Camera property
+     \param propname[in] property name
+     \param val[in] double value
+     \return 0 if success
+     */
+    virtual int setCameraProperty(const std::string& propname,double val);
+    /**
  \brief Get Camera property
      \param propname[in] property name
-     \param val[out] value
+     \param val[out] integer value
  \return 0 if success
  */
     virtual int getCameraProperty(const std::string& propname,uint32_t& val);
-
+/*
+    \brief Get Camera property
+        \param propname[in] property name
+        \param val[out] double value
+    \return 0 if success
+    */
+       virtual int getCameraProperty(const std::string& propname,double & val);
     /**
      \brief Get Ima properties
          \param proplist[out] lists of camera properties

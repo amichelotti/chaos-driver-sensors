@@ -44,13 +44,17 @@ public:
     ~RTCameraBase();
 
 protected:
-        const int32_t *sizex,*sizey,*depth,*offsetx,*offsety;
+         int32_t *sizex,*sizey,*depth,*offsetx,*offsety;
         const int32_t* mode;
         uint8_t* framebuf;
         uint8_t* framebuf_out;
+        double*shutter,*brightness,*contrast,*sharpness,*gain;
+
          char*fmt;
         CameraDriverInterface*driver;
         bool setProp(const std::string &name, int32_t value, uint32_t size);
+        bool setProp(const std::string &name, double value, uint32_t size);
+
 		/*!
 		Define the Control Unit Dataset and Actions
 		*/

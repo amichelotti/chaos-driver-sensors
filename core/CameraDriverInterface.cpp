@@ -149,6 +149,14 @@ int CameraDriverInterface::setCameraProperty(const std::string& propname,uint32_
     SEND_AND_RETURN;
 }
 
+int CameraDriverInterface::setCameraProperty(const std::string& propname,double val){
+    PREPARE_OP(CameraDriverInterfaceOpcode_SET_PROP);
+    idata.str=strdup(propname.c_str());
+    idata.strl=propname.size();
+    idata.farg=val;
+    SEND_AND_RETURN;
+}
+
 int CameraDriverInterface::getCameraProperty(const std::string& propname,uint32_t& val){
     PREPARE_OP(CameraDriverInterfaceOpcode_GET_PROP);
     idata.str=(char*)propname.c_str();
@@ -156,6 +164,16 @@ int CameraDriverInterface::getCameraProperty(const std::string& propname,uint32_
     SEND;
 
     val=ret.arg0;
+    return ret.result;
+}
+
+int CameraDriverInterface::getCameraProperty(const std::string& propname,double& val){
+    PREPARE_OP(CameraDriverInterfaceOpcode_GET_PROP);
+    idata.str=(char*)propname.c_str();
+    idata.strl=propname.size();
+    SEND;
+
+    val=ret.farg;
     return ret.result;
 }
 

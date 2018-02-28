@@ -81,17 +81,32 @@ public:
     /**
      \brief Set Camera property
      \param propname[in] property name
-     \param val[in] value
+     \param val[in] integer value
      \return 0 if success
      */
     virtual int setCameraProperty(const std::string& propname,uint32_t val)=0;
-    /**
+   /**
+    \brief Set Camera property
+    \param propname[in] property name
+    \param val[in] double value
+    \return 0 if success
+    */
+    virtual int setCameraProperty(const std::string& propname,double val)=0;
+
+   /**
  \brief Get Camera property
      \param propname[in] property name
-     \param val[out] value
+     \param val[out] integer value
  \return 0 if success
  */
     virtual int getCameraProperty(const std::string& propname,uint32_t& val)=0;
+   /**
+ \brief Get Camera property
+     \param propname[in] property name
+     \param val[out] double value
+ \return 0 if success
+ */
+    virtual int getCameraProperty(const std::string& propname,double& val)=0;
 
     /**
      \brief Get Ima properties

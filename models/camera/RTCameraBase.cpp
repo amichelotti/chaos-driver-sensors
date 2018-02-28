@@ -59,7 +59,20 @@ RTCameraBase::~RTCameraBase() {
 
 
 }
-bool  RTCameraBase::setProp(const std::string &name, int32_t value, uint32_t size){
+bool  RTCameraBase::setProp(const std::string &name, int value, uint32_t size){
+    int ret;
+
+    ret=driver->setCameraProperty(name,(uint32_t)value);
+    setStateVariableSeverity(StateVariableTypeAlarmDEV,"operation_not_supported", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+
+    if(ret!=0){
+        setStateVariableSeverity(StateVariableTypeAlarmDEV,"operation_not_supported", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
+
+    }
+    return (ret==0);
+}
+
+bool  RTCameraBase::setProp(const std::string &name, double value, uint32_t size){
     int ret;
 
     ret=driver->setCameraProperty(name,value);
@@ -71,7 +84,6 @@ bool  RTCameraBase::setProp(const std::string &name, int32_t value, uint32_t siz
     }
     return (ret==0);
 }
-
 //!Return the definition of the control unit
 /*!
 The api that can be called withi this method are listed into
@@ -84,12 +96,13 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
     addAttributeToDataSet("OFFSETX","AreaOfInterest Offset X (if supported)",chaos::DataType::TYPE_INT32,chaos::DataType::Input);
     addAttributeToDataSet("OFFSETY","AreaOfInterest Offset Y (if supported)",chaos::DataType::TYPE_INT32,chaos::DataType::Input);
     addAttributeToDataSet("DEPTH","Pixel depth",chaos::DataType::TYPE_INT32,chaos::DataType::Input);
-    addAttributeToDataSet("SHUTTER","Shutter % (0:100, -1 = Auto) Adjust the exposure of the camera",chaos::DataType::TYPE_INT32,chaos::DataType::Input);
-    addAttributeToDataSet("BRIGHTNESS","Brightness %(0:100, -1 = Auto) Adjusting the brightness lightens or darkens the entire image.",chaos::DataType::TYPE_INT32,chaos::DataType::Input);
-    addAttributeToDataSet("CONTRAST","Contrast % (0:100, -1 = Auto) Adjusting the contrast increases the difference between light and dark areas in the image.",chaos::DataType::TYPE_INT32,chaos::DataType::Input);
 
-    addAttributeToDataSet("SHARPNESS","Sharpness % (0:100, -1 = Auto) Amount of sharpening to apply. The higher the sharpness, the more distinct the image subject's contours will be",chaos::DataType::TYPE_INT32,chaos::DataType::Input);
-    addAttributeToDataSet("GAIN","Gain % (0:100, -1 = Auto)",chaos::DataType::TYPE_INT32,chaos::DataType::Input);
+    addAttributeToDataSet("SHUTTER","Shutter % (0:100, -1 = Auto) Adjust the exposure of the camera",chaos::DataType::TYPE_DOUBLE,chaos::DataType::Input);
+    addAttributeToDataSet("BRIGHTNESS","Brightness %(0:100, -1 = Auto) Adjusting the brightness lightens or darkens the entire image.",chaos::DataType::TYPE_DOUBLE,chaos::DataType::Input);
+    addAttributeToDataSet("CONTRAST","Contrast % (0:100, -1 = Auto) Adjusting the contrast increases the difference between light and dark areas in the image.",chaos::DataType::TYPE_DOUBLE,chaos::DataType::Input);
+    addAttributeToDataSet("SHARPNESS","Sharpness % (0:100, -1 = Auto) Amount of sharpening to apply. The higher the sharpness, the more distinct the image subject's contours will be",chaos::DataType::TYPE_DOUBLE,chaos::DataType::Input);
+    addAttributeToDataSet("GAIN","Gain % (0:100, -1 = Auto)",chaos::DataType::TYPE_DOUBLE,chaos::DataType::Input);
+
     addAttributeToDataSet("MODE","0=grabbing,1=triggered,2=pulse",chaos::DataType::TYPE_BOOLEAN,chaos::DataType::Input);
     addAttributeToDataSet("FMT","image format (jpg,png,gif...)",chaos::DataType::TYPE_STRING,chaos::DataType::Input);
     addAttributeToDataSet("FILTER","Filter type and parameters (if any) ",chaos::DataType::TYPE_CLUSTER,chaos::DataType::Input);
@@ -102,18 +115,21 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
             "Generic Camera Error");
     addStateVariable(StateVariableTypeAlarmCU,"encode_error",
             "Encoding error");
-    addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, int >(this,
+    addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, double >(this,
             &::driver::sensor::camera::RTCameraBase::setProp,
             "GAIN");
-    addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, int >(this,
+    addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, double >(this,
             &::driver::sensor::camera::RTCameraBase::setProp,
             "SHARPNESS");
-    addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, int >(this,
+    addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, double >(this,
             &::driver::sensor::camera::RTCameraBase::setProp,
             "BRIGHTNESS");
-    addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, int >(this,
+    addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, double >(this,
             &::driver::sensor::camera::RTCameraBase::setProp,
             "SHUTTER");
+    addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, double >(this,
+            &::driver::sensor::camera::RTCameraBase::setProp,
+            "CONTRAST");
     addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, int >(this,
             &::driver::sensor::camera::RTCameraBase::setProp,
             "WIDTH");
@@ -138,32 +154,89 @@ void RTCameraBase::unitDefineCustomAttribute() {
 //!Initialize the Custom Control Unit
 void RTCameraBase::unitInit() throw(chaos::CException) {
     int ret;
+    uint32_t itype;
+    uint32_t width,height;
     AttributeSharedCacheWrapper * cc=getAttributeCache();
     driver=new CameraDriverInterface(getAccessoInstanceByIndex(0));
 
     //breanch number and soft reset
 
-    sizex=cc->getROPtr<int32_t>(DOMAIN_INPUT, "WIDTH");
-    sizey=cc->getROPtr<int32_t>(DOMAIN_INPUT, "HEIGHT");
-    offsetx=cc->getROPtr<int32_t>(DOMAIN_INPUT, "OFFSETX");
-    offsety=cc->getROPtr<int32_t>(DOMAIN_INPUT, "OFFSETY");
+    sizex=cc->getRWPtr<int32_t>(DOMAIN_INPUT, "WIDTH");
+    sizey=cc->getRWPtr<int32_t>(DOMAIN_INPUT, "HEIGHT");
+    offsetx=cc->getRWPtr<int32_t>(DOMAIN_INPUT, "OFFSETX");
+    offsety=cc->getRWPtr<int32_t>(DOMAIN_INPUT, "OFFSETY");
 
-    if(*sizex == 0 || *sizey == 0){
-        RTCameraBaseLERR_<<"Invalid image sizes:"<<*sizex<<"x"<<*sizey;
+    shutter=cc->getRWPtr<double>(DOMAIN_INPUT, "SHUTTER");
+    brightness=cc->getRWPtr<double>(DOMAIN_INPUT, "BRIGHTNESS");
+    contrast=cc->getRWPtr<double>(DOMAIN_INPUT, "CONTRAST");
+    sharpness=cc->getRWPtr<double>(DOMAIN_INPUT, "SHARPNESS");
+    gain==cc->getRWPtr<double>(DOMAIN_INPUT, "GAIN");
+
+    if((ret=driver->cameraInit(0,0))!=0){
+        throw chaos::CException(ret,"cannot initialize camera",__PRETTY_FUNCTION__);
     }
-    setProp("WIDTH",*sizex,0);
-    setProp("HEIGHT",*sizey,0);
+    if(*sizex >0 && *sizey > 0){
+        setProp("WIDTH",*sizex,0);
+        setProp("HEIGHT",*sizey,0);
+    }
+
+    if(*shutter >0 ){
+        setProp("SHUTTER",*shutter,0);
+    }
+    if(*brightness >0 ){
+        setProp("BRIGHTNESS",*brightness,0);
+    }
+    if(*contrast >0 ){
+        setProp("CONTRAST",*contrast,0);
+    }
+    if(*sharpness >0 ){
+        setProp("SHARPNESS",*sharpness,0);
+    }
+    if(*gain >0 ){
+        setProp("GAIN",*gain,0);
+    }
     setProp("OFFSETX",*offsetx,0);
     setProp("OFFSETY",*offsety,0);
+    if(driver->getImageProperties(width,height,itype)==0){
+        RTCameraBaseLDBG_<<"CAMERA IMAGE:"<<width<<"x"<<height;
+        *sizex=width;
+        *sizey=height;
 
-    depth=cc->getROPtr<int32_t>(DOMAIN_INPUT, "DEPTH");
+
+    }
+    double tmp;
+    if(driver->getCameraProperty("OFFSETX",tmp)==0){
+        *offsetx = tmp;
+    }
+    if(driver->getCameraProperty("OFFSETY",tmp)==0){
+        *offsety = tmp;
+    }
+
+    if(driver->getCameraProperty("GAIN",tmp)==0){
+        *gain = tmp;
+    }
+    if(driver->getCameraProperty("SHARPNESS",tmp)==0){
+        *sharpness = tmp;
+    }
+    if(driver->getCameraProperty("CONTRAST",tmp)==0){
+        *contrast = tmp;
+    }
+    if(driver->getCameraProperty("BRIGHTNESS",tmp)==0){
+        *brightness = tmp;
+    }
+    if(driver->getCameraProperty("SHUTTER",tmp)==0){
+        *shutter = tmp;
+    }
+    if(*sizex == 0 || *sizey == 0){
+        RTCameraBaseLERR_<<"Invalid image sizes:"<<*sizex<<"x"<<*sizey;
+        throw chaos::CException(-3,"Invalid image size!!",__PRETTY_FUNCTION__);
+    }
+    depth=cc->getRWPtr<int32_t>(DOMAIN_INPUT, "DEPTH");
     mode=cc->getROPtr<int32_t>(DOMAIN_INPUT, "MODE");
     framebuf_out=cc->getRWPtr<uint8_t>(DOMAIN_OUTPUT, "FRAMEBUFFER");
     fmt=cc->getRWPtr<char>(DOMAIN_INPUT, "FMT");
     cc->setOutputAttributeNewSize("FRAMEBUFFER",*sizex*(*sizey)*(std::max(*depth/8,1)),true);
-    if((ret=driver->cameraInit(0,0))!=0){
-        throw chaos::CException(ret,"cannot initialize camera",__PRETTY_FUNCTION__);
-    }
+
     int size=*sizex*(*sizey)*(std::max(*depth/8,1));
 
     framebuf = (uint8_t*)malloc(size);
@@ -171,6 +244,8 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     if(*fmt == 0){
         strcpy(fmt,".png");
     }
+    getAttributeCache()->setInputDomainAsChanged();
+
 }
 
 //!Execute the work, this is called with a determinated delay, it must be as fast as possible

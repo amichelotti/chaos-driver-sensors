@@ -51,7 +51,7 @@ class BaslerScoutDriver:public ::driver::sensor::camera::CameraDriverBridge {
  void driverInit(const char *initParameter) throw(chaos::CException);
  void driverInit(const chaos::common::data::CDataWrapper& json) throw(chaos::CException);
 
-
+  int initializeCamera(const chaos::common::data::CDataWrapper& json) ;
   void driverDeinit() throw(chaos::CException) ;
     // This smart pointer will receive the grab result data.
      Pylon::CInstantCamera* camera;
@@ -63,6 +63,8 @@ class BaslerScoutDriver:public ::driver::sensor::camera::CameraDriverBridge {
 
      cameraGrabCallBack fn;
      int propsToCamera(Pylon::CInstantCamera& camera,chaos::common::data::CDataWrapper*p);
+     int cameraToProps(Pylon::CInstantCamera& camera,chaos::common::data::CDataWrapper*p);
+
 public:
 	BaslerScoutDriver();
 	~BaslerScoutDriver();
@@ -72,8 +74,11 @@ public:
 
 
      int setCameraProperty(const std::string& propname,uint32_t val);
+     int setCameraProperty(const std::string& propname,double val);
 
      int getCameraProperty(const std::string& propname,uint32_t& val);
+
+     int getCameraProperty(const std::string& propname,double& val);
 
      int getCameraProperties(std::vector<std::string >& proplist);
 
