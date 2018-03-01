@@ -141,13 +141,14 @@ static int setNode(const std::string& node_name,CInstantCamera& camera,double va
     try{
         INodeMap &control = camera.GetNodeMap();
         GenApi::CFloatPtr node=control.GetNode(node_name.c_str());
-        if(IsWritable(node)){
+         node->SetValue(val);
+      /*  if(IsWritable(node)){
             node->SetValue(val);
         } else {
             BaslerScoutDriverLERR_<<  "Node:"<<node_name<< " is not writable";
             return -100;
 
-        }
+        }*/
     }catch  (const GenericException &e){
         // Error handling.
         BaslerScoutDriverLERR_<<  "An exception occurred during SET of Node:"<<node_name;
@@ -356,6 +357,8 @@ public:
 //we need to define the driver with alias version and a class that implement it
 int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper& json) {
     if(camera){
+        BaslerScoutDriverLDBG_<<  "Deleting camera before";
+
         camera->Close();
         delete camera;
         camera =NULL;
@@ -389,7 +392,10 @@ BaslerScoutDriver::BaslerScoutDriver():camera(NULL),shots(0),framebuf(NULL),fn(N
 //default descrutcor
 BaslerScoutDriver::~BaslerScoutDriver() {
     if(camera){
+        BaslerScoutDriverLDBG_<<"deleting camera";
+
         delete camera;
+        camera =NULL;
     }
     if(props){
         delete props;
@@ -489,9 +495,10 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera& camera,chaos::common::data:
         BaslerScoutDriverLDBG_<< "setting Pixel Format " <<p->getCStringValue("PIXELFMT");
     }
     if(p->hasKey("GAIN")){
-        const CIntegerPtr gauto = control.GetNode("GainAuto");
         if(p->getDoubleValue("GAIN")<0){
-            setNode("GainAuto",camera, (int64_t)Basler_GigECamera::GainAutoEnums::GainAuto_Continuous);
+            if(setNode("GainAuto",camera, (int64_t)Basler_GigECamera::GainAutoEnums::GainAuto_Continuous)!=0){
+                ret++;
+            }
 
 
         } else {
@@ -516,7 +523,9 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera& camera,chaos::common::data:
     if(p->hasKey("SHUTTER")){
 
         if((p->getDoubleValue("SHUTTER")<0)){
-            setNode("ExposureAuto",camera,(int64_t)Basler_GigECamera::ExposureAutoEnums::ExposureAuto_Continuous);
+            if(setNode("ExposureAuto",camera,(int64_t)Basler_GigECamera::ExposureAutoEnums::ExposureAuto_Continuous)!=0){
+                ret++;
+            }
 
 
         } else {
@@ -680,8 +689,7 @@ int BaslerScoutDriver::cameraDeinit(){
     BaslerScoutDriverLDBG_<<"deinit";
     if(camera){
         camera->Close();
-        delete camera;
-        camera =NULL;
+
     }
     return 0;
 }
@@ -819,6 +827,8 @@ int  BaslerScoutDriver::getImageProperties(uint32_t& width,uint32_t& height,uint
 
 int  BaslerScoutDriver::setCameraProperty(const std::string& propname,uint32_t val){
     ChaosUniquePtr<chaos::common::data::CDataWrapper> cw(new chaos::common::data::CDataWrapper());
+    BaslerScoutDriverLDBG_<<"Setting \"" << propname<<"\"="<<(int32_t)val ;
+
     cw->addInt32Value(propname,(int32_t)val);
 
     return propsToCamera(*camera,cw.get());
@@ -826,6 +836,8 @@ int  BaslerScoutDriver::setCameraProperty(const std::string& propname,uint32_t v
 }
 int  BaslerScoutDriver::setCameraProperty(const std::string& propname,double val){
     ChaosUniquePtr<chaos::common::data::CDataWrapper> cw(new chaos::common::data::CDataWrapper());
+    BaslerScoutDriverLDBG_<<"Setting \"" << propname<<"\"="<<val ;
+
     cw->addDoubleValue(propname,val);
 
     return propsToCamera(*camera,cw.get());

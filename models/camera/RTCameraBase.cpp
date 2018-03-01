@@ -61,7 +61,7 @@ RTCameraBase::~RTCameraBase() {
 }
 bool  RTCameraBase::setProp(const std::string &name, int value, uint32_t size){
     int ret;
-
+    RTCameraBaseLDBG_<<"SET IPROP:"<<name<<" VALUE:"<<value;
     ret=driver->setCameraProperty(name,(uint32_t)value);
     setStateVariableSeverity(StateVariableTypeAlarmDEV,"operation_not_supported", chaos::common::alarm::MultiSeverityAlarmLevelClear);
 
@@ -74,6 +74,7 @@ bool  RTCameraBase::setProp(const std::string &name, int value, uint32_t size){
 
 bool  RTCameraBase::setProp(const std::string &name, double value, uint32_t size){
     int ret;
+    RTCameraBaseLDBG_<<"SET FPROP:"<<name<<" VALUE:"<<value;
 
     ret=driver->setCameraProperty(name,value);
     setStateVariableSeverity(StateVariableTypeAlarmDEV,"operation_not_supported", chaos::common::alarm::MultiSeverityAlarmLevelClear);
@@ -180,21 +181,16 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
         setProp("HEIGHT",*sizey,0);
     }
 
-    if(*shutter >0 ){
         setProp("SHUTTER",*shutter,0);
-    }
-    if(*brightness >0 ){
+
         setProp("BRIGHTNESS",*brightness,0);
-    }
-    if(*contrast >0 ){
+
         setProp("CONTRAST",*contrast,0);
-    }
-    if(*sharpness >0 ){
+
         setProp("SHARPNESS",*sharpness,0);
-    }
-    if(*gain >0 ){
+
         setProp("GAIN",*gain,0);
-    }
+
     setProp("OFFSETX",*offsetx,0);
     setProp("OFFSETY",*offsety,0);
     if(driver->getImageProperties(width,height,itype)==0){
@@ -242,7 +238,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     framebuf = (uint8_t*)malloc(size);
     RTCameraBaseLDBG_<<"Starting acquiring imagex "<<*sizex<<"x"<<*sizey<<" depth:"<<*depth<<" bits";
     if(*fmt == 0){
-        strcpy(fmt,".png");
+        strcpy(fmt,"png");
     }
     getAttributeCache()->setInputDomainAsChanged();
 
@@ -298,6 +294,7 @@ void RTCameraBase::unitDeinit() throw(chaos::CException) {
         free(framebuf);
         framebuf=0;
     }
+    driver->cameraDeinit();
 }
 
 //! pre imput attribute change

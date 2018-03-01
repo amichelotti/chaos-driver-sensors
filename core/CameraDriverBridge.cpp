@@ -47,19 +47,19 @@ CameraDriverBridge::~CameraDriverBridge() {
 
 //! Execute a command
 cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOpcode(cu_driver::DrvMsgPtr cmd) {
-	cu_driver::MsgManagmentResultType::MsgManagmentResult result = cu_driver::MsgManagmentResultType::MMR_EXECUTED;
+    cu_driver::MsgManagmentResultType::MsgManagmentResult result = cu_driver::MsgManagmentResultType::MMR_EXECUTED;
     camera_params_t *in = (camera_params_t *)cmd->inputData;
     camera_params_t *out = (camera_params_t *)cmd->resultData;
     CameraDriverBridgeLDBG_ <<" SKELETON Opcode:"<<cmd->opcode;
-	switch(cmd->opcode) {
-        case CameraDriverInterfaceOpcode_SET_IMAGE_PROP:{
-            uint32_t width=in->arg0;
-            uint32_t height=in->arg1;
-            uint32_t opencvImageType=in->arg2;
+    switch(cmd->opcode) {
+    case CameraDriverInterfaceOpcode_SET_IMAGE_PROP:{
+        uint32_t width=in->arg0;
+        uint32_t height=in->arg1;
+        uint32_t opencvImageType=in->arg2;
 
-            out->result=setImageProperties(width,height,opencvImageType);
-            break;
-        }
+        out->result=setImageProperties(width,height,opencvImageType);
+        break;
+    }
     case CameraDriverInterfaceOpcode_GET_IMAGE_PROP:{
         uint32_t width;
         uint32_t height;
@@ -71,17 +71,30 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
         break;
     }
 
-        case CameraDriverInterfaceOpcode_SET_PROP:{
-            const char*pnt=in->str;
-            uint32_t val=in->arg0;
-            out->result=setCameraProperty(pnt,val);
-            break;
-        }
+    case CameraDriverInterfaceOpcode_SET_PROP:{
+        const char*pnt=in->str;
+        uint32_t val=in->arg0;
+        out->result=setCameraProperty(pnt,val);
+        break;
+    }
+    case CameraDriverInterfaceOpcode_SET_FPROP:{
+        const char*pnt=in->str;
+        double val=in->farg;
+        out->result=setCameraProperty(pnt,val);
+        break;
+    }
     case CameraDriverInterfaceOpcode_GET_PROP:{
         const char*pnt=in->str;
         uint32_t val;
         out->result=getCameraProperty(pnt,val);
         out->arg0=val;
+        break;
+    }
+    case CameraDriverInterfaceOpcode_GET_FPROP:{
+        const char*pnt=in->str;
+        double val;
+        out->result=getCameraProperty(pnt,val);
+        out->farg=val;
         break;
     }
     case CameraDriverInterfaceOpcode_GET_PROPERTIES:{
@@ -127,6 +140,6 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
         out->result=stopGrab();
         break;
     }
-	}
-	return result;
+    }
+    return result;
 }

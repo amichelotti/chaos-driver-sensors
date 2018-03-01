@@ -150,7 +150,7 @@ int CameraDriverInterface::setCameraProperty(const std::string& propname,uint32_
 }
 
 int CameraDriverInterface::setCameraProperty(const std::string& propname,double val){
-    PREPARE_OP(CameraDriverInterfaceOpcode_SET_PROP);
+    PREPARE_OP(CameraDriverInterfaceOpcode_SET_FPROP);
     idata.str=strdup(propname.c_str());
     idata.strl=propname.size();
     idata.farg=val;
@@ -168,7 +168,7 @@ int CameraDriverInterface::getCameraProperty(const std::string& propname,uint32_
 }
 
 int CameraDriverInterface::getCameraProperty(const std::string& propname,double& val){
-    PREPARE_OP(CameraDriverInterfaceOpcode_GET_PROP);
+    PREPARE_OP(CameraDriverInterfaceOpcode_GET_FPROP);
     idata.str=(char*)propname.c_str();
     idata.strl=propname.size();
     SEND;
