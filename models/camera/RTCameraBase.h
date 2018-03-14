@@ -48,6 +48,7 @@ protected:
         const int32_t* mode;
         uint8_t* framebuf;
         uint8_t* framebuf_out;
+        char encoding[16];
         double*shutter,*brightness,*contrast,*sharpness,*gain;
 
          char*fmt;

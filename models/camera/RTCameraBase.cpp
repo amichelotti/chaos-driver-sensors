@@ -238,7 +238,9 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     framebuf = (uint8_t*)malloc(size);
     RTCameraBaseLDBG_<<"Starting acquiring imagex "<<*sizex<<"x"<<*sizey<<" depth:"<<*depth<<" bits";
     if(*fmt == 0){
-        strcpy(fmt,"png");
+        strcpy(encoding,".png");
+    } else {
+        snprintf(encoding,sizeof(encoding),"\.%s",fmt);
     }
     getAttributeCache()->setInputDomainAsChanged();
 
@@ -263,16 +265,24 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
            return;
      }
     std::vector<uchar> buf;
-    bool code = cv::imencode(fmt, image, buf );
-    if(code==false){
-        setStateVariableSeverity(StateVariableTypeAlarmCU,"encode_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+    try {
+        bool code = cv::imencode(encoding, image, buf );
+        if(code==false){
+            setStateVariableSeverity(StateVariableTypeAlarmCU,"encode_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+            LERR_<<"Encode error:"<<fmt;
 
-    } else {
-        setStateVariableSeverity(StateVariableTypeAlarmCU,"encode_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+        } else {
+            setStateVariableSeverity(StateVariableTypeAlarmCU,"encode_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
 
+        }
+    } catch(...){
+         setStateVariableSeverity(StateVariableTypeAlarmCU,"encode_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+         LERR_<<"Encode exception:"<<fmt;
     }
+
+
     uchar* result = reinterpret_cast<uchar*> (&buf[0]);
-    RTCameraBaseLDBG_<<" jpeg image encoded:"<<buf.size();
+    RTCameraBaseLDBG_<<encoding <<" image encoded:"<<buf.size();
     getAttributeCache()->setOutputAttributeNewSize("FRAMEBUFFER", buf.size());
 
     memcpy(framebuf_out,result,buf.size());
