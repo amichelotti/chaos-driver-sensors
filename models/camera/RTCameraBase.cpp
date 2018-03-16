@@ -233,7 +233,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     fmt=cc->getRWPtr<char>(DOMAIN_INPUT, "FMT");
     cc->setOutputAttributeNewSize("FRAMEBUFFER",*sizex*(*sizey)*(std::max(*depth/8,1)),true);
 
-    int size=*sizex*(*sizey)*(std::max(*depth/8,1));
+    int size=*sizex*(*sizey)*(std::max(*depth/8,1)*2);
 
     framebuf = (uint8_t*)malloc(size);
     RTCameraBaseLDBG_<<"Starting acquiring imagex "<<*sizex<<"x"<<*sizey<<" depth:"<<*depth<<" bits";

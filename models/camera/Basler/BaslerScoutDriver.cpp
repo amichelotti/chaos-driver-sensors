@@ -17,7 +17,7 @@
  *    	See the License for the specific language governing permissions and
  *    	limitations under the License.
  */
-#include <driver/sensors/models/camera/Basler/BaslerScoutDriver.h>
+#include "BaslerScoutDriver.h"
 #include <stdlib.h>
 #include <string>
 #include <chaos/common/data/CDataWrapper.h>
@@ -91,14 +91,19 @@ static T Adjust(T val, T minimum, T maximum, T inc)
 void BaslerScoutDriver::driverInit(const char *initParameter) throw(chaos::CException){
     BaslerScoutDriverLAPP_ << "Initializing  driver:"<<initParameter;
     props->reset();
-    initializeCamera(*props);
+    if(initializeCamera(*props)!=0){
+        throw chaos::CException(-3,"cannot initialize camera ",__PRETTY_FUNCTION__);
+
+    }
 }
 
 void BaslerScoutDriver::driverInit(const chaos::common::data::CDataWrapper& json) throw(chaos::CException){
     BaslerScoutDriverLAPP_ << "Initializing  driver:"<<json.getCompliantJSONString();
     props->reset();
     props->appendAllElement((chaos::common::data::CDataWrapper&)json);
-    initializeCamera(*props);
+    if(initializeCamera(*props)!=0){
+        throw chaos::CException(-1,"cannot initialize camera "+json.getCompliantJSONString(),__PRETTY_FUNCTION__);
+    }
 
 
 }
@@ -356,6 +361,8 @@ public:
 //GET_PLUGIN_CLASS_DEFINITION
 //we need to define the driver with alias version and a class that implement it
 int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper& json) {
+    IPylonDevice* pdev=NULL;
+    int found=0;
     if(camera){
         BaslerScoutDriverLDBG_<<  "Deleting camera before";
 
@@ -368,19 +375,58 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper&
         BaslerScoutDriverLDBG_<<  "Pylon driver initialized";
         // Create an instant camera object for the camera device found first.
         BaslerScoutDriverLDBG_<<"getting  camera informations ..";
-        IPylonDevice* pdev=CTlFactory::GetInstance().CreateFirstDevice();
-        if(pdev){
-            BaslerScoutDriverLDBG_<<" Model:"<< pdev->GetDeviceInfo().GetModelName();
+        if(json.hasKey("serial")&&json.isStringValue("serial")){
+            std::string serial=json.getCStringValue("serial");
+            CTlFactory& tlFactory = CTlFactory::GetInstance();
+           DeviceInfoList_t devices;
+                   // Get all attached devices and exit application if no device is found.
+           if ( tlFactory.EnumerateDevices(devices) == 0 ){
+               BaslerScoutDriverLERR_<<" No camera present!!!";
+               return -1;
+            }
+           CInstantCameraArray cameras( devices.size());
+           BaslerScoutDriverLDBG_<<  "Found "<< cameras.GetSize()<<" cameras, looking for serial:"<<serial;
+
+           for ( size_t i = 0; (i < cameras.GetSize())&& (found==0); ++i){
+                pdev=tlFactory.CreateDevice( devices[ i ]);
+
+                cameras[ i ].Attach(pdev);
+
+
+                BaslerScoutDriverLDBG_<<i<<"] Model:"<< cameras[ i ].GetDeviceInfo().GetModelName();
+                BaslerScoutDriverLDBG_ <<i<<"] Friendly Name: " << cameras[ i ].GetDeviceInfo().GetFriendlyName();
+                BaslerScoutDriverLDBG_<<i<< "] Full Name    : " << cameras[ i ].GetDeviceInfo().GetFullName();
+
+                BaslerScoutDriverLDBG_ <<i<<"] SerialNumber : " << cameras[ i ].GetDeviceInfo().GetSerialNumber();
+
+                if(serial ==cameras[ i ].GetDeviceInfo().GetSerialNumber().c_str()){
+                   BaslerScoutDriverLDBG_<<" FOUND "<<cameras[ i ].GetDeviceInfo().GetSerialNumber();
+                   cameras[ i ].DetachDevice();
+
+                   camera=new CInstantCamera(pdev);
+                   return 0;
+                } else {
+                    BaslerScoutDriverLDBG_<<" removing "<<cameras[ i ].GetDeviceInfo().GetSerialNumber();
+                    cameras[ i ].DetachDevice();
+                    tlFactory.DestroyDevice(pdev);
+                  // delete pdev;
+
+                }
+           }
+
         } else {
-            BaslerScoutDriverLERR_<< "cannot create instance";
-            return -1;
+            BaslerScoutDriverLDBG_<<"No \"serial\" specified getting first camera..";
+            pdev=CTlFactory::GetInstance().CreateFirstDevice();
+            camera = new CInstantCamera(pdev);
+            BaslerScoutDriverLDBG_<<" Model:"<< camera->GetDeviceInfo().GetModelName();
+            BaslerScoutDriverLDBG_ << "Friendly Name: " << camera->GetDeviceInfo().GetFriendlyName();
+            BaslerScoutDriverLDBG_<< "Full Name    : " <<  camera->GetDeviceInfo().GetFullName();
+            BaslerScoutDriverLDBG_ << "SerialNumber : " << camera->GetDeviceInfo().GetSerialNumber() ;
+            return 0;
+
         }
-        BaslerScoutDriverLDBG_<<"creating camera";
-
-        camera = new CInstantCamera(pdev);
-        BaslerScoutDriverLDBG_<<"created camera";
-
     }
+    return -1;
 }
 BaslerScoutDriver::BaslerScoutDriver():camera(NULL),shots(0),framebuf(NULL),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY){
 
@@ -619,6 +665,10 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera& camera,chaos::common::data:
 int BaslerScoutDriver::cameraInit(void *buffer,uint32_t sizeb){
     BaslerScoutDriverLDBG_<<"Initialization";
     // simple initialization
+    if(camera==NULL){
+        BaslerScoutDriverLERR_<<"no camera available";
+        return -1;
+    }
     try {
         if(props->hasKey("TRIGGER_MODE")){
             tmode=(TriggerModes)props->getInt32Value("TRIGGER_MODE");
@@ -774,8 +824,9 @@ int BaslerScoutDriver::waitGrab(uint32_t timeout_ms){
 
             //             int size_ret=(bcount<= ptrGrabResult->GetImageSize())?bcount: ptrGrabResult->GetImageSize();
             int size_ret=ptrGrabResult->GetImageSize();
+	    BaslerScoutDriverLDBG_<<"Image Raw Size: " << size_ret ;
             memcpy(framebuf,pImageBuffer,size_ret);
-            BaslerScoutDriverLDBG_<<"Image Raw Size: " << size_ret ;
+
 
             return size_ret;
 
