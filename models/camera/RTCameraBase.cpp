@@ -104,7 +104,7 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
     addAttributeToDataSet("SHARPNESS","Sharpness % (0:100, -1 = Auto) Amount of sharpening to apply. The higher the sharpness, the more distinct the image subject's contours will be",chaos::DataType::TYPE_DOUBLE,chaos::DataType::Input);
     addAttributeToDataSet("GAIN","Gain % (0:100, -1 = Auto)",chaos::DataType::TYPE_DOUBLE,chaos::DataType::Input);
 
-    addAttributeToDataSet("MODE","0=grabbing,1=triggered,2=pulse",chaos::DataType::TYPE_BOOLEAN,chaos::DataType::Input);
+    addAttributeToDataSet("TRIGGER_MODE","0=grabbing,1=triggered,2=pulse",chaos::DataType::TYPE_INT32,chaos::DataType::Input);
     addAttributeToDataSet("FMT","image format (jpg,png,gif...)",chaos::DataType::TYPE_STRING,chaos::DataType::Input);
     addAttributeToDataSet("FILTER","Filter type and parameters (if any) ",chaos::DataType::TYPE_CLUSTER,chaos::DataType::Input);
 
@@ -137,6 +137,10 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
     addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, int >(this,
             &::driver::sensor::camera::RTCameraBase::setProp,
             "HEIGHT");
+
+        addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, int >(this,
+            &::driver::sensor::camera::RTCameraBase::setProp,
+            "TRIGGER_MODE");
 
     addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, int >(this,
             &::driver::sensor::camera::RTCameraBase::setProp,
@@ -284,6 +288,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
     uchar* result = reinterpret_cast<uchar*> (&buf[0]);
     RTCameraBaseLDBG_<<encoding <<" image encoded:"<<buf.size();
     getAttributeCache()->setOutputAttributeNewSize("FRAMEBUFFER", buf.size());
+    framebuf_out=getAttributeCache()->getRWPtr<uint8_t>(DOMAIN_OUTPUT, "FRAMEBUFFER");
 
     memcpy(framebuf_out,result,buf.size());
     //    namedWindow("Captura",WINDOW_AUTOSIZE);
