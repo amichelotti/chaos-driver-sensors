@@ -20,11 +20,13 @@
  */
 #ifndef IDSGEXXDriver_H
 #define IDSGEXXDriver_H
+#include "Camera.h"
 
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <driver/sensors/core/CameraDriverBridge.h>
 #include <chaos/common/data/DatasetDB.h>
 #include <stdint.h>
+#define PIXEL_CLOCK 2
 namespace cu_driver = chaos::cu::driver_manager::driver;
 
 /*
@@ -35,7 +37,6 @@ DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(IDSGEXXDriver)
 namespace driver {
     namespace sensor {
         namespace camera {
-        class CConfigurationEvent;
 
 #define CAM_DEFAULT_WIDTH 659
 #define CAM_DEFAULT_HEIGTH 494
@@ -45,22 +46,24 @@ class IDSGEXXDriver:public ::driver::sensor::camera::CameraDriverBridge {
 
    chaos::common::data::CDataWrapper* props;
  protected:
+   int get_next_image(char **mem, INT *image_id,int32_t timeout);
+
  void driverInit(const char *initParameter) throw(chaos::CException);
  void driverInit(const chaos::common::data::CDataWrapper& json) throw(chaos::CException);
 
   int initializeCamera(const chaos::common::data::CDataWrapper& json) ;
   void driverDeinit() throw(chaos::CException) ;
     // This smart pointer will receive the grab result data.
-     Pylon::CInstantCamera* camera;
-     TriggerModes tmode; //0 continous, 1 software,2 hw,3 singleshot
-     GrabStrategy gstrategy;
-
+     HIDS hCam;
+     int32_t tmode; //0 continous, 1 software,2 hw,3 singleshot
+     int32_t gstrategy;
+     ueye::Camera camera;
      uint32_t shots;
      void*framebuf;
-
+     int32_t memID;
      cameraGrabCallBack fn;
-     int propsToCamera(Pylon::CInstantCamera& camera,chaos::common::data::CDataWrapper*p);
-     int cameraToProps(Pylon::CInstantCamera& camera,chaos::common::data::CDataWrapper*p);
+     int propsToCamera(chaos::common::data::CDataWrapper*p);
+     int cameraToProps(chaos::common::data::CDataWrapper*p);
 
 public:
 	IDSGEXXDriver();
@@ -89,7 +92,6 @@ public:
 
      int cameraDeinit();
         
-     friend class CConfigurationEvent;
 };
         }}}
 #endif /* defined(__ControlUnitTest__DummyDriver__) */
