@@ -637,9 +637,8 @@ int Camera::getImageRawSize(){
       case BGRY8:
       case RGBA8:
       case RGBY8:
+    default:
         depth = 4;
-        break;
-      default:
 
     }
     return getWidth() * getHeight() *depth;

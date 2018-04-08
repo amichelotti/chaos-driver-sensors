@@ -256,8 +256,8 @@ int IDSGEXXDriver::cameraToProps(chaos::common::data::CDataWrapper*p){
         p->addDoubleValue("SHUTTER",exp);
     }
     switch(camera.getTriggerMode()){
-        case TRIGGER_HI_LO:
-            p->addInt32Value("TRIGGER_MODE",CAMERA_TRIGGER_HW_LOW);
+    case TRIGGER_HI_LO:
+        p->addInt32Value("TRIGGER_MODE",CAMERA_TRIGGER_HW_LOW);
         break;
     case TRIGGER_LO_HI:
         p->addInt32Value("TRIGGER_MODE",CAMERA_TRIGGER_HW_HI);
@@ -282,6 +282,9 @@ int IDSGEXXDriver::cameraToProps(chaos::common::data::CDataWrapper*p){
     return 0;
 }
 
+#define PXL2COLOR(col) \
+    if(fmt == #col) {\
+    color=col;}
 
 int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
     // Get the camera control object.
@@ -379,69 +382,34 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
 
         // Set the pixel data format.
         std::string fmt=p->getStringValue("PIXELFMT");
-        if(fmt=="MONO8"){
-            color = MONO8;
-        }
-        if(fmt=="MONO16"){
-            color = MONO16;
-        }
-        if(fmt=="YUV"){
-            color = YUV;
-        }
+        PXL2COLOR(MONO8);
+        PXL2COLOR(MONO16);
+        PXL2COLOR(YUV);
+        PXL2COLOR(YCbCr);
+        PXL2COLOR(BGR5);
+        PXL2COLOR(BGR565);
+        PXL2COLOR(BGR8);
+        PXL2COLOR(BGRA8);
+        PXL2COLOR(BGRY8);
+        PXL2COLOR(RGB8);
+        PXL2COLOR(RGBA8);
+        PXL2COLOR(RGBY8);
 
-        switch(fmt){
-        case "MONO8":
-          break;
-        case "MONO16":
-          break;
-        case "YUV":
-          color = YUV;
-          break;
-        case "YCbCr":
-          color = YCbCr;
-          break;
-        case "BGR5":
-          color = BGR5;
-          break;
-        case "BGR565":
-          color = BGR565;
-          break;
-        case "BGR8":
-          color = BGR8;
-          break;
-        case "BGRA8":
-          color = BGRA8;
-          break;
-        case "BGRY8":
-          color = BGRY8;
-          break;
-        case "RGB8":
-          color = RGB8;
-          break;
-        case "RGBA8":
-          color = RGBA8;
-          break;
-        case "RGBY8":
-          color = RGBY8;
-          break;
-        default:
-            IDSGEXXDriverLERR_<<"invalid format specification:"<<fmt;
-      }
         if(color>0){
             IDSGEXXDriverLDBG_<< "setting Pixel Format " <<fmt;
 
-         camera.setColorMode(color);
+            camera.setColorMode(color);
         }
+    }
 
-        }
 
     if(p->hasKey("GAIN")){
         double gain=p->getDoubleValue("GAIN");
         if(gain<0){
-           bool auto_gain=true;
-           camera.setAutoGain(&auto_gain);
+            bool auto_gain=true;
+            camera.setAutoGain(&auto_gain);
         } else {
-            int igain=(400*gain)/100.0
+            int igain=(400*gain)/100.0;
             camera.setHardwareGain(&igain);
         }
 
@@ -451,7 +419,7 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
         double value=p->getDoubleValue("SHUTTER");
         if((value<0)){
             bool auto_exp=true;
-           camera.setAutoExposure(&auto_exp);
+            camera.setAutoExposure(&auto_exp);
         } else {
 
             camera.setExposure(&value);
@@ -536,19 +504,15 @@ int IDSGEXXDriver::cameraInit(void *buffer,uint32_t sizeb){
     // For demonstration purposes only, add sample configuration event handlers to print out information
     // about camera use and image grabbing.
     IDSGEXXDriverLDBG_<<"event  handler installed";
-
-
-
-
     return 0;
 }
 
 int IDSGEXXDriver::cameraDeinit(){
     IDSGEXXDriverLDBG_<<"deinit";
-    if(camera){
-        camera->Close();
 
-    }
+    camera.closeCamera();
+
+
     return 0;
 }
 
@@ -582,8 +546,8 @@ int IDSGEXXDriver::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _
 
 int IDSGEXXDriver::waitGrab(uint32_t timeout_ms){
     int32_t ret;
-    int size_ret;
-    if((ret=camera.captureImage(timeo_ms,framebuf,&size_ret))==0){
+    size_t size_ret;
+    if((ret=camera.captureImage(timeout_ms,(char*)framebuf,&size_ret))==0){
         IDSGEXXDriverLDBG_<<"Retrieved Image "<<camera.getWidth()<<"x"<<camera.getHeight()<<" raw size:"<<size_ret;
     } else{
         IDSGEXXDriverLERR_<<"No Image..";
@@ -595,22 +559,20 @@ int IDSGEXXDriver::waitGrab(uint32_t timeout_ms){
 
 }
 int IDSGEXXDriver::stopGrab(){
-    camera->StopGrabbing();
+    //camera->StopGrabbing();
 }
 
 int  IDSGEXXDriver::setImageProperties(uint32_t width,uint32_t height,uint32_t opencvImageType){
     props->addInt32Value("WIDTH",width);
     props->addInt32Value("HEIGHT",height);
-    if(camera){
-        return propsToCamera(*camera,props);
-    }
-    return -1;
+
+    return propsToCamera(props);
 }
 
 int  IDSGEXXDriver::getImageProperties(uint32_t& width,uint32_t& height,uint32_t& opencvImageType){
     ChaosUniquePtr<chaos::common::data::CDataWrapper> cw(new chaos::common::data::CDataWrapper());
     int ret=-1;
-    cameraToProps(*camera,cw.get());
+    cameraToProps(cw.get());
     if(cw->hasKey("WIDTH")){
         width=cw->getInt32Value("WIDTH");
         ret=0;
@@ -632,7 +594,7 @@ int  IDSGEXXDriver::setCameraProperty(const std::string& propname,uint32_t val){
 
     cw->addInt32Value(propname,(int32_t)val);
 
-    return propsToCamera(*camera,cw.get());
+    return propsToCamera(cw.get());
 
 }
 int  IDSGEXXDriver::setCameraProperty(const std::string& propname,double val){
@@ -641,14 +603,14 @@ int  IDSGEXXDriver::setCameraProperty(const std::string& propname,double val){
 
     cw->addDoubleValue(propname,val);
 
-    return propsToCamera(*camera,cw.get());
+    return propsToCamera(cw.get());
 
 }
 
 int  IDSGEXXDriver::getCameraProperty(const std::string& propname,uint32_t& val){
     ChaosUniquePtr<chaos::common::data::CDataWrapper> cw(new chaos::common::data::CDataWrapper());
 
-    cameraToProps(*camera,cw.get());
+    cameraToProps(cw.get());
 
     if(cw->hasKey(propname)){
         val = props->getInt32Value(propname);
@@ -660,7 +622,7 @@ int  IDSGEXXDriver::getCameraProperty(const std::string& propname,uint32_t& val)
 int  IDSGEXXDriver::getCameraProperty(const std::string& propname,double& val){
     ChaosUniquePtr<chaos::common::data::CDataWrapper> cw(new chaos::common::data::CDataWrapper());
 
-    cameraToProps(*camera,cw.get());
+    cameraToProps(cw.get());
 
     if(cw->hasKey(propname)){
         val = props->getDoubleValue(propname);
@@ -671,8 +633,9 @@ int  IDSGEXXDriver::getCameraProperty(const std::string& propname,double& val){
 
 int  IDSGEXXDriver::getCameraProperties(std::vector<std::string >& proplist){
     ChaosUniquePtr<chaos::common::data::CDataWrapper> cw(new chaos::common::data::CDataWrapper());
-    cameraToProps(*camera,cw.get());
+    cameraToProps(cw.get());
 
     cw->getAllKey(proplist);
     return (proplist.size()>0)?0:-1;
 }
+}}}
