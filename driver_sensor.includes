@@ -10,3 +10,4 @@ models/camera
 models/camera/Basler
 models/camera/IDS/
 models
+models/camera/IDS/ueye

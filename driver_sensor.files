@@ -85,6 +85,8 @@ models/camera/IDS/IDSGEXXDriver.h
 models/camera/IDS/IDSGEXXDriver.h
 models/camera/IDS/ueye/include/ueye/Camera.h
 models/camera/IDS/ueye/src/Camera.cpp
+models/camera/IDS/ueye/ueye.h
+models/camera/IDS/ueye/ueye_deprecated.h
 models/camera/RTCameraBase.cpp
 models/camera/RTCameraBase.cpp
 models/camera/RTCameraBase.h
