@@ -232,7 +232,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
         throw chaos::CException(-3,"Invalid image size!!",__PRETTY_FUNCTION__);
     }
     depth=cc->getRWPtr<int32_t>(DOMAIN_INPUT, "DEPTH");
-    mode=cc->getROPtr<int32_t>(DOMAIN_INPUT, "MODE");
+    mode=cc->getROPtr<int32_t>(DOMAIN_INPUT, "TRIGGER_MODE");
     framebuf_out=cc->getRWPtr<uint8_t>(DOMAIN_OUTPUT, "FRAMEBUFFER");
     fmt=cc->getRWPtr<char>(DOMAIN_INPUT, "FMT");
     cc->setOutputAttributeNewSize("FRAMEBUFFER",*sizex*(*sizey)*(std::max(*depth/8,1)),true);
