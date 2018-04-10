@@ -28,7 +28,7 @@ using namespace ::driver::sensor::camera;
 camera_params_t ret;\
 camera_params_t idata;\
 message.opcode = op; \
-CameraDriverInterfaceLDBG_<<"STUB Opcode:"<<op;\
+CameraDriverInterfaceLDBG_<<"STUB Opcode:\""<<# op<<"\" :"<<op;\
 message.inputData=(void*)&idata;\
 message.inputDataLength=sizeof(camera_params_t);\
 message.resultDataLength=sizeof(camera_params_t);\
@@ -123,7 +123,7 @@ CameraDriverInterface::~CameraDriverInterface() {
 }
 
 
-int CameraDriverInterface::setImageProperties(uint32_t width,uint32_t height,uint32_t opencvImageType){
+int CameraDriverInterface::setImageProperties(int32_t width,int32_t height,int32_t opencvImageType){
     PREPARE_OP(CameraDriverInterfaceOpcode_SET_IMAGE_PROP);
     idata.arg0=width;
     idata.arg1=height;
@@ -131,7 +131,7 @@ int CameraDriverInterface::setImageProperties(uint32_t width,uint32_t height,uin
     SEND_AND_RETURN;
 }
 
-int CameraDriverInterface::getImageProperties(uint32_t& width,uint32_t& height,uint32_t& opencvImageType){
+int CameraDriverInterface::getImageProperties(int32_t& width,int32_t& height,int32_t& opencvImageType){
     PREPARE_OP(CameraDriverInterfaceOpcode_GET_IMAGE_PROP);
     SEND;
     width=ret.arg0;
@@ -141,7 +141,7 @@ int CameraDriverInterface::getImageProperties(uint32_t& width,uint32_t& height,u
 }
 
 
-int CameraDriverInterface::setCameraProperty(const std::string& propname,uint32_t val){
+int CameraDriverInterface::setCameraProperty(const std::string& propname,int32_t val){
     PREPARE_OP(CameraDriverInterfaceOpcode_SET_PROP);
     idata.str=strdup(propname.c_str());
     idata.strl=propname.size();
@@ -157,7 +157,7 @@ int CameraDriverInterface::setCameraProperty(const std::string& propname,double 
     SEND_AND_RETURN;
 }
 
-int CameraDriverInterface::getCameraProperty(const std::string& propname,uint32_t& val){
+int CameraDriverInterface::getCameraProperty(const std::string& propname,int32_t& val){
     PREPARE_OP(CameraDriverInterfaceOpcode_GET_PROP);
     idata.str=(char*)propname.c_str();
     idata.strl=propname.size();
@@ -178,24 +178,17 @@ int CameraDriverInterface::getCameraProperty(const std::string& propname,double&
 }
 
 
-int CameraDriverInterface::getCameraProperties(std::vector<std::string >& proplist){
+int CameraDriverInterface::getCameraProperties(chaos::common::data::CDataWrapper& proplist){
     PREPARE_OP(CameraDriverInterfaceOpcode_GET_PROPERTIES);
     int cnt;
     char* start_str=0;
     SEND;
     if(ret.str){
-    start_str=ret.str;
-    for(cnt=0;cnt<ret.strl;cnt++){
-        char *pnt=(ret.str + cnt);
-        if((*pnt)==0){
-            std::string a;
-            a.assign(start_str);
-            proplist.push_back(a);
-            start_str=(pnt+1);
-        }
+        proplist.setSerializedData(ret.str);
+        free(ret.str);
+
     }
-    free(ret.str);
-}
+
     return ret.result;
 }
 

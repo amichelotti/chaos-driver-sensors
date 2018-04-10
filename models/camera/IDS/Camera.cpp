@@ -345,11 +345,23 @@ void Camera::setPixelClock(int *MHz)
 
   pixel_clock_ = *MHz;
 }
-void Camera::setFrameRate(double *rate)
+int Camera::setFrameRate(double *rate)
 {
-  checkError(is_SetFrameRate(cam_, *rate, rate));
-  flashUpdateGlobalParams();
-  frame_rate_ = *rate;
+    if(rate && (*rate<0)){
+        // set auto frame rate
+        double param1=1.0,param2=0.0;
+
+        if (IS_SUCCESS == is_SetAutoParameter(cam_, IS_SET_ENABLE_AUTO_FRAMERATE, &param1, &param2)) {
+            return 0;
+        }
+        return -1;
+    }
+    if(is_SetFrameRate(cam_, *rate, rate)==IS_SUCCESS){
+        flashUpdateGlobalParams();
+        frame_rate_ = *rate;
+        return 0;
+    }
+    return -2;
 }
 void Camera::setGainBoost(bool *enable)
 {
@@ -444,6 +456,21 @@ void Camera::setFlash(FlashMode mode)
   // automatically synchronized to the exposure time.
   setFlash(mode, 0, 0);
 }
+int Camera::getFrameRate(double*rate){
+    double param1,param2;
+    if (IS_SUCCESS == is_SetAutoParameter(cam_, IS_GET_ENABLE_AUTO_FRAMERATE, &param1, &param2)) {
+        if(param1==1.0){
+            *rate = -1;
+            return 0;
+        }
+    }
+    if(is_GetFramesPerSecond(cam_,rate)==IS_SUCCESS){
+        return 0;
+    }
+
+    return -1;
+}
+
 void Camera::flashUpdateGlobalParams()
 {
   if (flash_global_params_) {
@@ -692,11 +719,16 @@ void Camera::captureThread(CamCaptureCB callback)
 }
 int  Camera::captureImage(int timeo_ms,char*hostbuf,size_t *size){
     int ret=-1;
-    if(timeo_ms==0){
+   /* if(timeo_ms==0){
         ret=is_CaptureVideo(cam_, IS_WAIT);
     } else {
         ret=is_CaptureVideo(cam_, timeo_ms);
-    }
+    }*/
+    if(timeo_ms==0){
+            ret=is_FreezeVideo(cam_, IS_WAIT);
+        } else {
+            ret=is_FreezeVideo(cam_, timeo_ms);
+        }
     if(ret==IS_SUCCESS){
         char *img_mem;
         if (is_GetImageMem(cam_, (void**)&img_mem) == IS_SUCCESS) {

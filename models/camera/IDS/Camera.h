@@ -130,7 +130,14 @@ public:
   void setHardwareGamma(bool *enable);
   void setZoom(int *zoom);
   void setPixelClock(int *MHz);
-  void setFrameRate(double *rate);
+  int setFrameRate(double *rate);
+  /*
+   * Return FPS of the camera
+   * \param rate output FPS(if -1 autoframerate)
+   * return 0 if success
+   */
+
+  int getFrameRate(double*rate);
   void setGainBoost(bool *enable);
   void setAutoGain(bool *enable);
   void setHardwareGain(int *gain);

@@ -44,13 +44,14 @@ public:
     ~RTCameraBase();
 
 protected:
-         int32_t *sizex,*sizey,*depth,*offsetx,*offsety;
+    int32_t *sizex,*sizey;
         const int32_t* mode;
         uint8_t* framebuf;
         uint8_t* framebuf_out;
         char encoding[16];
-        double*shutter,*brightness,*contrast,*sharpness,*gain;
+        chaos::common::data::CDataWrapper camera_props;
 
+        double*shutter,*brightness,*contrast,*sharpness,*gain;
          char*fmt;
         CameraDriverInterface*driver;
         bool setProp(const std::string &name, int32_t value, uint32_t size);

@@ -62,25 +62,26 @@ class IDSGEXXDriver:public ::driver::sensor::camera::CameraDriverBridge {
      void*framebuf;
      int32_t memID;
      cameraGrabCallBack fn;
+     bool initialized;
      int propsToCamera(chaos::common::data::CDataWrapper*p);
      int cameraToProps(chaos::common::data::CDataWrapper*p);
 
 public:
 	IDSGEXXDriver();
 	~IDSGEXXDriver();
-    int setImageProperties(uint32_t width,uint32_t height,uint32_t opencvImageType);
+    int setImageProperties(int32_t width,int32_t height,int32_t opencvImageType);
 
-     int getImageProperties(uint32_t& width,uint32_t& height,uint32_t& opencvImageType);
+     int getImageProperties(int32_t& width,int32_t& height,int32_t& opencvImageType);
 
 
-     int setCameraProperty(const std::string& propname,uint32_t val);
+     int setCameraProperty(const std::string& propname,int32_t val);
      int setCameraProperty(const std::string& propname,double val);
 
-     int getCameraProperty(const std::string& propname,uint32_t& val);
+     int getCameraProperty(const std::string& propname,int32_t& val);
 
      int getCameraProperty(const std::string& propname,double& val);
 
-     int getCameraProperties(std::vector<std::string >& proplist);
+     int getCameraProperties(chaos::common::data::CDataWrapper& proplist);
 
      int startGrab(uint32_t shots,void*framebuf=NULL,cameraGrabCallBack=NULL);
 

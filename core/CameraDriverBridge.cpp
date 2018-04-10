@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string>
 #include <driver/sensors/core/CameraDriverBridge.h>
+#include <chaos/common/data/CDataWrapper.h>
 
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 
@@ -53,17 +54,17 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
     CameraDriverBridgeLDBG_ <<" SKELETON Opcode:"<<cmd->opcode;
     switch(cmd->opcode) {
     case CameraDriverInterfaceOpcode_SET_IMAGE_PROP:{
-        uint32_t width=in->arg0;
-        uint32_t height=in->arg1;
-        uint32_t opencvImageType=in->arg2;
+        int32_t width=in->arg0;
+        int32_t height=in->arg1;
+        int32_t opencvImageType=in->arg2;
 
         out->result=setImageProperties(width,height,opencvImageType);
         break;
     }
     case CameraDriverInterfaceOpcode_GET_IMAGE_PROP:{
-        uint32_t width;
-        uint32_t height;
-        uint32_t opencvImageType;
+        int32_t width;
+        int32_t height;
+        int32_t opencvImageType;
         out->result=getImageProperties(width,height,opencvImageType);
         out->arg0=width;
         out->arg1=height;
@@ -73,7 +74,7 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
 
     case CameraDriverInterfaceOpcode_SET_PROP:{
         const char*pnt=in->str;
-        uint32_t val=in->arg0;
+        int32_t val=in->arg0;
         out->result=setCameraProperty(pnt,val);
         break;
     }
@@ -85,7 +86,7 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
     }
     case CameraDriverInterfaceOpcode_GET_PROP:{
         const char*pnt=in->str;
-        uint32_t val;
+        int32_t val;
         out->result=getCameraProperty(pnt,val);
         out->arg0=val;
         break;
@@ -98,25 +99,17 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
         break;
     }
     case CameraDriverInterfaceOpcode_GET_PROPERTIES:{
-        std::vector<std::string> props;
-
+        chaos::common::data::CDataWrapper props;
+        int sizeb;
         out->result=getCameraProperties(props);
-        // calc len
-        int maxlen=0;
-        out->str=0;
-        out->strl=0;
-        for(int cnt=0;cnt<props.size();cnt++){
-            maxlen+=props[cnt].size();
+        const char*ptr=props.getBSONRawData(sizeb);
+
+        if((sizeb>0)&& ptr){
+            out->str=(char*)malloc(sizeb);
+            out->strl=sizeb;
+            memcpy(out->str,ptr,sizeb);
         }
-        if(maxlen>0){
-            out->str=(char*)malloc(maxlen);
-            out->strl=maxlen;
-        }
-        int plen=0;
-        for(int cnt=0;cnt<props.size();cnt++){
-            strncpy(out->str+plen,props[cnt].c_str(),props[cnt].size());
-            plen+=props[cnt].size();
-        }
+
         break;
     }
     case CameraDriverInterfaceOpcode_INIT:{

@@ -61,9 +61,9 @@ typedef enum CameraDriverInterfaceOpcode{
 */
 
 typedef struct {
-    uint32_t arg0;
-    uint32_t arg1;
-    uint32_t arg2;
+    int32_t arg0;
+    int32_t arg1;
+    int32_t arg2;
     double farg;
     int result;
     void*buffer;
@@ -91,7 +91,7 @@ public:
          \param opencvImageType[in] requested pixel encoding, opencv types
          \return 0 if success
          */
-    virtual int setImageProperties(uint32_t width,uint32_t height,uint32_t opencvImageType);
+    virtual int setImageProperties(int32_t width,int32_t height,int32_t opencvImageType);
     /**
      \brief Get Image properties, width, height, image type (opencv encoding)
      \param width[out] requested image width
@@ -99,7 +99,7 @@ public:
      \param opencvImageType[out] requested pixel encoding, opencv types
      \return 0 if success
      */
-    virtual int getImageProperties(uint32_t& width,uint32_t& height,uint32_t& opencvImageType);
+    virtual int getImageProperties(int32_t& width,int32_t& height,int32_t& opencvImageType);
     
 
     /**
@@ -108,7 +108,7 @@ public:
      \param val[in] integer value
      \return 0 if success
      */
-    virtual int setCameraProperty(const std::string& propname,uint32_t val);
+    virtual int setCameraProperty(const std::string& propname,int32_t val);
     /**
      \brief Set Camera property
      \param propname[in] property name
@@ -122,7 +122,7 @@ public:
      \param val[out] integer value
  \return 0 if success
  */
-    virtual int getCameraProperty(const std::string& propname,uint32_t& val);
+    virtual int getCameraProperty(const std::string& propname,int32_t& val);
 /*
     \brief Get Camera property
         \param propname[in] property name
@@ -135,7 +135,7 @@ public:
          \param proplist[out] lists of camera properties
      \return 0 if success
      */
-    virtual int getCameraProperties(std::vector<std::string >& proplist);
+    virtual int getCameraProperties(chaos::common::data::CDataWrapper& proplist);
 
     /**
      \brief Start Image Grabbing

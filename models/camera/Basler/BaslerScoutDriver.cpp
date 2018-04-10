@@ -848,7 +848,7 @@ int BaslerScoutDriver::stopGrab(){
     camera->StopGrabbing();
 }
 
-int  BaslerScoutDriver::setImageProperties(uint32_t width,uint32_t height,uint32_t opencvImageType){
+int  BaslerScoutDriver::setImageProperties(int32_t width,int32_t height,int32_t opencvImageType){
     props->addInt32Value("WIDTH",width);
     props->addInt32Value("HEIGHT",height);
     if(camera){
@@ -857,7 +857,7 @@ int  BaslerScoutDriver::setImageProperties(uint32_t width,uint32_t height,uint32
     return -1;
 }
 
-int  BaslerScoutDriver::getImageProperties(uint32_t& width,uint32_t& height,uint32_t& opencvImageType){
+int  BaslerScoutDriver::getImageProperties(int32_t& width,int32_t& height,int32_t& opencvImageType){
     ChaosUniquePtr<chaos::common::data::CDataWrapper> cw(new chaos::common::data::CDataWrapper());
     int ret=-1;
     cameraToProps(*camera,cw.get());
@@ -876,11 +876,11 @@ int  BaslerScoutDriver::getImageProperties(uint32_t& width,uint32_t& height,uint
 
 
 
-int  BaslerScoutDriver::setCameraProperty(const std::string& propname,uint32_t val){
+int  BaslerScoutDriver::setCameraProperty(const std::string& propname,int32_t val){
     ChaosUniquePtr<chaos::common::data::CDataWrapper> cw(new chaos::common::data::CDataWrapper());
     BaslerScoutDriverLDBG_<<"Setting \"" << propname<<"\"="<<(int32_t)val ;
 
-    cw->addInt32Value(propname,(int32_t)val);
+    cw->addInt32Value(propname,val);
 
     return propsToCamera(*camera,cw.get());
 
@@ -895,7 +895,7 @@ int  BaslerScoutDriver::setCameraProperty(const std::string& propname,double val
 
 }
 
-int  BaslerScoutDriver::getCameraProperty(const std::string& propname,uint32_t& val){
+int  BaslerScoutDriver::getCameraProperty(const std::string& propname,int32_t& val){
     ChaosUniquePtr<chaos::common::data::CDataWrapper> cw(new chaos::common::data::CDataWrapper());
 
     cameraToProps(*camera,cw.get());
@@ -919,10 +919,8 @@ int  BaslerScoutDriver::getCameraProperty(const std::string& propname,double& va
     return -1;
 }
 
-int  BaslerScoutDriver::getCameraProperties(std::vector<std::string >& proplist){
-    ChaosUniquePtr<chaos::common::data::CDataWrapper> cw(new chaos::common::data::CDataWrapper());
-    cameraToProps(*camera,cw.get());
+int  BaslerScoutDriver::getCameraProperties(chaos::common::data::CDataWrapper& proplist){
+   return cameraToProps(*camera,&proplist);
 
-    cw->getAllKey(proplist);
-    return (proplist.size()>0)?0:-1;
+
 }
