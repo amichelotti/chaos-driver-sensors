@@ -1,3 +1,5 @@
+../../../../../opt/pylon5/include/pylon/gige/_BaslerGigECameraParams.h
+../../../../../opt/pylon5/include/pylon/gige/_BaslerGigECameraParams.h
 CMakeLists.txt
 core/AbstractCameraDriver.cpp
 core/AbstractCameraDriver.h
