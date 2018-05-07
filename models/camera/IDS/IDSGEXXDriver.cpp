@@ -666,7 +666,6 @@ int  IDSGEXXDriver::getCameraProperty(const std::string& propname,double& val){
     ChaosUniquePtr<chaos::common::data::CDataWrapper> cw(new chaos::common::data::CDataWrapper());
 
     cameraToProps(cw.get());
-
     if(cw->hasKey(propname)){
         val = props->getDoubleValue(propname);
         return 0;
