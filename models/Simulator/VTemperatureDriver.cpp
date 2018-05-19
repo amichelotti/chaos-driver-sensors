@@ -41,16 +41,12 @@ CLOSE_CU_DRIVER_PLUGIN_CLASS_DEFINITION
 
 
 DEF_SENSOR_DATASET
-DEF_SENSOR_CHANNEL("RNDTEMP","Virtual random temperature",chaos::DataType::Output,chaos::DataType::TYPE_DOUBLE,sizeof(double))
-DEF_SENSOR_CHANNEL("RAMPTEMP","Virtual ramp temperature",chaos::DataType::Output,chaos::DataType::TYPE_INT32,sizeof(int32_t))
-DEF_SENSOR_CHANNEL("SINTEMP","Virtual periodic temperature",chaos::DataType::Output,chaos::DataType::TYPE_DOUBLE,sizeof(double))
-DEF_SENSOR_CHANNEL("FREQ","Virtual periodic frequency",chaos::DataType::Input,chaos::DataType::TYPE_DOUBLE,sizeof(double))
-DEF_SENSOR_CHANNEL("POINTS","Virtual periodic points",chaos::DataType::Input,chaos::DataType::TYPE_INT32,sizeof(int32_t))
+DEF_SENSOR_CHANNEL("TEMP","temperature",chaos::DataType::Output,chaos::DataType::TYPE_DOUBLE,sizeof(double))
 ENDDEF_SENSOR_DATASET
 
 //GET_PLUGIN_CLASS_DEFINITION
 //we need to define the driver with alias version and a class that implement it
-VTemperatureDriver::VTemperatureDriver():setPoint(25),err(1){
+VTemperatureDriver::VTemperatureDriver():setPoint(25),err(1),tempType(0){
   INIT_SENSOR_DATASET;
     counter=0;
     freq = 1.0;
@@ -66,7 +62,7 @@ int VTemperatureDriver::readChannel(void *buffer,int addr,int bcount){
     counter++;
     counter=counter%static_cast<int>(setPoint);
     
-    switch(addr){
+    switch(tempType){
         case 0:{
             double*pnt=(double*)buffer;
 
@@ -78,8 +74,10 @@ int VTemperatureDriver::readChannel(void *buffer,int addr,int bcount){
             return 1;
         }
         case 1:{
-            int32_t* pnt=(int32_t*)buffer;
-            pnt[0] = counter;
+        int rnd=rand();
+
+            double* pnt=(double*)buffer;
+            pnt[0] = counter +(rnd*1.0/RAND_MAX)*err;
             VTemperatureDriverLDBG_<<"reading channel :"<<addr<<" Virtual Ramp Temp:"<<pnt[0];
 
             return 1;
@@ -129,6 +127,9 @@ int VTemperatureDriver::sensorDeinit(){
 void VTemperatureDriver::driverInit(const chaos::common::data::CDataWrapper& s) throw (chaos::CException){
     VTemperatureDriverLDBG_<<"JSON PARAMS:"<<s.getJSONString();
 
+    if(s.hasKey("type")){
+        tempType=s.getInt32Value("type");
+    }
     if(s.hasKey("temp")){
         setPoint=s.getDoubleValue("temp");
         VTemperatureDriverLDBG_<<"SET POINT:"<<setPoint;

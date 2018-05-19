@@ -44,6 +44,7 @@ class VTemperatureDriver:public ::driver::sensor::AbstractSensorDriver{
     int32_t points;
     int32_t sinpoint;
     double setPoint,err;
+    int tempType;
 public:
 	VTemperatureDriver();
 	~VTemperatureDriver();
