@@ -12,3 +12,4 @@ models/camera/IDS/
 models
 models/camera/IDS/ueye
 ../../../../../opt/pylon5/include/pylon/gige
+models/camera/ShapeSim
