@@ -46,7 +46,7 @@ void print_state(CUStateKey::ControlUnitState state) {
 }
 
 
-int main (int argc, char* argv[] ) {
+int main (int argc, const char* argv[] ) {
   int err = 0;
   std::string attribute_value_tmp_str;
   CUStateKey::ControlUnitState device_state;

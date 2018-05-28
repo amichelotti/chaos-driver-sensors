@@ -52,7 +52,7 @@ using namespace ::driver::sensor::model;
 
 #define OPT_CUSTOM_DEVICE_ID "device_id"
 
-int main(int argc, char *argv[])
+int main(int argc, const char *argv[])
 {
     std::string tmp_device_id;
     try {

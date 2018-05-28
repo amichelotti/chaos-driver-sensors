@@ -27,9 +27,11 @@
 #include <opencv/cv.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>
-
+#include <opencv2/imgproc.hpp>
 namespace cu_driver = chaos::cu::driver_manager::driver;
 using namespace ::driver::sensor::camera;
+using namespace cv;
+
 #define ShapeSimLAPP_		LAPP_ << "[ShapeSim] "
 #define ShapeSimLDBG_		LDBG_ << "[ShapeSim:"<<__PRETTY_FUNCTION__<<"]"
 #define ShapeSimLERR_		LERR_ << "[ShapeSim:"<<__PRETTY_FUNCTION__<<"]"
@@ -315,7 +317,7 @@ int ShapeSim::waitGrab(uint32_t timeout_ms){
            linetype );
 
         int size = img.total() * img.elemSize();
-        std::memcpy(framebuf,img.data,size * sizeof(byte));
+        std::memcpy(framebuf,img.data,size );
         ret=0;
     }
 
