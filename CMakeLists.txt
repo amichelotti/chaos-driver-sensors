@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 project(chaos_driver_sensors)
-
+find_package(chaos MODULE REQUIRED)
+include_directories(../../ ${chaos_INCLUDE_DIRS})
 FILE(GLOB sensors_src core/*.cpp)
 SET(camera_src "")
 SET(camera_lib "")
@@ -27,15 +28,15 @@ ELSE()
 
 ENDIF()
 
- TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_common common_serial ${FrameworkLib} ${camera_lib})
+ TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_common common_serial pthread ${camera_lib})
 
 ADD_SUBDIRECTORY(models)
 
 ADD_EXECUTABLE(sensorsServer test/sensorsServer)
 ADD_EXECUTABLE(sensorsClient test/sensorsClient)
 
- TARGET_LINK_LIBRARIES(sensorsServer ${PROJECT_NAME} ${DRIVERS_LIB} chaos_cutoolkit chaos_common common_serial ${FrameworkLib} )
- TARGET_LINK_LIBRARIES(sensorsClient ${PROJECT_NAME} chaos_uitoolkit chaos_common ${DRIVERS_LIB} ${FrameworkLib})
+ TARGET_LINK_LIBRARIES(sensorsServer ${PROJECT_NAME} ${DRIVERS_LIB} chaos_cutoolkit chaos_common common_serial pthread)
+ TARGET_LINK_LIBRARIES(sensorsClient ${PROJECT_NAME} chaos_uitoolkit chaos_common ${DRIVERS_LIB} )
 
  INSTALL_TARGETS(/bin/sensor sensorsServer)
  INSTALL_TARGETS(/bin/sensor sensorsClient)
