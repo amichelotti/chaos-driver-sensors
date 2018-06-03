@@ -14,6 +14,6 @@ ELSE()
 #separate_arguments(pylon)
 SET(DRIVERS_LIB ${DRIVERS_LIB} ${PROJECT_NAME} PARENT_SCOPE)
 
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_common  chaos_driver_sensors ueye_api ${FrameworkLib})
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_common  chaos_driver_sensors ${FrameworkLib})
 INSTALL_TARGETS(/lib ${PROJECT_NAME})
 

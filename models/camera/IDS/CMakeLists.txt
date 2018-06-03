@@ -7,7 +7,7 @@ SET(sensors_src IDSGEXXDriver.cpp Camera.cpp)
 IF(BUILD_FORCE_STATIC)
    ADD_LIBRARY(${PROJECT_NAME} STATIC ${sensors_src})		 
 ELSE()
-    ADD_LIBRARY(${PROJECT_NAME} SHARED ${sensors_src})		 
+  ADD_LIBRARY(${PROJECT_NAME} SHARED ${sensors_src})		 
   ENDIF()
 
 
