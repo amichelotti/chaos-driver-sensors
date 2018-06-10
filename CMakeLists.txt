@@ -42,6 +42,9 @@ ADD_EXECUTABLE(sensorsClient test/sensorsClient)
  TARGET_LINK_LIBRARIES(sensorsServer ${PROJECT_NAME} ${DRIVERS_LIB} chaos_cutoolkit chaos_common common_serial pthread)
  TARGET_LINK_LIBRARIES(sensorsClient ${PROJECT_NAME} chaos_uitoolkit chaos_common ${DRIVERS_LIB} )
 
+ FILE(GLOB files "core/*.h")
+INSTALL(FILES ${files} DESTINATION include/driver/sensors/core)
+
  INSTALL_TARGETS(/bin/sensor sensorsServer)
  INSTALL_TARGETS(/bin/sensor sensorsClient)
  INSTALL_TARGETS(/lib ${PROJECT_NAME})
