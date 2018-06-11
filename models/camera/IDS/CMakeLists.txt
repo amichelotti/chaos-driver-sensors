@@ -19,5 +19,7 @@ FILE(COPY ${ids_libs} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 SET(DRIVERS_LIB ${DRIVERS_LIB} ${PROJECT_NAME} PARENT_SCOPE)
 
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_common  chaos_driver_sensors ueye_api ${FrameworkLib})
+FILE(GLOB files "*.h")
+INSTALL(FILES ${files} DESTINATION include/driver/sensors/models/camera/IDS)
 INSTALL_TARGETS(/lib ${PROJECT_NAME})
 

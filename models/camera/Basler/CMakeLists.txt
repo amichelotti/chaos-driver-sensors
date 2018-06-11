@@ -31,5 +31,8 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_common  chaos_driver
 MESSAGE(STATUS "pylon libs ${pylon}")
 FILE(GLOB pylon_libs ${BASLER}/lib64/*.so)
 INSTALL(FILES ${pylon_libs} DESTINATION lib)
+FILE(GLOB files "*.h")
+INSTALL(FILES ${files} DESTINATION include/driver/sensors/models/camera/Basler)
+
 INSTALL_TARGETS(/lib ${PROJECT_NAME})
 

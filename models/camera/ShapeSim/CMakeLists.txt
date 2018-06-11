@@ -15,5 +15,7 @@ ELSE()
 SET(DRIVERS_LIB ${DRIVERS_LIB} ${PROJECT_NAME} PARENT_SCOPE)
 
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_common  chaos_driver_sensors ${FrameworkLib})
+ FILE(GLOB files "*.h")
+INSTALL(FILES ${files} DESTINATION include/driver/sensors/models/camera/ShapeSim)
 INSTALL_TARGETS(/lib ${PROJECT_NAME})
 
