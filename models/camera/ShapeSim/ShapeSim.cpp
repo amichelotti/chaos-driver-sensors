@@ -58,9 +58,7 @@ void ShapeSim::driverInit(const char *initParameter) throw(chaos::CException){
 
 void ShapeSim::driverInit(const chaos::common::data::CDataWrapper& json) throw(chaos::CException){
     ShapeSimLAPP_ << "Initializing  driver:"<<json.getCompliantJSONString();
-    props->reset();
-    props->appendAllElement((chaos::common::data::CDataWrapper&)json);
-    if(initializeCamera(*props)!=0){
+    if(initializeCamera(json)!=0){
         throw chaos::CException(-1,"cannot initialize camera "+json.getCompliantJSONString(),__PRETTY_FUNCTION__);
     }
 
@@ -81,31 +79,36 @@ namespace camera{
 //we need to define the driver with alias version and a class that implement it
 int ShapeSim::initializeCamera(const chaos::common::data::CDataWrapper& json) {
     int ret=-2;
-    if(json.hasKey("SHAPE")&& json.isCDataWrapperValue("SHAPE")){
-        shape_params=json.getCSDataValue("SHAPE");
-        if(shape_params!=NULL){
-            if(shape_params->hasKey("type")){
-                ret=0;
-                initialized=true;
+    ShapeSimLDBG_<<"intialize camera:"<<json.getCompliantJSONString();
+    if(json.hasKey("SHAPE")){
+        if(json.isCDataWrapperValue("SHAPE")){
+            shape_params=json.getCSDataValue("SHAPE");
+            if(shape_params!=NULL){
+                if(shape_params->hasKey("type")){
+                    ret=0;
+                    initialized=true;
+                } else {
+                    ShapeSimLERR_<<  "Missing shape 'type'"<<json.getCompliantJSONString();
+
+                }
+
             } else {
-                ShapeSimLERR_<<  "Missing shape 'type'";
+                ShapeSimLERR_<<  "Error retriving 'SHAPE'"<<json.getCompliantJSONString();
 
             }
 
         } else {
-            ShapeSimLERR_<<  "Error retriving 'SHAPE'";
+            ShapeSimLERR_<<  "Missing 'SHAPE' parameters:"<<json.getCompliantJSONString();
 
         }
-
     } else {
-        ShapeSimLERR_<<  "Missing 'SHAPE'";
-
+        ShapeSimLERR_<<  "Missing 'SHAPE' key:"<<json.getCompliantJSONString();
     }
 
 
     return ret;
 }
-  ShapeSim::ShapeSim():shots(0),framebuf(NULL),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1),offsetx(0),offsety(0),shape_params(NULL){
+ShapeSim::ShapeSim():shots(0),framebuf(NULL),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1),offsetx(0),offsety(0),shape_params(NULL){
 
     ShapeSimLDBG_<<  "Created Driver";
     props=new chaos::common::data::CDataWrapper();
@@ -127,6 +130,7 @@ int ShapeSim::cameraToProps(chaos::common::data::CDataWrapper*p){
     p->addDoubleValue("FRAMERATE",framerate);
     p->addInt32Value("WIDTH",width);
     p->addInt32Value("HEIGHT",height);
+    p->addInt32Value("TRIGGER_MODE",0);
 
     p->addInt32Value("OFFSETX",offsetx);
     p->addInt32Value("OFFSETY",offsety);
@@ -227,13 +231,13 @@ int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
     shots=_shots;
     framebuf=_framebuf;
     fn=_fn;
-     err_centerx=0;
-     err_centery=0;
-     err_sizex=0;
-     err_sizey=0;
+    err_centerx=0;
+    err_centery=0;
+    err_sizex=0;
+    err_sizey=0;
 
-     err_rotangle=0;
-     err_extangle=0;
+    err_rotangle=0;
+    err_extangle=0;
     // fetch parameters
     if(shape_params->hasKey("type")){
         shape_type=shape_params->getStringValue("type");
@@ -307,21 +311,21 @@ int ShapeSim::waitGrab(uint32_t timeout_ms){
         // get parameters
 
         ellipse( img,
-           Point( centerx+err_centerx, centery+err_centery),
-           Size( sizex + err_sizex, sizey+ err_sizey ),
-           rotangle + err_rotangle,
-           0,
-           360,
-           Scalar( colr, colg, colb ),
-           tickness,
-           linetype );
+                 Point( centerx+err_centerx, centery+err_centery),
+                 Size( sizex + err_sizex, sizey+ err_sizey ),
+                 rotangle + err_rotangle,
+                 0,
+                 360,
+                 Scalar( colr, colg, colb ),
+                 tickness,
+                 linetype );
 
         int size = img.total() * img.elemSize();
         std::memcpy(framebuf,img.data,size );
         ret=0;
     }
 
-/*    if((ret=camera.captureImage(timeout_ms,(char*)framebuf,&size_ret))==0){
+    /*    if((ret=camera.captureImage(timeout_ms,(char*)framebuf,&size_ret))==0){
         ShapeSimLDBG_<<"Retrieved Image "<<camera.getWidth()<<"x"<<camera.getHeight()<<" raw size:"<<size_ret;
         ret= size_ret;
     } else{
