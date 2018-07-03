@@ -108,11 +108,12 @@ int ShapeSim::initializeCamera(const chaos::common::data::CDataWrapper& json) {
 
     return ret;
 }
-ShapeSim::ShapeSim():shots(0),framebuf(NULL),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1),offsetx(0),offsety(0),shape_params(NULL){
+ShapeSim::ShapeSim():shots(0),frames(0),framebuf(NULL),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1),offsetx(0),offsety(0),shape_params(NULL){
 
     ShapeSimLDBG_<<  "Created Driver";
     props=new chaos::common::data::CDataWrapper();
 
+    cv::namedWindow("test");
 
 }
 //default descrutcor
@@ -309,7 +310,10 @@ int ShapeSim::waitGrab(uint32_t timeout_ms){
     if(shape_type == "ellipse"){
         Mat img(width, height, CV_8UC3, Scalar::all(0));
         // get parameters
+        std::stringstream ss;
+        ss<<"frame:"<<frames++;
 
+        putText(img,ss.str(),Point(0,0),FONT_HERSHEY_SIMPLEX, 4,(255,255,255),2,LINE_AA);
         ellipse( img,
                  Point( centerx+err_centerx, centery+err_centery),
                  Size( sizex + err_sizex, sizey+ err_sizey ),
@@ -321,6 +325,11 @@ int ShapeSim::waitGrab(uint32_t timeout_ms){
                  linetype );
 
         int size = img.total() * img.elemSize();
+         cv::imshow("test",img);
+       // imshow( atom_window, img );
+         waitKey( 0 );
+         ShapeSimLDBG_<<shape_type<<"("<<width<<"X"<<height<<") center "<<centerx<<","<<centery<<" sizex:"<<sizex<<" sizey:"<<sizey<<" color:"<<colr<<"R,"<<colg<<"G,"<<colb<<" size byte:"<<size;
+
         std::memcpy(framebuf,img.data,size );
         ret=0;
     }

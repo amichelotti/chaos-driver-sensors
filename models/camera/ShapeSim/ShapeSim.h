@@ -55,6 +55,7 @@ class ShapeSim:public ::driver::sensor::camera::CameraDriverBridge {
      int32_t tmode; //0 continous, 1 software,2 hw,3 singleshot
      int32_t gstrategy;
      uint32_t shots;
+     uint64_t frames;
      void*framebuf;
      int32_t memID;
      cameraGrabCallBack fn;
