@@ -8,6 +8,7 @@ SET(camera_src )
 SET(camera_lib )
 IF(OPENCV)
   include_directories(../../ ${chaos_INCLUDE_DIRS} ${CMAKE_INSTALL_PREFIX}/include ${OPENCV}/include )
+
   link_directories(${OPENCV}/lib ${CMAKE_INSTALL_PREFIX}/lib)
   FILE(GLOB camera_src models/camera/*.cpp)
   FILE(REMOVE models/camera/UnitServerIgnore)
