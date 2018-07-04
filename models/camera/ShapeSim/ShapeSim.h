@@ -73,7 +73,7 @@ class ShapeSim:public ::driver::sensor::camera::CameraDriverBridge {
      int colr,colg,colb,tickness,linetype;
      double err_centerx,err_centery;
      double err_sizex,err_sizey;
-     double err_rotangle,err_extangle;
+     double err_rotangle,err_extangle,err_tickness;
      //
 public:
 	ShapeSim();

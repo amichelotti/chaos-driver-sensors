@@ -28,6 +28,9 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/uniform_int_distribution.hpp>
+
 namespace cu_driver = chaos::cu::driver_manager::driver;
 using namespace ::driver::sensor::camera;
 using namespace cv;
@@ -108,7 +111,7 @@ int ShapeSim::initializeCamera(const chaos::common::data::CDataWrapper& json) {
 
     return ret;
 }
-ShapeSim::ShapeSim():shots(0),frames(0),framebuf(NULL),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1),offsetx(0),offsety(0),shape_params(NULL){
+ShapeSim::ShapeSim():shots(0),frames(0),framebuf(NULL),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1.0),offsetx(0),offsety(0),shape_params(NULL){
 
     ShapeSimLDBG_<<  "Created Driver";
     props=new chaos::common::data::CDataWrapper();
@@ -226,7 +229,14 @@ int ShapeSim::cameraDeinit(){
     return 0;
 }
 
-
+#define GETDBLPARAM(w,name) \
+    if(w->hasKey(#name)){\
+    name = w->getDoubleValue(#name);\
+    ShapeSimLDBG_<< "shape DBL param '"<<#name<<" = "<<name;}
+#define GETINTPARAM(w,name) \
+    if(w->hasKey(#name)){\
+    name = w->getInt32Value(#name);\
+    ShapeSimLDBG_<< "shape INT param '"<<#name<<" = "<<name;}
 int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
     ShapeSimLDBG_<<"Start Grabbing";
     int ret=-1;
@@ -240,99 +250,90 @@ int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
 
     err_rotangle=0;
     err_extangle=0;
+    err_tickness=0;
     // fetch parameters
     if(shape_params->hasKey("type")){
         shape_type=shape_params->getStringValue("type");
         ret =0;
         centerx=width/2;
         centery=height/2;
-        if(shape_params->hasKey("centerx")){
-            centerx=shape_params->getInt32Value("centerx");
-        }
-        if(shape_params->hasKey("centery")){
-            centery=shape_params->getInt32Value("centery");
-        }
-        if(shape_params->hasKey("err_centerx")){
-            err_centerx=shape_params->getDoubleValue("err_centerx");
-        }
-        if(shape_params->hasKey("err_centery")){
-            err_centery=shape_params->getDoubleValue("err_centery");
-        }
-        if(shape_params->hasKey("err_sizex")){
-            err_sizex=shape_params->getDoubleValue("err_sizex");
-        }
-        if(shape_params->hasKey("err_sizey")){
-            err_sizey=shape_params->getDoubleValue("err_sizey");
-        }
-        if(shape_params->hasKey("err_rotangle")){
-            err_rotangle=shape_params->getDoubleValue("err_rotangle");
-        }
-        if(shape_params->hasKey("err_extangle")){
-            err_extangle=shape_params->getDoubleValue("err_extangle");
-        }
-        sizex=centerx/2;
-        sizey=centery/2;
-        if(shape_params->hasKey("sizex")){
-            sizex=shape_params->getInt32Value("sizex");
-        }
-        if(shape_params->hasKey("sizey")){
-            sizey=shape_params->getInt32Value("sizey");
-        }
         rotangle=0;
         extangle=0;
-        if(shape_params->hasKey("rotangle")){
-            rotangle=shape_params->getDoubleValue("rotangle");
-        }
-        if(shape_params->hasKey("extangle")){
-            extangle=shape_params->getDoubleValue("extangle");
-        }
         colr=255;
         colg=0;
         colb=0;
         tickness=2;
         linetype=8; //connected
-        if(shape_params->hasKey("colr")){
-            colr=shape_params->getInt32Value("colr");
-        }
-        if(shape_params->hasKey("colg")){
-            colg=shape_params->getInt32Value("colg");
-        }
-        if(shape_params->hasKey("colb")){
-            colb=shape_params->getInt32Value("colb");
-        }
+        GETINTPARAM(shape_params,centerx);
+        GETINTPARAM(shape_params,centery);
+        sizex=centerx/2;
+        sizey=centery/2;
+
+        GETDBLPARAM(shape_params,err_centerx);
+        GETDBLPARAM(shape_params,err_centery);
+        GETDBLPARAM(shape_params,err_sizex);
+        GETDBLPARAM(shape_params,err_sizey);
+        GETDBLPARAM(shape_params,err_rotangle);
+        GETDBLPARAM(shape_params,err_extangle);
+        GETDBLPARAM(shape_params,err_tickness);
+        GETINTPARAM(shape_params,sizex);
+
+        GETINTPARAM(shape_params,sizey);
+
+
+        GETDBLPARAM(shape_params,rotangle);
+        GETDBLPARAM(shape_params,extangle);
+
+        GETINTPARAM(shape_params,tickness);
+        GETINTPARAM(shape_params,linetype);
+        GETINTPARAM(shape_params,colg);
+        GETINTPARAM(shape_params,colb);
+        GETINTPARAM(shape_params,colr);
+
     }
     return ret;
 }
-
+#define RND_DIST(var) \
+    int tmp_##var=var;\
+    if(err_##var>0){\
+    boost::random::uniform_int_distribution<> dist_##var(-err_##var,err_##var);\
+    double err=dist_##var(gen);\
+    tmp_##var+= err;}
 int ShapeSim::waitGrab(uint32_t timeout_ms){
     int32_t ret=-1;
     size_t size_ret;
-
+    boost::random::mt19937 gen(std::time(0) );
     if(shape_type == "ellipse"){
-        Mat img(width, height, CV_8UC3, Scalar::all(0));
+        Mat img(height,width,  CV_8UC3, Scalar::all(0));
         // get parameters
         std::stringstream ss;
         ss<<"frame:"<<frames++;
+        RND_DIST(centerx);
+        RND_DIST(centery);
+        RND_DIST(sizex);
+        RND_DIST(sizey);
+        RND_DIST(rotangle);
+        RND_DIST(tickness);
 
-        putText(img,ss.str(),Point(10,20),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
+        putText(img,ss.str(),Point(10,25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
         ellipse( img,
-                 Point( centerx+err_centerx, centery+err_centery),
-                 Size( sizex + err_sizex, sizey+ err_sizey ),
-                 rotangle + err_rotangle,
+                 Point( tmp_centerx, tmp_centery),
+                 Size( tmp_sizex, tmp_sizey ),
+                 tmp_rotangle,
                  0,
                  360,
                  Scalar( colr, colg, colb ),
-                 tickness,
+                 tmp_tickness,
                  linetype );
 
         int size = img.total() * img.elemSize();
 #ifdef CVDEBUG
-         cv::imshow("test",img);
-         imshow( "test", img );
+        cv::imshow("test",img);
+        imshow( "test", img );
+        waitKey( 0 );
 #endif
-         waitKey( 0 );
-         rotangle++;
-         ShapeSimLDBG_<<shape_type<<"("<<width<<"X"<<height<<") center "<<centerx<<","<<centery<<" sizex:"<<sizex<<" sizey:"<<sizey<<" color:"<<colr<<"R,"<<colg<<"G,"<<colb<<" size byte:"<<size;
+
+        ShapeSimLDBG_<<shape_type<<"("<<width<<"X"<<height<<") center "<<tmp_centerx<<","<<tmp_centery<<" sizex:"<<tmp_sizex<<" sizey:"<<tmp_sizey<<" color:"<<colr<<"R,"<<colg<<"G,"<<colb<<" size byte:"<<size;
 
         std::memcpy(framebuf,img.data,size );
         ret=0;

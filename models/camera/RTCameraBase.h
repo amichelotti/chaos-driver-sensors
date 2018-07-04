@@ -48,6 +48,7 @@ protected:
         const int32_t* mode;
         uint8_t* framebuf;
         uint8_t* framebuf_out;
+        uint32_t framebuf_encoding;
         char encoding[16];
         chaos::common::data::CDataWrapper camera_props;
 

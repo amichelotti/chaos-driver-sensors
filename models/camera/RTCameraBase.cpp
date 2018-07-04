@@ -40,9 +40,46 @@ PUBLISHABLE_CONTROL_UNIT_IMPLEMENTATION(RTCameraBase)
 /*
  Construct
  */
+#define DECODE_CVENCODING(e,cvenc) \
+    if(e == #cvenc){\
+    RTCameraBaseLDBG_<<"Found Encoding:"<<#cvenc;\
+    framebuf_encoding=cvenc;\
+}
+
 RTCameraBase::RTCameraBase(const string& _control_unit_id, const string& _control_unit_param, const ControlUnitDriverList& _control_unit_drivers):
-RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers) {
+RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers),framebuf_encoding(CV_8UC3) {
   RTCameraBaseLDBG_<<"Creating "<<_control_unit_id<<" params:"<<_control_unit_param;
+  try{
+      chaos::common::data::CDataWrapper p;
+      p.setSerializedJsonData(_control_unit_param.c_str());
+      if(p.hasKey("FRAMEBUFFER_ENCODING")&&p.isStringValue("FRAMEBUFFER_ENCODING")){
+          std::string enc=p.getStringValue("FRAMEBUFFER_ENCODING");
+          DECODE_CVENCODING(enc,CV_8UC4);
+          DECODE_CVENCODING(enc,CV_8UC3);
+          DECODE_CVENCODING(enc,CV_8UC2);
+          DECODE_CVENCODING(enc,CV_8UC1);
+          DECODE_CVENCODING(enc,CV_8SC1);
+          DECODE_CVENCODING(enc,CV_8SC2);
+          DECODE_CVENCODING(enc,CV_8SC3);
+          DECODE_CVENCODING(enc,CV_8SC4);
+
+          DECODE_CVENCODING(enc,CV_16UC4);
+          DECODE_CVENCODING(enc,CV_16UC3);
+          DECODE_CVENCODING(enc,CV_16UC2);
+          DECODE_CVENCODING(enc,CV_16UC1);
+          DECODE_CVENCODING(enc,CV_16SC1);
+          DECODE_CVENCODING(enc,CV_16SC2);
+          DECODE_CVENCODING(enc,CV_16SC3);
+          DECODE_CVENCODING(enc,CV_16SC4);
+          DECODE_CVENCODING(enc,CV_32SC1);
+          DECODE_CVENCODING(enc,CV_32SC2);
+          DECODE_CVENCODING(enc,CV_32SC3);
+          DECODE_CVENCODING(enc,CV_32SC4);
+
+      }
+  } catch(...){
+
+  }
 }
 
 /*
@@ -101,7 +138,6 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
     std::vector<std::string> props;
     camera_props.getAllKey(props);
     addAttributeToDataSet("FMT","image format (jpg,png,gif...)",chaos::DataType::TYPE_STRING,chaos::DataType::Input);
-    addAttributeToDataSet("FILTER","Filter type and parameters (if any) ",chaos::DataType::TYPE_CLUSTER,chaos::DataType::Input);
     addBinaryAttributeAsSubtypeToDataSet("FRAMEBUFFER","image",chaos::DataType::SUB_TYPE_CHAR,DEFAULT_RESOLUTION,chaos::DataType::Output);
 
     for(std::vector<std::string>::iterator i = props.begin();i!=props.end();i++){
@@ -276,7 +312,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
   //  int size=*sizex*(*sizey)*(std::max(*depth/8,1));
     ret=driver->waitGrab(5000);
     RTCameraBaseLDBG_<<" raw image read:"<<ret;
-     cv::Mat image(*sizey,*sizex,CV_8UC3,framebuf);
+     cv::Mat image(*sizey,*sizex,framebuf_encoding,framebuf);
     if(image.empty()){
           RTCameraBaseLERR_"cannot convert image";
            return;
