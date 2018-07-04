@@ -276,7 +276,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
   //  int size=*sizex*(*sizey)*(std::max(*depth/8,1));
     ret=driver->waitGrab(5000);
     RTCameraBaseLDBG_<<" raw image read:"<<ret;
-     cv::Mat image(*sizey,*sizex,CV_8UC1,framebuf);
+     cv::Mat image(*sizey,*sizex,CV_8UC3,framebuf);
     if(image.empty()){
           RTCameraBaseLERR_"cannot convert image";
            return;

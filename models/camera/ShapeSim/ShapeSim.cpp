@@ -112,9 +112,10 @@ ShapeSim::ShapeSim():shots(0),frames(0),framebuf(NULL),fn(NULL),props(NULL),tmod
 
     ShapeSimLDBG_<<  "Created Driver";
     props=new chaos::common::data::CDataWrapper();
+#ifdef CVDEBUG
 
     cv::namedWindow("test");
-
+#endif
 }
 //default descrutcor
 ShapeSim::~ShapeSim() {
@@ -313,7 +314,7 @@ int ShapeSim::waitGrab(uint32_t timeout_ms){
         std::stringstream ss;
         ss<<"frame:"<<frames++;
 
-        putText(img,ss.str(),Point(0,0),FONT_HERSHEY_SIMPLEX, 4,(255,255,255),2,LINE_AA);
+        putText(img,ss.str(),Point(10,20),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
         ellipse( img,
                  Point( centerx+err_centerx, centery+err_centery),
                  Size( sizex + err_sizex, sizey+ err_sizey ),
@@ -325,9 +326,12 @@ int ShapeSim::waitGrab(uint32_t timeout_ms){
                  linetype );
 
         int size = img.total() * img.elemSize();
+#ifdef CVDEBUG
          cv::imshow("test",img);
-       // imshow( atom_window, img );
+         imshow( "test", img );
+#endif
          waitKey( 0 );
+         rotangle++;
          ShapeSimLDBG_<<shape_type<<"("<<width<<"X"<<height<<") center "<<centerx<<","<<centery<<" sizex:"<<sizex<<" sizey:"<<sizey<<" color:"<<colr<<"R,"<<colg<<"G,"<<colb<<" size byte:"<<size;
 
         std::memcpy(framebuf,img.data,size );

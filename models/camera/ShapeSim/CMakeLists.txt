@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(chaos_driver_sensors_shapesim)
 include_directories(${OPENCV}/include)
-link_directories(${OPENCV}/lib64 ${OPENCV}/lib)
+link_directories(${OPENCV}/lib)
 SET(sensors_src ShapeSim.cpp)
 
 IF(BUILD_FORCE_STATIC)
