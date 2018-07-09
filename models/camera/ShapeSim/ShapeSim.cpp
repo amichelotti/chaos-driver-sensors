@@ -307,7 +307,7 @@ int ShapeSim::waitGrab(uint32_t timeout_ms){
         Mat img(height,width,  CV_8UC3, Scalar::all(0));
         // get parameters
         std::stringstream ss;
-        ss<<"frame:"<<frames++;
+        ss<<getUid()<<" frame:"<<frames++;
         RND_DIST(centerx);
         RND_DIST(centery);
         RND_DIST(sizex);

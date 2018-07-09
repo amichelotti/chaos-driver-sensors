@@ -50,6 +50,7 @@ RTCameraBase::RTCameraBase(const string& _control_unit_id, const string& _contro
 RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers),framebuf_encoding(CV_8UC3) {
   RTCameraBaseLDBG_<<"Creating "<<_control_unit_id<<" params:"<<_control_unit_param;
   try{
+      framebuf=NULL;
       chaos::common::data::CDataWrapper p;
       p.setSerializedJsonData(_control_unit_param.c_str());
       if(p.hasKey("FRAMEBUFFER_ENCODING")&&p.isStringValue("FRAMEBUFFER_ENCODING")){
@@ -137,7 +138,8 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
     }
     std::vector<std::string> props;
     camera_props.getAllKey(props);
-    addAttributeToDataSet("FMT","image format (jpg,png,gif...)",chaos::DataType::TYPE_STRING,chaos::DataType::Input);
+    addAttributeToDataSet("FMT","image format (jpg,png,gif...)",chaos::DataType::TYPE_STRING,chaos::DataType::Bidirectional);
+
     addBinaryAttributeAsSubtypeToDataSet("FRAMEBUFFER","image",chaos::DataType::SUB_TYPE_CHAR,DEFAULT_RESOLUTION,chaos::DataType::Output);
 
     for(std::vector<std::string>::iterator i = props.begin();i!=props.end();i++){
@@ -234,6 +236,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     mode=cc->getROPtr<int32_t>(DOMAIN_INPUT, "TRIGGER_MODE");
     framebuf_out=cc->getRWPtr<uint8_t>(DOMAIN_OUTPUT, "FRAMEBUFFER");
     fmt=cc->getRWPtr<char>(DOMAIN_INPUT, "FMT");
+    ofmt=cc->getRWPtr<char>(DOMAIN_OUTPUT, "FMT");
     std::vector<std::string> props;
     camera_props.getAllKey(props);
     //breanch number and soft reset
@@ -295,6 +298,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     } else {
         snprintf(encoding,sizeof(encoding),".%s",fmt);
     }
+    snprintf(ofmt,sizeof(encoding),encoding);
     getAttributeCache()->setInputDomainAsChanged();
 
 }

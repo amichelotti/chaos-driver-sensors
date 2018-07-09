@@ -53,7 +53,7 @@ protected:
         chaos::common::data::CDataWrapper camera_props;
 
         double*shutter,*brightness,*contrast,*sharpness,*gain;
-         char*fmt;
+         char*fmt,*ofmt;
         CameraDriverInterface*driver;
         bool setProp(const std::string &name, int32_t value, uint32_t size);
         bool setProp(const std::string &name, double value, uint32_t size);
