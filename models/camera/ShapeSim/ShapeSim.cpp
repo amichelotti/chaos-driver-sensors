@@ -111,7 +111,7 @@ int ShapeSim::initializeCamera(const chaos::common::data::CDataWrapper& json) {
 
     return ret;
 }
-ShapeSim::ShapeSim():shots(0),frames(0),framebuf(NULL),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1.0),offsetx(0),offsety(0),shape_params(NULL){
+ShapeSim::ShapeSim():shots(0),frames(0),framebuf(NULL),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1.0),offsetx(0),offsety(0){
 
     ShapeSimLDBG_<<  "Created Driver";
     props=new chaos::common::data::CDataWrapper();

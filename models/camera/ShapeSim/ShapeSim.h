@@ -65,7 +65,7 @@ class ShapeSim:public ::driver::sensor::camera::CameraDriverBridge {
      int width,height,offsetx,offsety;
      double framerate;
      // shape parameters
-     chaos::common::data::CDataWrapper* shape_params;
+     ChaosUniquePtr<chaos::common::data::CDataWrapper> shape_params;
      std::string shape_type;
      int centerx,centery;
      int sizex,sizey;

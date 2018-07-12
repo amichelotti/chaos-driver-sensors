@@ -135,7 +135,7 @@ void ::driver::sensor::SCUTA::unitInit() throw(CException) {
 void ::driver::sensor::SCUTA::unitStart() throw(CException) {
       double *shutter;
       double val=5;
-  DPRINT("initializing shutters to 50%");
+  DPRINT("initializing shutters to 50%%");
 
 shutter= getAttributeCache()->getRWPtr<double>(DOMAIN_OUTPUT, "I_SHUTTER");
   *shutter = 50;
