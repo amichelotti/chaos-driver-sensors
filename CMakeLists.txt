@@ -33,7 +33,7 @@ ELSE()
 
 ENDIF()
 
- TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_common common_serial pthread ${camera_lib})
+ TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_metadata_service_client chaos_common common_serial pthread ${camera_lib})
 
 ADD_SUBDIRECTORY(models)
 
