@@ -140,7 +140,6 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
     camera_props.getAllKey(props);
     addAttributeToDataSet("FMT","image format (jpg,png,gif...)",chaos::DataType::TYPE_STRING,chaos::DataType::Bidirectional);
 
-    addBinaryAttributeAsSubtypeToDataSet("FRAMEBUFFER","image",chaos::DataType::SUB_TYPE_CHAR,DEFAULT_RESOLUTION,chaos::DataType::Output);
 
     for(std::vector<std::string>::iterator i = props.begin();i!=props.end();i++){
 
@@ -156,62 +155,7 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
                     *i);
         }
     }
-    /*
-     * addAttributeToDataSet("WIDTH","X image size",chaos::DataType::TYPE_INT32,chaos::DataType::Input);
-    addAttributeToDataSet("HEIGHT","Y image size",chaos::DataType::TYPE_INT32,chaos::DataType::Input);
-    addAttributeToDataSet("OFFSETX","AreaOfInterest Offset X (if supported)",chaos::DataType::TYPE_INT32,chaos::DataType::Input);
-    addAttributeToDataSet("OFFSETY","AreaOfInterest Offset Y (if supported)",chaos::DataType::TYPE_INT32,chaos::DataType::Input);
-    addAttributeToDataSet("DEPTH","Pixel depth",chaos::DataType::TYPE_INT32,chaos::DataType::Input);
-
-    addAttributeToDataSet("SHUTTER","Shutter % (0:100, -1 = Auto) Adjust the exposure of the camera",chaos::DataType::TYPE_DOUBLE,chaos::DataType::Input);
-    addAttributeToDataSet("BRIGHTNESS","Brightness %(0:100, -1 = Auto) Adjusting the brightness lightens or darkens the entire image.",chaos::DataType::TYPE_DOUBLE,chaos::DataType::Input);
-    addAttributeToDataSet("CONTRAST","Contrast % (0:100, -1 = Auto) Adjusting the contrast increases the difference between light and dark areas in the image.",chaos::DataType::TYPE_DOUBLE,chaos::DataType::Input);
-    addAttributeToDataSet("SHARPNESS","Sharpness % (0:100, -1 = Auto) Amount of sharpening to apply. The higher the sharpness, the more distinct the image subject's contours will be",chaos::DataType::TYPE_DOUBLE,chaos::DataType::Input);
-    addAttributeToDataSet("GAIN","Gain % (0:100, -1 = Auto)",chaos::DataType::TYPE_DOUBLE,chaos::DataType::Input);
-
-
-
-
-
-    addStateVariable(StateVariableTypeAlarmDEV,"operation_not_supported",
-            "The operation is not supported by the current HW");
-    addStateVariable(StateVariableTypeAlarmDEV,"camera_error",
-            "Generic Camera Error");
-    addStateVariable(StateVariableTypeAlarmCU,"encode_error",
-            "Encoding error");
-    addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, double >(this,
-            &::driver::sensor::camera::RTCameraBase::setProp,
-            "GAIN");
-    addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, double >(this,
-            &::driver::sensor::camera::RTCameraBase::setProp,
-            "SHARPNESS");
-    addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, double >(this,
-            &::driver::sensor::camera::RTCameraBase::setProp,
-            "BRIGHTNESS");
-    addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, double >(this,
-            &::driver::sensor::camera::RTCameraBase::setProp,
-            "SHUTTER");
-    addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, double >(this,
-            &::driver::sensor::camera::RTCameraBase::setProp,
-            "CONTRAST");
-    addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, int >(this,
-            &::driver::sensor::camera::RTCameraBase::setProp,
-            "WIDTH");
-    addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, int >(this,
-            &::driver::sensor::camera::RTCameraBase::setProp,
-            "HEIGHT");
-
-        addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, int >(this,
-            &::driver::sensor::camera::RTCameraBase::setProp,
-            "TRIGGER_MODE");
-
-    addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, int >(this,
-            &::driver::sensor::camera::RTCameraBase::setProp,
-            "OFFSETX");
-    addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, int >(this,
-            &::driver::sensor::camera::RTCameraBase::setProp,
-            "OFFSETY");
-            */
+    addBinaryAttributeAsSubtypeToDataSet("FRAMEBUFFER","image",chaos::DataType::SUB_TYPE_CHAR,DEFAULT_RESOLUTION,chaos::DataType::Output);
 
 }
 
@@ -232,7 +176,6 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     sizex=cc->getRWPtr<int32_t>(DOMAIN_INPUT, "WIDTH");
     sizey=cc->getRWPtr<int32_t>(DOMAIN_INPUT, "HEIGHT");
     //
-
     mode=cc->getROPtr<int32_t>(DOMAIN_INPUT, "TRIGGER_MODE");
     framebuf_out=cc->getRWPtr<uint8_t>(DOMAIN_OUTPUT, "FRAMEBUFFER");
     fmt=cc->getRWPtr<char>(DOMAIN_INPUT, "FMT");
@@ -300,6 +243,8 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     }
     snprintf(ofmt,sizeof(encoding),encoding);
     getAttributeCache()->setInputDomainAsChanged();
+    getAttributeCache()->setOutputDomainAsChanged();
+
 
 }
 
@@ -315,8 +260,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
     int ret;
   //  int size=*sizex*(*sizey)*(std::max(*depth/8,1));
     ret=driver->waitGrab(5000);
-    RTCameraBaseLDBG_<<" raw image read:"<<ret;
-     cv::Mat image(*sizey,*sizex,framebuf_encoding,framebuf);
+    cv::Mat image(*sizey,*sizex,framebuf_encoding,framebuf);
     if(image.empty()){
           RTCameraBaseLERR_"cannot convert image";
            return;
@@ -339,16 +283,16 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
 
 
     uchar* result = reinterpret_cast<uchar*> (&buf[0]);
-    RTCameraBaseLDBG_<<encoding <<" image encoded:"<<buf.size();
     getAttributeCache()->setOutputAttributeNewSize("FRAMEBUFFER", buf.size());
-    framebuf_out=getAttributeCache()->getRWPtr<uint8_t>(DOMAIN_OUTPUT, "FRAMEBUFFER");
 
     memcpy(framebuf_out,result,buf.size());
     //    namedWindow("Captura",WINDOW_AUTOSIZE);
     //    imshow( "Captura", image );
 
 
-      getAttributeCache()->setOutputDomainAsChanged();
+    getAttributeCache()->setOutputDomainAsChanged();
+    RTCameraBaseLDBG_<<encoding <<" image encoded:"<<buf.size();
+
 }
 
 //!Execute the Control Unit work
