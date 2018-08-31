@@ -33,10 +33,13 @@ using namespace chaos::cu::control_manager;
 using namespace cv;
 PUBLISHABLE_CONTROL_UNIT_IMPLEMENTATION(RTCameraBase)
 
-#define RTCameraBaseLAPP_		LAPP_ << "[RTCameraBase] "
+/*#define RTCameraBaseLAPP_		LAPP_ << "[RTCameraBase] "
 #define RTCameraBaseLDBG_		LDBG_ << "[RTCameraBase] " << __PRETTY_FUNCTION__ << " "
 #define RTCameraBaseLERR_		LERR_ << "[RTCameraBase] " << __PRETTY_FUNCTION__ << "("<<__LINE__<<") "
-
+*/
+#define RTCameraBaseLAPP_		CUAPP
+#define RTCameraBaseLDBG_		CUDBG
+#define RTCameraBaseLERR_		CUERR
 /*
  Construct
  */
@@ -283,9 +286,9 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
 
 
     uchar* result = reinterpret_cast<uchar*> (&buf[0]);
-    getAttributeCache()->setOutputAttributeNewSize("FRAMEBUFFER", buf.size());
-
-    memcpy(framebuf_out,result,buf.size());
+    //getAttributeCache()->setOutputAttributeNewSize("FRAMEBUFFER", buf.size());
+    getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER",result,buf.size());
+    //memcpy(framebuf_out,result,buf.size());
     //    namedWindow("Captura",WINDOW_AUTOSIZE);
     //    imshow( "Captura", image );
 
