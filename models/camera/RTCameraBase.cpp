@@ -263,6 +263,10 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
     int ret;
   //  int size=*sizex*(*sizey)*(std::max(*depth/8,1));
     ret=driver->waitGrab(5000);
+    if(ret<0){
+        RTCameraBaseLERR_<<" Timeout!!";
+        return;
+    }
     cv::Mat image(*sizey,*sizex,framebuf_encoding,framebuf);
     if(image.empty()){
           RTCameraBaseLERR_"cannot convert image";
@@ -274,6 +278,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
         if(code==false){
             setStateVariableSeverity(StateVariableTypeAlarmCU,"encode_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
             LERR_<<"Encode error:"<<fmt;
+            return;
 
         } else {
             setStateVariableSeverity(StateVariableTypeAlarmCU,"encode_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
@@ -282,6 +287,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
     } catch(...){
          setStateVariableSeverity(StateVariableTypeAlarmCU,"encode_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
          LERR_<<"Encode exception:"<<fmt;
+         return;
     }
 
 
