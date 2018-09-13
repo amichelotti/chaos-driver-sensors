@@ -407,7 +407,7 @@ int  ShapeSim::getCameraProperty(const std::string& propname,int32_t& val){
     cameraToProps(cw.get());
 
     if(cw->hasKey(propname)){
-        val = props->getInt32Value(propname);
+        val = cw->getInt32Value(propname);
         return 0;
     }
     return -1;
@@ -418,7 +418,7 @@ int  ShapeSim::getCameraProperty(const std::string& propname,double& val){
 
     cameraToProps(cw.get());
     if(cw->hasKey(propname)){
-        val = props->getDoubleValue(propname);
+        val = cw->getDoubleValue(propname);
         return 0;
     }
     return -1;
