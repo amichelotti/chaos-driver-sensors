@@ -169,7 +169,7 @@ void ZBSensorCollector::updateStatus(){
                     case 3:
                     // get the channel
                         channel = atoi(pnt);
-                        uid = (type << 16) | (node<<8) | channel&0xFF; 
+                        uid = (type << 16) | (node<<8) | (channel&0xFF); 
                         ZBSensorCollectorLDBG_<<"channel:"<<channel<<"node:"<<node<<" type:"<<type<<" uid:"<<std::hex<<uid<<std::dec;
                         if(uid==0) {
                            ZBSensorCollectorLERR_ << "bad uid something is going wrong:"<<buffer;

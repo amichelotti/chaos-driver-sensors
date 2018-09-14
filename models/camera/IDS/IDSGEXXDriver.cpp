@@ -603,6 +603,7 @@ int IDSGEXXDriver::waitGrab(uint32_t timeout_ms){
 }
 int IDSGEXXDriver::stopGrab(){
     //camera->StopGrabbing();
+    return 0;
 }
 
 int  IDSGEXXDriver::setImageProperties(int32_t width,int32_t height,int32_t opencvImageType){

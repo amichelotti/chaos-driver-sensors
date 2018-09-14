@@ -353,6 +353,7 @@ int ShapeSim::waitGrab(uint32_t timeout_ms){
 }
 int ShapeSim::stopGrab(){
     //camera->StopGrabbing();
+    return 0;
 }
 
 int  ShapeSim::setImageProperties(int32_t width,int32_t height,int32_t opencvImageType){
