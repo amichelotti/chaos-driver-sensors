@@ -24,7 +24,6 @@
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <math.h>
 #include <boost/lexical_cast.hpp>
-#include <opencv/cv.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc.hpp>
