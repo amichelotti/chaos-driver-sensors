@@ -21,7 +21,6 @@
 #include "RTCameraBase.h"
 #include <driver/sensors/core/AbstractSensorDriver.h>
 #include <chaos/cu_toolkit/control_manager/AttributeSharedCacheWrapper.h>
-#include <opencv/cv.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>
 #include <driver/sensors/core/CameraDriverInterface.h>
