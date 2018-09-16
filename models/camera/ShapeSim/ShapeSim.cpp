@@ -95,7 +95,7 @@ int ShapeSim::initializeCamera(const chaos::common::data::CDataWrapper& json) {
                 }
 
             } else {
-                ShapeSimLERR_<<  "Error retriving 'SHAPE'"<<json.getCompliantJSONString();
+                ShapeSimLERR_<<  "  retriving 'SHAPE'"<<json.getCompliantJSONString();
 
             }
 
