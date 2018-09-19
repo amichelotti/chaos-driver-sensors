@@ -212,6 +212,7 @@ int ShapeSim::propsToCamera(chaos::common::data::CDataWrapper*p){
 int ShapeSim::cameraInit(void *buffer,uint32_t sizeb){
     ShapeSimLDBG_<<"Initialization";
     // simple initialization
+    frames=0;
 
 
 
@@ -223,7 +224,7 @@ int ShapeSim::cameraInit(void *buffer,uint32_t sizeb){
 
 int ShapeSim::cameraDeinit(){
     ShapeSimLDBG_<<"deinit";
-
+    frames=0;
 
     return 0;
 }
@@ -331,8 +332,7 @@ int ShapeSim::waitGrab(uint32_t timeout_ms){
         imshow( "test", img );
         waitKey( 0 );
 #endif
-
-        ShapeSimLDBG_<<shape_type<<"("<<width<<"X"<<height<<") center "<<tmp_centerx<<","<<tmp_centery<<" sizex:"<<tmp_sizex<<" sizey:"<<tmp_sizey<<" color:"<<colr<<"R,"<<colg<<"G,"<<colb<<" size byte:"<<size;
+        ShapeSimLDBG_<<shape_type<<"("<<width<<"X"<<height<<")"<<frames<<" center "<<tmp_centerx<<","<<tmp_centery<<" sizex:"<<tmp_sizex<<" sizey:"<<tmp_sizey<<" color:"<<colr<<"R,"<<colg<<"G,"<<colb<<" size byte:"<<size;
 
         std::memcpy(framebuf,img.data,size );
         ret=0;
