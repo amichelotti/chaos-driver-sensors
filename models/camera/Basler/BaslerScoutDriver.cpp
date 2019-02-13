@@ -120,9 +120,16 @@ namespace sensor{
 namespace camera{
 
 static int setNode(const std::string& node_name,CInstantCamera& camera,int64_t val){
+
     try{
+        BaslerScoutDriverLDBG_<<"setting node:"<<node_name;
         INodeMap &control = camera.GetNodeMap();
         GenApi::CIntegerPtr node=control.GetNode(node_name.c_str());
+        if(node.IsValid()==false){
+            BaslerScoutDriverLERR_<<  "Node:"<<node_name<<" is invalid";
+
+            return -1;
+        }
         if(IsWritable(node)){
             node->SetValue(val);
         } else {
@@ -144,8 +151,15 @@ static int setNode(const std::string& node_name,CInstantCamera& camera,int64_t v
 
 static int setNode(const std::string& node_name,CInstantCamera& camera,double val){
     try{
+        BaslerScoutDriverLDBG_<<"setting node:"<<node_name;
+
         INodeMap &control = camera.GetNodeMap();
         GenApi::CFloatPtr node=control.GetNode(node_name.c_str());
+         if(node.IsValid()==false){
+            BaslerScoutDriverLERR_<<  "Node:"<<node_name<<" is invalid";
+
+            return -1;
+        }
          node->SetValue(val);
       /*  if(IsWritable(node)){
             node->SetValue(val);
@@ -168,8 +182,15 @@ static int setNode(const std::string& node_name,CInstantCamera& camera,double va
 }
 static int setNodeInPercentage(const std::string& node_name,CInstantCamera& camera,float percent){
     try {
+        BaslerScoutDriverLDBG_<<"setting node:"<<node_name;
+
         INodeMap &control = camera.GetNodeMap();
         GenApi::CIntegerPtr node=control.GetNode(node_name.c_str());
+        if(node.IsValid()==false){
+            BaslerScoutDriverLERR_<<  "Node:"<<node_name<<" is invalid";
+
+            return -1;
+        }
         int64_t min,max,inc;
         min=node->GetMin() ;
         max=node->GetMax();
@@ -194,9 +215,15 @@ static int setNodeInPercentage(const std::string& node_name,CInstantCamera& came
 
 static int getNode(const std::string& node_name,CInstantCamera& camera,int32_t& percent){
     try {
+                BaslerScoutDriverLDBG_<<"getting node:"<<node_name;
+
         INodeMap &control = camera.GetNodeMap();
         GenApi::CIntegerPtr node=control.GetNode(node_name.c_str());
+        if(node.IsValid()==false){
+            BaslerScoutDriverLERR_<<  "Node:"<<node_name<<" is invalid";
 
+            return -1;
+        }
         percent=-1;
         percent=node->GetValue();
 
@@ -214,8 +241,15 @@ static int getNode(const std::string& node_name,CInstantCamera& camera,int32_t& 
 static int getNodeInPercentage(const std::string& node_name,CInstantCamera& camera,float& percent){
     int64_t min,max,inc,val;
     try {
+        BaslerScoutDriverLDBG_<<"getting node:"<<node_name;
+
         INodeMap &control = camera.GetNodeMap();
         GenApi::CIntegerPtr node=control.GetNode(node_name.c_str());
+         if(node.IsValid()==false){
+            BaslerScoutDriverLERR_<<  "Node:"<<node_name<<" is invalid";
+
+            return -1;
+        }
         percent=-1;
         min=node->GetMin() ;
         max=node->GetMax();
@@ -527,6 +561,7 @@ int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera& cam,chaos::common::d
     GETINTPERCVALUE(SharpnessEnhancementRaw,"SHARPNESS");
     GETINTPERCVALUE(BslBrightnessRaw,"BRIGHTNESS");
     GETINTPERCVALUE(BslContrastRaw,"CONTRAST");
+    return 0;
 }
 
 int BaslerScoutDriver::propsToCamera(CInstantCamera& camera,chaos::common::data::CDataWrapper*p){
@@ -601,7 +636,10 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera& camera,chaos::common::data:
 
 
         } else {
-            setNode("GainAuto",camera,(int64_t)Basler_GigECamera::GainAutoEnums::GainAuto_Off);
+            if(setNode("GainAuto",camera,(int64_t)Basler_GigECamera::GainAutoEnums::GainAuto_Off)!=0){
+                ret++;
+                BaslerScoutDriverLERR_<<"Setting GAINAUTO Failed";  
+            }
 
 
             double gain=p->getDoubleValue("GAIN")/100.0;
@@ -623,12 +661,19 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera& camera,chaos::common::data:
 
         if((p->getDoubleValue("SHUTTER")<0)){
             if(setNode("ExposureAuto",camera,(int64_t)Basler_GigECamera::ExposureAutoEnums::ExposureAuto_Continuous)!=0){
+                BaslerScoutDriverLERR_<<"Setting Exposure Auto";
+
                 ret++;
             }
 
 
         } else {
-            setNode("ExposureAuto",camera,(int64_t)Basler_GigECamera::ExposureAutoEnums::ExposureAuto_Off);
+            if(setNode("ExposureAuto",camera,(int64_t)Basler_GigECamera::ExposureAutoEnums::ExposureAuto_Off)!=0){
+                BaslerScoutDriverLERR_<<"Setting Exposure Auto";
+
+                ret++;
+            
+            }
 
 
             double gain=p->getDoubleValue("SHUTTER")/100.0;
@@ -830,6 +875,7 @@ int BaslerScoutDriver::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBa
     } else {
         camera->StartGrabbing( strategy);
     }
+    return 0;
 
 }
 
@@ -900,6 +946,7 @@ int BaslerScoutDriver::waitGrab(uint32_t timeout_ms){
 }
 int BaslerScoutDriver::stopGrab(){
     camera->StopGrabbing();
+    return 0;
 }
 
 int  BaslerScoutDriver::setImageProperties(int32_t width,int32_t height,int32_t opencvImageType){
