@@ -122,7 +122,7 @@ namespace camera{
 static int setNode(const std::string& node_name,CInstantCamera& camera,int64_t val){
 
     try{
-        BaslerScoutDriverLDBG_<<"setting node:"<<node_name;
+        BaslerScoutDriverLDBG_<<"setting int node:"<<node_name<<" to "<<val;
         INodeMap &control = camera.GetNodeMap();
         GenApi::CIntegerPtr node=control.GetNode(node_name.c_str());
         if(node.IsValid()==false){
@@ -151,7 +151,7 @@ static int setNode(const std::string& node_name,CInstantCamera& camera,int64_t v
 
 static int setNode(const std::string& node_name,CInstantCamera& camera,double val){
     try{
-        BaslerScoutDriverLDBG_<<"setting node:"<<node_name;
+        BaslerScoutDriverLDBG_<<"setting float node:"<<node_name<<" to:"<<val;
 
         INodeMap &control = camera.GetNodeMap();
         GenApi::CFloatPtr node=control.GetNode(node_name.c_str());
@@ -182,7 +182,7 @@ static int setNode(const std::string& node_name,CInstantCamera& camera,double va
 }
 static int setNodeInPercentage(const std::string& node_name,CInstantCamera& camera,float percent){
     try {
-        BaslerScoutDriverLDBG_<<"setting node:"<<node_name;
+        BaslerScoutDriverLDBG_<<"setting int node:"<<node_name<<" to: "<<percent<<" %";
 
         INodeMap &control = camera.GetNodeMap();
         GenApi::CIntegerPtr node=control.GetNode(node_name.c_str());
@@ -636,14 +636,14 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera& camera,chaos::common::data:
                     ret++;
             }
         } else {
-            setNode("GainAuto",camera,(int64_t)Basler_GigECamera::GainAutoEnums::GainAuto_Off);
+            //setNode("GainAuto",camera,(int64_t)Basler_GigECamera::GainAutoEnums::GainAuto_Off);
                
             if(gain>1.0){
                 gain=1.0;
             }
             if(setNodeInPercentage("GainRaw",camera,gain)!=0){
                 ret++;
-                BaslerScoutDriverLERR_<<"Setting GAIN FAILED";
+                BaslerScoutDriverLERR_<<"Setting GAIN FAILED:"<<gain;
 
             }
         }
