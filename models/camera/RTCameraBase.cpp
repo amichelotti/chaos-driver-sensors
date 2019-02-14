@@ -99,6 +99,10 @@ RTCameraBase::~RTCameraBase() {
 }
 void RTCameraBase::updateProperty(){
     std::vector<std::string> props;
+    if(driver->getCameraProperties(camera_props)!=0){
+        throw chaos::CException(-1,"Error retrieving camera properties",__PRETTY_FUNCTION__);
+
+    }
     camera_props.getAllKey(props);
     AttributeSharedCacheWrapper * cc=getAttributeCache();
 
