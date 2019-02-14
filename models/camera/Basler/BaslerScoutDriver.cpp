@@ -29,7 +29,7 @@
 // use the pylon driver
 #include <pylon/ConfigurationEventHandler.h>
 #include <pylon/gige/BaslerGigEInstantCamera.h>
-
+#include <chaos/common/data/CDataVariant.h>
 using namespace Pylon;
 namespace cu_driver = chaos::cu::driver_manager::driver;
 using namespace ::driver::sensor::camera;
@@ -494,13 +494,13 @@ BaslerScoutDriver::~BaslerScoutDriver() {
 }
 #define GETINTVALUE(x,y){\
     int32_t val;\
-    BaslerScoutDriverLDBG_<<"GETTING PROP \""<< # x <<"\" alias:"<<y;\
+    BaslerScoutDriverLDBG_<<"GETTING INT PROP \""<< # x <<"\" alias:"<<y;\
     if(getNode(# x,cam,val)==0){\
     p->addInt32Value(y,(int32_t)val);} else {    BaslerScoutDriverLERR_<<"cannot read basler node \""<< #x<<"\"";\
 }}
 
 #define GETINTPERCVALUE(x,y){ \
-    BaslerScoutDriverLDBG_<<"GETTING PROP \""<< # x <<"\" alias:"<<y;\
+    BaslerScoutDriverLDBG_<<"GETTING INT PERCENT PROP \""<< # x <<"\" alias:"<<y;\
     float per;\
     if(getNodeInPercentage(# x,cam,per)==0){\
     p->addInt32Value(y,(int32_t)per);}}
@@ -629,20 +629,15 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera& camera,chaos::common::data:
         BaslerScoutDriverLDBG_<< "setting Pixel Format " <<p->getCStringValue("PIXELFMT");
     }
     if(p->hasKey("GAIN")){
-        if(p->getDoubleValue("GAIN")<0){
+        double gain=p->getAsRealValue("GAIN")/100.0;
+
+        if(val<0){
             if(setNode("GainAuto",camera, (int64_t)Basler_GigECamera::GainAutoEnums::GainAuto_Continuous)!=0){
-                ret++;
+                    ret++;
             }
-
-
         } else {
-            if(setNode("GainAuto",camera,(int64_t)Basler_GigECamera::GainAutoEnums::GainAuto_Off)!=0){
-                ret++;
-                BaslerScoutDriverLERR_<<"Setting GAINAUTO Failed";  
-            }
-
-
-            double gain=p->getDoubleValue("GAIN")/100.0;
+            setNode("GainAuto",camera,(int64_t)Basler_GigECamera::GainAutoEnums::GainAuto_Off);
+               
             if(gain>1.0){
                 gain=1.0;
             }
@@ -651,32 +646,21 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera& camera,chaos::common::data:
                 BaslerScoutDriverLERR_<<"Setting GAIN FAILED";
 
             }
-
-
-            //                   BaslerScoutDriverLDBG_ << "Gain "<<gain<<"     : " << gain_node->GetValue() << " (Min: " << gain_node->GetMin() << "; Max: " <<  gain_node->GetMax() << "; Inc: " <<gain_node->GetInc() << ")";
-
         }
     }
     if(p->hasKey("SHUTTER")){
+        double gain=p->getAsRealValue("SHUTTER")/100.0;
 
-        if((p->getDoubleValue("SHUTTER")<0)){
+        if((gain<0)){
             if(setNode("ExposureAuto",camera,(int64_t)Basler_GigECamera::ExposureAutoEnums::ExposureAuto_Continuous)!=0){
                 BaslerScoutDriverLERR_<<"Setting Exposure Auto";
 
                 ret++;
             }
-
-
         } else {
             if(setNode("ExposureAuto",camera,(int64_t)Basler_GigECamera::ExposureAutoEnums::ExposureAuto_Off)!=0){
-                BaslerScoutDriverLERR_<<"Setting Exposure Auto";
-
-                ret++;
-            
+                BaslerScoutDriverLERR_<<"Setting Exposure Auto OFF";            
             }
-
-
-            double gain=p->getDoubleValue("SHUTTER")/100.0;
             if(gain>1.0){
                 gain=1.0;
             }
@@ -685,69 +669,49 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera& camera,chaos::common::data:
                 BaslerScoutDriverLERR_<<"Setting SHUTTER FAILED";
 
             }
-
-
         }
     }
     if(p->hasKey("SHARPNESS")){
+        double gain=p->getAsRealValue("SHARPNESS")/100.0;
 
-        if(p->getDoubleValue("SHARPNESS")<0){
+        if(gain<0){
             setNode("DemosaicingMode",camera,(int64_t)Basler_GigECamera::DemosaicingModeEnums::DemosaicingMode_BaslerPGI );
 
         } else {
-
-
-            double gain=p->getDoubleValue("SHARPNESS")/100.0;
             if(gain>1.0){
                 gain=1.0;
             }
             if(setNodeInPercentage("SharpnessEnhancementRaw",camera,gain)!=0){
                 ret++;
                 BaslerScoutDriverLERR_<<"Setting SHARPNESS FAILED";
-
             }
-
-            //                    BaslerScoutDriverLDBG_ << "SHARPNESS "<<gain<<"     : " << sharp_node->GetValue() << " (Min: " << sharp_node->GetMin() << "; Max: " <<  sharp_node->GetMax() << "; Inc: " <<sharp_node->GetInc() << ")";
-
         }
     }
     if(p->hasKey("BRIGHTNESS")){
         setNode("DemosaicingMode",camera,(int64_t)Basler_GigECamera::DemosaicingModeEnums::DemosaicingMode_BaslerPGI );
+        double gain=p->getAsRealValue("BRIGHTNESS")/100.0;
 
-        if(p->getDoubleValue("BRIGHTNESS")<0){
-
-        } else {
-
-
-            double gain=p->getDoubleValue("BRIGHTNESS")/100.0;
+        if(gain>=0){
             if(gain>1.0){
                 gain=1.0;
             }
             if(setNodeInPercentage("BslBrightnessRaw",camera,gain)!=0){
                 ret++;
                 BaslerScoutDriverLERR_<<"Setting BRIGHTNESS FAILED";
-
             }
-
-            //         BaslerScoutDriverLDBG_ << "BRIGHTNESS "<<gain<<"     : " << bright_node->GetValue() << " (Min: " << bright_node->GetMin() << "; Max: " <<  bright_node->GetMax() << "; Inc: " <<bright_node->GetInc() << ")";
-
         }
     }
     if(p->hasKey("CONTRAST")){
         setNode("DemosaicingMode",camera,(int64_t)Basler_GigECamera::DemosaicingModeEnums::DemosaicingMode_BaslerPGI );
+        double gain=p->getDoubleValue("CONTRAST")/100.0;
 
-        if(p->getDoubleValue("CONTRAST")<0){
-
-        } else {
-
-
-            double gain=p->getDoubleValue("CONTRAST")/100.0;
+        if(gain>=0){
             if(gain>1.0){
                 gain=1.0;
             }
             if(setNodeInPercentage("BslContrastRaw",camera,gain)!=0){
                 ret++;
-                  BaslerScoutDriverLERR_<<"Setting CONTRAST FAILED";
+                BaslerScoutDriverLERR_<<"Setting CONTRAST FAILED";
             }
 
             //                  BaslerScoutDriverLDBG_ << "CONTRAST "<<gain<<"     : " << contrast_node->GetValue() << " (Min: " << contrast_node->GetMin() << "; Max: " <<  contrast_node->GetMax() << "; Inc: " <<contrast_node->GetInc() << ")";
