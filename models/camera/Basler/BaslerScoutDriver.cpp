@@ -182,7 +182,7 @@ static int setNode(const std::string& node_name,CInstantCamera& camera,double va
 }
 static int setNodeInPercentage(const std::string& node_name,CInstantCamera& camera,float percent){
     try {
-        BaslerScoutDriverLDBG_<<"setting int node:"<<node_name<<" to: "<<percent<<" %";
+        BaslerScoutDriverLDBG_<<"setting int node:"<<node_name<<" to: "<<percent*100<<" %";
 
         INodeMap &control = camera.GetNodeMap();
         GenApi::CIntegerPtr node=control.GetNode(node_name.c_str());
@@ -397,14 +397,14 @@ public:
 int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper& json) {
     IPylonDevice* pdev=NULL;
     int found=0;
-    if(camera){
+    if(camerap){
         BaslerScoutDriverLDBG_<<  "Deleting camera before";
 
-        camera->Close();
-        delete camera;
-        camera =NULL;
+        camerap->Close();
+        delete camerap;
+        camerap =NULL;
     }
-    if(camera==NULL){
+    if(camerap==NULL){
         PylonInitialize();
         BaslerScoutDriverLDBG_<<  "Pylon driver initialized";
         // Create an instant camera object for the camera device found first.
@@ -437,11 +437,11 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper&
                    BaslerScoutDriverLDBG_<<" FOUND "<<cameras[ i ].GetDeviceInfo().GetSerialNumber();
                    cameras[ i ].DetachDevice();
 
-                   camera=new CInstantCamera(pdev);
-                   if(camera && (!camera->IsOpen())){
+                   camerap=new CInstantCamera(pdev);
+                   if(camerap && (!camerap->IsOpen())){
                        BaslerScoutDriverLDBG_ << "Opening Camera";
 
-                       camera->Open();
+                       camerap->Open();
                    }
                    return 0;
                 } else {
@@ -456,15 +456,15 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper&
         } else {
             BaslerScoutDriverLDBG_<<"No \"serial\" specified getting first camera..";
             pdev=CTlFactory::GetInstance().CreateFirstDevice();
-            camera = new CInstantCamera(pdev);
-            BaslerScoutDriverLDBG_<<" Model:"<< camera->GetDeviceInfo().GetModelName();
-            BaslerScoutDriverLDBG_ << "Friendly Name: " << camera->GetDeviceInfo().GetFriendlyName();
-            BaslerScoutDriverLDBG_<< "Full Name    : " <<  camera->GetDeviceInfo().GetFullName();
-            BaslerScoutDriverLDBG_ << "SerialNumber : " << camera->GetDeviceInfo().GetSerialNumber() ;
-            if(camera && (!camera->IsOpen())){
+            camerap = new CInstantCamera(pdev);
+            BaslerScoutDriverLDBG_<<" Model:"<< camerap->GetDeviceInfo().GetModelName();
+            BaslerScoutDriverLDBG_ << "Friendly Name: " << camerap->GetDeviceInfo().GetFriendlyName();
+            BaslerScoutDriverLDBG_<< "Full Name    : " <<  camerap->GetDeviceInfo().GetFullName();
+            BaslerScoutDriverLDBG_ << "SerialNumber : " << camerap->GetDeviceInfo().GetSerialNumber() ;
+            if(camerap && (!camerap->IsOpen())){
                 BaslerScoutDriverLDBG_ << "Opening Camera";
 
-                camera->Open();
+                camerap->Open();
             }
             return 0;
 
@@ -473,7 +473,7 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper&
 
     return -1;
 }
-BaslerScoutDriver::BaslerScoutDriver():camera(NULL),shots(0),framebuf(NULL),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY){
+BaslerScoutDriver::BaslerScoutDriver():camerap(NULL),shots(0),framebuf(NULL),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY){
 
     BaslerScoutDriverLDBG_<<  "Created Driver";
     props=new chaos::common::data::CDataWrapper();
@@ -482,11 +482,11 @@ BaslerScoutDriver::BaslerScoutDriver():camera(NULL),shots(0),framebuf(NULL),fn(N
 }
 //default descrutcor
 BaslerScoutDriver::~BaslerScoutDriver() {
-    if(camera){
+    if(camerap){
         BaslerScoutDriverLDBG_<<"deleting camera";
 
-        delete camera;
-        camera =NULL;
+        delete camerap;
+        camerap =NULL;
     }
     if(props){
         delete props;
@@ -567,7 +567,6 @@ int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera& cam,chaos::common::d
 int BaslerScoutDriver::propsToCamera(CInstantCamera& camera,chaos::common::data::CDataWrapper*p){
     // Get the camera control object.
     int ret=0;
-    INodeMap &control = camera.GetNodeMap();
     if(p == NULL){
         p = props;
     }
@@ -625,6 +624,8 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera& camera,chaos::common::data:
     }
     if (p->hasKey("PIXELFMT")){
         // Set the pixel data format.
+        INodeMap &control = camera.GetNodeMap();
+
         CEnumerationPtr(control.GetNode("PixelFormat"))->FromString(p->getCStringValue("PIXELFMT"));
         BaslerScoutDriverLDBG_<< "setting Pixel Format " <<p->getCStringValue("PIXELFMT");
     }
@@ -727,7 +728,7 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera& camera,chaos::common::data:
 int BaslerScoutDriver::cameraInit(void *buffer,uint32_t sizeb){
     BaslerScoutDriverLDBG_<<"Initialization";
     // simple initialization
-    if(camera==NULL){
+    if(camerap==NULL){
         BaslerScoutDriverLERR_<<"no camera available";
         return -1;
     }
@@ -741,15 +742,15 @@ int BaslerScoutDriver::cameraInit(void *buffer,uint32_t sizeb){
         // as all currently registered configuration handlers are removed by setting the registration mode to RegistrationMode_ReplaceAll.
         switch(tmode){
         case (CAMERA_TRIGGER_CONTINOUS):{
-            camera->RegisterConfiguration( new CAcquireContinuousConfiguration , RegistrationMode_ReplaceAll, Cleanup_Delete);
+            camerap->RegisterConfiguration( new CAcquireContinuousConfiguration , RegistrationMode_ReplaceAll, Cleanup_Delete);
             break;
         }
         case CAMERA_TRIGGER_SINGLE:{
-            camera->RegisterConfiguration( new CAcquireSingleFrameConfiguration , RegistrationMode_ReplaceAll, Cleanup_Delete);
+            camerap->RegisterConfiguration( new CAcquireSingleFrameConfiguration , RegistrationMode_ReplaceAll, Cleanup_Delete);
             break;
         }
         case CAMERA_TRIGGER_SOFT:{
-            camera->RegisterConfiguration( new CSoftwareTriggerConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
+            camerap->RegisterConfiguration( new CSoftwareTriggerConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
 
             break;
         }
@@ -764,23 +765,23 @@ int BaslerScoutDriver::cameraInit(void *buffer,uint32_t sizeb){
 
         // For demonstration purposes only, add sample configuration event handlers to print out information
         // about camera use and image grabbing.
-        camera->RegisterConfiguration( new CConfigurationEvent(this), RegistrationMode_Append, Cleanup_Delete);
+        camerap->RegisterConfiguration( new CConfigurationEvent(this), RegistrationMode_Append, Cleanup_Delete);
         BaslerScoutDriverLDBG_<<"event  handler installed";
 
         //camera->RegisterImageEventHandler( new CCameraEventPrinter, RegistrationMode_Append, Cleanup_Delete);
         // Print the model name of the camera.
-        BaslerScoutDriverLDBG_<< "Using device " << camera->GetDeviceInfo().GetModelName();
+        BaslerScoutDriverLDBG_<< "Using device " << camerap->GetDeviceInfo().GetModelName();
 
         // The MaxNumBuffer parameter can be used to control the count of buffers
         // allocated for grabbing. The default value of this parameter is 10.
-        camera->MaxNumBuffer = 15;
+        camerap->MaxNumBuffer = 15;
         BaslerScoutDriverLDBG_<<"Open camera";
-        if(!camera->IsOpen()){
-            camera->Open();
+        if(!camerap->IsOpen()){
+            camerap->Open();
         }
 
 
-        setNode("DemosaicingMode",*camera,(int64_t)Basler_GigECamera::DemosaicingModeEnums::DemosaicingMode_BaslerPGI );
+        setNode("DemosaicingMode",*camerap,(int64_t)Basler_GigECamera::DemosaicingModeEnums::DemosaicingMode_BaslerPGI );
 
 
 
@@ -800,8 +801,8 @@ int BaslerScoutDriver::cameraInit(void *buffer,uint32_t sizeb){
 
 int BaslerScoutDriver::cameraDeinit(){
     BaslerScoutDriverLDBG_<<"deinit";
-    if(camera){
-        camera->Close();
+    if(camerap){
+        camerap->Close();
 
     }
     return 0;
@@ -834,33 +835,33 @@ int BaslerScoutDriver::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBa
         break;
     }
     if(shots>0){
-        camera->StartGrabbing((size_t)shots, strategy);
+        camerap->StartGrabbing((size_t)shots, strategy);
 
     } else {
-        camera->StartGrabbing( strategy);
+        camerap->StartGrabbing( strategy);
     }
     return 0;
 
 }
 
 int BaslerScoutDriver::waitGrab(uint32_t timeout_ms){
-    if(camera==NULL){
+    if(camerap==NULL){
         return -1;
     }
     Pylon::CGrabResultPtr ptrGrabResult;
     if(tmode> CAMERA_TRIGGER_SINGLE){
-        if ( camera->WaitForFrameTriggerReady( 500, TimeoutHandling_ThrowException)){
+        if ( camerap->WaitForFrameTriggerReady( 500, TimeoutHandling_ThrowException)){
             if(tmode == CAMERA_TRIGGER_SOFT){
-                camera->ExecuteSoftwareTrigger();
+                camerap->ExecuteSoftwareTrigger();
             }
         }
 
-        while(camera->GetGrabResultWaitObject().Wait( 0) == 0){
+        while(camerap->GetGrabResultWaitObject().Wait( 0) == 0){
             WaitObject::Sleep( 100);
         }
     }
     int nBuffersInQueue = 0;
-    while( camera->RetrieveResult( timeout_ms, ptrGrabResult, TimeoutHandling_Return))
+    while( camerap->RetrieveResult( timeout_ms, ptrGrabResult, TimeoutHandling_Return))
     {
         if ( ptrGrabResult->GetNumberOfSkippedImages())
         {
@@ -909,15 +910,15 @@ int BaslerScoutDriver::waitGrab(uint32_t timeout_ms){
 
 }
 int BaslerScoutDriver::stopGrab(){
-    camera->StopGrabbing();
+    camerap->StopGrabbing();
     return 0;
 }
 
 int  BaslerScoutDriver::setImageProperties(int32_t width,int32_t height,int32_t opencvImageType){
     props->addInt32Value("WIDTH",width);
     props->addInt32Value("HEIGHT",height);
-    if(camera){
-        return propsToCamera(*camera,props);
+    if(camerap){
+        return propsToCamera(*camerap,props);
     }
     return -1;
 }
@@ -925,7 +926,7 @@ int  BaslerScoutDriver::setImageProperties(int32_t width,int32_t height,int32_t 
 int  BaslerScoutDriver::getImageProperties(int32_t& width,int32_t& height,int32_t& opencvImageType){
     ChaosUniquePtr<chaos::common::data::CDataWrapper> cw(new chaos::common::data::CDataWrapper());
     int ret=-1;
-    cameraToProps(*camera,cw.get());
+    cameraToProps(*camerap,cw.get());
     if(cw->hasKey("WIDTH")){
         width=cw->getInt32Value("WIDTH");
         ret=0;
@@ -947,7 +948,7 @@ int  BaslerScoutDriver::setCameraProperty(const std::string& propname,int32_t va
 
     cw->addInt32Value(propname,val);
 
-    return propsToCamera(*camera,cw.get());
+    return propsToCamera(*camerap,cw.get());
 
 }
 int  BaslerScoutDriver::setCameraProperty(const std::string& propname,double val){
@@ -956,14 +957,14 @@ int  BaslerScoutDriver::setCameraProperty(const std::string& propname,double val
 
     cw->addDoubleValue(propname,val);
 
-    return propsToCamera(*camera,cw.get());
+    return propsToCamera(*camerap,cw.get());
 
 }
 
 int  BaslerScoutDriver::getCameraProperty(const std::string& propname,int32_t& val){
     ChaosUniquePtr<chaos::common::data::CDataWrapper> cw(new chaos::common::data::CDataWrapper());
 
-    cameraToProps(*camera,cw.get());
+    cameraToProps(*camerap,cw.get());
 
     if(cw->hasKey(propname)){
         val = props->getInt32Value(propname);
@@ -975,7 +976,7 @@ int  BaslerScoutDriver::getCameraProperty(const std::string& propname,int32_t& v
 int  BaslerScoutDriver::getCameraProperty(const std::string& propname,double& val){
     ChaosUniquePtr<chaos::common::data::CDataWrapper> cw(new chaos::common::data::CDataWrapper());
 
-    cameraToProps(*camera,cw.get());
+    cameraToProps(*camerap,cw.get());
 
     if(cw->hasKey(propname)){
         val = props->getDoubleValue(propname);
@@ -985,7 +986,7 @@ int  BaslerScoutDriver::getCameraProperty(const std::string& propname,double& va
 }
 
 int  BaslerScoutDriver::getCameraProperties(chaos::common::data::CDataWrapper& proplist){
-   return cameraToProps(*camera,&proplist);
+   return cameraToProps(*camerap,&proplist);
 
 
 }

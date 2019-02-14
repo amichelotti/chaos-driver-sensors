@@ -54,7 +54,7 @@ class BaslerScoutDriver:public ::driver::sensor::camera::CameraDriverBridge {
   int initializeCamera(const chaos::common::data::CDataWrapper& json) ;
   void driverDeinit() throw(chaos::CException) ;
     // This smart pointer will receive the grab result data.
-     Pylon::CInstantCamera* camera;
+     Pylon::CInstantCamera* camerap;
      TriggerModes tmode; //0 continous, 1 software,2 hw,3 singleshot
      GrabStrategy gstrategy;
 

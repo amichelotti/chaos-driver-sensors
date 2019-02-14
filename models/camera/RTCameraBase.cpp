@@ -97,6 +97,27 @@ RTCameraBase::~RTCameraBase() {
 
 
 }
+void RTCameraBase::updateProperty(){
+    std::vector<std::string> props;
+    camera_props.getAllKey(props);
+    AttributeSharedCacheWrapper * cc=getAttributeCache();
+
+    for(std::vector<std::string>::iterator i = props.begin();i!=props.end();i++){
+
+        if(camera_props.getValueType(*i)==chaos::DataType::TYPE_DOUBLE){
+            double tmp,*p;
+            driver->getCameraProperty(*i,tmp);
+            p=cc->getRWPtr<double>(DOMAIN_OUTPUT,*i);
+            *p=tmp;
+        }
+        if(camera_props.getValueType(*i)==chaos::DataType::TYPE_INT32){
+            int32_t tmp,*p;
+            driver->getCameraProperty(*i,tmp);
+            p=cc->getRWPtr<int32_t>(DOMAIN_OUTPUT,*i);
+            *p=tmp;
+        }
+    }
+}
 bool  RTCameraBase::setProp(const std::string &name, int32_t value, uint32_t size){
     int ret;
     RTCameraBaseLDBG_<<"SET IPROP:"<<name<<" VALUE:"<<value;
@@ -107,6 +128,8 @@ bool  RTCameraBase::setProp(const std::string &name, int32_t value, uint32_t siz
         setStateVariableSeverity(StateVariableTypeAlarmDEV,"operation_not_supported", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
 
     }
+    updateProperty();
+
     return (ret==0);
 }
 
@@ -121,6 +144,7 @@ bool  RTCameraBase::setProp(const std::string &name, double value, uint32_t size
         setStateVariableSeverity(StateVariableTypeAlarmDEV,"operation_not_supported", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
 
     }
+    updateProperty();
     return (ret==0);
 }
 //!Return the definition of the control unit
@@ -146,6 +170,8 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
     for(std::vector<std::string>::iterator i = props.begin();i!=props.end();i++){
 
         addAttributeToDataSet(*i,*i,camera_props.getValueType(*i),chaos::DataType::Input);
+        addAttributeToDataSet(*i,*i,camera_props.getValueType(*i),chaos::DataType::Output);
+
         if(camera_props.getValueType(*i)==chaos::DataType::TYPE_DOUBLE){
             addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, double >(this,
                     &::driver::sensor::camera::RTCameraBase::setProp,
@@ -252,6 +278,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
 
 //!Execute the work, this is called with a determinated delay, it must be as fast as possible
 void RTCameraBase::unitStart() throw(chaos::CException) {
+  updateProperty();
 
   driver->startGrab(0,framebuf,NULL);
 }
