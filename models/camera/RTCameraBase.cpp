@@ -174,9 +174,8 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
     for(std::vector<std::string>::iterator i = props.begin();i!=props.end();i++){
         RTCameraBaseLDBG_<<"ADDING ATTRIBUTE:"<<*i<<" Type:"<<camera_props.getValueType(*i);
 
-        addAttributeToDataSet(*i,*i,camera_props.getValueType(*i),chaos::DataType::Input);
-        addAttributeToDataSet(*i,*i,camera_props.getValueType(*i),chaos::DataType::Output);
-
+        addAttributeToDataSet(*i,*i,camera_props.getValueType(*i),chaos::DataType::Bidirectional);
+        
         if(camera_props.getValueType(*i)==chaos::DataType::TYPE_DOUBLE){
             addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, double >(this,
                     &::driver::sensor::camera::RTCameraBase::setProp,
