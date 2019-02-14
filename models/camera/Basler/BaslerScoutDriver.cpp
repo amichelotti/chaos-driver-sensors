@@ -503,7 +503,7 @@ BaslerScoutDriver::~BaslerScoutDriver() {
     BaslerScoutDriverLDBG_<<"GETTING INT PERCENT PROP \""<< # x <<"\" alias:"<<y;\
     float per;\
     if(getNodeInPercentage(# x,cam,per)==0){\
-    p->addInt32Value(y,(int32_t)per);}}
+    p->addDoubleValue(y,per);}}
 
 int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera& cam,chaos::common::data::CDataWrapper*p){
     using namespace GenApi;

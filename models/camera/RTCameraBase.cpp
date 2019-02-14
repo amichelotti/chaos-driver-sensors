@@ -107,12 +107,16 @@ void RTCameraBase::updateProperty(){
         if(camera_props.getValueType(*i)==chaos::DataType::TYPE_DOUBLE){
             double tmp,*p;
             driver->getCameraProperty(*i,tmp);
+            RTCameraBaseLDBG_<<"Camera Property double "<<*i;
+
             p=cc->getRWPtr<double>(DOMAIN_OUTPUT,*i);
             *p=tmp;
         }
         if(camera_props.getValueType(*i)==chaos::DataType::TYPE_INT32){
             int32_t tmp,*p;
             driver->getCameraProperty(*i,tmp);
+            RTCameraBaseLDBG_<<"Camera Property int "<<*i;
+
             p=cc->getRWPtr<int32_t>(DOMAIN_OUTPUT,*i);
             *p=tmp;
         }
@@ -279,6 +283,8 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
 
 //!Execute the work, this is called with a determinated delay, it must be as fast as possible
 void RTCameraBase::unitStart() throw(chaos::CException) {
+    RTCameraBaseLDBG_<<"Sarting...";
+
   updateProperty();
 
   driver->startGrab(0,framebuf,NULL);
