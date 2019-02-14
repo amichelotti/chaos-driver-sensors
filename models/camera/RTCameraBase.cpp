@@ -168,6 +168,7 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
 
 
     for(std::vector<std::string>::iterator i = props.begin();i!=props.end();i++){
+        RTCameraBaseLDBG_<<"ADDING ATTRIBUTE:"<<*i<<" Type:"<<camera_props.getValueType(*i);
 
         addAttributeToDataSet(*i,*i,camera_props.getValueType(*i),chaos::DataType::Input);
         addAttributeToDataSet(*i,*i,camera_props.getValueType(*i),chaos::DataType::Output);
