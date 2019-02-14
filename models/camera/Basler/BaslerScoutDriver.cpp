@@ -631,7 +631,7 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera& camera,chaos::common::data:
     if(p->hasKey("GAIN")){
         double gain=p->getAsRealValue("GAIN")/100.0;
 
-        if(val<0){
+        if(gain<0){
             if(setNode("GainAuto",camera, (int64_t)Basler_GigECamera::GainAutoEnums::GainAuto_Continuous)!=0){
                     ret++;
             }
