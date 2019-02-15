@@ -32,6 +32,7 @@ namespace camera{
 
 
 protected:
+                 boost::mutex io_mux;
 
 public:
     CameraDriverBridge();

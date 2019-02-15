@@ -256,9 +256,9 @@ static int getNodeInPercentage(const std::string& node_name,CInstantCamera& came
         inc=node->GetInc();
         val=node->GetValue();
         if((max-min)>0){
-            percent = (val*1.0-min)/(float)(max - min);
+            percent = (val*1.0-min)*100.0/(float)(max - min);
         }
-        BaslerScoutDriverLDBG_<<"VAL:"<<val<<"MIN:"<<min<<" MAX:"<<max<<" PERCENT:"<<percent*100;
+        BaslerScoutDriverLDBG_<<"VAL:"<<val<<"MIN:"<<min<<" MAX:"<<max<<" PERCENT:"<<percent;
     } catch  (const GenericException &e){
         // Error handling.
         BaslerScoutDriverLERR_<<  "An exception occurred during GET of Node:"<<node_name;
@@ -967,7 +967,9 @@ int  BaslerScoutDriver::getCameraProperty(const std::string& propname,int32_t& v
     cameraToProps(*camerap,cw.get());
 
     if(cw->hasKey(propname)){
-        val = props->getInt32Value(propname);
+        val = cw->getInt32Value(propname);
+        BaslerScoutDriverLDBG_<<"Property Int \"" << propname<<"\"="<<val ;
+
         return 0;
     }
     return -1;
@@ -979,7 +981,9 @@ int  BaslerScoutDriver::getCameraProperty(const std::string& propname,double& va
     cameraToProps(*camerap,cw.get());
 
     if(cw->hasKey(propname)){
-        val = props->getDoubleValue(propname);
+        val = cw->getDoubleValue(propname);
+        BaslerScoutDriverLDBG_<<"Property Double \"" << propname<<"\"="<<val ;
+
         return 0;
     }
     return -1;

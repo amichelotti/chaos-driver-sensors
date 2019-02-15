@@ -142,43 +142,59 @@ int CameraDriverInterface::getImageProperties(int32_t& width,int32_t& height,int
 
 
 int CameraDriverInterface::setCameraProperty(const std::string& propname,int32_t val){
+    boost::mutex::scoped_lock lock(io_mux);
+
     PREPARE_OP(CameraDriverInterfaceOpcode_SET_PROP);
-    idata.str=strdup(propname.c_str());
+    strncpy(idata.property,propname.c_str(),MAX_PROP_STRING);
     idata.strl=propname.size();
     idata.arg0=val;
-    SEND_AND_RETURN;
+    SEND;
+//    free(idata.str);
+    return ret.result;
 }
 
 int CameraDriverInterface::setCameraProperty(const std::string& propname,double val){
+    boost::mutex::scoped_lock lock(io_mux);
+
     PREPARE_OP(CameraDriverInterfaceOpcode_SET_FPROP);
-    idata.str=strdup(propname.c_str());
+    strncpy(idata.property,propname.c_str(),MAX_PROP_STRING);
     idata.strl=propname.size();
     idata.farg=val;
-    SEND_AND_RETURN;
+    SEND;
+ //   free(idata.str);
+    return ret.result;
 }
 
 int CameraDriverInterface::getCameraProperty(const std::string& propname,int32_t& val){
+    boost::mutex::scoped_lock lock(io_mux);
+
     PREPARE_OP(CameraDriverInterfaceOpcode_GET_PROP);
-    idata.str=(char*)propname.c_str();
+    strncpy(idata.property,propname.c_str(),MAX_PROP_STRING);
+    
     idata.strl=propname.size();
     SEND;
 
     val=ret.arg0;
+ //   free(idata.str);
     return ret.result;
 }
 
 int CameraDriverInterface::getCameraProperty(const std::string& propname,double& val){
+    boost::mutex::scoped_lock lock(io_mux);
+
     PREPARE_OP(CameraDriverInterfaceOpcode_GET_FPROP);
-    idata.str=(char*)propname.c_str();
-    idata.strl=propname.size();
+    strncpy(idata.property,propname.c_str(),MAX_PROP_STRING);
     SEND;
 
     val=ret.farg;
+  //  free(idata.str);
     return ret.result;
 }
 
 
 int CameraDriverInterface::getCameraProperties(chaos::common::data::CDataWrapper& proplist){
+    boost::mutex::scoped_lock lock(io_mux);
+
     PREPARE_OP(CameraDriverInterfaceOpcode_GET_PROPERTIES);
     int cnt;
     char* start_str=0;
@@ -186,6 +202,7 @@ int CameraDriverInterface::getCameraProperties(chaos::common::data::CDataWrapper
     if(ret.str){
         proplist.setSerializedData(ret.str);
         free(ret.str);
+        ret.str=NULL;
 
     }
 

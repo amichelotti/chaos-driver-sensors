@@ -48,6 +48,8 @@ CameraDriverBridge::~CameraDriverBridge() {
 
 //! Execute a command
 cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOpcode(cu_driver::DrvMsgPtr cmd) {
+    boost::mutex::scoped_lock lock(io_mux);
+
     cu_driver::MsgManagmentResultType::MsgManagmentResult result = cu_driver::MsgManagmentResultType::MMR_EXECUTED;
     camera_params_t *in = (camera_params_t *)cmd->inputData;
     camera_params_t *out = (camera_params_t *)cmd->resultData;
@@ -79,20 +81,22 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
         break;
     }
     case CameraDriverInterfaceOpcode_SET_FPROP:{
-        const char*pnt=in->str;
+        const char*pnt=in->property;
         double val=in->farg;
         out->result=setCameraProperty(pnt,val);
+     //   free((void*)pnt);
         break;
     }
     case CameraDriverInterfaceOpcode_GET_PROP:{
-        const char*pnt=in->str;
+        const char*pnt=in->property;
         int32_t val;
         out->result=getCameraProperty(pnt,val);
         out->arg0=val;
+     //   free((void*)pnt);
         break;
     }
     case CameraDriverInterfaceOpcode_GET_FPROP:{
-        const char*pnt=in->str;
+        const char*pnt=in->property;
         double val;
         out->result=getCameraProperty(pnt,val);
         out->farg=val;

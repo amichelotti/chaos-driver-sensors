@@ -111,7 +111,7 @@ void RTCameraBase::updateProperty(){
         if(camera_props.getValueType(*i)==chaos::DataType::TYPE_DOUBLE){
             double tmp,*p;
             driver->getCameraProperty(*i,tmp);
-            RTCameraBaseLDBG_<<"Camera Property double "<<*i;
+            RTCameraBaseLDBG_<<"Camera Property double "<<*i<<" VALUE:"<<tmp;
 
             p=cc->getRWPtr<double>(DOMAIN_OUTPUT,*i);
             *p=tmp;
@@ -119,7 +119,7 @@ void RTCameraBase::updateProperty(){
         if(camera_props.getValueType(*i)==chaos::DataType::TYPE_INT32){
             int32_t tmp,*p;
             driver->getCameraProperty(*i,tmp);
-            RTCameraBaseLDBG_<<"Camera Property int "<<*i;
+            RTCameraBaseLDBG_<<"Camera Property int "<<*i<<" VALUE:"<<tmp;
 
             p=cc->getRWPtr<int32_t>(DOMAIN_OUTPUT,*i);
             *p=tmp;
@@ -137,13 +137,14 @@ bool  RTCameraBase::setProp(const std::string &name, int32_t value, uint32_t siz
 
     }
     updateProperty();
-
+    RTCameraBaseLDBG_<<"SET IPROP:"<<name<<" VALUE:"<<value<<" ret:"<<ret;
+    getAttributeCache()->setInputDomainAsChanged();
+    getAttributeCache()->setOutputDomainAsChanged();
     return (ret==0);
 }
 
 bool  RTCameraBase::setProp(const std::string &name, double value, uint32_t size){
     int ret;
-    RTCameraBaseLDBG_<<"SET FPROP:"<<name<<" VALUE:"<<value;
 
     ret=driver->setCameraProperty(name,value);
     setStateVariableSeverity(StateVariableTypeAlarmDEV,"operation_not_supported", chaos::common::alarm::MultiSeverityAlarmLevelClear);
@@ -153,6 +154,10 @@ bool  RTCameraBase::setProp(const std::string &name, double value, uint32_t size
 
     }
     updateProperty();
+     getAttributeCache()->setInputDomainAsChanged();
+    getAttributeCache()->setOutputDomainAsChanged();
+        RTCameraBaseLDBG_<<"SET FPROP:"<<name<<" VALUE:"<<value<<" ret:"<<ret;
+
     return (ret==0);
 }
 //!Return the definition of the control unit
@@ -179,7 +184,7 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
         RTCameraBaseLDBG_<<"ADDING ATTRIBUTE:"<<*i<<" Type:"<<camera_props.getValueType(*i);
 
         addAttributeToDataSet(*i,*i,camera_props.getValueType(*i),chaos::DataType::Bidirectional);
-        
+       // addCustomAttribute(*i,sizeof(double),camera_props.getValueType(*i));
         if(camera_props.getValueType(*i)==chaos::DataType::TYPE_DOUBLE){
             addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, double >(this,
                     &::driver::sensor::camera::RTCameraBase::setProp,

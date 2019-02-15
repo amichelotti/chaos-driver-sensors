@@ -59,7 +59,7 @@ typedef enum CameraDriverInterfaceOpcode{
     \param error[in] an error occurred, or 0 if grabbing ok
 
 */
-
+#define MAX_PROP_STRING 80
 typedef struct {
     int32_t arg0;
     int32_t arg1;
@@ -68,6 +68,7 @@ typedef struct {
     int result;
     void*buffer;
     void*fn;
+    char property[MAX_PROP_STRING];
     char* str; //strings
     int strl; //len
 } camera_params_t;
@@ -78,6 +79,7 @@ class CameraDriverInterface: public AbstractCameraDriver {
 protected:
     chaos_driver::DrvMsg message;
     chaos_driver::DriverAccessor* accessor;
+    boost::mutex io_mux;
 
 public:
     CameraDriverInterface(chaos_driver::DriverAccessor*_accessor):accessor(_accessor){};
