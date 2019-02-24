@@ -492,18 +492,6 @@ BaslerScoutDriver::~BaslerScoutDriver() {
         delete props;
     }
 }
-#define GETINTVALUE(x,y){\
-    int32_t val;\
-    BaslerScoutDriverLDBG_<<"GETTING INT PROP \""<< # x <<"\" alias:"<<y;\
-    if(getNode(# x,cam,val)==0){\
-    p->addInt32Value(y,(int32_t)val);} else {    BaslerScoutDriverLERR_<<"cannot read basler node \""<< #x<<"\"";\
-}}
-
-#define GETINTPERCVALUE(x,y){ \
-    BaslerScoutDriverLDBG_<<"GETTING INT PERCENT PROP \""<< # x <<"\" alias:"<<y;\
-    float per;\
-    if(getNodeInPercentage(# x,cam,per)==0){\
-    p->addDoubleValue(y,per);}}
 
 int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera& cam,chaos::common::data::CDataWrapper*p){
     using namespace GenApi;
@@ -552,15 +540,15 @@ int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera& cam,chaos::common::d
 
     }
 
-    GETINTVALUE(Width,"WIDTH");
-    GETINTVALUE(Height,"HEIGHT");
-    GETINTVALUE(OffsetX,"OFFSETX");
-    GETINTVALUE(OffsetY,"OFFSETY");
-    GETINTPERCVALUE(GainRaw,"GAIN");
-    GETINTPERCVALUE(ExposureTimeRaw,"SHUTTER");
-    GETINTPERCVALUE(SharpnessEnhancementRaw,"SHARPNESS");
-    GETINTPERCVALUE(BslBrightnessRaw,"BRIGHTNESS");
-    GETINTPERCVALUE(BslContrastRaw,"CONTRAST");
+    GETINTVALUE(Width,"WIDTH",BaslerScoutDriverLDBG_);
+    GETINTVALUE(Height,"HEIGHT",BaslerScoutDriverLDBG_);
+    GETINTVALUE(OffsetX,"OFFSETX",BaslerScoutDriverLDBG_);
+    GETINTVALUE(OffsetY,"OFFSETY",BaslerScoutDriverLDBG_);
+    GETINTPERCVALUE(GainRaw,"GAIN",BaslerScoutDriverLDBG_);
+    GETINTPERCVALUE(ExposureTimeRaw,"SHUTTER",BaslerScoutDriverLDBG_);
+    GETINTPERCVALUE(SharpnessEnhancementRaw,"SHARPNESS",BaslerScoutDriverLDBG_);
+    GETINTPERCVALUE(BslBrightnessRaw,"BRIGHTNESS",BaslerScoutDriverLDBG_);
+    GETINTPERCVALUE(BslContrastRaw,"CONTRAST",BaslerScoutDriverLDBG_);
     return 0;
 }
 
@@ -843,9 +831,8 @@ int BaslerScoutDriver::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBa
     return 0;
 
 }
-
-int BaslerScoutDriver::waitGrab(uint32_t timeout_ms){
-    if(camerap==NULL){
+int BaslerScoutDriver::waitGrab(const char**img,uint32_t timeout_ms){
+ if(camerap==NULL){
         return -1;
     }
     Pylon::CGrabResultPtr ptrGrabResult;
@@ -874,8 +861,7 @@ int BaslerScoutDriver::waitGrab(uint32_t timeout_ms){
             //      cout << "Gray value of first pixel: " << (uint32_t) pImageBuffer[0] << endl << endl;
 
 
-            BaslerScoutDriverLDBG_<<"SizeX: " << ptrGrabResult->GetWidth() ;
-            BaslerScoutDriverLDBG_<<"SizeY: " << ptrGrabResult->GetHeight();
+           
             // CPylonImage target;
             // CImageFormatConverter converter;
             // converter.OutputPixelFormat=PixelType_RGB8packed;
@@ -889,8 +875,15 @@ int BaslerScoutDriver::waitGrab(uint32_t timeout_ms){
 
             //             int size_ret=(bcount<= ptrGrabResult->GetImageSize())?bcount: ptrGrabResult->GetImageSize();
             int size_ret=ptrGrabResult->GetImageSize();
-	    BaslerScoutDriverLDBG_<<"Image Raw Size: " << size_ret ;
-            memcpy(framebuf,pImageBuffer,size_ret);
+	        BaslerScoutDriverLDBG_<<" Size "<<ptrGrabResult->GetWidth()<<"x"<< ptrGrabResult->GetHeight()<<" Image Raw Size: " << size_ret ;
+            if(img){
+                *img=(const char*)pImageBuffer;
+                //memcpy(hostbuf,pImageBuffer,size_ret);
+            }
+            if(fn){
+                fn(pImageBuffer,size_ret, ptrGrabResult->GetWidth(),ptrGrabResult->GetHeight());
+            }
+            
 
 
             return size_ret;
@@ -908,6 +901,10 @@ int BaslerScoutDriver::waitGrab(uint32_t timeout_ms){
 
     return 0;
 
+}
+
+int BaslerScoutDriver::waitGrab(uint32_t timeout_ms){
+    return waitGrab((const char**)&framebuf,timeout_ms);
 }
 int BaslerScoutDriver::stopGrab(){
     camerap->StopGrabbing();

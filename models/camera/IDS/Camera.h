@@ -109,8 +109,10 @@ public:
   unsigned int getCameraSerialNo() const { return serial_number_; }
   int getWidthMax() const { return cam_info_.nMaxWidth; }
   int getHeightMax() const { return cam_info_.nMaxHeight; }
-  int getWidth() const { return cam_info_.nMaxWidth / zoom_; }
-  int getHeight() const { return cam_info_.nMaxHeight / zoom_; }
+  int getWidth() const;
+  int getHeight() const;
+  
+  
   int getZoom() const { return zoom_; }
   uEyeColor getColorMode() const { return color_mode_; }
   bool getAutoExposure() const { return auto_exposure_; }
@@ -131,6 +133,8 @@ public:
   void setZoom(int *zoom);
   void setPixelClock(int *MHz);
   int setFrameRate(double *rate);
+  int setAOI(int posx,int posy,int width,int height);
+  int getAOI(int& posx,int& posy,int& width,int& height);
   /*
    * Return FPS of the camera
    * \param rate output FPS(if -1 autoframerate)
@@ -155,6 +159,8 @@ public:
 
   void closeCamera();
   int captureImage(int timeo_ms,char*hostbuf,size_t *size);
+  int captureImage(int timeo_ms,char**getbuf,size_t *size);
+
   void initMemoryPool(int size);
 
 private:

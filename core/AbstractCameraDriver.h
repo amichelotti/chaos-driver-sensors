@@ -37,8 +37,8 @@ namespace camera{
     \param error[in] an error occurred, or 0 if grabbing ok
 
 */
-typedef void (*cameraGrabCallBack)(void*buf,uint32_t blen,uint32_t width,uint32_t heigth, uint32_t error) ;
-
+typedef int (*cameraGrabCallBack)(const void*buf,uint32_t blen,uint32_t width,uint32_t heigth) ;
+//typedef boost::function<void(const void*buf,uint32_t blen,uint32_t width,uint32_t heigth, uint32_t error)> cameraGrabCallBack;
 enum TriggerModes {
     CAMERA_TRIGGER_CONTINOUS,
     CAMERA_TRIGGER_SINGLE,
@@ -132,6 +132,10 @@ public:
      \return 0 if success
      */
     virtual int waitGrab(uint32_t timeout_ms)=0;
+
+
+    virtual int waitGrab(const char**buf,uint32_t timeout_ms)=0;
+
 
     /**
      \brief Stop Image Grabbing

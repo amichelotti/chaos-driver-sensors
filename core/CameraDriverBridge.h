@@ -21,6 +21,21 @@
 #define __ASTRACTCAMERABRIDGE_H__
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <driver/sensors/core/AbstractCameraDriver.h>
+
+
+#define GETINTVALUE(x,y,LOG){\
+    int32_t val;\
+    LOG<<"GETTING INT PROP \""<< # x <<"\" alias:"<<y;\
+    if(getNode(# x,cam,val)==0){\
+    p->addInt32Value(y,(int32_t)val);} else {    BaslerScoutDriverLERR_<<"cannot read basler node \""<< #x<<"\"";\
+}}
+
+#define GETINTPERCVALUE(x,y,LOG){ \
+    LOG<<"GETTING INT PERCENT PROP \""<< # x <<"\" alias:"<<y;\
+    float per;\
+    if(getNodeInPercentage(# x,cam,per)==0){\
+    p->addDoubleValue(y,per);}}
+
 namespace cu_driver = chaos::cu::driver_manager::driver;
 
 namespace driver {

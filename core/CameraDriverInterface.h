@@ -39,6 +39,8 @@ typedef enum CameraDriverInterfaceOpcode{
     CameraDriverInterfaceOpcode_GET_PROPERTIES,
     CameraDriverInterfaceOpcode_START_GRAB,
     CameraDriverInterfaceOpcode_WAIT_GRAB,
+    CameraDriverInterfaceOpcode_WAIT_GRABBUF,
+
     CameraDriverInterfaceOpcode_STOP_GRAB,
     CameraDriverInterfaceOpcode_INIT,
     CameraDriverInterfaceOpcode_DEINIT
@@ -151,10 +153,17 @@ public:
     /**
      \brief Wait Image Grabbing
      \param timeout[in] timeout in ms to wait (0 waits indefinitively)
-     \return 0 if success
+     \return size of raw image if success
      */
     virtual int waitGrab(uint32_t timeout_ms);
-
+    /**
+     \brief Wait Image Grabbing
+     \param hostbuf return the buffer pointer where is stored the raw image
+     \param retsize the returned size
+     \param timeout[in] timeout in ms to wait (0 waits indefinitively)
+     \return size of raw image if success
+     */
+    virtual int waitGrab(const char**hostbuf,uint32_t timeout_ms);
     /**
      \brief Stop Image Grabbing
 

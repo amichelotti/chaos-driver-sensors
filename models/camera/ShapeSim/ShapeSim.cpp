@@ -110,7 +110,7 @@ int ShapeSim::initializeCamera(const chaos::common::data::CDataWrapper& json) {
 
     return ret;
 }
-ShapeSim::ShapeSim():shots(0),frames(0),framebuf(NULL),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1.0),offsetx(0),offsety(0){
+ShapeSim::ShapeSim():shots(0),frames(0),framebuf(NULL),framebuf_size(0),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1.0),offsetx(0),offsety(0){
 
     ShapeSimLDBG_<<  "Created Driver";
     props=new chaos::common::data::CDataWrapper();
@@ -241,7 +241,7 @@ int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
     ShapeSimLDBG_<<"Start Grabbing";
     int ret=-1;
     shots=_shots;
-    framebuf=_framebuf;
+    //framebuf=_framebuf;
     fn=_fn;
     err_centerx=0;
     err_centery=0;
@@ -291,6 +291,7 @@ int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
         GETINTPARAM(shape_params,colr);
 
     }
+
     return ret;
 }
 #define RND_DIST(var) \
@@ -299,7 +300,8 @@ int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
     boost::random::uniform_int_distribution<> dist_##var(-err_##var,err_##var);\
     double err=dist_##var(gen);\
     tmp_##var+= err;}
-int ShapeSim::waitGrab(uint32_t timeout_ms){
+
+int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
     int32_t ret=-1;
     size_t size_ret;
     boost::random::mt19937 gen(std::time(0) );
@@ -332,10 +334,15 @@ int ShapeSim::waitGrab(uint32_t timeout_ms){
         imshow( "test", img );
         waitKey( 0 );
 #endif
+        if(framebuf_size<size){
+            framebuf=realloc(framebuf,size);
+            framebuf_size=size;
+        }
         ShapeSimLDBG_<<shape_type<<"("<<width<<"X"<<height<<")"<<frames<<" center "<<tmp_centerx<<","<<tmp_centery<<" sizex:"<<tmp_sizex<<" sizey:"<<tmp_sizey<<" color:"<<colr<<"R,"<<colg<<"G,"<<colb<<" size byte:"<<size;
-
+        
         std::memcpy(framebuf,img.data,size );
-        ret=0;
+        *buf=(char*)framebuf;
+        ret=size;
     }
 
     /*    if((ret=camera.captureImage(timeout_ms,(char*)framebuf,&size_ret))==0){
@@ -349,6 +356,10 @@ int ShapeSim::waitGrab(uint32_t timeout_ms){
 
     return ret;
 
+}
+
+int ShapeSim::waitGrab(uint32_t timeout_ms){
+    return waitGrab((const char**)&framebuf,timeout_ms);
 }
 int ShapeSim::stopGrab(){
     //camera->StopGrabbing();

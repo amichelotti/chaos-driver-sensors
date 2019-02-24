@@ -85,7 +85,7 @@ public:
      int startGrab(uint32_t shots,void*framebuf=NULL,cameraGrabCallBack=NULL);
 
      int waitGrab(uint32_t timeout_ms);
-
+     int waitGrab(const char**imgbuf,uint32_t timeout_ms);
      int stopGrab();
 
      int cameraInit(void *buffer,uint32_t sizeb);

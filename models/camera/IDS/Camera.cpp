@@ -33,6 +33,7 @@
  *********************************************************************/
 
 #include "Camera.h"
+#include <chaos/common/global.h>
 
 // Check expected uEye SDK version in ueye.h for supported architectures
 #if defined(__i386) || defined(__i386__) || defined(_M_IX86)
@@ -313,6 +314,38 @@ void Camera::setZoom(int *zoom)
   }
   zoom_ = *zoom;
 }
+
+int Camera::setAOI(int posx,int posy,int width,int height){
+IS_RECT rect;
+INT nRet;
+    rect.s32X = posx;
+    rect.s32Y = posy;
+    rect.s32Width = width;
+    rect.s32Height = height;
+    nRet= is_AOI(cam_, IS_AOI_IMAGE_SET_AOI, (void*)&rect, sizeof(rect));
+    if(is_GetSensorInfo(cam_, &cam_info_)!=IS_SUCCESS){
+      LERR_<<" error readinf sensors";
+    } else {
+      LDBG_<<"SET AOI size:"<<cam_info_.nMaxWidth / zoom_<<"x"<<cam_info_.nMaxHeight / zoom_;
+    }
+
+    return nRet;
+
+}
+int Camera::getAOI(int& posx,int& posy,int& width,int& height){
+   IS_RECT rectAOI;
+  INT nRet = is_AOI(cam_, IS_AOI_IMAGE_GET_AOI, (void*)&rectAOI, sizeof(rectAOI));
+
+    if (nRet == IS_SUCCESS)
+    {
+      posx = rectAOI.s32X;
+      posy = rectAOI.s32Y;
+      width = rectAOI.s32Width;
+      height = rectAOI.s32Height;
+    }
+  return nRet;
+
+}
 void Camera::setPixelClock(int *MHz)
 {
   int pixelClockList[150];  // No camera has more than 150 different pixel clocks (uEye manual)
@@ -589,7 +622,29 @@ Camera::~Camera()
 {
   closeCamera();
 }
+int Camera::getWidth() const { 
+  //return cam_info_.nMaxWidth / zoom_; 
+  IS_RECT rectAOI;
+  INT nRet = is_AOI(cam_, IS_AOI_IMAGE_GET_AOI, (void*)&rectAOI, sizeof(rectAOI));
 
+    if (nRet == IS_SUCCESS)
+    {
+      return rectAOI.s32Width;
+    }
+  return 0;
+}
+int Camera::getHeight() const { 
+   IS_RECT rectAOI;
+  INT nRet = is_AOI(cam_, IS_AOI_IMAGE_GET_AOI, (void*)&rectAOI, sizeof(rectAOI));
+
+    if (nRet == IS_SUCCESS)
+    {
+      return rectAOI.s32Height;
+    }
+  return 0;
+
+ // return cam_info_.nMaxHeight / zoom_;
+}
 void Camera::initMemoryPool(int size)
 {
   int bits = 32;
@@ -716,6 +771,32 @@ void Camera::captureThread(CamCaptureCB callback)
 
   destroyMemoryPool();
   streaming_ = false;
+}
+
+int  Camera::captureImage(int timeo_ms,char**buf,size_t *size){
+    int ret=-1;
+   /* if(timeo_ms==0){
+        ret=is_CaptureVideo(cam_, IS_WAIT);
+    } else {
+        ret=is_CaptureVideo(cam_, timeo_ms);
+    }*/
+    if(timeo_ms==0){
+            ret=is_FreezeVideo(cam_, IS_WAIT);
+        } else {
+            ret=is_FreezeVideo(cam_, timeo_ms);
+        }
+    if(ret==IS_SUCCESS){
+        char *img_mem;
+        if (is_GetImageMem(cam_, (void**)&img_mem) == IS_SUCCESS) {
+            size_t siz = getImageRawSize();
+            *buf=img_mem;
+            if(size){*size=siz;}
+           return 0;
+        }
+    }
+
+
+    return -1;
 }
 int  Camera::captureImage(int timeo_ms,char*hostbuf,size_t *size){
     int ret=-1;

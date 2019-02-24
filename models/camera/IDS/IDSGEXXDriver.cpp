@@ -24,6 +24,7 @@
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <math.h>
 #include <boost/lexical_cast.hpp>
+
 // use the pylon driver
 
 namespace cu_driver = chaos::cu::driver_manager::driver;
@@ -157,7 +158,9 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
             return -4;
         }
     }
+    // initialize properties.
 
+    propsToCamera((chaos::common::data::CDataWrapper*)&json);
     /*  if((ret=is_InitCamera (&hCam, NULL))!=IS_SUCCESS){
         IDSGEXXDriverLERR_<<  "Cannot initalize IDS camera";
         return -1;
@@ -225,6 +228,7 @@ IDSGEXXDriver::~IDSGEXXDriver() {
     is_ExitCamera(hCam);
 
 }
+/*
 #define GETINTVALUE(x,y){\
     int32_t val;\
     IDSGEXXDriverLDBG_<<"GETTING PROP \""<< # x <<"\" alias:"<<y;\
@@ -236,7 +240,7 @@ IDSGEXXDriver::~IDSGEXXDriver() {
     float per;\
     if(getNodeInPercentage(# x,camera,per)==0){\
     p->addInt32Value(y,(int32_t)per);}}
-
+*/
 int IDSGEXXDriver::cameraToProps(chaos::common::data::CDataWrapper*p){
 
     if(p == NULL){
@@ -313,6 +317,11 @@ int IDSGEXXDriver::cameraToProps(chaos::common::data::CDataWrapper*p){
 int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
     // Get the camera control object.
     int32_t ret=0;
+    int posy=0,width=0,height=0,posx=0;
+    if((ret=camera.getAOI(posx,posy,width,height))==IS_SUCCESS){
+        IDSGEXXDriverLDBG_<< "CURRENT OFFSET (" << posx<<","<<posy<<") img size:"<<width<<"x"<<height;
+
+    }
 
     if(p == NULL){
         p = props;
@@ -366,18 +375,22 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
     //   chaos::common::data::CDataWrapper*p=driver->props;
 
     if (p->hasKey("OFFSETX")){
+         posx=p->getInt32Value("OFFSETX");
+         ret=camera.setAOI(posx,posy,width,height);
+    
         if(ret==IS_SUCCESS){
-            IDSGEXXDriverLDBG_<< "setting OFFSETX " << p->getInt32Value("OFFSETX");
+            IDSGEXXDriverLDBG_<< "setting OFFSETX:" << posx;
         }else {
             ret++;
             IDSGEXXDriverLERR_<<"Setting OFFSETX FAILED";
 
         }
     }
-    if (p->hasKey("OFFSETY"))
-    {
+    if (p->hasKey("OFFSETY")){
+        posy=p->getInt32Value("OFFSETY");
+         ret=camera.setAOI(posx,posy,width,height);
         if(ret==IS_SUCCESS){
-            IDSGEXXDriverLDBG_<< "setting OFFSETY " << p->getInt32Value("OFFSETY");
+            IDSGEXXDriverLDBG_<< "setting OFFSETY " << posy;
 
         }else {
             ret++;
@@ -388,20 +401,21 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
 
     }
     if ( p->hasKey("WIDTH")){
+         width=p->getInt32Value("WIDTH");
+         ret=camera.setAOI(posx,posy,width,height);
         if(ret==IS_SUCCESS){
-            IDSGEXXDriverLDBG_<< "setting WIDTH " << p->getInt32Value("WIDTH");
-
+            IDSGEXXDriverLDBG_<< "setting WIDTH " << width;
         } else {
             ret++;
             IDSGEXXDriverLERR_<<"Setting WIDTH FAILED";
 
         }
-
-
     }
     if ( p->hasKey("HEIGHT")){
+         height=p->getInt32Value("HEIGHT");
+         ret=camera.setAOI(posx,posy,width,height);
         if(ret==IS_SUCCESS){
-            IDSGEXXDriverLDBG_<< "setting HEIGHT " << p->getInt32Value("HEIGHT");
+            IDSGEXXDriverLDBG_<< "setting HEIGHT " << height;
 
         }else {
             ret++;
@@ -437,7 +451,7 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
 
 
     if(p->hasKey("GAIN")){
-        double gain=p->getDoubleValue("GAIN");
+        double gain=p->getAsRealValue("GAIN");
         if(gain<0){
             bool auto_gain=true;
             camera.setAutoGain(&auto_gain);
@@ -453,7 +467,7 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
     }
 
     if(p->hasKey("SHUTTER")){
-        double value=p->getDoubleValue("SHUTTER");
+        double value=p->getAsRealValue("SHUTTER");
         if((value<0)){
             bool auto_exp=true;
             camera.setAutoExposure(&auto_exp);
@@ -466,7 +480,7 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
         }
     }
     if(p->hasKey("ZOOM")){
-        int zoom=p->getDoubleValue("ZOOM");
+        int zoom=p->getAsRealValue("ZOOM");
         if(zoom>0){
 
             camera.setZoom(&zoom);
@@ -474,14 +488,14 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
     }
     // Pixel Clock
     if(p->hasKey("PIXELCLOCK")){
-        double value=p->getDoubleValue("PIXELCLOCK");
+        double value=p->getAsRealValue("PIXELCLOCK");
         int ivalue=value;
         IDSGEXXDriverLDBG_<< "PIXEL CLOCK:"<<value;
 
         camera.setPixelClock(&ivalue);
     }
     if(p->hasKey("FRAMERATE")){
-        double value=p->getDoubleValue("FRAMERATE");
+        double value=p->getAsRealValue("FRAMERATE");
         IDSGEXXDriverLDBG_<< "FRAME RATE:"<<value;
 
         camera.setFrameRate(&value);
@@ -490,7 +504,7 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
 
     if(p->hasKey("SHARPNESS")){
 
-        if(p->getDoubleValue("SHARPNESS")<0){
+        if(p->getAsRealValue("SHARPNESS")<0){
 
 
         } else {
@@ -500,12 +514,12 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
     }
     if(p->hasKey("BRIGHTNESS")){
 
-        if(p->getDoubleValue("BRIGHTNESS")<0){
+        if(p->getAsRealValue("BRIGHTNESS")<0){
 
         } else {
 
 
-            double gain=p->getDoubleValue("BRIGHTNESS")/100.0;
+            double gain=p->getAsRealValue("BRIGHTNESS")/100.0;
             if(gain>1.0){
                 gain=1.0;
             }
@@ -515,12 +529,12 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
     }
     if(p->hasKey("CONTRAST")){
 
-        if(p->getDoubleValue("CONTRAST")<0){
+        if(p->getAsRealValue("CONTRAST")<0){
 
         } else {
 
 
-            double gain=p->getDoubleValue("CONTRAST")/100.0;
+            double gain=p->getAsRealValue("CONTRAST")/100.0;
             if(gain>1.0){
                 gain=1.0;
             }
@@ -585,21 +599,28 @@ int IDSGEXXDriver::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _
     }
     return 0;
 }
-
-int IDSGEXXDriver::waitGrab(uint32_t timeout_ms){
-    int32_t ret=0;
-    size_t size_ret;
-    if((ret=camera.captureImage(timeout_ms,(char*)framebuf,&size_ret))==0){
-        IDSGEXXDriverLDBG_<<"Retrieved Image "<<camera.getWidth()<<"x"<<camera.getHeight()<<" raw size:"<<size_ret;
-        ret= size_ret;
+int IDSGEXXDriver::waitGrab(const char**hostbuf,uint32_t timeout_ms){
+  int32_t ret=0;
+    size_t size_ret=0;
+    char *buf=0;
+     if((ret=camera.captureImage(timeout_ms,(char*)&buf,&size_ret))==0){
+            IDSGEXXDriverLDBG_<<"Retrieved Image "<<camera.getWidth()<<"x"<<camera.getHeight()<<" raw size:"<<size_ret;
+            ret= size_ret;
     } else{
-        IDSGEXXDriverLERR_<<"No Image..";
+      //      IDSGEXXDriverLERR_<<"No Image..";
     }
-
+    if(hostbuf&&buf){
+       // memcpy(hostbuf,buf,size_ret);
+       *hostbuf=buf;
+    }
+   
 
 
     return ret;
-
+}
+int IDSGEXXDriver::waitGrab(uint32_t timeout_ms){
+  
+    return waitGrab((const char**)&framebuf,timeout_ms);
 }
 int IDSGEXXDriver::stopGrab(){
     //camera->StopGrabbing();
@@ -657,7 +678,7 @@ int  IDSGEXXDriver::getCameraProperty(const std::string& propname,int32_t& val){
     cameraToProps(cw.get());
 
     if(cw->hasKey(propname)){
-        val = props->getInt32Value(propname);
+        val = cw->getInt32Value(propname);
         return 0;
     }
     return -1;
@@ -668,7 +689,7 @@ int  IDSGEXXDriver::getCameraProperty(const std::string& propname,double& val){
 
     cameraToProps(cw.get());
     if(cw->hasKey(propname)){
-        val = props->getDoubleValue(propname);
+        val = cw->getAsRealValue(propname);
         return 0;
     }
     return -1;

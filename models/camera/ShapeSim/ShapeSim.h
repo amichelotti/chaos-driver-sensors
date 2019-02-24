@@ -57,6 +57,7 @@ class ShapeSim:public ::driver::sensor::camera::CameraDriverBridge {
      uint32_t shots;
      uint64_t frames;
      void*framebuf;
+     int framebuf_size;
      int32_t memID;
      cameraGrabCallBack fn;
      bool initialized;
@@ -95,6 +96,7 @@ public:
      int startGrab(uint32_t shots,void*framebuf=NULL,cameraGrabCallBack=NULL);
 
      int waitGrab(uint32_t timeout_ms);
+     int waitGrab(const char**buf,uint32_t timeout_ms);
 
      int stopGrab();
 

@@ -21,7 +21,6 @@
 #ifndef IDSGEXXDriver_H
 #define IDSGEXXDriver_H
 #include "Camera.h"
-
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <driver/sensors/core/CameraDriverBridge.h>
 #include <chaos/common/data/DatasetDB.h>
@@ -86,7 +85,7 @@ public:
      int startGrab(uint32_t shots,void*framebuf=NULL,cameraGrabCallBack=NULL);
 
      int waitGrab(uint32_t timeout_ms);
-
+      int waitGrab(const char**imgbuf,uint32_t timeout_ms);
      int stopGrab();
 
      int cameraInit(void *buffer,uint32_t sizeb);

@@ -23,6 +23,7 @@
 #include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
 
 #define DEFAULT_RESOLUTION 640*480*3
+#define CAMERA_FRAME_BUFFERING 100
 
 namespace driver{
     
@@ -42,16 +43,28 @@ public:
      Destructor a new CU
      */
     ~RTCameraBase();
+        void cameraGrabCallBack(const void*buf,uint32_t blen,uint32_t width,uint32_t heigth, uint32_t error);
 
 protected:
     int32_t *sizex,*sizey;
         const int32_t* mode;
         uint8_t* framebuf;
-        uint8_t* framebuf_out;
         uint32_t framebuf_encoding;
         char encoding[16];
         chaos::common::data::CDataWrapper camera_props;
+       // uint8_t* camera_out;
+        uint8_t* framebuf_out[CAMERA_FRAME_BUFFERING]; //capture stage
+        int captureReadPointer,captureWritePointer;
+        void captureThread();
+        bool stopCapture,stopEncoding;
+        boost::thread capture_th,encode_th;
+        std::vector<unsigned char> encbuf[CAMERA_FRAME_BUFFERING];//encode stage
+        int encodeReadPointer,encodeWritePointer;
+        boost::mutex mutex_r,mutex_w,mutex_io,mutex_encode,mutex_er,mutex_ew;
+        boost::condition_variable wait_capture,wait_encode;
 
+        void encodeThread();
+        int bufinuse;
         double*shutter,*brightness,*contrast,*sharpness,*gain;
          char*fmt,*ofmt;
         CameraDriverInterface*driver;
