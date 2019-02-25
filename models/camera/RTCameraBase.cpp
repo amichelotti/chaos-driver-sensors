@@ -49,7 +49,7 @@ PUBLISHABLE_CONTROL_UNIT_IMPLEMENTATION(RTCameraBase)
 }
 
 RTCameraBase::RTCameraBase(const string& _control_unit_id, const string& _control_unit_param, const ControlUnitDriverList& _control_unit_drivers):
-RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers),framebuf_encoding(CV_8UC3),captureReadPointer(0),captureWritePointer(0),encodeReadPointer(0),encodeWritePointer(0) {
+RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers),framebuf_encoding(CV_8UC3),captureImg(CAMERA_FRAME_BUFFERING),encodedImg(CAMERA_FRAME_BUFFERING),encode_time(0),capture_time(0),network_time(0),captureWritePointer(0),encodeWritePointer(0) {
   RTCameraBaseLDBG_<<"Creating "<<_control_unit_id<<" params:"<<_control_unit_param;
   try{
       framebuf=NULL;
@@ -178,7 +178,8 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
     std::vector<std::string> props;
     camera_props.getAllKey(props);
     addAttributeToDataSet("FMT","image format (jpg,png,gif...)",chaos::DataType::TYPE_STRING,chaos::DataType::Bidirectional);
-
+    addAttributeToDataSet("CAPTURE_FRAMERATE","Capture Frame Rate",chaos::DataType::TYPE_INT32,chaos::DataType::Output);
+    addAttributeToDataSet("ENCODE_FRAMERATE","Encode Frame Rate",chaos::DataType::TYPE_INT32,chaos::DataType::Output);
 
     for(std::vector<std::string>::iterator i = props.begin();i!=props.end();i++){
         RTCameraBaseLDBG_<<"ADDING ATTRIBUTE:"<<*i<<" Type:"<<camera_props.getValueType(*i);
@@ -221,6 +222,8 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
  //   camera_out=cc->getRWPtr<uint8_t>(DOMAIN_OUTPUT, "FRAMEBUFFER");
     fmt=cc->getRWPtr<char>(DOMAIN_INPUT, "FMT");
     ofmt=cc->getRWPtr<char>(DOMAIN_OUTPUT, "FMT");
+    capture_frame_rate=cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, "CAPTURE_FRAMERATE");
+    enc_frame_rate=cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, "ENCODE_FRAMERATE");
     std::vector<std::string> props;
     camera_props.getAllKey(props);
     //breanch number and soft reset
@@ -293,17 +296,17 @@ void RTCameraBase::cameraGrabCallBack(const void*buf,uint32_t blen,uint32_t widt
 }
 //!Execute the work, this is called with a determinated delay, it must be as fast as possible
 void RTCameraBase::unitStart() throw(chaos::CException) {
-    RTCameraBaseLDBG_<<"Sarting...";
+    RTCameraBaseLDBG_<<"Starting...";
     // allocate buffers;
     for(int cnt=0;cnt<CAMERA_FRAME_BUFFERING;cnt++){
         framebuf_out[cnt]=(uint8_t*)malloc(*sizex * *sizey * 4);
     }
     RTCameraBaseLDBG_<<"Allocated "<<CAMERA_FRAME_BUFFERING<<" buffers of "<<(*sizex * *sizey * 4)<<" bytes";
+    updateProperty();
 
     capture_th=boost::thread(&RTCameraBase::captureThread,this);
     encode_th=boost::thread(&RTCameraBase::encodeThread,this);
 
-     updateProperty();
 
     driver->startGrab(0);
 }
@@ -312,54 +315,58 @@ void RTCameraBase::captureThread(){
     int ret;
     stopCapture=false;
     const char*img=0;
+    uint64_t start;
+    counter_capture=0;
+    RTCameraBaseLDBG_<<"Capture thread STARTED";
+
     while(!stopCapture){
+         start=chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
           ret=driver->waitGrab(&img,5000);
           if(ret>0){
-              mutex_w.lock();
             if(captureWritePointer>=CAMERA_FRAME_BUFFERING){
                 captureWritePointer=0;
             }
-             mutex_w.unlock();
-            RTCameraBaseLDBG_<<"Capture write pointer:"<<captureWritePointer<<" read pointer:"<<captureReadPointer;
-
             memcpy((void*)framebuf_out[captureWritePointer],img,ret);
-            mutex_w.lock();
-            captureWritePointer++;
-            mutex_w.unlock();
-            wait_capture.notify_one();
+            buf_t a={framebuf_out[captureWritePointer],ret}; 
+            capture_time+=(chaos::common::utility::TimingUtil::getTimeStampInMicroseconds()-start);
+            counter_capture++;
+           
+            if(captureImg.push(a)==false){
+                // FULL
+                RTCameraBaseLDBG_<<"Capture FULL write pointer:"<<captureWritePointer;
+                wait_capture.notify_one();
+
+                boost::mutex::scoped_lock lock(mutex_io);
+                full_capture.wait(lock);
+            } else {
+                RTCameraBaseLDBG_<<"Capture write pointer:"<<captureWritePointer<<" read pointer:"<<encodeWritePointer;
+                captureWritePointer++;
+                wait_capture.notify_one();
+
+            }
         }
     }
+        RTCameraBaseLDBG_<<"Capture thread ENDED";
+
 }
 void RTCameraBase::encodeThread(){
+    uint64_t start;
+    counter_encode=0;
+    RTCameraBaseLDBG_<<"Encode thread STARTED";
     while(!stopCapture){ 
-        mutex_w.lock();
-        int32_t wrpointer=captureWritePointer;
-        mutex_w.unlock();
-        uint32_t dist=abs(wrpointer-captureReadPointer);
-        if(dist==0){
-            boost::mutex::scoped_lock lock(mutex_io);
-            wait_capture.wait(lock);
+        if(encodeWritePointer>=CAMERA_FRAME_BUFFERING){
+            encodeWritePointer=0;
         }
-       
-        
-        
-        for(int cnt=0;cnt<dist;cnt++){
-            RTCameraBaseLDBG_<<"Encode write pointer:"<<encodeWritePointer<<" read pointer:"<<captureReadPointer;
+        buf_t a;
 
-            cv::Mat image(*sizey,*sizex,framebuf_encoding,framebuf_out[captureReadPointer]);
-            if((captureReadPointer+1)<CAMERA_FRAME_BUFFERING){
-                captureReadPointer++;
-            } else {
-                captureReadPointer=0;
-            }
+        if(captureImg.pop(a)){
+            start=chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
+            full_capture.notify_one();
+
+        cv::Mat image(*sizey,*sizex,framebuf_encoding,a.buf);
         try {
         //bool code = cv::imencode(encoding, image, buf );
-            mutex_ew.lock();
-            if(encodeWritePointer>=CAMERA_FRAME_BUFFERING){
-                encodeWritePointer=0;
-             
-            }
-            mutex_ew.unlock();
+           
 
             bool code = cv::imencode(encoding, image,  encbuf[encodeWritePointer]);
             if(code==false){
@@ -369,47 +376,69 @@ void RTCameraBase::encodeThread(){
 
             } else {
                 setStateVariableSeverity(StateVariableTypeAlarmCU,"encode_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
-                mutex_ew.lock();
-                encodeWritePointer++;
-                mutex_ew.unlock();
-
+                buf_t a;
+                a.buf= reinterpret_cast<uchar*> (&encbuf[encodeWritePointer][0]);
+                a.size=encbuf[encodeWritePointer].size();
                 wait_encode.notify_one();
+                encode_time+=(chaos::common::utility::TimingUtil::getTimeStampInMicroseconds()-start);
+                counter_encode++;
+                if(encodedImg.push(a)==false){
+                    // FULL
+                    boost::mutex::scoped_lock lock(mutex_encode);
+                    RTCameraBaseLDBG_<<"Encode FULL write pointer:"<<encodeWritePointer;
+                    full_encode.wait(lock);
 
+                } else {
+                    encodeWritePointer++;
+                }
+               
             }
         } catch(...){
              setStateVariableSeverity(StateVariableTypeAlarmCU,"encode_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
             LERR_<<"Encode exception:"<<fmt;
-            continue;
         }
+        } else {
+            RTCameraBaseLDBG_<<"Encode EMPTY";
+
+            boost::mutex::scoped_lock lock(mutex_encode);
+            wait_capture.wait(lock);
         }
     }
+    RTCameraBaseLDBG_<<"Encode thread ENDED";
+
 }
+
 //!Execute the Control Unit work
 void RTCameraBase::unitRun() throw(chaos::CException) {
   //get the output attribute pointer form the internal cache
-
-    
-     if(encodeReadPointer==encodeWritePointer){
-            boost::mutex::scoped_lock lock(mutex_encode);
-            wait_encode.wait(lock);
+    if((encode_time >0) && (capture_time >0)){
+        *enc_frame_rate=(1000000*counter_encode/encode_time);
+        *capture_frame_rate=(1000000*counter_capture/capture_time);
     }
     
-    uchar* result = reinterpret_cast<uchar*> (&encbuf[encodeReadPointer][0]);
-    if((encodeReadPointer+1)<CAMERA_FRAME_BUFFERING){
-            encodeReadPointer++;
+    if((counter_capture%100000)==0){
+        //RTCameraBaseLDBG_<<"CAPTURE TIME (us):"<<capture_time/counter_capture<<" HZ:"<<(1000000*counter_capture/capture_time)<<" ENCODE TIME (us):"<<encode_time/counter_encode<<" HZ:"<<(1000000*counter_encode/encode_time);
+        capture_time=0;
+        encode_time=0;
+        counter_encode=0;
+        counter_capture=0;
+    }
+    
+    buf_t a;
+    if(encodedImg.pop(a)){
+        RTCameraBaseLDBG_<<"Encode Write Pointer:"<<encodeWritePointer<<" CaptureWrite:"<<captureWritePointer;
+        
+        getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER",a.buf,a.size);
+        getAttributeCache()->setOutputDomainAsChanged();
+        full_encode.notify_one();
+
     } else {
-            encodeReadPointer=0;
+       // RTCameraBaseLDBG_<<"Encode EMPTY :"<<encodeWritePointer<<" CaptureWrite:"<<captureWritePointer;
+        full_encode.notify_one();
+
+        boost::mutex::scoped_lock lock(mutex_encode);
+        wait_encode.wait(lock);
     }
-    //getAttributeCache()->setOutputAttributeNewSize("FRAMEBUFFER", buf.size());
-    RTCameraBaseLDBG_<<"Encode Write Pointer:"<<encodeWritePointer<<" Read:"<<encodeReadPointer<<" size encoded:"<<encbuf[encodeReadPointer].size();
-
-    getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER",result,encbuf[encodeReadPointer].size());
-    //memcpy(framebuf_out,result,buf.size());
-    //    namedWindow("Captura",WINDOW_AUTOSIZE);
-    //    imshow( "Captura", image );
-
-
-    getAttributeCache()->setOutputDomainAsChanged();
 
 }
 
@@ -418,6 +447,8 @@ void RTCameraBase::unitStop() throw(chaos::CException) {
     stopCapture=true;
     wait_capture.notify_all();
     wait_encode.notify_all();
+    full_encode.notify_all();
+    full_capture.notify_all();
     capture_th.join();
     encode_th.join();
      for(int cnt=0;cnt<CAMERA_FRAME_BUFFERING;cnt++){

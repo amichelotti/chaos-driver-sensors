@@ -19,11 +19,13 @@
  */
 #ifndef ChaosRTControlUnit_RTCameraBase_h
 #define ChaosRTControlUnit_RTCameraBase_h
+#include  <boost/lockfree/queue.hpp> 
+
 
 #include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
 
 #define DEFAULT_RESOLUTION 640*480*3
-#define CAMERA_FRAME_BUFFERING 100
+#define CAMERA_FRAME_BUFFERING 64
 
 namespace driver{
     
@@ -50,21 +52,28 @@ protected:
         const int32_t* mode;
         uint8_t* framebuf;
         uint32_t framebuf_encoding;
+        typedef struct {
+            unsigned char*buf;
+            int32_t size;
+        } buf_t;
         char encoding[16];
         chaos::common::data::CDataWrapper camera_props;
        // uint8_t* camera_out;
         uint8_t* framebuf_out[CAMERA_FRAME_BUFFERING]; //capture stage
-        int captureReadPointer,captureWritePointer;
+        int captureWritePointer;
         void captureThread();
         bool stopCapture,stopEncoding;
         boost::thread capture_th,encode_th;
         std::vector<unsigned char> encbuf[CAMERA_FRAME_BUFFERING];//encode stage
-        int encodeReadPointer,encodeWritePointer;
-        boost::mutex mutex_r,mutex_w,mutex_io,mutex_encode,mutex_er,mutex_ew;
-        boost::condition_variable wait_capture,wait_encode;
-
+        int encodeWritePointer;
+        boost::condition_variable wait_capture,wait_encode,full_capture,full_encode;
+        boost::lockfree::queue<buf_t, boost::lockfree::fixed_sized<true> > captureImg;
+        boost::lockfree::queue<buf_t, boost::lockfree::fixed_sized<true> > encodedImg;
+        boost::mutex mutex_io,mutex_encode;
+        uint64_t encode_time,capture_time,network_time,counter_capture,counter_encode;
         void encodeThread();
         int bufinuse;
+        int32_t* enc_frame_rate,*capture_frame_rate;
         double*shutter,*brightness,*contrast,*sharpness,*gain;
          char*fmt,*ofmt;
         CameraDriverInterface*driver;

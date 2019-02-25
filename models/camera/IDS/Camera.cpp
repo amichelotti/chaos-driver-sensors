@@ -773,13 +773,9 @@ void Camera::captureThread(CamCaptureCB callback)
   streaming_ = false;
 }
 
-int  Camera::captureImage(int timeo_ms,char**buf,size_t *size){
+int  Camera::captureImage(int timeo_ms,const char**buf,size_t *size){
     int ret=-1;
-   /* if(timeo_ms==0){
-        ret=is_CaptureVideo(cam_, IS_WAIT);
-    } else {
-        ret=is_CaptureVideo(cam_, timeo_ms);
-    }*/
+ 
     if(timeo_ms==0){
             ret=is_FreezeVideo(cam_, IS_WAIT);
         } else {
@@ -800,11 +796,7 @@ int  Camera::captureImage(int timeo_ms,char**buf,size_t *size){
 }
 int  Camera::captureImage(int timeo_ms,char*hostbuf,size_t *size){
     int ret=-1;
-   /* if(timeo_ms==0){
-        ret=is_CaptureVideo(cam_, IS_WAIT);
-    } else {
-        ret=is_CaptureVideo(cam_, timeo_ms);
-    }*/
+  
     if(timeo_ms==0){
             ret=is_FreezeVideo(cam_, IS_WAIT);
         } else {

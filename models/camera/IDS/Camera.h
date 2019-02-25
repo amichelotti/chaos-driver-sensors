@@ -159,7 +159,7 @@ public:
 
   void closeCamera();
   int captureImage(int timeo_ms,char*hostbuf,size_t *size);
-  int captureImage(int timeo_ms,char**getbuf,size_t *size);
+  int captureImage(int timeo_ms,const char**getbuf,size_t *size);
 
   void initMemoryPool(int size);
 

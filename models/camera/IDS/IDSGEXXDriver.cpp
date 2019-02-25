@@ -226,6 +226,9 @@ IDSGEXXDriver::IDSGEXXDriver():shots(0),framebuf(NULL),fn(NULL),props(NULL),tmod
 //default descrutcor
 IDSGEXXDriver::~IDSGEXXDriver() {
     is_ExitCamera(hCam);
+    if(props){
+        delete props;
+    }
 
 }
 /*
@@ -602,8 +605,8 @@ int IDSGEXXDriver::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _
 int IDSGEXXDriver::waitGrab(const char**hostbuf,uint32_t timeout_ms){
   int32_t ret=0;
     size_t size_ret=0;
-    char *buf=0;
-     if((ret=camera.captureImage(timeout_ms,(char*)&buf,&size_ret))==0){
+    const char *buf=0;
+     if((ret=camera.captureImage(timeout_ms,&buf,&size_ret))==0){
             IDSGEXXDriverLDBG_<<"Retrieved Image "<<camera.getWidth()<<"x"<<camera.getHeight()<<" raw size:"<<size_ret;
             ret= size_ret;
     } else{

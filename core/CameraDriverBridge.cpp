@@ -75,7 +75,7 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
     }
 
     case CameraDriverInterfaceOpcode_SET_PROP:{
-        const char*pnt=in->str;
+        const char*pnt=in->property;
         int32_t val=in->arg0;
         out->result=setCameraProperty(pnt,val);
         break;
