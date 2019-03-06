@@ -68,6 +68,11 @@ void ShapeSim::driverInit(const chaos::common::data::CDataWrapper& json) throw(c
 
 void ShapeSim::driverDeinit() throw(chaos::CException) {
     ShapeSimLAPP_ << "Deinit driver";
+    if(framebuf){
+        free(framebuf);
+        framebuf=NULL;
+    }
+    framebuf_size=0;
 
 }
 
@@ -359,7 +364,10 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
 }
 
 int ShapeSim::waitGrab(uint32_t timeout_ms){
-    return waitGrab((const char**)&framebuf,timeout_ms);
+        ShapeSimLERR_<<"NOT IMPLEMENTED";
+
+    return 0;
+    //return waitGrab((const char**)&framebuf,timeout_ms);
 }
 int ShapeSim::stopGrab(){
     //camera->StopGrabbing();
