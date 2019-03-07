@@ -28,7 +28,7 @@ using namespace ::driver::sensor::camera;
 camera_params_t ret;\
 camera_params_t idata;\
 message.opcode = op; \
-/*CameraDriverInterfaceLDBG_<<"STUB Opcode:\""<<# op<<"\" :"<<op;*/\
+CameraDriverInterfaceLDBG_<<"STUB Opcode:\""<<# op<<"\" :"<<op;\
 message.inputData=(void*)&idata;\
 message.inputDataLength=sizeof(camera_params_t);\
 message.resultDataLength=sizeof(camera_params_t);\

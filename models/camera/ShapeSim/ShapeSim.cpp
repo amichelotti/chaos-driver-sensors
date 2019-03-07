@@ -344,9 +344,14 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
             framebuf_size=size;
         }
         ShapeSimLDBG_<<shape_type<<"("<<width<<"X"<<height<<")"<<frames<<" center "<<tmp_centerx<<","<<tmp_centery<<" sizex:"<<tmp_sizex<<" sizey:"<<tmp_sizey<<" color:"<<colr<<"R,"<<colg<<"G,"<<colb<<" size byte:"<<size;
+        if(buf){
+            *buf=(char*)framebuf;
+            std::memcpy(framebuf,img.data,size );
+        } else {
+            ShapeSimLERR_<<"BAD BUFFER GIVEN "<<shape_type<<"("<<width<<"X"<<height<<")"<<frames<<" center "<<tmp_centerx<<","<<tmp_centery<<" sizex:"<<tmp_sizex<<" sizey:"<<tmp_sizey<<" color:"<<colr<<"R,"<<colg<<"G,"<<colb<<" size byte:"<<size;
+
+        }
         
-        std::memcpy(framebuf,img.data,size );
-        *buf=(char*)framebuf;
         ret=size;
     }
 

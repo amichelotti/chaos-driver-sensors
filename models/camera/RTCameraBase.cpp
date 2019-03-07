@@ -80,6 +80,10 @@ RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drive
           DECODE_CVENCODING(enc,CV_32SC4);
 
       }
+       for(int cnt=0;cnt<CAMERA_FRAME_BUFFERING;cnt++){
+        framebuf_out[cnt].buf=NULL;
+        framebuf_out[cnt].size=0;
+    }
   } catch(...){
 
   }
@@ -451,6 +455,8 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
 
 //!Execute the Control Unit work
 void RTCameraBase::unitStop() throw(chaos::CException) {
+    RTCameraBaseLDBG_<<"Stopping...";
+
     stopCapture=true;
     wait_capture.notify_all();
     wait_encode.notify_all();
@@ -461,6 +467,7 @@ void RTCameraBase::unitStop() throw(chaos::CException) {
      for(int cnt=0;cnt<CAMERA_FRAME_BUFFERING;cnt++){
         free(framebuf_out[cnt].buf);
         framebuf_out[cnt].size=0;
+        framebuf_out[cnt].buf=NULL;
     }
 }
 
