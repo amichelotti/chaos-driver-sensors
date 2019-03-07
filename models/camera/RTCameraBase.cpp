@@ -299,7 +299,8 @@ void RTCameraBase::unitStart() throw(chaos::CException) {
     RTCameraBaseLDBG_<<"Starting...";
     // allocate buffers;
     for(int cnt=0;cnt<CAMERA_FRAME_BUFFERING;cnt++){
-        framebuf_out[cnt]=(uint8_t*)malloc(*sizex * *sizey * 4);
+        framebuf_out[cnt].buf=(unsigned char*)malloc(*sizex * *sizey * 4);
+        framebuf_out[cnt].size=*sizex * *sizey * 4;
     }
     RTCameraBaseLDBG_<<"Allocated "<<CAMERA_FRAME_BUFFERING<<" buffers of "<<(*sizex * *sizey * 4)<<" bytes";
     updateProperty();
@@ -326,12 +327,18 @@ void RTCameraBase::captureThread(){
             if(captureWritePointer>=CAMERA_FRAME_BUFFERING){
                 captureWritePointer=0;
             }
-            memcpy((void*)framebuf_out[captureWritePointer],img,ret);
-            buf_t a={framebuf_out[captureWritePointer],ret}; 
+            if(framebuf_out[captureWritePointer].size<ret){
+                framebuf_out[captureWritePointer].buf=(unsigned char*)realloc(framebuf_out[captureWritePointer].buf,ret);
+                if(framebuf_out[captureWritePointer].buf==NULL){
+                    throw chaos::CException(-1,"Heap memory exahusted",__PRETTY_FUNCTION__);
+                }
+                framebuf_out[captureWritePointer].size=ret;
+            }
+            memcpy((void*)framebuf_out[captureWritePointer].buf,img,ret);
             capture_time+=(chaos::common::utility::TimingUtil::getTimeStampInMicroseconds()-start);
             counter_capture++;
            
-            if(captureImg.push(a)==false){
+            if(captureImg.push(framebuf_out[captureWritePointer])==false){
                 // FULL
                 RTCameraBaseLDBG_<<"Capture FULL write pointer:"<<captureWritePointer;
                 wait_capture.notify_one();
@@ -452,7 +459,8 @@ void RTCameraBase::unitStop() throw(chaos::CException) {
     capture_th.join();
     encode_th.join();
      for(int cnt=0;cnt<CAMERA_FRAME_BUFFERING;cnt++){
-        free(framebuf_out[cnt]);;
+        free(framebuf_out[cnt].buf);
+        framebuf_out[cnt].size=0;
     }
 }
 

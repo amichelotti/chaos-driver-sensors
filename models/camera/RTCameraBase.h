@@ -59,7 +59,8 @@ protected:
         char encoding[16];
         chaos::common::data::CDataWrapper camera_props;
        // uint8_t* camera_out;
-        uint8_t* framebuf_out[CAMERA_FRAME_BUFFERING]; //capture stage
+        buf_t framebuf_out[CAMERA_FRAME_BUFFERING]; //capture stage
+
         int captureWritePointer;
         void captureThread();
         bool stopCapture,stopEncoding;
