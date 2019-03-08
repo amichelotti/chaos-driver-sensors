@@ -243,7 +243,6 @@ int ShapeSim::cameraDeinit(){
     name = w->getInt32Value(#name);\
     ShapeSimLDBG_<< "shape INT param '"<<#name<<" = "<<name;}
 int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
-    ShapeSimLDBG_<<"Start Grabbing";
     int ret=-1;
     shots=_shots;
     //framebuf=_framebuf;
@@ -300,6 +299,7 @@ int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
         GETINTPARAM(shape_params,colr);
 
     }
+    ShapeSimLDBG_<<"Start Grabbing at:"<<framerate <<" frame/s";
 
     return ret;
 }
@@ -314,6 +314,8 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
     int32_t ret=-1;
     size_t size_ret;
     boost::random::mt19937 gen(std::time(0) );
+    usleep(1000000/framerate);
+
     if(shape_type == "ellipse"){
         Mat img(height,width,  CV_8UC3, Scalar::all(0));
         // get parameters
@@ -325,7 +327,6 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
         RND_DIST(sizey);
         RND_DIST(rotangle);
         RND_DIST(tickness);
-        usleep(1000000/framerate);
         putText(img,ss.str(),Point(10,25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
         ellipse( img,
                  Point( tmp_centerx, tmp_centery),
