@@ -355,6 +355,10 @@ void RTCameraBase::captureThread(){
                 wait_capture.notify_one();
 
             }
+        } else {
+            RTCameraBaseLERR_<<"wait returned:"<<ret<<" buffer:0x"<<img<<" is bypass";
+            usleep(100000);
+
         }
     }
         RTCameraBaseLDBG_<<"Capture thread ENDED";
