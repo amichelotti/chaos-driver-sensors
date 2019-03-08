@@ -325,6 +325,7 @@ void RTCameraBase::captureThread(){
     RTCameraBaseLDBG_<<"Capture thread STARTED";
 
     while(!stopCapture){
+        img=0;
          start=chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
           ret=driver->waitGrab(&img,5000);
           if((img!=0) && (ret>0)){
