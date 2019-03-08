@@ -327,7 +327,7 @@ void RTCameraBase::captureThread(){
     while(!stopCapture){
          start=chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
           ret=driver->waitGrab(&img,5000);
-          if(ret>0){
+          if((img!=0) && (ret>0)){
             if(captureWritePointer>=CAMERA_FRAME_BUFFERING){
                 captureWritePointer=0;
             }

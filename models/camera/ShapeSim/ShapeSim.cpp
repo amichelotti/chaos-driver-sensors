@@ -257,6 +257,10 @@ int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
     err_extangle=0;
     err_tickness=0;
     // fetch parameters
+    if(shape_params->hasKey("framerate")){
+        framerate=shape_params->getDoubleValue("framerate");
+    }
+
     if(shape_params->hasKey("type")){
         shape_type=shape_params->getStringValue("type");
         ret =0;
@@ -321,7 +325,7 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
         RND_DIST(sizey);
         RND_DIST(rotangle);
         RND_DIST(tickness);
-
+        usleep(1000000/framerate);
         putText(img,ss.str(),Point(10,25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
         ellipse( img,
                  Point( tmp_centerx, tmp_centery),
