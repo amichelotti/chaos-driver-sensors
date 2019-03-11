@@ -242,6 +242,7 @@ int ShapeSim::cameraDeinit(){
     if(w->hasKey(#name)){\
     name = w->getInt32Value(#name);\
     ShapeSimLDBG_<< "shape INT param '"<<#name<<" = "<<name;}
+    
 int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
     int ret=-1;
     shots=_shots;
@@ -314,8 +315,7 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
     int32_t ret=-1;
     size_t size_ret;
     boost::random::mt19937 gen(std::time(0) );
-    usleep(1000000/framerate);
-
+    
     if(shape_type == "ellipse"){
         Mat img(height,width,  CV_8UC3, Scalar::all(0));
         // get parameters
@@ -358,8 +358,14 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
         }
         
         ret=size;
+    } else {
+        ShapeSimLERR_<<"Unknown shape given:"<<shape_type;
     }
-
+    if(framerate>0){
+        usleep(1000000/framerate);
+    } else {
+        sleep(1);
+    }
     /*    if((ret=camera.captureImage(timeout_ms,(char*)framebuf,&size_ret))==0){
         ShapeSimLDBG_<<"Retrieved Image "<<camera.getWidth()<<"x"<<camera.getHeight()<<" raw size:"<<size_ret;
         ret= size_ret;

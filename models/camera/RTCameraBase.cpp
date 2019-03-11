@@ -308,12 +308,12 @@ void RTCameraBase::unitStart() throw(chaos::CException) {
     }
     RTCameraBaseLDBG_<<"Allocated "<<CAMERA_FRAME_BUFFERING<<" buffers of "<<(*sizex * *sizey * 4)<<" bytes";
     updateProperty();
+    driver->startGrab(0);
 
     capture_th=boost::thread(&RTCameraBase::captureThread,this);
     encode_th=boost::thread(&RTCameraBase::encodeThread,this);
 
 
-    driver->startGrab(0);
 }
 
 void RTCameraBase::captureThread(){
@@ -461,7 +461,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
 //!Execute the Control Unit work
 void RTCameraBase::unitStop() throw(chaos::CException) {
     RTCameraBaseLDBG_<<"Stopping...";
-
+    driver->stopGrab();
     stopCapture=true;
     wait_capture.notify_all();
     wait_encode.notify_all();
