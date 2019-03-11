@@ -357,7 +357,7 @@ void RTCameraBase::captureThread(){
 
             }
         } else {
-            RTCameraBaseLERR_<<"wait returned:"<<ret<<" buffer:0x"<<img<<" is bypass";
+            RTCameraBaseLERR_<<"wait returned:"<<ret<<" buffer  is bypass ?";
             usleep(100000);
 
         }
