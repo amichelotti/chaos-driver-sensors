@@ -220,8 +220,15 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
 
 //!Define custom control unit attribute
 void RTCameraBase::unitDefineCustomAttribute() {
+    getAttributeCache()->addCustomAttribute("config", 4096, chaos::DataType::TYPE_CLUSTER);
+    if(driver->getCameraProperties(camera_props)!=0){
+        throw chaos::CException(-1,"Error retrieving camera properties",__PRETTY_FUNCTION__);
 
+    }
+    getAttributeCache()->setCustomAttributeValue("config", (void*)camera_props.getBSONRawData(),camera_props.getBSONRawSize() );
 }
+
+
 
 //!Initialize the Custom Control Unit
 void RTCameraBase::unitInit() throw(chaos::CException) {

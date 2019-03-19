@@ -609,13 +609,14 @@ int IDSGEXXDriver::waitGrab(const char**hostbuf,uint32_t timeout_ms){
      if((ret=camera.captureImage(timeout_ms,&buf,&size_ret))==0){
             IDSGEXXDriverLDBG_<<"Retrieved Image "<<camera.getWidth()<<"x"<<camera.getHeight()<<" raw size:"<<size_ret;
             ret= size_ret;
+            if(hostbuf&&buf){
+       // memcpy(hostbuf,buf,size_ret);
+                *hostbuf=buf;
+        }
     } else{
       //      IDSGEXXDriverLERR_<<"No Image..";
     }
-    if(hostbuf&&buf){
-       // memcpy(hostbuf,buf,size_ret);
-       *hostbuf=buf;
-    }
+    
    
 
 
