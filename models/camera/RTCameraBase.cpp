@@ -132,6 +132,7 @@ void RTCameraBase::updateProperty(){
 }
 bool  RTCameraBase::setProp(const std::string &name, int32_t value, uint32_t size){
     int ret;
+    int32_t valuer;
     RTCameraBaseLDBG_<<"SET IPROP:"<<name<<" VALUE:"<<value;
     ret=driver->setCameraProperty(name,value);
     setStateVariableSeverity(StateVariableTypeAlarmDEV,"operation_not_supported", chaos::common::alarm::MultiSeverityAlarmLevelClear);
@@ -140,8 +141,12 @@ bool  RTCameraBase::setProp(const std::string &name, int32_t value, uint32_t siz
         setStateVariableSeverity(StateVariableTypeAlarmDEV,"operation_not_supported", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
 
     }
-    updateProperty();
-    RTCameraBaseLDBG_<<"SET IPROP:"<<name<<" VALUE:"<<value<<" ret:"<<ret;
+   // updateProperty();
+    driver->getCameraProperty(name,valuer);
+    AttributeSharedCacheWrapper * cc=getAttributeCache();
+    int32_t * p=cc->getRWPtr<int32_t>(DOMAIN_OUTPUT,name);
+    *p=valuer;
+    RTCameraBaseLDBG_<<"SET IPROP:"<<name<<" SET VALUE:"<<value<<" READ VALUE:"<<valuer<<" ret:"<<ret;
     getAttributeCache()->setInputDomainAsChanged();
     getAttributeCache()->setOutputDomainAsChanged();
     return (ret==0);
@@ -149,7 +154,7 @@ bool  RTCameraBase::setProp(const std::string &name, int32_t value, uint32_t siz
 
 bool  RTCameraBase::setProp(const std::string &name, double value, uint32_t size){
     int ret;
-
+    double valuer;
     ret=driver->setCameraProperty(name,value);
     setStateVariableSeverity(StateVariableTypeAlarmDEV,"operation_not_supported", chaos::common::alarm::MultiSeverityAlarmLevelClear);
 
@@ -157,10 +162,15 @@ bool  RTCameraBase::setProp(const std::string &name, double value, uint32_t size
         setStateVariableSeverity(StateVariableTypeAlarmDEV,"operation_not_supported", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
 
     }
-    updateProperty();
+    //updateProperty();
+     driver->getCameraProperty(name,valuer);
+    AttributeSharedCacheWrapper * cc=getAttributeCache();
+    double * p=cc->getRWPtr<double>(DOMAIN_OUTPUT,name);
+    *p=valuer;
+
      getAttributeCache()->setInputDomainAsChanged();
     getAttributeCache()->setOutputDomainAsChanged();
-        RTCameraBaseLDBG_<<"SET FPROP:"<<name<<" VALUE:"<<value<<" ret:"<<ret;
+        RTCameraBaseLDBG_<<"SET FPROP:"<<name<<" VALUE:"<<value<<" READ:"<<valuer<<" ret:"<<ret;
 
     return (ret==0);
 }
