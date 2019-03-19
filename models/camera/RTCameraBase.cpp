@@ -49,7 +49,7 @@ PUBLISHABLE_CONTROL_UNIT_IMPLEMENTATION(RTCameraBase)
 }
 
 RTCameraBase::RTCameraBase(const string& _control_unit_id, const string& _control_unit_param, const ControlUnitDriverList& _control_unit_drivers):
-RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers),framebuf_encoding(CV_8UC3),captureImg(CAMERA_FRAME_BUFFERING),encodedImg(CAMERA_FRAME_BUFFERING),encode_time(0),capture_time(0),network_time(0),captureWritePointer(0),encodeWritePointer(0) {
+RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers),driver(NULL),framebuf_encoding(CV_8UC3),captureImg(CAMERA_FRAME_BUFFERING),encodedImg(CAMERA_FRAME_BUFFERING),encode_time(0),capture_time(0),network_time(0),captureWritePointer(0),encodeWritePointer(0) {
   RTCameraBaseLDBG_<<"Creating "<<_control_unit_id<<" params:"<<_control_unit_param;
   try{
       framebuf=NULL;
@@ -189,6 +189,8 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
         RTCameraBaseLDBG_<<"ADDING ATTRIBUTE:"<<*i<<" Type:"<<camera_props.getValueType(*i);
 
         addAttributeToDataSet(*i,*i,camera_props.getValueType(*i),chaos::DataType::Bidirectional);
+       // getAttributeCache()->addCustomAttribute(*i, 8, camera_props.getValueType(*i));
+       // getAttributeCache()->setCustomAttributeValue("quit", &quit, sizeof(bool));
        // addCustomAttribute(*i,sizeof(double),camera_props.getValueType(*i));
         if(camera_props.getValueType(*i)==chaos::DataType::TYPE_DOUBLE){
             addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, double >(this,
