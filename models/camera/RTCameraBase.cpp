@@ -225,7 +225,13 @@ void RTCameraBase::unitDefineCustomAttribute() {
         throw chaos::CException(-1,"Error retrieving camera properties",__PRETTY_FUNCTION__);
 
     }
-    getAttributeCache()->setCustomAttributeValue("config", (void*)camera_props.getBSONRawData(),camera_props.getBSONRawSize() );
+    std::string config=camera_props.getJSONString();
+    RTCameraBaseLDBG_<<"ADDING CONFIG:"<<config;
+
+    getAttributeCache()->setCustomAttributeValue("config", (void*)config.c_str(),2*config.size());
+    getAttributeCache()->setCustomDomainAsChanged();
+    pushCustomDataset();
+
 }
 
 
@@ -331,6 +337,8 @@ void RTCameraBase::unitStart() throw(chaos::CException) {
 
     capture_th=boost::thread(&RTCameraBase::captureThread,this);
     encode_th=boost::thread(&RTCameraBase::encodeThread,this);
+    getAttributeCache()->setCustomDomainAsChanged();
+    pushCustomDataset();
 
 
 }
