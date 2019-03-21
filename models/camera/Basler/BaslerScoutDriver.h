@@ -46,11 +46,11 @@ namespace driver {
 class BaslerScoutDriver:public ::driver::sensor::camera::CameraDriverBridge {
 
 
-   chaos::common::data::CDataWrapper* props;
+   chaos::common::data::CDataWrapper config;
  protected:
  void driverInit(const char *initParameter) throw(chaos::CException);
  void driverInit(const chaos::common::data::CDataWrapper& json) throw(chaos::CException);
-
+int getNode(const std::string& node_name,CInstantCamera& camera,CDataWrapper& prop);
   int initializeCamera(const chaos::common::data::CDataWrapper& json) ;
   void driverDeinit() throw(chaos::CException) ;
     // This smart pointer will receive the grab result data.

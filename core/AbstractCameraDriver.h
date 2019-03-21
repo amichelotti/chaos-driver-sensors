@@ -20,6 +20,7 @@
 #ifndef __ASTRACTCAMERADRIVER_H__
 #define __ASTRACTCAMERADRIVER_H__
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
+#include <common/misc/data/core/Property.h>
 namespace cu_driver = chaos::cu::driver_manager::driver;
 #include <string>
 #include <vector>
@@ -57,7 +58,8 @@ enum GrabStrategy {
  class AbstractCameraDriver{
 
 
-
+protected:
+  common::misc::data::Property props;
 public:
    AbstractCameraDriver(){}
 

@@ -33,6 +33,7 @@
 using namespace Pylon;
 namespace cu_driver = chaos::cu::driver_manager::driver;
 using namespace ::driver::sensor::camera;
+using namespace chaos::common::data;
 #define BaslerScoutDriverLAPP_		LAPP_ << "[BaslerScoutDriver] "
 #define BaslerScoutDriverLDBG_		LDBG_ << "[BaslerScoutDriver:"<<__PRETTY_FUNCTION__<<"]"
 #define BaslerScoutDriverLERR_		LERR_ << "[BaslerScoutDriver:"<<__PRETTY_FUNCTION__<<"]"
@@ -89,19 +90,15 @@ static T Adjust(T val, T minimum, T maximum, T inc)
 }
 
 void BaslerScoutDriver::driverInit(const char *initParameter) throw(chaos::CException){
-    BaslerScoutDriverLDBG_ << "Initializing  driver:"<<initParameter;
-    props->reset();
-    if(initializeCamera(*props)!=0){
-        throw chaos::CException(-3,"cannot initialize camera ",__PRETTY_FUNCTION__);
+    throw chaos::CException(-3,"Not a JSON initialization",__PRETTY_FUNCTION__);
 
-    }
 }
 
 void BaslerScoutDriver::driverInit(const chaos::common::data::CDataWrapper& json) throw(chaos::CException){
     BaslerScoutDriverLDBG_ << "Initializing  driver:"<<json.getCompliantJSONString();
-    props->reset();
-    props->appendAllElement((chaos::common::data::CDataWrapper&)json);
-    if(initializeCamera(*props)!=0){
+    config.reset();
+    config.appendAllElement((chaos::common::data::CDataWrapper&)json);
+    if(initializeCamera(config)!=0){
         throw chaos::CException(-1,"cannot initialize camera "+json.getCompliantJSONString(),__PRETTY_FUNCTION__);
     }
 
@@ -213,7 +210,7 @@ static int setNodeInPercentage(const std::string& node_name,CInstantCamera& came
     return 0;
 }
 
-static int getNode(const std::string& node_name,CInstantCamera& camera,int32_t& percent){
+int BaslerScoutDriver::getNode(const std::string& node_name,CInstantCamera& camera,CDataWrapper& prop){
     try {
                 BaslerScoutDriverLDBG_<<"getting node:"<<node_name;
 
@@ -224,10 +221,9 @@ static int getNode(const std::string& node_name,CInstantCamera& camera,int32_t& 
 
             return -1;
         }
-        percent=-1;
-        percent=node->GetValue();
+        CDataBuffer p=saveProperty(prop,node_name,node->GetValue(),node->GetMin(),node->GetMax(),node->GetIncr());
 
-        BaslerScoutDriverLDBG_<<"VAL:"<<percent;
+        BaslerScoutDriverLDBG_<<"VAL:"<<p->getJSONString();
     } catch  (const GenericException &e){
         // Error handling.
         BaslerScoutDriverLERR_<<  "An exception occurred during GET of Node:\""<<node_name<<"\":"<< e.GetDescription();
@@ -238,6 +234,7 @@ static int getNode(const std::string& node_name,CInstantCamera& camera,int32_t& 
     }
     return 0;
 }
+/*
 static int getNodeInPercentage(const std::string& node_name,CInstantCamera& camera,float& percent){
     int64_t min,max,inc,val;
     try {
@@ -270,7 +267,7 @@ static int getNodeInPercentage(const std::string& node_name,CInstantCamera& came
     }
     return 0;
 }
-/*
+
 static void setNodeInPercentage(const GenApi::CFloatPtr& node,float percent){
     double min,max,inc;
     if(node.get()==NULL){
@@ -457,6 +454,11 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper&
             BaslerScoutDriverLDBG_<<"No \"serial\" specified getting first camera..";
             pdev=CTlFactory::GetInstance().CreateFirstDevice();
             camerap = new CInstantCamera(pdev);
+            props.createProperty("Model",camerap->GetDeviceInfo().GetModelName());
+            props.createProperty("Name",camerap->GetDeviceInfo().GetFriendlyName());
+            props.createProperty("FullName",camerap->GetDeviceInfo().GetFullName());
+            props.createProperty("SerialNumber",camerap->GetDeviceInfo().GetSerialNumber());
+
             BaslerScoutDriverLDBG_<<" Model:"<< camerap->GetDeviceInfo().GetModelName();
             BaslerScoutDriverLDBG_ << "Friendly Name: " << camerap->GetDeviceInfo().GetFriendlyName();
             BaslerScoutDriverLDBG_<< "Full Name    : " <<  camerap->GetDeviceInfo().GetFullName();
@@ -466,6 +468,9 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper&
 
                 camerap->Open();
             }
+            // Create all properties
+            if(getNode("TriggerMode",cam,*p)==0){
+            }
             return 0;
 
         }
@@ -473,10 +478,9 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper&
 
     return -1;
 }
-BaslerScoutDriver::BaslerScoutDriver():camerap(NULL),shots(0),framebuf(NULL),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY){
+BaslerScoutDriver::BaslerScoutDriver():camerap(NULL),shots(0),framebuf(NULL),fn(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY){
 
     BaslerScoutDriverLDBG_<<  "Created Driver";
-    props=new chaos::common::data::CDataWrapper();
 
 
 }
@@ -488,9 +492,6 @@ BaslerScoutDriver::~BaslerScoutDriver() {
         delete camerap;
         camerap =NULL;
     }
-    if(props){
-        delete props;
-    }
 }
 
 int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera& cam,chaos::common::data::CDataWrapper*p){
@@ -501,12 +502,15 @@ int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera& cam,chaos::common::d
     }
     BaslerScoutDriverLDBG_<<"Updating Camera Properties";
 
-    if(getNode("TriggerMode",cam,ivalue)==0){
+    if(getNode("TriggerMode",cam,*p)==0){
         BaslerScoutDriverLDBG_<<"GETTING PROP TRIGGER_MODE";
+        int ivalue;
+        if(getPropertyValue(*p,"TriggerMode",ivalue)==0){
+            if(ivalue==Basler_GigECamera::TriggerModeEnums::TriggerMode_On){
+                if(getNode("TriggerSource",cam,*p)==0){
+                    if(getPropertyValue(*p,"TriggerMode",ivalue)==0){
 
-        if(ivalue==Basler_GigECamera::TriggerModeEnums::TriggerMode_On){
-            if(getNode("TriggerSource",cam,ivalue)==0){
-                switch(ivalue){
+                    switch(ivalue){
                     case  Basler_GigECamera::TriggerSourceEnums::TriggerSource_Software:
                         p->addInt32Value("TRIGGER_MODE",CAMERA_TRIGGER_SOFT);
                         BaslerScoutDriverLDBG_<<"TRIGGER_MODE SOFT";

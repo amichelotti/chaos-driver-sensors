@@ -66,6 +66,8 @@ class AbstractSensorDriver:ADD_CU_DRIVER_PLUGIN_SUPERCLASS {
 protected:
     ddDataSet_t *dataset;
     int datasetSize;
+   
+
 public:
 	AbstractSensorDriver();
 
