@@ -210,29 +210,32 @@ static int setNodeInPercentage(const std::string& node_name,CInstantCamera& came
     return 0;
 }
 
-int BaslerScoutDriver::getNode(const std::string& node_name,CInstantCamera& camera,CDataWrapper& prop){
+ChaosUniquePtr<chaos::common::data::CDataWrapper> BaslerScoutDriver::getNode(const std::string& node_name,CInstantCamera& camera){
     try {
-                BaslerScoutDriverLDBG_<<"getting node:"<<node_name;
+            ChaosUniquePtr<chaos::common::data::CDataWrapper> res;
+            BaslerScoutDriverLDBG_<<"getting node:"<<node_name;
 
         INodeMap &control = camera.GetNodeMap();
         GenApi::CIntegerPtr node=control.GetNode(node_name.c_str());
         if(node.IsValid()==false){
             BaslerScoutDriverLERR_<<  "Node:"<<node_name<<" is invalid";
 
-            return -1;
+            return res;
         }
-        CDataBuffer p=saveProperty(prop,node_name,node->GetValue(),node->GetMin(),node->GetMax(),node->GetIncr());
-
-        BaslerScoutDriverLDBG_<<"VAL:"<<p->getJSONString();
+        res.reset(new chaos::common::data::CDataWrapper());
+        FILLPROPERTYCD(res,node->GetValue(),node->GetMin(),node->GetMax(),node->GetInc());
+        
+        BaslerScoutDriverLDBG_<<"VAL:"<<res->getJSONString();
+        return res;
     } catch  (const GenericException &e){
         // Error handling.
         BaslerScoutDriverLERR_<<  "An exception occurred during GET of Node:\""<<node_name<<"\":"<< e.GetDescription();
-        return -3;
+        return res;
     } catch(...){
         BaslerScoutDriverLERR_<<  "An exception occurre during GET of Node:"<<node_name;
-        return -2;
+        return res;
     }
-    return 0;
+    returnres;
 }
 /*
 static int getNodeInPercentage(const std::string& node_name,CInstantCamera& camera,float& percent){
@@ -454,23 +457,37 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper&
             BaslerScoutDriverLDBG_<<"No \"serial\" specified getting first camera..";
             pdev=CTlFactory::GetInstance().CreateFirstDevice();
             camerap = new CInstantCamera(pdev);
-            props.createProperty("Model",camerap->GetDeviceInfo().GetModelName());
-            props.createProperty("Name",camerap->GetDeviceInfo().GetFriendlyName());
-            props.createProperty("FullName",camerap->GetDeviceInfo().GetFullName());
-            props.createProperty("SerialNumber",camerap->GetDeviceInfo().GetSerialNumber());
+            if(camerap){
+                props.createProperty("Model",camerap->GetDeviceInfo().GetModelName());
+                props.createProperty("Name",camerap->GetDeviceInfo().GetFriendlyName());
+                props.createProperty("FullName",camerap->GetDeviceInfo().GetFullName());
+                props.createProperty("SerialNumber",camerap->GetDeviceInfo().GetSerialNumber());
+                
+                props.createProperty("TriggerMode",getNode("TriggerMode",*camerap),"TRIGGER_MODE");
+                props.createProperty("TriggerSource",getNode("TriggerSource",*camerap));
+                props.createProperty("TriggerActivation",getNode("TriggerActivation",*camerap));
+                props.createProperty("Width",getNode("Width",*camerap),"WIDTH");
+                props.createProperty("Height",getNode("Height",*camerap),"HEIGHT");
+                props.createProperty("OffsetX",getNode("OffsetX",*camerap),"OFFSETX");
+                props.createProperty("OffsetY",getNode("OffsetY",*camerap),"OFFSETY");
+                props.createProperty("GainRaw",getNode("GainRaw",*camerap),"GAIN");
+                props.createProperty("ExposureTimeRaw",getNode("ExposureTimeRaw",*camerap),"SHUTTER");
+                props.createProperty("SharpnessEnhancementRaw",getNode("SharpnessEnhancementRaw",*camerap),"SHARPNESS");
+                props.createProperty("BslBrightnessRaw",getNode("BslBrightnessRaw",*camerap),"BRIGHTNESS");
+                props.createProperty("BslContrastRaw",getNode("BslContrastRaw",*camerap),"CONTRAST");
 
-            BaslerScoutDriverLDBG_<<" Model:"<< camerap->GetDeviceInfo().GetModelName();
-            BaslerScoutDriverLDBG_ << "Friendly Name: " << camerap->GetDeviceInfo().GetFriendlyName();
-            BaslerScoutDriverLDBG_<< "Full Name    : " <<  camerap->GetDeviceInfo().GetFullName();
-            BaslerScoutDriverLDBG_ << "SerialNumber : " << camerap->GetDeviceInfo().GetSerialNumber() ;
-            if(camerap && (!camerap->IsOpen())){
-                BaslerScoutDriverLDBG_ << "Opening Camera";
+                BaslerScoutDriverLDBG_<<" Model:"<< camerap->GetDeviceInfo().GetModelName();
+                BaslerScoutDriverLDBG_ << "Friendly Name: " << camerap->GetDeviceInfo().GetFriendlyName();
+                BaslerScoutDriverLDBG_<< "Full Name    : " <<  camerap->GetDeviceInfo().GetFullName();
+                BaslerScoutDriverLDBG_ << "SerialNumber : " << camerap->GetDeviceInfo().GetSerialNumber() ;
+                if((!camerap->IsOpen())){
+                    BaslerScoutDriverLDBG_ << "Opening Camera";
 
-                camerap->Open();
+                    camerap->Open();
+                }
             }
             // Create all properties
-            if(getNode("TriggerMode",cam,*p)==0){
-            }
+           
             return 0;
 
         }
@@ -501,6 +518,18 @@ int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera& cam,chaos::common::d
         p = props;
     }
     BaslerScoutDriverLDBG_<<"Updating Camera Properties";
+    props.setProperty("TriggerMode",getNode("TriggerMode",*camerap));
+    props.setProperty("TriggerSource",getNode("TriggerSource",*camerap));
+    props.setProperty("TriggerActivation",getNode("TriggerActivation",*camerap));
+    props.setProperty("Width",getNode("Width",*camerap));
+    props.setProperty("Height",getNode("Height",*camerap));
+    props.setProperty("OffsetX",getNode("OffsetX",*camerap));
+    props.setProperty("OffsetY",getNode("OffsetY",*camerap));
+    props.setProperty("GainRaw",getNode("GainRaw",*camerap));
+    props.setProperty("ExposureTimeRaw",getNode("ExposureTimeRaw",*camerap));
+    props.setProperty("SharpnessEnhancementRaw",getNode("SharpnessEnhancementRaw",*camerap));
+    props.setProperty("BslBrightnessRaw",getNode("BslBrightnessRaw",*camerap));
+    props.setProperty("BslContrastRaw",getNode("BslContrastRaw",*camerap));
 
     if(getNode("TriggerMode",cam,*p)==0){
         BaslerScoutDriverLDBG_<<"GETTING PROP TRIGGER_MODE";
