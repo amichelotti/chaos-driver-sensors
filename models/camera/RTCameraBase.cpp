@@ -334,9 +334,9 @@ void RTCameraBase::unitStart() throw(chaos::CException) {
     RTCameraBaseLDBG_<<"Allocated "<<CAMERA_FRAME_BUFFERING<<" buffers of "<<(*sizex * *sizey * 4)<<" bytes";
     updateProperty();
     driver->startGrab(0);
+    stopCapture=false;
 
     capture_th=boost::thread(&RTCameraBase::captureThread,this);
-    encode_th=boost::thread(&RTCameraBase::encodeThread,this);
     getAttributeCache()->setCustomDomainAsChanged();
     pushCustomDataset();
 
@@ -345,11 +345,11 @@ void RTCameraBase::unitStart() throw(chaos::CException) {
 
 void RTCameraBase::captureThread(){
     int ret;
-    stopCapture=false;
     const char*img=0;
     uint64_t start;
     counter_capture=0;
     RTCameraBaseLDBG_<<"Capture thread STARTED";
+    encode_th=boost::thread(&RTCameraBase::encodeThread,this);
 
     while(!stopCapture){
         img=0;
