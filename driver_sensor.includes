@@ -1,0 +1,15 @@
+../../chaosframework
+.
+../../chaosframework/usr/local/include
+/usr/local/
+/opt/pylon5/include
+models/cameras
+core/
+models/camera/IDS
+models/camera
+models/camera/Basler
+models/camera/IDS/
+models
+models/camera/IDS/ueye
+../../../../../opt/pylon5/include/pylon/gige
+models/camera/ShapeSim

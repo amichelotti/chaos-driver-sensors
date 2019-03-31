@@ -20,13 +20,11 @@
  */
 
 #include <stdio.h>
-
-#include <chaos/ui_toolkit/ChaosUIToolkit.h>
-#include <chaos/ui_toolkit/LowLevelApi/LLRpcApi.h>
-#include <chaos/ui_toolkit/HighLevelApi/HLDataApi.h>
+#include <chaos_metadata_service_client/ChaosMetadataServiceClient.h>
 
 using namespace chaos;
-using namespace chaos::ui;
+using namespace chaos::metadata_service_client;
+using namespace chaos::metadata_service_client::node_controller;
 
 void print_state(CUStateKey::ControlUnitState state) {
   switch (state) {
@@ -46,15 +44,17 @@ void print_state(CUStateKey::ControlUnitState state) {
 }
 
 
-int main (int argc, char* argv[] ) {
+int main (int argc, const char* argv[] ) {
   int err = 0;
   std::string attribute_value_tmp_str;
   CUStateKey::ControlUnitState device_state;
   try{
     //init UIToolkit client
-    ChaosUIToolkit::getInstance()->init(argc, argv);
+    ChaosMetadataServiceClient::getInstance()->init(argc, argv);
 
-    DeviceController *controller = HLDataApi::getInstance()->getControllerForDeviceID("device_name", 40000);
+    chaos::metadata_service_client::node_controller::CUController*controller;
+    ChaosMetadataServiceClient::getInstance()->getNewCUController(argv[1],&controller);
+
     if(!controller) return -1;
 
     //init device
@@ -155,7 +155,7 @@ int main (int argc, char* argv[] ) {
     //deinit the toolkit
     try {
         //! [UIToolkit Deinit]
-        ChaosUIToolkit::getInstance()->deinit();
+    ChaosMetadataServiceClient::getInstance()->deinit();
         //! [UIToolkit Deinit]
     } catch (CException& e) {
         std::cerr << e.errorCode << " - "<< e.errorDomain << " - " << e.errorMessage << std::endl;
