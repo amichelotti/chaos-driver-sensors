@@ -124,7 +124,7 @@ void BasicSensor::unitRun() throw(chaos::CException) {
     //BasicSensorLAPP_<<"UnitRun";
     for(i=output_size.begin(),cnt=0;i!=output_size.end();i++,cnt++){
         char buffer[*i];
-        if(ret=driver->readChannel(buffer,cnt,*i)){
+        if((ret=driver->readChannel(buffer,cnt,*i))){
 	  changed++;
             BasicSensorLDBG_<<"Reading output channel "<<cnt<<", size :"<<*i <<" ret:"<<ret;
             getAttributeCache()->setOutputAttributeValue(cnt, (void*)buffer, *i);
