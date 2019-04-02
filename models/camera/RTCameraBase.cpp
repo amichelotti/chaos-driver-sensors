@@ -327,6 +327,8 @@ void RTCameraBase::cameraGrabCallBack(const void*buf,uint32_t blen,uint32_t widt
 void RTCameraBase::unitStart() throw(chaos::CException) {
     RTCameraBaseLDBG_<<"Starting...";
     // allocate buffers;
+    encodeWritePointer=0;
+    captureWritePointer=0;
     for(int cnt=0;cnt<CAMERA_FRAME_BUFFERING;cnt++){
         framebuf_out[cnt].buf=(unsigned char*)malloc(*sizex * *sizey * 4);
         framebuf_out[cnt].size=*sizex * *sizey * 4;
@@ -389,7 +391,9 @@ void RTCameraBase::captureThread(){
 
         }
     }
-        RTCameraBaseLDBG_<<"Capture thread ENDED";
+    captureWritePointer=0;
+
+    RTCameraBaseLDBG_<<"Capture thread ENDED";
 
 }
 void RTCameraBase::encodeThread(){
@@ -447,6 +451,7 @@ void RTCameraBase::encodeThread(){
             wait_capture.wait(lock);
         }
     }
+    encodeWritePointer=0;
     RTCameraBaseLDBG_<<"Encode thread ENDED";
 
 }
@@ -501,6 +506,9 @@ void RTCameraBase::unitStop() throw(chaos::CException) {
         framebuf_out[cnt].size=0;
         framebuf_out[cnt].buf=NULL;
     }
+    encodedImg.consume_all([](buf_t i){ });
+    captureImg.consume_all([](buf_t i){ });
+    
 }
 
 //!Deinit the Control Unit
