@@ -358,11 +358,7 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
 
             break;
         }
-        case  CAMERA_TRIGGER_HW:{
-            //  camera->RegisterConfiguration( new CActionTriggerConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
-
-            break;
-        }
+       
         case CAMERA_TRIGGER_HW_LOW:
             IDSGEXXDriverLDBG_<< "TRIGGER HI->LOW";
 
