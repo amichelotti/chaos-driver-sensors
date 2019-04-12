@@ -546,7 +546,9 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper 
                 break;
             }
             case CAMERA_TRIGGER_SINGLE:
-            case CAMERA_TRIGGER_HW:
+            case CAMERA_TRIGGER_HW_LOW:
+            case CAMERA_TRIGGER_HW_HI:
+
             {
                 BaslerScoutDriverLDBG_ << " TRIGGER SINGLE MODE";
 
