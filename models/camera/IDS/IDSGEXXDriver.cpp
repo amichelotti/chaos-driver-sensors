@@ -216,12 +216,17 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
 
     return 0;
 }
+/*
 IDSGEXXDriver::IDSGEXXDriver():shots(0),framebuf(NULL),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false){
 
     IDSGEXXDriverLDBG_<<  "Created Driver";
     props=new chaos::common::data::CDataWrapper();
 
 
+}*/
+DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera, IDSGEXXDriver),shots(0),framebuf(NULL),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false) {
+    IDSGEXXDriverLDBG_<<  "Created Driver";
+    props=new chaos::common::data::CDataWrapper();
 }
 //default descrutcor
 IDSGEXXDriver::~IDSGEXXDriver() {

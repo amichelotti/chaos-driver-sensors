@@ -47,6 +47,14 @@ OPEN_REGISTER_PLUGIN
 REGISTER_PLUGIN(::driver::sensor::camera::BaslerScoutDriver)
 CLOSE_REGISTER_PLUGIN
 
+#define SETINODE(name,cam,val,ret) \
+ if(setNode(name,cam,(int64_t)val)==0){\
+    BaslerScoutDriverLDBG_<< "setting \""<<name <<"\" = " <<val;\
+    } else {\
+        ret++;\
+        BaslerScoutDriverLERR_<<"ERROR setting \""<<name <<"\" = " <<val;\
+    }
+
 template <typename T>
 static T Adjust(T val, T minimum, T maximum, T inc)
 {
@@ -89,7 +97,7 @@ static T Adjust(T val, T minimum, T maximum, T inc)
 }
 
 void BaslerScoutDriver::driverInit(const char *initParameter) throw(chaos::CException){
-    BaslerScoutDriverLDBG_ << "Initializing  driver:"<<initParameter;
+    BaslerScoutDriverLDBG_ << "Initializing  BASLER driver char*:"<<initParameter;
     props->reset();
     if(initializeCamera(*props)!=0){
         throw chaos::CException(-3,"cannot initialize camera ",__PRETTY_FUNCTION__);
@@ -98,7 +106,7 @@ void BaslerScoutDriver::driverInit(const char *initParameter) throw(chaos::CExce
 }
 
 void BaslerScoutDriver::driverInit(const chaos::common::data::CDataWrapper& json) throw(chaos::CException){
-    BaslerScoutDriverLDBG_ << "Initializing  driver:"<<json.getCompliantJSONString();
+    BaslerScoutDriverLDBG_ << "Initializing BASLER json driver:"<<json.getCompliantJSONString();
     props->reset();
     props->appendAllElement((chaos::common::data::CDataWrapper&)json);
     if(initializeCamera(*props)!=0){
@@ -109,7 +117,7 @@ void BaslerScoutDriver::driverInit(const chaos::common::data::CDataWrapper& json
 }
 
 void BaslerScoutDriver::driverDeinit() throw(chaos::CException) {
-    BaslerScoutDriverLAPP_ << "Deinit driver";
+    BaslerScoutDriverLAPP_ << "Deinit BASLER driver";
 
 }
 using namespace GenApi;
@@ -433,11 +441,38 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper&
 
                 BaslerScoutDriverLDBG_ <<i<<"] SerialNumber : " << cameras[ i ].GetDeviceInfo().GetSerialNumber();
 
+                
                 if(serial ==cameras[ i ].GetDeviceInfo().GetSerialNumber().c_str()){
                    BaslerScoutDriverLDBG_<<" FOUND "<<cameras[ i ].GetDeviceInfo().GetSerialNumber();
                    cameras[ i ].DetachDevice();
 
                    camerap=new CInstantCamera(pdev);
+                    if(camerap && json.hasKey("TRIGGER_MODE")){
+                        int tmode=json.getInt32Value("TRIGGER_MODE");
+                         switch(tmode){
+                            case (CAMERA_TRIGGER_CONTINOUS):{
+                                BaslerScoutDriverLDBG_<<" CONTINUOS MODE";
+
+                                camerap->RegisterConfiguration( new CAcquireContinuousConfiguration , RegistrationMode_ReplaceAll, Cleanup_Delete);     
+                                break;
+                            }
+                            case CAMERA_TRIGGER_SINGLE:
+                            case  CAMERA_TRIGGER_HW:{
+                                BaslerScoutDriverLDBG_<<" TRIGGER SINGLE MODE";
+
+                                camerap->RegisterConfiguration( new CAcquireSingleFrameConfiguration , RegistrationMode_ReplaceAll, Cleanup_Delete);
+                                break;
+                            }
+                            case CAMERA_TRIGGER_SOFT:{
+                                BaslerScoutDriverLDBG_<<" TRIGGER SOFT MODE";
+
+                                camerap->RegisterConfiguration( new CSoftwareTriggerConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
+
+                            break;
+                            }
+        
+                        }
+                    }
                    if(camerap && (!camerap->IsOpen())){
                        BaslerScoutDriverLDBG_ << "Opening Camera";
 
@@ -473,13 +508,29 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper&
 
     return -1;
 }
+/*
 BaslerScoutDriver::BaslerScoutDriver():camerap(NULL),shots(0),framebuf(NULL),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY){
 
-    BaslerScoutDriverLDBG_<<  "Created Driver";
+    BaslerScoutDriverLDBG_<<  "Created BASLER Driver";
     props=new chaos::common::data::CDataWrapper();
 
 
 }
+*/
+
+DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera, BaslerScoutDriver) {
+    camerap=NULL;
+    shots=0;
+    framebuf=NULL;
+    fn=NULL;
+    props=NULL;
+    tmode=CAMERA_TRIGGER_CONTINOUS;
+    gstrategy=CAMERA_LATEST_ONLY;
+
+BaslerScoutDriverLDBG_<<  "Created BASLER Driver";
+    props=new chaos::common::data::CDataWrapper();
+}
+
 //default descrutcor
 BaslerScoutDriver::~BaslerScoutDriver() {
     if(camerap){
@@ -510,7 +561,6 @@ int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera& cam,chaos::common::d
                     case  Basler_GigECamera::TriggerSourceEnums::TriggerSource_Software:
                         p->addInt32Value("TRIGGER_MODE",CAMERA_TRIGGER_SOFT);
                         BaslerScoutDriverLDBG_<<"TRIGGER_MODE SOFT";
-
 
                     break;
                 default:
@@ -564,7 +614,34 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera& camera,chaos::common::data:
 
     // Maximize the Image AOI.
     //   chaos::common::data::CDataWrapper*p=driver->props;
+    if(p->hasKey("TRIGGER_MODE")){
+        int value=p->getInt32Value("TRIGGER_MODE");
+        switch(value){
+            case CAMERA_TRIGGER_HW_HI:
+            SETINODE("TriggerMode",camera,Basler_GigECamera::TriggerModeEnums::TriggerMode_On,ret);
+            SETINODE("TriggerSource",camera,Basler_GigECamera::TriggerSourceEnums::TriggerSource_VInput1,ret);
+            SETINODE("TriggerActivation",camera,Basler_GigECamera::TriggerActivationEnums::TriggerActivation_RisingEdge,ret);
 
+            break;
+            case CAMERA_TRIGGER_HW_LOW:
+            SETINODE("TriggerMode",camera,Basler_GigECamera::TriggerModeEnums::TriggerMode_On,ret);
+            SETINODE("TriggerSource",camera,Basler_GigECamera::TriggerSourceEnums::TriggerSource_VInput1,ret);
+            SETINODE("TriggerActivation",camera,Basler_GigECamera::TriggerActivationEnums::TriggerActivation_FallingEdge,ret);
+            break;
+            case CAMERA_TRIGGER_SOFT:
+            SETINODE("TriggerMode",camera,Basler_GigECamera::TriggerModeEnums::TriggerMode_On,ret);
+            SETINODE("TriggerSource",camera,Basler_GigECamera::TriggerSourceEnums::TriggerSource_Software,ret);
+            break;
+            case CAMERA_TRIGGER_CONTINOUS:
+            SETINODE("TriggerMode",camera,Basler_GigECamera::TriggerModeEnums::TriggerMode_Off,ret);
+
+            break;
+
+
+        }
+
+       
+    }
     if (p->hasKey("OFFSETX")){
         if(setNode("OffsetX",camera,(int64_t)p->getInt32Value("OFFSETX"))==0){
             BaslerScoutDriverLDBG_<< "setting OFFSETX " << p->getInt32Value("OFFSETX");
@@ -841,6 +918,10 @@ int BaslerScoutDriver::waitGrab(const char**img,uint32_t timeout_ms){
             if(tmode == CAMERA_TRIGGER_SOFT){
                 camerap->ExecuteSoftwareTrigger();
             }
+        } else {
+            BaslerScoutDriverLERR_<< "TRIGGER TIMEOUT : ";
+
+            return TRIGGER_TIMEOUT;
         }
 
         while(camerap->GetGrabResultWaitObject().Wait( 0) == 0){

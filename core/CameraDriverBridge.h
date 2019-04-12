@@ -43,7 +43,7 @@ namespace driver {
 namespace sensor {
 namespace camera{
 
-  class CameraDriverBridge:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, AbstractCameraDriver {
+  class CameraDriverBridge:public AbstractCameraDriver {
 
 
 protected:

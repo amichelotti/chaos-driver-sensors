@@ -40,7 +40,7 @@ namespace driver {
 #define CAM_DEFAULT_WIDTH 659
 #define CAM_DEFAULT_HEIGTH 494
 
-class IDSGEXXDriver:public ::driver::sensor::camera::CameraDriverBridge {
+class IDSGEXXDriver:ADD_CU_DRIVER_PLUGIN_SUPERCLASS,  ::driver::sensor::camera::CameraDriverBridge {
 
 
    chaos::common::data::CDataWrapper* props;
@@ -91,7 +91,8 @@ public:
      int cameraInit(void *buffer,uint32_t sizeb);
 
      int cameraDeinit();
-        
+            cu_driver::MsgManagmentResultType::MsgManagmentResult execOpcode(cu_driver::DrvMsgPtr cmd){return CameraDriverBridge::execOpcode(cmd);}
+
 };
         }}}
 #endif /* defined(__ControlUnitTest__DummyDriver__) */
