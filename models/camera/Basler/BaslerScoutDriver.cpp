@@ -934,12 +934,7 @@ int BaslerScoutDriver::cameraInit(void *buffer, uint32_t sizeb)
 
             break;
         }
-        case CAMERA_TRIGGER_HW:
-        {
-            //  camera->RegisterConfiguration( new CActionTriggerConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
-
-            break;
-        }
+        
         }
 
         BaslerScoutDriverLDBG_ << "trigger configuration handler installed";
