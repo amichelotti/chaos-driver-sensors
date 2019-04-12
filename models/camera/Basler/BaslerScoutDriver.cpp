@@ -565,7 +565,7 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper 
         }
     }
     if(camerap){
-        propsToCamera(&camerap,&json);
+        propsToCamera(*camerap,(chaos::common::data::CDataWrapper*)&json);
         return 0;
     }
     return -1;
