@@ -547,7 +547,8 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper 
             {
                 BaslerScoutDriverLDBG_ << " TRIGGER SINGLE MODE";
 
-                camerap->RegisterConfiguration(new CAcquireSingleFrameConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
+               // camerap->RegisterConfiguration(new CAcquireSingleFrameConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
+                camerap->RegisterConfiguration(new CActionTriggerConfiguration(0x1234, 0x432, AllGroupMask), RegistrationMode_Append, Cleanup_Delete);
                 break;
             }
             case CAMERA_TRIGGER_SOFT:
@@ -562,13 +563,14 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper 
         }
     }
     if(camerap){
-        propsToCamera(*camerap,(chaos::common::data::CDataWrapper*)&json);
-
-         if ((!camerap->IsOpen())){
+        if ((!camerap->IsOpen())){
                 BaslerScoutDriverLDBG_ << "Opening Camera";
 
                 camerap->Open();
         }
+        propsToCamera(*camerap,(chaos::common::data::CDataWrapper*)&json);
+
+         
         return 0;
     }
     return -1;
