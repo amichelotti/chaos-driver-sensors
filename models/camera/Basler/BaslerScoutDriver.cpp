@@ -501,12 +501,12 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper 
 
                     camerap = new CInstantCamera(pdev);
 
-                    if (camerap && (!camerap->IsOpen()))
+                   /* if (camerap && (!camerap->IsOpen()))
                     {
                         BaslerScoutDriverLDBG_ << "Opening Camera";
 
                         camerap->Open();
-                    }
+                    }*/
                 }
                 else
                 {
@@ -526,12 +526,7 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper 
             BaslerScoutDriverLDBG_ << "Friendly Name: " << camerap->GetDeviceInfo().GetFriendlyName();
             BaslerScoutDriverLDBG_ << "Full Name    : " << camerap->GetDeviceInfo().GetFullName();
             BaslerScoutDriverLDBG_ << "SerialNumber : " << camerap->GetDeviceInfo().GetSerialNumber();
-            if (camerap && (!camerap->IsOpen()))
-            {
-                BaslerScoutDriverLDBG_ << "Opening Camera";
-
-                camerap->Open();
-            }
+           
         }
         if (camerap && json.hasKey("TRIGGER_MODE"))
         {
@@ -568,6 +563,12 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper 
     }
     if(camerap){
         propsToCamera(*camerap,(chaos::common::data::CDataWrapper*)&json);
+
+         if ((!camerap->IsOpen())){
+                BaslerScoutDriverLDBG_ << "Opening Camera";
+
+                camerap->Open();
+        }
         return 0;
     }
     return -1;
