@@ -697,6 +697,8 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera &camera, chaos::common::data
     if (p->hasKey("TRIGGER_MODE"))
     {
         int value = p->getInt32Value("TRIGGER_MODE");
+        BaslerScoutDriverLDBG_ << "setting TRIGGER_MODE: " << value;
+
         switch (value)
         {
         case CAMERA_TRIGGER_HW_HI:
@@ -722,51 +724,22 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera &camera, chaos::common::data
     }
     if (p->hasKey("OFFSETX"))
     {
-        if (setNode("OffsetX", camera, (int64_t)p->getInt32Value("OFFSETX")) == 0)
-        {
-            BaslerScoutDriverLDBG_ << "setting OFFSETX " << p->getInt32Value("OFFSETX");
-        }
-        else
-        {
-            ret++;
-            BaslerScoutDriverLERR_ << "Setting OFFSETX FAILED";
-        }
+        SETINODE("OffsetX", camera, p->getInt32Value("OFFSETX"),ret);
+        
     }
     if (p->hasKey("OFFSETY"))
     {
-        if (setNode("OffsetY", camera, (int64_t)p->getInt32Value("OFFSETY")) == 0)
-        {
-            BaslerScoutDriverLDBG_ << "setting OFFSETY " << p->getInt32Value("OFFSETY");
-        }
-        else
-        {
-            ret++;
-            BaslerScoutDriverLERR_ << "Setting OFFSETY FAILED";
-        }
+             SETINODE("OffsetY", camera, p->getInt32Value("OFFSETY"),ret);
+
     }
     if (p->hasKey("WIDTH"))
     {
-        if (setNode("Width", camera, (int64_t)p->getInt32Value("WIDTH")) == 0)
-        {
-            BaslerScoutDriverLDBG_ << "setting WIDTH " << p->getInt32Value("WIDTH");
-        }
-        else
-        {
-            ret++;
-            BaslerScoutDriverLERR_ << "Setting WIDTH FAILED";
-        }
+         SETINODE("Width", camera, p->getInt32Value("WIDTH"),ret);
+
     }
     if (p->hasKey("HEIGHT"))
     {
-        if (setNode("Height", camera, (int64_t)p->getInt32Value("HEIGHT")) == 0)
-        {
-            BaslerScoutDriverLDBG_ << "setting HEIGHT " << p->getInt32Value("HEIGHT");
-        }
-        else
-        {
-            ret++;
-            BaslerScoutDriverLERR_ << "Setting HEIGHT FAILED";
-        }
+        SETINODE("Height", camera, p->getInt32Value("HEIGHT"),ret);
     }
     if (p->hasKey("PIXELFMT"))
     {
