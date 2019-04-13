@@ -25,6 +25,7 @@
 #include <math.h>
 #include <pylon/PylonIncludes.h>
 #include <pylon/gige/ActionTriggerConfiguration.h>
+#include "HardwareTriggerConfiguration.h"
 #include <boost/lexical_cast.hpp>
 // use the pylon driver
 #include <pylon/ConfigurationEventHandler.h>
@@ -548,7 +549,7 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper 
                 BaslerScoutDriverLDBG_ << " TRIGGER SINGLE MODE";
 
                // camerap->RegisterConfiguration(new CAcquireSingleFrameConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
-                camerap->RegisterConfiguration(new CActionTriggerConfiguration(0x1234, 0x432, AllGroupMask), RegistrationMode_Append, Cleanup_Delete);
+                camerap->RegisterConfiguration(new CHardwareTriggerConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
                 break;
             }
             case CAMERA_TRIGGER_SOFT:
