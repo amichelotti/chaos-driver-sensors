@@ -57,7 +57,7 @@ class BaslerScoutDriver:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camer
      Pylon::CInstantCamera* camerap;
      TriggerModes tmode; //0 continous, 1 software,2 hw,3 singleshot
      GrabStrategy gstrategy;
-
+     bool stopGrabbing;
      uint32_t shots;
      void*framebuf;
      std::string triggerHWSource;

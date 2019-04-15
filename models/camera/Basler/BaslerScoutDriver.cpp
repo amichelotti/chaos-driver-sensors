@@ -570,6 +570,7 @@ DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera, BaslerSco
 
     BaslerScoutDriverLDBG_ << "Created BASLER Driver";
     triggerHWSource="Line1";
+    stopGrabbing=true;
     props = new chaos::common::data::CDataWrapper();
 }
 
@@ -1010,6 +1011,7 @@ int BaslerScoutDriver::startGrab(uint32_t _shots, void *_framebuf, cameraGrabCal
     {
         camerap->StartGrabbing(strategy);
     }
+    stopGrabbing=false;
     return 0;
 }
 int BaslerScoutDriver::waitGrab(const char **img, uint32_t timeout_ms)
@@ -1017,6 +1019,10 @@ int BaslerScoutDriver::waitGrab(const char **img, uint32_t timeout_ms)
     if (camerap == NULL)
     {
         return -1;
+    }
+    if(stopGrabbing){
+        BaslerScoutDriverLERR_ << "Grabbing is stopped ";
+        return -2;
     }
     Pylon::CGrabResultPtr ptrGrabResult;
     if (tmode > CAMERA_TRIGGER_SINGLE)
@@ -1035,7 +1041,7 @@ int BaslerScoutDriver::waitGrab(const char **img, uint32_t timeout_ms)
             return TRIGGER_TIMEOUT_ERROR;
         }
 
-        while (camerap->GetGrabResultWaitObject().Wait(0) == 0)
+        while ((camerap->GetGrabResultWaitObject().Wait(0) == 0)&&(stopGrabbing==false))
         {
             WaitObject::Sleep(100);
         }
@@ -1099,6 +1105,7 @@ int BaslerScoutDriver::waitGrab(uint32_t timeout_ms)
 }
 int BaslerScoutDriver::stopGrab()
 {
+    stopGrabbing=true;
     camerap->StopGrabbing();
     return 0;
 }
