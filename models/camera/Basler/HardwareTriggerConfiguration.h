@@ -104,10 +104,10 @@ namespace Pylon
                             //// The Basler pylon Viewer tool can be used to test the selected settings first.
 
                             //// The trigger source must be set to the trigger input, e.g. 'Line1'.
-                            CEnumerationPtr(nodemap.GetNode("TriggerSource"))->FromString(m_source);
+                            CEnumerationPtr(nodemap.GetNode("TriggerSource"))->FromString(m_source.c_str());
 
                             ////The trigger activation must be set to e.g. 'RisingEdge'.
-                            CEnumerationPtr(nodemap.GetNode("TriggerActivation"))->FromString(m_level);
+                            CEnumerationPtr(nodemap.GetNode("TriggerActivation"))->FromString(m_level.c_str());
                         }
                         else
                         {
@@ -147,8 +147,8 @@ namespace Pylon
             }
         }
     };
-static CHardwareTriggerConfiguration::m_source="Line1";
-    static CHardwareTriggerConfiguration::m_level="RisingEdge";
+static std::string CHardwareTriggerConfiguration::m_source="Line1";
+    static std::string CHardwareTriggerConfiguration::m_level="RisingEdge";
     /**
      * @}
      */
