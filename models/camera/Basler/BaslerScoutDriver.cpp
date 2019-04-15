@@ -822,19 +822,13 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera &camera, chaos::common::data
 
         if ((gain < 0))
         {
-            if (setNode("ExposureAuto", camera, (int64_t)Basler_GigECamera::ExposureAutoEnums::ExposureAuto_Continuous) != 0)
-            {
-                BaslerScoutDriverLERR_ << "Setting Exposure Auto";
+            SETINODE("ExposureAuto",camera,Basler_GigECamera::ExposureAutoEnums::ExposureAuto_Continuous,ret);
 
-                ret++;
-            }
         }
         else
         {
-            if (setNode("ExposureAuto", camera, (int64_t)Basler_GigECamera::ExposureAutoEnums::ExposureAuto_Off) != 0)
-            {
-                BaslerScoutDriverLERR_ << "Setting Exposure Auto OFF";
-            }
+            SETINODE("ExposureAuto",camera,Basler_GigECamera::ExposureAutoEnums::ExposureAuto_Off,ret);
+            
             if (gain > 1.0)
             {
                 gain = 1.0;
@@ -852,7 +846,8 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera &camera, chaos::common::data
 
         if (gain < 0)
         {
-            setNode("DemosaicingMode", camera, (int64_t)Basler_GigECamera::DemosaicingModeEnums::DemosaicingMode_BaslerPGI);
+            SETINODE("DemosaicingMode",camera,Basler_GigECamera::DemosaicingModeEnums::DemosaicingMode_BaslerPGI,ret);
+
         }
         else
         {
@@ -869,7 +864,8 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera &camera, chaos::common::data
     }
     if (p->hasKey("BRIGHTNESS"))
     {
-        setNode("DemosaicingMode", camera, (int64_t)Basler_GigECamera::DemosaicingModeEnums::DemosaicingMode_BaslerPGI);
+        SETINODE("DemosaicingMode",camera,Basler_GigECamera::DemosaicingModeEnums::DemosaicingMode_BaslerPGI,ret);
+
         double gain = p->getAsRealValue("BRIGHTNESS") / 100.0;
 
         if (gain >= 0)
@@ -887,7 +883,7 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera &camera, chaos::common::data
     }
     if (p->hasKey("CONTRAST"))
     {
-        setNode("DemosaicingMode", camera, (int64_t)Basler_GigECamera::DemosaicingModeEnums::DemosaicingMode_BaslerPGI);
+        SETINODE("DemosaicingMode",camera,Basler_GigECamera::DemosaicingModeEnums::DemosaicingMode_BaslerPGI,ret);
         double gain = p->getDoubleValue("CONTRAST") / 100.0;
 
         if (gain >= 0)
