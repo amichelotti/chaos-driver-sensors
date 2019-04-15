@@ -638,6 +638,8 @@ int BaslerScoutDriver::changeTriggerMode(Pylon::CInstantCamera* camera,int trigg
         
         }
         tmode=(TriggerModes)trigger_mode;
+            camera->Open();
+
         return 0;
 }
 
