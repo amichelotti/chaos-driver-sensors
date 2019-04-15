@@ -40,9 +40,9 @@ namespace Pylon
     
     class CHardwareTriggerConfiguration : public CConfigurationEventHandler
     {
-        static  std::string m_source,m_level;
 
     public:
+        static  std::string m_source,m_level;
 
         static void setHWTrigger(const std::string&source,const std::string& level){
             m_source=source;
