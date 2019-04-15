@@ -494,7 +494,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
 void RTCameraBase::unitStop() throw(chaos::CException) {
     stopCapture=true;
 
-    RTCameraBaseLDBG_<<"Stopping...";
+    RTCameraBaseLDBG_<<"Stopping... stop capture:"<<stopCapture;
 
     driver->stopGrab();
     wait_capture.notify_all();
