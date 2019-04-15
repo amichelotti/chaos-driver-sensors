@@ -45,12 +45,8 @@ CLOSE_REGISTER_PLUGIN
 
 using namespace ueye;
 void IDSGEXXDriver::driverInit(const char *initParameter) throw(chaos::CException){
-    IDSGEXXDriverLAPP_ << "Initializing  driver:"<<initParameter;
-    props->reset();
-    if(initializeCamera(*props)!=0){
-        throw chaos::CException(-3,"cannot initialize camera ",__PRETTY_FUNCTION__);
+       throw chaos::CException(-3, "You should provide a valid JSON initialization string", __PRETTY_FUNCTION__);
 
-    }
 }
 
 

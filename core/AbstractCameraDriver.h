@@ -53,7 +53,9 @@ enum GrabStrategy {
     CAMERA_LATEST, // keep last images (number is defined by NIMAGES)
     CAMERA_INCOMING // start grabbing just after the SW is waiting for
 } ;
-#define TRIGGER_TIMEOUT -100
+#define TRIGGER_TIMEOUT_ERROR -100
+#define TRIGGER_HW_SOURCE_KEY "TRIGGER_HW_SOURCE"
+
  class AbstractCameraDriver{
 
 

@@ -37,9 +37,17 @@ namespace Pylon
         The %CHARDWARETriggerConfiguration is provided as header-only file.
         The code can be copied and modified for creating own configuration classes.
     */
+    
     class CHardwareTriggerConfiguration : public CConfigurationEventHandler
     {
+        static  std::string m_source,m_level;
+
     public:
+
+        static void setHWTrigger(const std::string&source,const std::string& level){
+            m_source=source;
+            m_level=level;
+        }
         /// Apply Hardware trigger configuration.
         static void ApplyConfiguration( GENAPI_NAMESPACE::INodeMap& nodemap)
         {
@@ -96,10 +104,10 @@ namespace Pylon
                             //// The Basler pylon Viewer tool can be used to test the selected settings first.
 
                             //// The trigger source must be set to the trigger input, e.g. 'Line1'.
-                            CEnumerationPtr(nodemap.GetNode("TriggerSource"))->FromString("Line1");
+                            CEnumerationPtr(nodemap.GetNode("TriggerSource"))->FromString(m_source);
 
                             ////The trigger activation must be set to e.g. 'RisingEdge'.
-                            CEnumerationPtr(nodemap.GetNode("TriggerActivation"))->FromString("RisingEdge");
+                            CEnumerationPtr(nodemap.GetNode("TriggerActivation"))->FromString(m_level);
                         }
                         else
                         {
@@ -139,7 +147,8 @@ namespace Pylon
             }
         }
     };
-
+static CHardwareTriggerConfiguration::m_source="Line1";
+    static CHardwareTriggerConfiguration::m_level="RisingEdge";
     /**
      * @}
      */

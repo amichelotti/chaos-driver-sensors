@@ -102,12 +102,7 @@ static T Adjust(T val, T minimum, T maximum, T inc)
 
 void BaslerScoutDriver::driverInit(const char *initParameter) throw(chaos::CException)
 {
-    BaslerScoutDriverLDBG_ << "Initializing  BASLER driver char*:" << initParameter;
-    props->reset();
-    if (initializeCamera(*props) != 0)
-    {
-        throw chaos::CException(-3, "cannot initialize camera ", __PRETTY_FUNCTION__);
-    }
+    throw chaos::CException(-3, "You should provide a valid JSON initialization string", __PRETTY_FUNCTION__);
 }
 
 void BaslerScoutDriver::driverInit(const chaos::common::data::CDataWrapper &json) throw(chaos::CException)
@@ -115,6 +110,10 @@ void BaslerScoutDriver::driverInit(const chaos::common::data::CDataWrapper &json
     BaslerScoutDriverLDBG_ << "Initializing BASLER json driver:" << json.getCompliantJSONString();
     props->reset();
     props->appendAllElement((chaos::common::data::CDataWrapper &)json);
+    if(props->hasKey(TRIGGER_HW_SOURCE_KEY)){
+        triggerHWSource=props->getStringValue(TRIGGER_HW_SOURCE_KEY);
+
+    }
     if (initializeCamera(*props) != 0)
     {
         throw chaos::CException(-1, "cannot initialize camera " + json.getCompliantJSONString(), __PRETTY_FUNCTION__);
@@ -532,35 +531,8 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper 
         if (camerap && json.hasKey("TRIGGER_MODE"))
         {
             int tmode = json.getInt32Value("TRIGGER_MODE");
-            switch (tmode)
-            {
-            case (CAMERA_TRIGGER_CONTINOUS):
-            {
-                BaslerScoutDriverLDBG_ << " CONTINUOS MODE";
-
-                camerap->RegisterConfiguration(new CAcquireContinuousConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
-                break;
-            }
-            case CAMERA_TRIGGER_SINGLE:
-            case CAMERA_TRIGGER_HW_LOW:
-            case CAMERA_TRIGGER_HW_HI:
-
-            {
-                BaslerScoutDriverLDBG_ << " TRIGGER SINGLE MODE";
-
-               // camerap->RegisterConfiguration(new CAcquireSingleFrameConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
-                camerap->RegisterConfiguration(new CHardwareTriggerConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
-                break;
-            }
-            case CAMERA_TRIGGER_SOFT:
-            {
-                BaslerScoutDriverLDBG_ << " TRIGGER SOFT MODE";
-
-                camerap->RegisterConfiguration(new CSoftwareTriggerConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
-
-                break;
-            }
-            }
+            
+            changeTriggerMode(camerap,tmode);
         }
     }
     if(camerap){
@@ -597,6 +569,7 @@ DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera, BaslerSco
     gstrategy = CAMERA_LATEST_ONLY;
 
     BaslerScoutDriverLDBG_ << "Created BASLER Driver";
+    triggerHWSource="Line1";
     props = new chaos::common::data::CDataWrapper();
 }
 
@@ -614,6 +587,57 @@ BaslerScoutDriver::~BaslerScoutDriver()
     {
         delete props;
     }
+}
+int BaslerScoutDriver::changeTriggerMode(Pylon::CInstantCamera* camera,int trigger_mode){
+    if(camera==NULL){
+        BaslerScoutDriverLERR_ << "Invalid Camera";
+        return -1;
+    }
+    camera->Close();
+    switch (trigger_mode)
+        {
+        case (CAMERA_TRIGGER_CONTINOUS):
+        {
+            BaslerScoutDriverLDBG_ << " TRIGGER CONTINOUS";
+
+            camerap->RegisterConfiguration(new CAcquireContinuousConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
+            break;
+        }
+        case CAMERA_TRIGGER_SINGLE:
+        {
+            BaslerScoutDriverLDBG_ << " TRIGGER SINGLE";
+
+            camerap->RegisterConfiguration(new CAcquireSingleFrameConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
+            break;
+        }
+        case CAMERA_TRIGGER_SOFT:
+        {
+            BaslerScoutDriverLDBG_ << " TRIGGER SOFT";
+
+            camerap->RegisterConfiguration(new CSoftwareTriggerConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
+
+            break;
+        }
+         case CAMERA_TRIGGER_HW_LOW:
+         {
+                BaslerScoutDriverLDBG_ << " TRIGGER LOW Edge of "<<triggerHWSource;
+                CHardwareTriggerConfiguration::setHWTrigger(triggerHWSource,"FallingEdge");
+               // camerap->RegisterConfiguration(new CAcquireSingleFrameConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
+                camerap->RegisterConfiguration(new CHardwareTriggerConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
+                break;
+            }
+        case CAMERA_TRIGGER_HW_HI:
+
+            {
+                BaslerScoutDriverLDBG_ << " TRIGGER HI Edge of "<<triggerHWSource;
+                CHardwareTriggerConfiguration::setHWTrigger(triggerHWSource,"RisingEdge");
+               // camerap->RegisterConfiguration(new CAcquireSingleFrameConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
+                camerap->RegisterConfiguration(new CHardwareTriggerConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
+                break;
+            }
+        
+        }
+        tmode=(TriggerModes)trigger_mode;
 }
 
 int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera &cam, chaos::common::data::CDataWrapper *p)
@@ -668,8 +692,7 @@ int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera &cam, chaos::common::
     }
     else
     {
-        BaslerScoutDriverLERR_ << "cannot retrive Trigger mode defaulting to NO TRIGGER";
-        p->addInt32Value("TRIGGER_MODE", CAMERA_TRIGGER_CONTINOUS);
+        p->addInt32Value("TRIGGER_MODE", tmode);
     }
 
     GETINTVALUE(Width, "WIDTH", BaslerScoutDriverLDBG_);
@@ -702,8 +725,8 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera &camera, chaos::common::data
     {
         int value = p->getInt32Value("TRIGGER_MODE");
         BaslerScoutDriverLDBG_ << "setting TRIGGER_MODE: " << value;
-
-        switch (value)
+        changeTriggerMode(&camera,value);
+       /* switch (value)
         {
         case CAMERA_TRIGGER_HW_HI:
             SETINODE("TriggerMode", camera, Basler_GigECamera::TriggerModeEnums::TriggerMode_On, ret);
@@ -725,7 +748,9 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera &camera, chaos::common::data
 
             break;
         }
+        */
     }
+
     if (p->hasKey("OFFSETX"))
     {
         SETINODE("OffsetX", camera, p->getInt32Value("OFFSETX"),ret);
@@ -888,31 +913,16 @@ int BaslerScoutDriver::cameraInit(void *buffer, uint32_t sizeb)
         if (props->hasKey("TRIGGER_MODE"))
         {
             tmode = (TriggerModes)props->getInt32Value("TRIGGER_MODE");
+            if(changeTriggerMode(camerap,tmode)!=0){
+                BaslerScoutDriverLERR_ << "Failed change Trigger to "<<tmode;
+
+            }
         }
 
         // Register the standard configuration event handler for enabling software triggering.
         // The software trigger configuration handler replaces the default configuration
         // as all currently registered configuration handlers are removed by setting the registration mode to RegistrationMode_ReplaceAll.
-        switch (tmode)
-        {
-        case (CAMERA_TRIGGER_CONTINOUS):
-        {
-            camerap->RegisterConfiguration(new CAcquireContinuousConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
-            break;
-        }
-        case CAMERA_TRIGGER_SINGLE:
-        {
-            camerap->RegisterConfiguration(new CAcquireSingleFrameConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
-            break;
-        }
-        case CAMERA_TRIGGER_SOFT:
-        {
-            camerap->RegisterConfiguration(new CSoftwareTriggerConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete);
-
-            break;
-        }
-        
-        }
+       
 
         BaslerScoutDriverLDBG_ << "trigger configuration handler installed";
 
@@ -1019,7 +1029,7 @@ int BaslerScoutDriver::waitGrab(const char **img, uint32_t timeout_ms)
         {
             BaslerScoutDriverLERR_ << "TRIGGER TIMEOUT : ";
 
-            return TRIGGER_TIMEOUT;
+            return TRIGGER_TIMEOUT_ERROR;
         }
 
         while (camerap->GetGrabResultWaitObject().Wait(0) == 0)

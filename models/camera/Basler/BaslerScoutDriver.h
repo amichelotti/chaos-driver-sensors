@@ -60,11 +60,11 @@ class BaslerScoutDriver:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camer
 
      uint32_t shots;
      void*framebuf;
-
+     std::string triggerHWSource;
      cameraGrabCallBack fn;
      int propsToCamera(Pylon::CInstantCamera& camera,chaos::common::data::CDataWrapper*p);
      int cameraToProps(Pylon::CInstantCamera& camera,chaos::common::data::CDataWrapper*p);
-
+     int changeTriggerMode(Pylon::CInstantCamera* camera,int trigger_mode);
 public:
 	BaslerScoutDriver();
 	~BaslerScoutDriver();
