@@ -155,6 +155,8 @@ bool  RTCameraBase::setProp(const std::string &name, int32_t value, uint32_t siz
 bool  RTCameraBase::setProp(const std::string &name, double value, uint32_t size){
     int ret;
     double valuer;
+    RTCameraBaseLDBG_<<"SET FPROP:"<<name<<" VALUE:"<<value<<" READ:"<<valuer<<" ret:"<<ret;
+
     ret=driver->setCameraProperty(name,value);
     setStateVariableSeverity(StateVariableTypeAlarmDEV,"operation_not_supported", chaos::common::alarm::MultiSeverityAlarmLevelClear);
 
@@ -170,7 +172,6 @@ bool  RTCameraBase::setProp(const std::string &name, double value, uint32_t size
 
      getAttributeCache()->setInputDomainAsChanged();
     getAttributeCache()->setOutputDomainAsChanged();
-        RTCameraBaseLDBG_<<"SET FPROP:"<<name<<" VALUE:"<<value<<" READ:"<<valuer<<" ret:"<<ret;
 
     return (ret==0);
 }
@@ -256,30 +257,35 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     std::vector<std::string> props;
     camera_props.getAllKey(props);
     //breanch number and soft reset
-    for(std::vector<std::string>::iterator i = props.begin();i!=props.end();i++){
-
-        if(camera_props.getValueType(*i)==chaos::DataType::TYPE_DOUBLE){
-            double tmp=cc->getValue<double>(DOMAIN_INPUT,*i);
-            setProp(*i,tmp,0);
-
-        }
-        if(camera_props.getValueType(*i)==chaos::DataType::TYPE_INT32){
-            int32_t tmp=cc->getValue<int32_t>(DOMAIN_INPUT,*i);
-            setProp(*i,tmp,0);
-        }
-    }
+    
 
 
     if((ret=driver->cameraInit(0,0))!=0){
         throw chaos::CException(ret,"cannot initialize camera",__PRETTY_FUNCTION__);
     }
 
+    for(std::vector<std::string>::iterator i = props.begin();i!=props.end();i++){
 
+        if(camera_props.getValueType(*i)==chaos::DataType::TYPE_DOUBLE){
+            double tmp=cc->getValue<double>(DOMAIN_INPUT,*i);
+            RTCameraBaseLDBG_<<"Init Double \""<<*i<<"\" from input:"<<tmp;
+
+            setProp(*i,tmp,0);
+
+        }
+        if(camera_props.getValueType(*i)==chaos::DataType::TYPE_INT32){
+            int32_t tmp=cc->getValue<int32_t>(DOMAIN_INPUT,*i);
+            RTCameraBaseLDBG_<<"Init Integer \""<<*i<<"\" from input:"<<tmp;
+
+            setProp(*i,tmp,0);
+        }
+    }
 
     for(std::vector<std::string>::iterator i = props.begin();i!=props.end();i++){
 
         if(camera_props.getValueType(*i)==chaos::DataType::TYPE_DOUBLE){
             double tmp,*p;
+
             driver->getCameraProperty(*i,tmp);
             p=cc->getRWPtr<double>(DOMAIN_INPUT,*i);
             *p=tmp;
