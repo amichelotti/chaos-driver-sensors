@@ -590,10 +590,16 @@ BaslerScoutDriver::~BaslerScoutDriver()
     }
 }
 int BaslerScoutDriver::changeTriggerMode(Pylon::CInstantCamera* camera,int trigger_mode){
+    bool restore_grab=false;
     if(camera==NULL){
         BaslerScoutDriverLERR_ << "Invalid Camera";
         return -1;
     }
+    if(!stopGrabbing){
+        stopGrab();
+        restore_grab=true;
+    }
+    
     camera->Close();
     switch (trigger_mode)
         {
@@ -639,8 +645,10 @@ int BaslerScoutDriver::changeTriggerMode(Pylon::CInstantCamera* camera,int trigg
         
         }
         tmode=(TriggerModes)trigger_mode;
-            camera->Open();
-
+        camera->Open();
+        if(restore_grab){
+            startGrab(shots,framebuf,fn);
+        }
         return 0;
 }
 
@@ -1018,6 +1026,8 @@ int BaslerScoutDriver::waitGrab(const char **img, uint32_t timeout_ms)
 {
     if (camerap == NULL)
     {
+        BaslerScoutDriverLERR_ << "Invalid Camera ";
+
         return -1;
     }
     if(stopGrabbing){
