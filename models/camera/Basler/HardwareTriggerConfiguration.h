@@ -147,8 +147,8 @@ namespace Pylon
             }
         }
     };
-static std::string CHardwareTriggerConfiguration::m_source="Line1";
-    static std::string CHardwareTriggerConfiguration::m_level="RisingEdge";
+std::string CHardwareTriggerConfiguration::m_source="Line1";
+std::string CHardwareTriggerConfiguration::m_level="RisingEdge";
     /**
      * @}
      */
