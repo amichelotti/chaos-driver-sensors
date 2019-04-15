@@ -638,6 +638,7 @@ int BaslerScoutDriver::changeTriggerMode(Pylon::CInstantCamera* camera,int trigg
         
         }
         tmode=(TriggerModes)trigger_mode;
+        return 0;
 }
 
 int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera &cam, chaos::common::data::CDataWrapper *p)
