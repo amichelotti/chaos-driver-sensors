@@ -386,7 +386,7 @@ void RTCameraBase::captureThread(){
 
             }
         } else {
-            RTCameraBaseLERR_<<"wait returned:"<<ret<<" buffer  is bypass ?";
+            RTCameraBaseLERR_<<" wait returned:"<<ret<<" buffer  is bypass ? capture stopped:"<<stopCapture ;
             usleep(100000);
 
         }
@@ -492,9 +492,11 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
 
 //!Execute the Control Unit work
 void RTCameraBase::unitStop() throw(chaos::CException) {
-    RTCameraBaseLDBG_<<"Stopping...";
-    driver->stopGrab();
     stopCapture=true;
+
+    RTCameraBaseLDBG_<<"Stopping...";
+
+    driver->stopGrab();
     wait_capture.notify_all();
     wait_encode.notify_all();
     full_encode.notify_all();
