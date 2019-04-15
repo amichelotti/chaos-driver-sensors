@@ -58,6 +58,8 @@ class BaslerScoutDriver:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camer
      TriggerModes tmode; //0 continous, 1 software,2 hw,3 singleshot
      GrabStrategy gstrategy;
      bool stopGrabbing;
+     bool restore_grab;
+
      uint32_t shots;
      void*framebuf;
      std::string triggerHWSource;

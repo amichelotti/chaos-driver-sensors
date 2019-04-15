@@ -557,6 +557,22 @@ BaslerScoutDriver::BaslerScoutDriver():camerap(NULL),shots(0),framebuf(NULL),fn(
 
 }
 */
+#define STOP_GRABBING(camera) \
+ if(camera==NULL){\
+        BaslerScoutDriverLERR_ << "Invalid Camera";\
+        return -1;\
+    }\
+    if(!stopGrabbing){\
+        stopGrab();\
+        restore_grab=true;\
+    }\
+    (camera)->Close();\
+
+#define RESTORE_GRABBING(camera) \
+  (camera)->Open();\
+        if(restore_grab){\
+            startGrab(shots,framebuf,fn);\
+        }\
 
 DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera, BaslerScoutDriver)
 {
@@ -571,6 +587,7 @@ DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera, BaslerSco
     BaslerScoutDriverLDBG_ << "Created BASLER Driver";
     triggerHWSource="Line1";
     stopGrabbing=true;
+    restore_grab=false;
     props = new chaos::common::data::CDataWrapper();
 }
 
@@ -590,17 +607,7 @@ BaslerScoutDriver::~BaslerScoutDriver()
     }
 }
 int BaslerScoutDriver::changeTriggerMode(Pylon::CInstantCamera* camera,int trigger_mode){
-    bool restore_grab=false;
-    if(camera==NULL){
-        BaslerScoutDriverLERR_ << "Invalid Camera";
-        return -1;
-    }
-    if(!stopGrabbing){
-        stopGrab();
-        restore_grab=true;
-    }
-    
-    camera->Close();
+   STOP_GRABBING(camera);
     switch (trigger_mode)
         {
         case (CAMERA_TRIGGER_CONTINOUS):
@@ -645,10 +652,7 @@ int BaslerScoutDriver::changeTriggerMode(Pylon::CInstantCamera* camera,int trigg
         
         }
         tmode=(TriggerModes)trigger_mode;
-        camera->Open();
-        if(restore_grab){
-            startGrab(shots,framebuf,fn);
-        }
+        RESTORE_GRABBING(camera);
         return 0;
 }
 
@@ -728,7 +732,7 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera &camera, chaos::common::data
         p = props;
     }
     BaslerScoutDriverLDBG_ << "setting props: " << p->getCompliantJSONString();
-
+    
     // Get the parameters for setting the image area of interest (Image AOI).
 
     // Maximize the Image AOI.
@@ -762,7 +766,7 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera &camera, chaos::common::data
         }
         */
     }
-
+    STOP_GRABBING(&camera);
     if (p->hasKey("OFFSETX"))
     {
         SETINODE("OffsetX", camera, p->getInt32Value("OFFSETX"),ret);
@@ -903,7 +907,7 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera &camera, chaos::common::data
     }
     //         p->addInt32Value("WIDTH", (int32_t)width->GetValue());
     //       p->addInt32Value("HEIGHT", (int32_t)height->GetValue());
-
+    RESTORE_GRABBING(&camera);
     return ret;
 }
 
