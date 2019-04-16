@@ -35,7 +35,7 @@ void AbstractCameraDriver::parseInitCommonParams(const chaos::common::data::CDat
         sw_trigger_timeout_us=props.getInt32Value(TRIGGER_SW_TIMEOUT_KEY);
     }
      if(props.hasKey(TRIGGER_MODE_KEY)){
-        tmode=props.getInt32Value(TRIGGER_MODE_KEY);
+        tmode=(TriggerModes)props.getInt32Value(TRIGGER_MODE_KEY);
     }
 }
 
