@@ -43,7 +43,6 @@ namespace driver {
 class IDSGEXXDriver:ADD_CU_DRIVER_PLUGIN_SUPERCLASS,  ::driver::sensor::camera::CameraDriverBridge {
 
 
-   chaos::common::data::CDataWrapper* props;
  protected:
    int get_next_image(char **mem, INT *image_id,int32_t timeout);
 

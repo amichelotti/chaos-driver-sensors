@@ -303,17 +303,6 @@ int IDSGEXXDriver::cameraToProps(chaos::common::data::CDataWrapper*p){
     p->addInt32Value("OFFSETX",0);
     p->addInt32Value("OFFSETY",0);
 
-   // double framerate=camera.
-    /* GETINTVALUE(Width,"WIDTH");
-    GETINTVALUE(Height,"HEIGHT");
-    GETINTVALUE(OffsetX,"OFFSETX");
-    GETINTVALUE(OffsetY,"OFFSETY");
-    GETINTPERCVALUE(GainRaw,"GAIN");
-    GETINTPERCVALUE(ExposureTimeRaw,"SHUTTER");
-    GETINTPERCVALUE(SharpnessEnhancementRaw,"SHARPNESS");
-    GETINTPERCVALUE(BslBrightnessRaw,"BRIGHTNESS");
-    GETINTPERCVALUE(BslContrastRaw,"CONTRAST");
-*/
     return 0;
 }
 
@@ -643,10 +632,12 @@ int IDSGEXXDriver::stopGrab(){
 }
 
 int  IDSGEXXDriver::setImageProperties(int32_t width,int32_t height,int32_t opencvImageType){
-    props->addInt32Value("WIDTH",width);
-    props->addInt32Value("HEIGHT",height);
+    ChaosUniquePtr<chaos::common::data::CDataWrapper> cw(new chaos::common::data::CDataWrapper());
 
-    return propsToCamera(props);
+    cw->addInt32Value("WIDTH",width);
+    cw->addInt32Value("HEIGHT",height);
+
+    return propsToCamera(cw.get());
 }
 
 int  IDSGEXXDriver::getImageProperties(int32_t& width,int32_t& height,int32_t& opencvImageType){
