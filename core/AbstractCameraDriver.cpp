@@ -21,7 +21,7 @@
 namespace driver {
 namespace sensor {
 namespace camera{
-void AbstractCameraDriver::parseInitCommonParams(chaos::common::data::CDataWrapper& props){
+void AbstractCameraDriver::parseInitCommonParams(const chaos::common::data::CDataWrapper& props){
     if(props.hasKey(TRIGGER_HW_SOURCE_KEY)){
         triggerHWSource=props.getStringValue(TRIGGER_HW_SOURCE_KEY);
     }
