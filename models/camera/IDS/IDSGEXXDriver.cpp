@@ -44,7 +44,7 @@ REGISTER_PLUGIN(::driver::sensor::camera::IDSGEXXDriver)
 CLOSE_REGISTER_PLUGIN
 
 using namespace ueye;
-void IDSGEXXDriver::driverInit(const char *initParameter) throw(chaos::CException){
+void IDSGEXXDriver::driverInit(const char *initParameter){
        throw chaos::CException(-3, "You should provide a valid JSON initialization string", __PRETTY_FUNCTION__);
 
 }
@@ -71,7 +71,7 @@ int IDSGEXXDriver::get_next_image(char **mem, INT *image_id,int32_t timeout) {
 
     return 0;
 }
-void IDSGEXXDriver::driverInit(const chaos::common::data::CDataWrapper& json) throw(chaos::CException){
+void IDSGEXXDriver::driverInit(const chaos::common::data::CDataWrapper& json) {
     IDSGEXXDriverLAPP_ << "Initializing  json driver:"<<json.getCompliantJSONString();
     props->reset();
     props->appendAllElement((chaos::common::data::CDataWrapper&)json);
@@ -81,7 +81,7 @@ void IDSGEXXDriver::driverInit(const chaos::common::data::CDataWrapper& json) th
 
 }
 
-void IDSGEXXDriver::driverDeinit() throw(chaos::CException) {
+void IDSGEXXDriver::driverDeinit()  {
     IDSGEXXDriverLAPP_ << "Deinit driver";
 
 }
@@ -225,7 +225,7 @@ IDSGEXXDriver::IDSGEXXDriver():shots(0),framebuf(NULL),fn(NULL),props(NULL),tmod
 
 
 }*/
-DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera, IDSGEXXDriver),shots(0),framebuf(NULL),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false) {
+DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera, IDSGEXXDriver),initialized(false) {
     IDSGEXXDriverLDBG_<<  "Created Driver";
 }
 //default descrutcor
@@ -337,7 +337,7 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
 
     
     if(props->hasKey("TRIGGER_MODE")){
-        tmode=(int32_t)props->getInt32Value("TRIGGER_MODE");
+        tmode=(TriggerModes)props->getInt32Value("TRIGGER_MODE");
 
 
         // Register the standard configuration event handler for enabling software triggering.

@@ -47,11 +47,11 @@ class IDSGEXXDriver:ADD_CU_DRIVER_PLUGIN_SUPERCLASS,  ::driver::sensor::camera::
  protected:
    int get_next_image(char **mem, INT *image_id,int32_t timeout);
 
- void driverInit(const char *initParameter) throw(chaos::CException);
- void driverInit(const chaos::common::data::CDataWrapper& json) throw(chaos::CException);
+ void driverInit(const char *initParameter) ;
+ void driverInit(const chaos::common::data::CDataWrapper& json);
 
   int initializeCamera(const chaos::common::data::CDataWrapper& json) ;
-  void driverDeinit() throw(chaos::CException) ;
+  void driverDeinit() ;
     // This smart pointer will receive the grab result data.
      HIDS hCam;
      ueye::Camera camera;
