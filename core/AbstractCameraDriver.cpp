@@ -21,12 +21,19 @@
 namespace driver {
 namespace sensor {
 namespace camera{
+#define AbstractCameraDriverLAPP_		LAPP_ << "[AbstractCameraDriver] "
+#define AbstractCameraDriverLDBG_		LDBG_ << "[AbstractCameraDriver:"<<__FUNCTION__<<"]"
+#define AbstractCameraDriverLERR_		LERR_ << "[AbstractCameraDriver:"<<__PRETTY_FUNCTION__<<"]"
+
 void AbstractCameraDriver::parseInitCommonParams(const chaos::common::data::CDataWrapper& config){
+    AbstractCameraDriverLDBG_<<"config:"<<config.getCompliantJSONString();
     if(config.hasKey(TRIGGER_HW_SOURCE_KEY)){
         triggerHWSource=config.getStringValue(TRIGGER_HW_SOURCE_KEY);
     }
     if(config.hasKey(SERIAL_KEY)){
         serial=config.getStringValue(SERIAL_KEY);
+        AbstractCameraDriverLDBG_<<"seria:"<<serial;
+
     }
     if(config.hasKey(TRIGGER_HW_TIMEOUT_KEY)){
         hw_trigger_timeout_us=config.getInt32Value(TRIGGER_HW_TIMEOUT_KEY);
