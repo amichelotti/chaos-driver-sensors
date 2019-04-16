@@ -21,24 +21,24 @@
 namespace driver {
 namespace sensor {
 namespace camera{
-void AbstractCameraDriver::parseInitCommonParams(const chaos::common::data::CDataWrapper& props){
-    if(props.hasKey(TRIGGER_HW_SOURCE_KEY)){
-        triggerHWSource=props.getStringValue(TRIGGER_HW_SOURCE_KEY);
+void AbstractCameraDriver::parseInitCommonParams(const chaos::common::data::CDataWrapper& config){
+    if(config.hasKey(TRIGGER_HW_SOURCE_KEY)){
+        triggerHWSource=config.getStringValue(TRIGGER_HW_SOURCE_KEY);
     }
-    if(props.hasKey(SERIAL_KEY)){
-        serial=props.getStringValue(SERIAL_KEY);
+    if(config.hasKey(SERIAL_KEY)){
+        serial=config.getStringValue(SERIAL_KEY);
     }
-    if(props.hasKey(TRIGGER_HW_TIMEOUT_KEY)){
-        hw_trigger_timeout_us=props.getInt32Value(TRIGGER_HW_TIMEOUT_KEY);
+    if(config.hasKey(TRIGGER_HW_TIMEOUT_KEY)){
+        hw_trigger_timeout_us=config.getInt32Value(TRIGGER_HW_TIMEOUT_KEY);
     }
-    if(props.hasKey(TRIGGER_SW_TIMEOUT_KEY)){
-        sw_trigger_timeout_us=props.getInt32Value(TRIGGER_SW_TIMEOUT_KEY);
+    if(config.hasKey(TRIGGER_SW_TIMEOUT_KEY)){
+        sw_trigger_timeout_us=config.getInt32Value(TRIGGER_SW_TIMEOUT_KEY);
     }
-     if(props.hasKey(TRIGGER_MODE_KEY)){
-        tmode=(TriggerModes)props.getInt32Value(TRIGGER_MODE_KEY);
+     if(config.hasKey(TRIGGER_MODE_KEY)){
+        tmode=(TriggerModes)config.getInt32Value(TRIGGER_MODE_KEY);
     }
-    if(props.hasKey(GRAB_STRATEGY_KEY)){
-        gstrategy=(GrabStrategy)props.getInt32Value("GRAB_STRATEGY");
+    if(config.hasKey(GRAB_STRATEGY_KEY)){
+        gstrategy=(GrabStrategy)config.getInt32Value("GRAB_STRATEGY");
     }
 }
 
