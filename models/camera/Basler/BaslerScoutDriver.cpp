@@ -1228,5 +1228,8 @@ int BaslerScoutDriver::getCameraProperty(const std::string &propname, double &va
 
 int BaslerScoutDriver::getCameraProperties(chaos::common::data::CDataWrapper &proplist)
 {
-    return cameraToProps(*camerap, &proplist);
+    int ret=cameraToProps(*camerap, &proplist);
+    BaslerScoutDriverLDBG_ << "PROPERTIES:"<<proplist.getCompliantJSONString();
+
+    return ret;
 }
