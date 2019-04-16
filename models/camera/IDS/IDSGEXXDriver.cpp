@@ -98,6 +98,12 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
     int ret;
     const char *version;
     int major, minor, build;
+    props->reset();
+    ownprops->reset();
+    props->appendAllElement((chaos::common::data::CDataWrapper &)json);
+    parseInitCommonParams(json);
+    
+    
    /* if (camera.checkVersion(major, minor, build, version)) {
         IDSGEXXDriverLDBG_<<"Loaded uEye SDK:"<<version;
     } else {
@@ -113,8 +119,7 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
         IDSGEXXDriverLERR_<<" NO CAMERA FOUND";
         return -1;
     }
-    if(json.hasKey("serial")&&json.isStringValue("serial")){
-        std::string serial=json.getCStringValue("serial");
+    if(!serial.empty()){
         uint32_t id=atoi(serial.c_str());
         if (!camera.openCameraSerNo(id)) {
             IDSGEXXDriverLERR_<<"Failed to open uEye camera with serialNo:"<< id;
@@ -125,7 +130,7 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
         IDSGEXXDriverLDBG_<<  "Open camera with Serial:"<<id;
 
     } else if(json.hasKey("deviceID")&&json.isStringValue("deviceID")){
-        std::string serial=json.getCStringValue("deviceID");
+        serial=json.getCStringValue("deviceID");
         uint32_t id=atoi(serial.c_str());
         if (!camera.openCameraDevId(id)) {
             IDSGEXXDriverLERR_<<"Failed to open uEye camera with deviceID"<< id;
@@ -136,7 +141,7 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
         IDSGEXXDriverLDBG_<<  "Open camera with DeviceID:"<<id;
 
     } else if(json.hasKey("deviceID")&&json.isStringValue("cameraID")){
-        std::string serial=json.getCStringValue("cameraID");
+        serial=json.getCStringValue("cameraID");
         uint32_t id=atoi(serial.c_str());
         if (!camera.openCameraCamId(id)) {
             IDSGEXXDriverLERR_<<"Failed to open uEye camera with cameraID"<< id;
@@ -222,15 +227,11 @@ IDSGEXXDriver::IDSGEXXDriver():shots(0),framebuf(NULL),fn(NULL),props(NULL),tmod
 }*/
 DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera, IDSGEXXDriver),shots(0),framebuf(NULL),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false) {
     IDSGEXXDriverLDBG_<<  "Created Driver";
-    props=new chaos::common::data::CDataWrapper();
 }
 //default descrutcor
 IDSGEXXDriver::~IDSGEXXDriver() {
     is_ExitCamera(hCam);
-    if(props){
-        delete props;
-    }
-
+    
 }
 /*
 #define GETINTVALUE(x,y){\
@@ -247,8 +248,10 @@ IDSGEXXDriver::~IDSGEXXDriver() {
 */
 int IDSGEXXDriver::cameraToProps(chaos::common::data::CDataWrapper*p){
 
-    if(p == NULL){
-        p = props;
+   if(p==NULL){
+        IDSGEXXDriverLERR_ << "Invalid Parameter";
+        return -1;
+
     }
     int width = camera.getWidth();
     int height = camera.getHeight();
@@ -322,14 +325,17 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
     // Get the camera control object.
     int32_t ret=0;
     int posy=0,width=0,height=0,posx=0;
+    if(p==NULL){
+        IDSGEXXDriverLERR_ << "Invalid Parameter";
+        return -1;
+
+    }
     if((ret=camera.getAOI(posx,posy,width,height))==IS_SUCCESS){
         IDSGEXXDriverLDBG_<< "CURRENT OFFSET (" << posx<<","<<posy<<") img size:"<<width<<"x"<<height;
 
     }
 
-    if(p == NULL){
-        p = props;
-    }
+    
     if(props->hasKey("TRIGGER_MODE")){
         tmode=(int32_t)props->getInt32Value("TRIGGER_MODE");
 
@@ -356,14 +362,25 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
         }
        
         case CAMERA_TRIGGER_HW_LOW:
-            IDSGEXXDriverLDBG_<< "TRIGGER HI->LOW";
 
-            camera.setTriggerMode(TRIGGER_HI_LO);
+            if(camera.setTriggerMode(TRIGGER_HI_LO)){
+                IDSGEXXDriverLDBG_<< "TRIGGER HI->LOW";
+
+            } else {
+                IDSGEXXDriverLERR_<< "TRIGGER HI->LOW set failed";
+
+            }
             break;
         case CAMERA_TRIGGER_HW_HI:
             IDSGEXXDriverLDBG_<< "TRIGGER LOW->HI";
 
-            camera.setTriggerMode(TRIGGER_LO_HI);
+            if(camera.setTriggerMode(TRIGGER_LO_HI)){
+                IDSGEXXDriverLDBG_<< "TRIGGER LOW->HI";
+
+            } else {
+                IDSGEXXDriverLERR_<< "TRIGGER LOW->HI set failed";
+
+            }
             break;
         }
     }
@@ -578,10 +595,7 @@ int IDSGEXXDriver::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _
     shots=_shots;
     framebuf=_framebuf;
     fn=_fn;
-    int gstrategy;
-    if(props->hasKey("GRAB_STRATEGY")){
-        gstrategy=props->getInt32Value("GRAB_STRATEGY");
-    }
+    
     camera.initMemoryPool(4);
     switch(gstrategy){
     case CAMERA_ONE_BY_ONE:
