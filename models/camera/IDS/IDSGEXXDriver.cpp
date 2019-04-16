@@ -325,8 +325,8 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
     }
 
     
-    if(props->hasKey("TRIGGER_MODE")){
-        tmode=(TriggerModes)props->getInt32Value("TRIGGER_MODE");
+    if(p->hasKey(TRIGGER_MODE_KEY)){
+        tmode=(TriggerModes)p->getInt32Value(TRIGGER_MODE_KEY);
 
 
         // Register the standard configuration event handler for enabling software triggering.
