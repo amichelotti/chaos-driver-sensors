@@ -42,4 +42,3 @@ void AbstractCameraDriver::parseInitCommonParams(const chaos::common::data::CDat
 }
 }
 }
-#endif /* defined(__ControlUnitTest__DummyDriver__) */
