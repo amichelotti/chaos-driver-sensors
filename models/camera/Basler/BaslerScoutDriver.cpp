@@ -35,7 +35,7 @@ using namespace Pylon;
 namespace cu_driver = chaos::cu::driver_manager::driver;
 using namespace ::driver::sensor::camera;
 #define BaslerScoutDriverLAPP_ LAPP_ << "[BaslerScoutDriver] "
-#define BaslerScoutDriverLDBG_ LDBG_ << "[BaslerScoutDriver:" << __PRETTY_FUNCTION__ << "]"
+#define BaslerScoutDriverLDBG_ LDBG_ << "[BaslerScoutDriver:" << __FUNCTION__ << "]"
 #define BaslerScoutDriverLERR_ LERR_ << "[BaslerScoutDriver:" << __PRETTY_FUNCTION__ << "]"
 
 //GET_PLUGIN_CLASS_DEFINITION
@@ -278,7 +278,11 @@ int BaslerScoutDriver::getNode(const std::string &node_name, CInstantCamera *cam
         }
         percent = -1;
         percent = node->GetValue();
-        ownprops->createProperty(node_name,node->GetValue(),node->GetMin(),node->GetMax(),node->GetInc(),pub);
+      /*  if(ownprops->hasKey(node_name)){
+            ownprops->setProperty(node_name,node->GetValue());
+        } else*/ {
+            ownprops->createProperty(node_name,node->GetValue(),node->GetMin(),node->GetMax(),node->GetInc(),pub);
+        }
         BaslerScoutDriverLDBG_ << "VAL:" << percent;
     }
     catch (const GenericException &e)
@@ -314,8 +318,11 @@ int BaslerScoutDriver::getNode(const std::string &node_name, CInstantCamera *cam
         max = node->GetMax();
         inc = node->GetInc();
         val = node->GetValue();
+        /*if(ownprops->hasKey(node_name)){
+            ownprops->setProperty(node_name,node->GetValue());
+        } else*/ {
          ownprops->createProperty(node_name,node->GetValue(),node->GetMin(),node->GetMax(),node->GetInc(),pub);
-
+        }
         if ((max - min) > 0)
         {
             percent = (val * 1.0 - min) * 100.0 / (float)(max - min);
