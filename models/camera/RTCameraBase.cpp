@@ -111,6 +111,7 @@ void RTCameraBase::updateProperty(){
     AttributeSharedCacheWrapper * cc=getAttributeCache();
 
     for(std::vector<std::string>::iterator i = props.begin();i!=props.end();i++){
+        if(!camera_props.isCDataWrapperValue(*i)){
 
         if(camera_props.getValueType(*i)==chaos::DataType::TYPE_DOUBLE){
             double tmp,*p;
@@ -127,6 +128,7 @@ void RTCameraBase::updateProperty(){
 
             p=cc->getRWPtr<int32_t>(DOMAIN_OUTPUT,*i);
             *p=tmp;
+        }
         }
     }
 }
@@ -268,6 +270,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     }
 
     for(std::vector<std::string>::iterator i = props.begin();i!=props.end();i++){
+        if(!camera_props.isCDataWrapperValue(*i)){
 
         if(camera_props.getValueType(*i)==chaos::DataType::TYPE_DOUBLE){
             double tmp=cc->getValue<double>(DOMAIN_INPUT,*i);
@@ -282,9 +285,11 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
 
             setProp(*i,tmp,0);
         }
+        }
     }
 
     for(std::vector<std::string>::iterator i = props.begin();i!=props.end();i++){
+        if(!camera_props.isCDataWrapperValue(*i)){
 
         if(camera_props.getValueType(*i)==chaos::DataType::TYPE_DOUBLE){
             double tmp,*p;
@@ -298,6 +303,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
             driver->getCameraProperty(*i,tmp);
             p=cc->getRWPtr<int32_t>(DOMAIN_INPUT,*i);
             *p=tmp;
+        }
         }
     }
 
