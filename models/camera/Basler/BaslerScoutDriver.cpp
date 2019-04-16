@@ -565,14 +565,12 @@ BaslerScoutDriver::BaslerScoutDriver():camerap(NULL),shots(0),framebuf(NULL),fn(
     if(!stopGrabbing){\
         stopGrab();\
         restore_grab=true;\
-    }\
-    (camera)->Close();\
+    }
 
 #define RESTORE_GRABBING(camera) \
-  (camera)->Open();\
         if(restore_grab){\
             startGrab(shots,framebuf,fn);\
-        }\
+        }
 
 DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera, BaslerScoutDriver)
 {
@@ -608,6 +606,7 @@ BaslerScoutDriver::~BaslerScoutDriver()
 }
 int BaslerScoutDriver::changeTriggerMode(Pylon::CInstantCamera* camera,int trigger_mode){
    STOP_GRABBING(camera);
+   camera->Close();
     switch (trigger_mode)
         {
         case (CAMERA_TRIGGER_CONTINOUS):
@@ -652,7 +651,9 @@ int BaslerScoutDriver::changeTriggerMode(Pylon::CInstantCamera* camera,int trigg
         
         }
         tmode=(TriggerModes)trigger_mode;
+        camera->Open();
         RESTORE_GRABBING(camera);
+
         return 0;
 }
 
