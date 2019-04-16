@@ -54,7 +54,6 @@ class BaslerScoutDriver:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camer
   void driverDeinit() throw(chaos::CException) ;
     // This smart pointer will receive the grab result data.
      Pylon::CInstantCamera* camerap;
-     GrabStrategy gstrategy;
           int propsToCamera(Pylon::CInstantCamera& camera,chaos::common::data::CDataWrapper*p);
      int cameraToProps(Pylon::CInstantCamera& camera,chaos::common::data::CDataWrapper*p);
      int changeTriggerMode(Pylon::CInstantCamera* camera,int trigger_mode);

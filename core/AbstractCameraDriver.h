@@ -86,6 +86,8 @@ protected:
      std::string triggerHWSource;
      std::string serial;
      uint32_t shots;
+     GrabStrategy gstrategy;
+
      void*framebuf;
      cameraGrabCallBack fn;
      uint32_t hw_trigger_timeout_us,sw_trigger_timeout_us; // 0 =wait indefinitively

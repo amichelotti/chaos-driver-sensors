@@ -54,13 +54,8 @@ class IDSGEXXDriver:ADD_CU_DRIVER_PLUGIN_SUPERCLASS,  ::driver::sensor::camera::
   void driverDeinit() throw(chaos::CException) ;
     // This smart pointer will receive the grab result data.
      HIDS hCam;
-     int32_t tmode; //0 continous, 1 software,2 hw,3 singleshot
-     int32_t gstrategy;
      ueye::Camera camera;
-     uint32_t shots;
-     void*framebuf;
      int32_t memID;
-     cameraGrabCallBack fn;
      bool initialized;
      int propsToCamera(chaos::common::data::CDataWrapper*p);
      int cameraToProps(chaos::common::data::CDataWrapper*p);
