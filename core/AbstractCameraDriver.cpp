@@ -38,7 +38,7 @@ void AbstractCameraDriver::parseInitCommonParams(const chaos::common::data::CDat
         tmode=(TriggerModes)props.getInt32Value(TRIGGER_MODE_KEY);
     }
     if(props->hasKey(GRAB_STRATEGY_KEY)){
-        gstrategy=props->getInt32Value("GRAB_STRATEGY");
+        gstrategy=props.getInt32Value("GRAB_STRATEGY");
     }
 }
 
