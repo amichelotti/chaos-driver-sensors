@@ -197,6 +197,7 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
     addAttributeToDataSet("ENCODE_FRAMERATE","Encode Frame Rate",chaos::DataType::TYPE_INT32,chaos::DataType::Output);
 
     for(std::vector<std::string>::iterator i = props.begin();i!=props.end();i++){
+        if(!camera_props.isCDataWrapperValue(*i)){
         RTCameraBaseLDBG_<<"ADDING ATTRIBUTE:"<<*i<<" Type:"<<camera_props.getValueType(*i);
 
         addAttributeToDataSet(*i,*i,camera_props.getValueType(*i),chaos::DataType::Bidirectional);
@@ -212,6 +213,7 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
             addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, int32_t >(this,
                     &::driver::sensor::camera::RTCameraBase::setProp,
                     *i);
+        }
         }
     }
     addBinaryAttributeAsSubtypeToDataSet("FRAMEBUFFER","image",chaos::DataType::SUB_TYPE_CHAR,DEFAULT_RESOLUTION,chaos::DataType::Output);
