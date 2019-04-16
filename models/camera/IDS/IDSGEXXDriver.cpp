@@ -30,7 +30,7 @@
 namespace cu_driver = chaos::cu::driver_manager::driver;
 using namespace ::driver::sensor::camera;
 #define IDSGEXXDriverLAPP_		LAPP_ << "[IDSGEXXDriver] "
-#define IDSGEXXDriverLDBG_		LDBG_ << "[IDSGEXXDriver:"<<__PRETTY_FUNCTION__<<"]"
+#define IDSGEXXDriverLDBG_		LDBG_ << "[IDSGEXXDriver:"<<__FUNCTION__<<"]"
 #define IDSGEXXDriverLERR_		LERR_ << "[IDSGEXXDriver:"<<__PRETTY_FUNCTION__<<"]"
 
 
@@ -119,8 +119,10 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
         IDSGEXXDriverLERR_<<" NO CAMERA FOUND";
         return -1;
     }
-    if(!serial.empty()){
+    if(serial.size()){
         uint32_t id=atoi(serial.c_str());
+        IDSGEXXDriverLDBG_<<"opening serial:"<<serial;
+
         if (!camera.openCameraSerNo(id)) {
             IDSGEXXDriverLERR_<<"Failed to open uEye camera with serialNo:"<< id;
 
