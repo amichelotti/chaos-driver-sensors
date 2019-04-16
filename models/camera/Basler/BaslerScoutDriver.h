@@ -46,7 +46,6 @@ namespace driver {
 class BaslerScoutDriver:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::CameraDriverBridge {
 
 
-   chaos::common::data::CDataWrapper* props;
  protected:
  void driverInit(const char *initParameter) throw(chaos::CException);
  void driverInit(const chaos::common::data::CDataWrapper& json) throw(chaos::CException);
@@ -55,18 +54,13 @@ class BaslerScoutDriver:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camer
   void driverDeinit() throw(chaos::CException) ;
     // This smart pointer will receive the grab result data.
      Pylon::CInstantCamera* camerap;
-     TriggerModes tmode; //0 continous, 1 software,2 hw,3 singleshot
      GrabStrategy gstrategy;
-     bool stopGrabbing;
-     bool restore_grab;
-
-     uint32_t shots;
-     void*framebuf;
-     std::string triggerHWSource;
-     cameraGrabCallBack fn;
-     int propsToCamera(Pylon::CInstantCamera& camera,chaos::common::data::CDataWrapper*p);
+          int propsToCamera(Pylon::CInstantCamera& camera,chaos::common::data::CDataWrapper*p);
      int cameraToProps(Pylon::CInstantCamera& camera,chaos::common::data::CDataWrapper*p);
      int changeTriggerMode(Pylon::CInstantCamera* camera,int trigger_mode);
+     int getNode(const std::string &node_name, Pylon::CInstantCamera *camera, int32_t &percent,const std::string pub="");
+    int getNodeInPercentage(const std::string &node_name, Pylon::CInstantCamera*camera, float &percent,const std::string& pub="");
+
 public:
 	BaslerScoutDriver();
 	~BaslerScoutDriver();

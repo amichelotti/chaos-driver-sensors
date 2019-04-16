@@ -20,6 +20,8 @@
 #ifndef __ASTRACTCAMERADRIVER_H__
 #define __ASTRACTCAMERADRIVER_H__
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
+#include <common/misc/data/core/Property.h>
+
 namespace cu_driver = chaos::cu::driver_manager::driver;
 #include <string>
 #include <vector>
@@ -54,14 +56,42 @@ enum GrabStrategy {
     CAMERA_INCOMING // start grabbing just after the SW is waiting for
 } ;
 #define TRIGGER_TIMEOUT_ERROR -100
-#define TRIGGER_HW_SOURCE_KEY "TRIGGER_HW_SOURCE"
+#define TRIGGER_MODE_KEY "TRIGGER_MODE"
+#define SERIAL_KEY "serial"
 
+#define TRIGGER_HW_SOURCE_KEY "TRIGGER_HW_SOURCE"
+#define TRIGGER_DELAY_KEY "TRIGGER_DELAY"
+#define TRIGGER_HW_TIMEOUT_KEY "TRIGGER_HW_TIMEOUT"
+#define TRIGGER_SW_TIMEOUT_KEY "TRIGGER_SW_TIMEOUT"
+#define WIDTH_KEY "WIDTH"
+#define HEIGHT_KEY "HEIGHT"
+#define OFFSETX_KEY "OFFSETX"
+#define OFFSETY_KEY "OFFSETY"
+#define GAIN_KEY "GAIN"
+#define SHUTTER_KEY "SHUTTER"
+#define SHARPNESS_KEY "SHARPNESS"
+#define BRIGHTNESS_KEY "BRIGHTNESS"
+#define CONTRAST_KEY "CONTRAST"
+   
  class AbstractCameraDriver{
 
+protected:
+    ChaosUniquePtr< ::common::misc::data::Property > ownprops; //camera own props,
 
+    ChaosUniquePtr<chaos::common::data::CDataWrapper> props; //camera generic props
+    TriggerModes tmode; //0 continous, 1 software,2 hw,3 singleshot
+     bool stopGrabbing;
+     bool restore_grab;
+     std::string triggerHWSource;
+     std::string serial;
+     uint32_t shots;
+     void*framebuf;
+     cameraGrabCallBack fn;
+     uint32_t hw_trigger_timeout_us,sw_trigger_timeout_us; // 0 =wait indefinitively
 
+    void parseInitCommonParams(const chaos::common::data::CDataWrapper& params);
 public:
-   AbstractCameraDriver(){}
+   AbstractCameraDriver():stopGrabbing(true),restore_grab(false),shots(1),framebuf(NULL),fn(NULL),hw_trigger_timeout_us(5000000),sw_trigger_timeout_us(0),ownprops(new ::common::misc::data::Property),props(new chaos::common::data::CDataWrapper){}
 
     //! Execute a command
     /**
