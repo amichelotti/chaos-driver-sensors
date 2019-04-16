@@ -221,13 +221,14 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
 
 //!Define custom control unit attribute
 void RTCameraBase::unitDefineCustomAttribute() {
+    std::string config;
     getAttributeCache()->addCustomAttribute("config", 8192, chaos::DataType::TYPE_CLUSTER);
     if(driver->getCameraProperties(camera_props)!=0){
         throw chaos::CException(-1,"Error retrieving camera properties",__PRETTY_FUNCTION__);
 
     }
     if(camera_props.hasKey("custom")){
-    std::string config=camera_props.getCSDataValue("custom")->getJSONString();
+    config=camera_props.getCSDataValue("custom")->getCompliantJSONString();
     RTCameraBaseLDBG_<<"ADDING CONFIG:"<<config;
 
     getAttributeCache()->setCustomAttributeValue("config", (void*)config.c_str(),config.size());
