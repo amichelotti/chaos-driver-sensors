@@ -73,9 +73,11 @@ int IDSGEXXDriver::get_next_image(char **mem, INT *image_id,int32_t timeout) {
 }
 void IDSGEXXDriver::driverInit(const chaos::common::data::CDataWrapper& json) {
     IDSGEXXDriverLAPP_ << "Initializing  json driver:"<<json.getCompliantJSONString();
+    parseInitCommonParams(json);
+    ownprops->reset();
+    
     props->reset();
-    props->appendAllElement((chaos::common::data::CDataWrapper&)json);
-    if(initializeCamera(*props)!=0){
+    if(initializeCamera(json)!=0){
         throw chaos::CException(-1,"cannot initialize camera "+json.getCompliantJSONString(),__PRETTY_FUNCTION__);
     }
 
@@ -98,10 +100,6 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
     int ret;
     const char *version;
     int major, minor, build;
-    props->reset();
-    ownprops->reset();
-    props->appendAllElement((chaos::common::data::CDataWrapper &)json);
-    parseInitCommonParams(json);
     
     
    /* if (camera.checkVersion(major, minor, build, version)) {
