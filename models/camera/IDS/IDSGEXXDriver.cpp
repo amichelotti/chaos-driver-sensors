@@ -481,7 +481,7 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
 
         } else {
             IDSGEXXDriverLDBG_<< "EXPOSURE:"<<value;
-
+            
             camera.setExposure(&value);
         }
     }

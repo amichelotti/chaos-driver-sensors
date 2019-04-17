@@ -81,7 +81,8 @@ protected:
         void updateProperty();
         bool setProp(const std::string &name, int32_t value, uint32_t size);
         bool setProp(const std::string &name, double value, uint32_t size);
-
+        void startGrabbing();
+        void stopGrabbing();
 		/*!
 		Define the Control Unit Dataset and Actions
 		*/

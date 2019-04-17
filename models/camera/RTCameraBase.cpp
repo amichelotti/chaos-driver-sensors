@@ -136,6 +136,10 @@ bool  RTCameraBase::setProp(const std::string &name, int32_t value, uint32_t siz
     int ret;
     int32_t valuer;
     RTCameraBaseLDBG_<<"SET IPROP:"<<name<<" VALUE:"<<value;
+    bool stopgrab=(stopCapture==false)&&(((name == WIDTH_KEY)&&(value !=*sizex)) || ((name == HEIGHT_KEY)&&(value !=*sizey)));
+    if(stopgrab){
+        stopGrabbing();
+    }
     ret=driver->setCameraProperty(name,value);
     setStateVariableSeverity(StateVariableTypeAlarmDEV,"operation_not_supported", chaos::common::alarm::MultiSeverityAlarmLevelClear);
 
@@ -143,12 +147,16 @@ bool  RTCameraBase::setProp(const std::string &name, int32_t value, uint32_t siz
         setStateVariableSeverity(StateVariableTypeAlarmDEV,"operation_not_supported", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
 
     }
+
    // updateProperty();
     driver->getCameraProperty(name,valuer);
     AttributeSharedCacheWrapper * cc=getAttributeCache();
     int32_t * p=cc->getRWPtr<int32_t>(DOMAIN_OUTPUT,name);
     *p=valuer;
     RTCameraBaseLDBG_<<"SET IPROP:"<<name<<" SET VALUE:"<<value<<" READ VALUE:"<<valuer<<" ret:"<<ret;
+    if(stopgrab){
+        startGrabbing();
+    }
     getAttributeCache()->setInputDomainAsChanged();
     getAttributeCache()->setOutputDomainAsChanged();
     return (ret==0);
@@ -219,6 +227,11 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
         }
     }
     addBinaryAttributeAsSubtypeToDataSet("FRAMEBUFFER","image",chaos::DataType::SUB_TYPE_CHAR,DEFAULT_RESOLUTION,chaos::DataType::Output);
+    addStateVariable(StateVariableTypeAlarmDEV,"operation_not_supported","the operation in not supported i.e property not present or accesible");
+    addStateVariable(StateVariableTypeAlarmCU,"encode_error","an error occurred during encode");
+    addStateVariable(StateVariableTypeAlarmDEV,"capture_error","an error occurred during capture");
+    addStateVariable(StateVariableTypeAlarmDEV,"capture_timeout","a timeout has occurred");
+
 
 }
 
@@ -250,10 +263,10 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     AttributeSharedCacheWrapper * cc=getAttributeCache();
     // this properties must exist
     //
-    sizex=cc->getRWPtr<int32_t>(DOMAIN_INPUT, "WIDTH");
-    sizey=cc->getRWPtr<int32_t>(DOMAIN_INPUT, "HEIGHT");
+    sizex=cc->getRWPtr<int32_t>(DOMAIN_INPUT, WIDTH_KEY);
+    sizey=cc->getRWPtr<int32_t>(DOMAIN_INPUT, HEIGHT_KEY);
     //
-    mode=cc->getROPtr<int32_t>(DOMAIN_INPUT, "TRIGGER_MODE");
+    mode=cc->getROPtr<int32_t>(DOMAIN_INPUT, TRIGGER_MODE_KEY);
  //   camera_out=cc->getRWPtr<uint8_t>(DOMAIN_OUTPUT, "FRAMEBUFFER");
     fmt=cc->getRWPtr<char>(DOMAIN_INPUT, "FMT");
     ofmt=cc->getRWPtr<char>(DOMAIN_OUTPUT, "FMT");
@@ -338,9 +351,8 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
 void RTCameraBase::cameraGrabCallBack(const void*buf,uint32_t blen,uint32_t width,uint32_t heigth, uint32_t error){
    
 }
-//!Execute the work, this is called with a determinated delay, it must be as fast as possible
-void RTCameraBase::unitStart() throw(chaos::CException) {
-    RTCameraBaseLDBG_<<"Starting...";
+void RTCameraBase::startGrabbing(){
+     RTCameraBaseLDBG_<<"Start Grabbing";
     // allocate buffers;
     encodeWritePointer=0;
     captureWritePointer=0;
@@ -356,8 +368,33 @@ void RTCameraBase::unitStart() throw(chaos::CException) {
     capture_th=boost::thread(&RTCameraBase::captureThread,this);
     getAttributeCache()->setCustomDomainAsChanged();
     pushCustomDataset();
+}
 
+void RTCameraBase::stopGrabbing(){
+    stopCapture=true;
 
+    RTCameraBaseLDBG_<<"Stop Grabbing..."<<stopCapture;
+
+    driver->stopGrab();
+    wait_capture.notify_all();
+    wait_encode.notify_all();
+    full_encode.notify_all();
+    full_capture.notify_all();
+    capture_th.join();
+    encode_th.join();
+     for(int cnt=0;cnt<CAMERA_FRAME_BUFFERING;cnt++){
+        free(framebuf_out[cnt].buf);
+        framebuf_out[cnt].size=0;
+        framebuf_out[cnt].buf=NULL;
+    }
+    encodedImg.consume_all([](buf_t i){ });
+    captureImg.consume_all([](buf_t i){ });
+    RTCameraBaseLDBG_<<"Stop Grabbing done"<<stopCapture;
+
+}
+//!Execute the work, this is called with a determinated delay, it must be as fast as possible
+void RTCameraBase::unitStart() throw(chaos::CException) {
+   startGrabbing();
 }
 
 void RTCameraBase::captureThread(){
@@ -373,6 +410,9 @@ void RTCameraBase::captureThread(){
          start=chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
           ret=driver->waitGrab(&img,5000);
           if((img!=0) && (ret>0)){
+            setStateVariableSeverity(StateVariableTypeAlarmDEV,"capture_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+            setStateVariableSeverity(StateVariableTypeAlarmDEV,"capture_timeout", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+
             if(captureWritePointer>=CAMERA_FRAME_BUFFERING){
                 captureWritePointer=0;
             }
@@ -401,7 +441,16 @@ void RTCameraBase::captureThread(){
 
             }
         } else {
-            RTCameraBaseLERR_<<" wait returned:"<<ret<<" buffer  is bypass ? capture stopped:"<<stopCapture ;
+
+            if(ret==TRIGGER_TIMEOUT_ERROR){
+                RTCameraBaseLERR_<<" wait returned:"<<ret<<" timeout stopped:"<<stopCapture ;
+                setStateVariableSeverity(StateVariableTypeAlarmDEV,"capture_timeout", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
+
+            } else {
+                RTCameraBaseLERR_<<" wait returned:"<<ret<<" buffer  is bypass ? capture stopped:"<<stopCapture ;
+                setStateVariableSeverity(StateVariableTypeAlarmDEV,"capture_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+
+            }
             usleep(100000);
 
         }
@@ -507,24 +556,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
 
 //!Execute the Control Unit work
 void RTCameraBase::unitStop() throw(chaos::CException) {
-    stopCapture=true;
-
-    RTCameraBaseLDBG_<<"Stopping... stop capture:"<<stopCapture;
-
-    driver->stopGrab();
-    wait_capture.notify_all();
-    wait_encode.notify_all();
-    full_encode.notify_all();
-    full_capture.notify_all();
-    capture_th.join();
-    encode_th.join();
-     for(int cnt=0;cnt<CAMERA_FRAME_BUFFERING;cnt++){
-        free(framebuf_out[cnt].buf);
-        framebuf_out[cnt].size=0;
-        framebuf_out[cnt].buf=NULL;
-    }
-    encodedImg.consume_all([](buf_t i){ });
-    captureImg.consume_all([](buf_t i){ });
+    stopGrabbing();
     
 }
 
