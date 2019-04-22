@@ -28,7 +28,7 @@ find_library (pylon_gcc_map NAMES NodeMapData_gcc_v3_1_Basler_pylon_v5_1 PATHS $
 SET(pylon ${pylonbase} ${pylonutil} ${pylon_gcc_api_basler} ${pylon_gcc_base} ${pylon_gcc_log} ${pylon_gcc_parser} ${pylon_gcc_xml} ${pylon_gcc_map})
 #separate_arguments(pylon)
 SET(DRIVERS_LIB ${DRIVERS_LIB} ${PROJECT_NAME} PARENT_SCOPE)
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_common  chaos_driver_sensors ${pylon} ${FrameworkLib})
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_common  chaos_driver_sensors ${pylon} ${FrameworkLib} common_misc_data)
 MESSAGE(STATUS "pylon libs ${pylon}")
 FILE(GLOB pylon_libs ${PYLON5}/lib/*.so)
 INSTALL(FILES ${pylon_libs} DESTINATION lib)
