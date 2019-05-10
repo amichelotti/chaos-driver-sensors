@@ -49,7 +49,7 @@ PUBLISHABLE_CONTROL_UNIT_IMPLEMENTATION(RTCameraBase)
 }
 
 RTCameraBase::RTCameraBase(const string& _control_unit_id, const string& _control_unit_param, const ControlUnitDriverList& _control_unit_drivers):
-RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers),driver(NULL),framebuf_encoding(CV_8UC3),captureImg(CAMERA_FRAME_BUFFERING),encodedImg(CAMERA_FRAME_BUFFERING),encode_time(0),capture_time(0),network_time(0),captureWritePointer(0),encodeWritePointer(0) {
+RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers),driver(NULL),framebuf_encoding(CV_8UC3),captureImg(CAMERA_FRAME_BUFFERING),encodedImg(CAMERA_FRAME_BUFFERING),encode_time(0),capture_time(0),network_time(0),captureWritePointer(0),encodeWritePointer(0), hw_trigger_timeout_us(5000000),sw_trigger_timeout_us(0),trigger_timeout(0) {
   RTCameraBaseLDBG_<<"Creating "<<_control_unit_id<<" params:"<<_control_unit_param;
   try{
       framebuf=NULL;
@@ -79,6 +79,12 @@ RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drive
           DECODE_CVENCODING(enc,CV_32SC3);
           DECODE_CVENCODING(enc,CV_32SC4);
 
+      }
+      if(p.hasKey(TRIGGER_HW_TIMEOUT_KEY)){
+            hw_trigger_timeout_us=p.getInt32Value(TRIGGER_HW_TIMEOUT_KEY);
+      }
+      if(p.hasKey(TRIGGER_SW_TIMEOUT_KEY)){
+            sw_trigger_timeout_us=p.getInt32Value(TRIGGER_SW_TIMEOUT_KEY);
       }
        for(int cnt=0;cnt<CAMERA_FRAME_BUFFERING;cnt++){
         framebuf_out[cnt].buf=NULL;
@@ -136,7 +142,11 @@ bool  RTCameraBase::setProp(const std::string &name, int32_t value, uint32_t siz
     int ret;
     int32_t valuer;
     RTCameraBaseLDBG_<<"SET IPROP:"<<name<<" VALUE:"<<value;
-    bool stopgrab=(stopCapture==false)&&(((name == WIDTH_KEY)&&(value !=*sizex)) || ((name == HEIGHT_KEY)&&(value !=*sizey)));
+    bool stopgrab=(stopCapture==false)&&
+                    (((name == WIDTH_KEY)&&(value !=*sizex)) || 
+                    ((name == HEIGHT_KEY)&&(value !=*sizey)) ||
+                    ((name == OFFSETX_KEY)&&(value !=*offsetx)) ||
+                    ((name == OFFSETY_KEY)&&(value !=*offsety)));
     if(stopgrab){
         stopGrabbing();
     }
@@ -144,7 +154,10 @@ bool  RTCameraBase::setProp(const std::string &name, int32_t value, uint32_t siz
     setStateVariableSeverity(StateVariableTypeAlarmDEV,"operation_not_supported", chaos::common::alarm::MultiSeverityAlarmLevelClear);
 
     if(ret!=0){
+        std::stringstream ss;
+        ss<<"error setting \""<<name<<"\" to "<<value;
         setStateVariableSeverity(StateVariableTypeAlarmDEV,"operation_not_supported", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
+		metadataLogging(chaos::common::metadata_logging::StandardLoggingChannel::LogLevelError,ss.str());
 
     }
 
@@ -265,6 +278,8 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     //
     sizex=cc->getRWPtr<int32_t>(DOMAIN_INPUT, WIDTH_KEY);
     sizey=cc->getRWPtr<int32_t>(DOMAIN_INPUT, HEIGHT_KEY);
+    offsetx=cc->getRWPtr<int32_t>(DOMAIN_INPUT, OFFSETX_KEY);
+    offsety=cc->getRWPtr<int32_t>(DOMAIN_INPUT, OFFSETY_KEY);
     //
     mode=cc->getROPtr<int32_t>(DOMAIN_INPUT, TRIGGER_MODE_KEY);
  //   camera_out=cc->getRWPtr<uint8_t>(DOMAIN_OUTPUT, "FRAMEBUFFER");
@@ -353,6 +368,8 @@ void RTCameraBase::cameraGrabCallBack(const void*buf,uint32_t blen,uint32_t widt
 }
 void RTCameraBase::startGrabbing(){
      RTCameraBaseLDBG_<<"Start Grabbing";
+    metadataLogging(chaos::common::metadata_logging::StandardLoggingChannel::LogLevelInfo,"Start grabbing");
+
     // allocate buffers;
     encodeWritePointer=0;
     captureWritePointer=0;
@@ -372,6 +389,7 @@ void RTCameraBase::startGrabbing(){
 
 void RTCameraBase::stopGrabbing(){
     stopCapture=true;
+    metadataLogging(chaos::common::metadata_logging::StandardLoggingChannel::LogLevelInfo,"Stop grabbing");
 
     RTCameraBaseLDBG_<<"Stop Grabbing..."<<stopCapture;
 
@@ -389,6 +407,11 @@ void RTCameraBase::stopGrabbing(){
     }
     encodedImg.consume_all([](buf_t i){ });
     captureImg.consume_all([](buf_t i){ });
+    setStateVariableSeverity(StateVariableTypeAlarmDEV,"operation_not_supported", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+    setStateVariableSeverity(StateVariableTypeAlarmDEV,"capture_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+    setStateVariableSeverity(StateVariableTypeAlarmDEV,"capture_timeout", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+    setStateVariableSeverity(StateVariableTypeAlarmCU,"encode_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+
     RTCameraBaseLDBG_<<"Stop Grabbing done"<<stopCapture;
 
 }
@@ -408,7 +431,7 @@ void RTCameraBase::captureThread(){
     while(!stopCapture){
         img=0;
          start=chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
-          ret=driver->waitGrab(&img,5000);
+          ret=driver->waitGrab(&img,trigger_timeout);
           if((img!=0) && (ret>0)){
             setStateVariableSeverity(StateVariableTypeAlarmDEV,"capture_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
             setStateVariableSeverity(StateVariableTypeAlarmDEV,"capture_timeout", chaos::common::alarm::MultiSeverityAlarmLevelClear);
