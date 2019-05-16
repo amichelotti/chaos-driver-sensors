@@ -48,7 +48,7 @@ public:
         void cameraGrabCallBack(const void*buf,uint32_t blen,uint32_t width,uint32_t heigth, uint32_t error);
 
 protected:
-    int32_t *sizex,*sizey;
+        int32_t *sizex,*sizey,*offsetx,*offsety;
         const int32_t* mode;
         uint8_t* framebuf;
         uint32_t framebuf_encoding;
@@ -71,6 +71,8 @@ protected:
         boost::lockfree::queue<buf_t, boost::lockfree::fixed_sized<true> > captureImg;
         boost::lockfree::queue<buf_t, boost::lockfree::fixed_sized<true> > encodedImg;
         boost::mutex mutex_io,mutex_encode;
+        uint32_t hw_trigger_timeout_us,sw_trigger_timeout_us,trigger_timeout; // 0 =wait indefinitively
+
         uint64_t encode_time,capture_time,network_time,counter_capture,counter_encode;
         void encodeThread();
         int bufinuse;
@@ -81,7 +83,8 @@ protected:
         void updateProperty();
         bool setProp(const std::string &name, int32_t value, uint32_t size);
         bool setProp(const std::string &name, double value, uint32_t size);
-
+        void startGrabbing();
+        void stopGrabbing();
 		/*!
 		Define the Control Unit Dataset and Actions
 		*/

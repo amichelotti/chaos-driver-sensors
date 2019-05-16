@@ -40,27 +40,21 @@ namespace driver {
 #define CAM_DEFAULT_WIDTH 659
 #define CAM_DEFAULT_HEIGTH 494
 
-class IDSGEXXDriver:public ::driver::sensor::camera::CameraDriverBridge {
+class IDSGEXXDriver:ADD_CU_DRIVER_PLUGIN_SUPERCLASS,  ::driver::sensor::camera::CameraDriverBridge {
 
 
-   chaos::common::data::CDataWrapper* props;
  protected:
    int get_next_image(char **mem, INT *image_id,int32_t timeout);
 
- void driverInit(const char *initParameter) throw(chaos::CException);
- void driverInit(const chaos::common::data::CDataWrapper& json) throw(chaos::CException);
+ void driverInit(const char *initParameter) ;
+ void driverInit(const chaos::common::data::CDataWrapper& json);
 
   int initializeCamera(const chaos::common::data::CDataWrapper& json) ;
-  void driverDeinit() throw(chaos::CException) ;
+  void driverDeinit() ;
     // This smart pointer will receive the grab result data.
      HIDS hCam;
-     int32_t tmode; //0 continous, 1 software,2 hw,3 singleshot
-     int32_t gstrategy;
      ueye::Camera camera;
-     uint32_t shots;
-     void*framebuf;
      int32_t memID;
-     cameraGrabCallBack fn;
      bool initialized;
      int propsToCamera(chaos::common::data::CDataWrapper*p);
      int cameraToProps(chaos::common::data::CDataWrapper*p);
@@ -91,7 +85,8 @@ public:
      int cameraInit(void *buffer,uint32_t sizeb);
 
      int cameraDeinit();
-        
+            cu_driver::MsgManagmentResultType::MsgManagmentResult execOpcode(cu_driver::DrvMsgPtr cmd){return CameraDriverBridge::execOpcode(cmd);}
+
 };
         }}}
 #endif /* defined(__ControlUnitTest__DummyDriver__) */
