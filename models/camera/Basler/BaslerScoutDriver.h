@@ -43,10 +43,9 @@ namespace driver {
 #define CAM_DEFAULT_WIDTH 659
 #define CAM_DEFAULT_HEIGTH 494
 
-class BaslerScoutDriver:public ::driver::sensor::camera::CameraDriverBridge {
+class BaslerScoutDriver:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::CameraDriverBridge {
 
 
-   chaos::common::data::CDataWrapper* props;
  protected:
  void driverInit(const char *initParameter) throw(chaos::CException);
  void driverInit(const chaos::common::data::CDataWrapper& json) throw(chaos::CException);
@@ -55,15 +54,11 @@ class BaslerScoutDriver:public ::driver::sensor::camera::CameraDriverBridge {
   void driverDeinit() throw(chaos::CException) ;
     // This smart pointer will receive the grab result data.
      Pylon::CInstantCamera* camerap;
-     TriggerModes tmode; //0 continous, 1 software,2 hw,3 singleshot
-     GrabStrategy gstrategy;
-
-     uint32_t shots;
-     void*framebuf;
-
-     cameraGrabCallBack fn;
-     int propsToCamera(Pylon::CInstantCamera& camera,chaos::common::data::CDataWrapper*p);
+          int propsToCamera(Pylon::CInstantCamera& camera,chaos::common::data::CDataWrapper*p);
      int cameraToProps(Pylon::CInstantCamera& camera,chaos::common::data::CDataWrapper*p);
+     int changeTriggerMode(Pylon::CInstantCamera* camera,int trigger_mode);
+     int getNode(const std::string &node_name, Pylon::CInstantCamera *camera, int32_t &percent,const std::string pub="");
+    int getNodeInPercentage(const std::string &node_name, Pylon::CInstantCamera*camera, float &percent,const std::string& pub="");
 
 public:
 	BaslerScoutDriver();
@@ -91,7 +86,8 @@ public:
      int cameraInit(void *buffer,uint32_t sizeb);
 
      int cameraDeinit();
-        
+    cu_driver::MsgManagmentResultType::MsgManagmentResult execOpcode(cu_driver::DrvMsgPtr cmd){return CameraDriverBridge::execOpcode(cmd);}
+  
      friend class CConfigurationEvent;
 };
         }}}
