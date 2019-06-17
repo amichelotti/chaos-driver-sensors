@@ -138,21 +138,21 @@ void BasicSensor::unitRun() throw(chaos::CException) {
     for(i=output_size.begin(),cnt=0;i!=output_size.end();i++,cnt++){
         char buffer[*i];
         if((ret=driver->readChannel(buffer,cnt,*i))){
-	  changed++;
+	        changed++;
             BasicSensorLDBG_<<"Reading output channel "<<cnt<<", size :"<<*i <<" ret:"<<ret;
             getAttributeCache()->setOutputAttributeValue(cnt, (void*)buffer, *i);
         }
     }
-  
+    uint64_t difftime=(chaos::common::utility::TimingUtil::getLocalTimeStamp() - last_update);
   //! set output dataset as changed
     if(changed){
       setStateVariableSeverity(StateVariableTypeAlarmCU,"timeout_sensor_readout", chaos::common::alarm::MultiSeverityAlarmLevelClear);
       last_update=chaos::common::utility::TimingUtil::getLocalTimeStamp();
       getAttributeCache()->setOutputDomainAsChanged();
-    } else if((chaos::common::utility::TimingUtil::getLocalTimeStamp() - last_update)> sensor_timeout){
+    } else if((difftime> sensor_timeout)&&(difftime<2*sensor_timeout)){
         setStateVariableSeverity(StateVariableTypeAlarmCU,"timeout_sensor_readout", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
 
-    } else if((chaos::common::utility::TimingUtil::getLocalTimeStamp() - last_update)> 2*sensor_timeout){
+    } else if(difftime> 2*sensor_timeout){
         setStateVariableSeverity(StateVariableTypeAlarmCU,"timeout_sensor_readout", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
 
     }
