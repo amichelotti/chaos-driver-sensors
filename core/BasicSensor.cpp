@@ -25,6 +25,8 @@ using namespace chaos;
 using namespace chaos::common::data::cache;
 using namespace chaos::cu::driver_manager::driver;
 using namespace ::driver::sensor;
+using namespace chaos::cu::control_manager;
+using namespace chaos::cu::driver_manager::driver;
 
 PUBLISHABLE_CONTROL_UNIT_IMPLEMENTATION(BasicSensor)
 
@@ -35,11 +37,20 @@ PUBLISHABLE_CONTROL_UNIT_IMPLEMENTATION(BasicSensor)
 /*
  Construct
  */
-BasicSensor::BasicSensor(const string& _control_unit_id, const string& _control_unit_param, const ControlUnitDriverList& _control_unit_drivers):
-RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers) {
+BasicSensor::BasicSensor(const string& _control_unit_id, const string& _control_unit_param, const ControlUnitDriverList& _control_unit_drivers):last_update(0),sensor_timeout(120*1000), 
+RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers){
    BasicSensorLAPP_ << "Created";
+   driver=NULL;
+   try{
+         chaos::common::data::CDataWrapper parms;
+        parms.setSerializedJsonData(_control_unit_param.c_str());
+        if(parms.hasKey("sensor_timeout")){
+            sensor_timeout = parms.getInt32Value("sensor_timeout");
+        }
 
-    driver=NULL;
+   } catch(...){
+
+   }
 }
 
 /*
@@ -76,6 +87,7 @@ void BasicSensor::unitDefineActionAndDataset() throw(chaos::CException) {
     driver_dataset = (ddDataSet_t *)malloc( driver_dataset_size);
     assert(driver_dataset);
   }
+  addStateVariable(StateVariableTypeAlarmCU,"timeout_sensor_readout","Sensor timeout");
     ret=driver->getDataset(driver_dataset,driver_dataset_size);
     
     for(int cnt=0;cnt<ret/sizeof(ddDataSet_t);cnt++){
@@ -113,6 +125,7 @@ getAttributeCache()->resetChangedInputIndex();
 //!Execute the work, this is called with a determinated delay, it must be as fast as possible
 void BasicSensor::unitStart() throw(chaos::CException) {
     setDefaultScheduleDelay(1000000);
+    setStateVariableSeverity(StateVariableTypeAlarmCU,"timeout_sensor_readout", chaos::common::alarm::MultiSeverityAlarmLevelClear);
 
 }
 
@@ -132,8 +145,17 @@ void BasicSensor::unitRun() throw(chaos::CException) {
     }
   
   //! set output dataset as changed
-    if(changed)
+    if(changed){
+      setStateVariableSeverity(StateVariableTypeAlarmCU,"timeout_sensor_readout", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+      last_update=chaos::common::utility::TimingUtil::getLocalTimeStamp();
       getAttributeCache()->setOutputDomainAsChanged();
+    } else if((chaos::common::utility::TimingUtil::getLocalTimeStamp() - last_update)> sensor_timeout){
+        setStateVariableSeverity(StateVariableTypeAlarmCU,"timeout_sensor_readout", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
+
+    } else if((chaos::common::utility::TimingUtil::getLocalTimeStamp() - last_update)> 2*sensor_timeout){
+        setStateVariableSeverity(StateVariableTypeAlarmCU,"timeout_sensor_readout", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+
+    }
 }
 
 //!Execute the Control Unit work
