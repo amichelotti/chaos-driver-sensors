@@ -315,7 +315,7 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
     int32_t ret=-1;
     size_t size_ret;
     boost::random::mt19937 gen(std::time(0) );
-    Mat img(height,width,  CV_8UC3, Scalar::all(0));
+    Mat img= Mat::zeros(height,width,  CV_8UC3);
     std::stringstream ss,fs;
     ss<<getUid()<<":"<<frames++;
     RND_DIST(centerx);
@@ -325,8 +325,7 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
     RND_DIST(rotangle);
     RND_DIST(tickness);
     fs<<shape_type<<":("<<tmp_centerx<<","<<tmp_centery<<") "<<tmp_sizex<<"x"<<tmp_sizey<<","<<tmp_rotangle<<","<<tmp_tickness;
-    rectangle(img,Point( 0, 0),Size( width, height ), Scalar( colr, colg, colb ),tmp_tickness,
-                 linetype);
+    rectangle(img,Point( 0, 0),Point( width-1, height-1 ), Scalar( colr, colg, colb ));
     if(shape_type == "ellipse"){
         // get parameters
        
