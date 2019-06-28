@@ -364,7 +364,7 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
             framebuf[frames&1]=realloc(framebuf[frames&1],size);
             framebuf_size[frames&1]=size;
         }
-        ShapeSimLDBG_<<shape_type<<"("<<width<<"X"<<height<<")"<<frames<<" center "<<tmp_centerx<<","<<tmp_centery<<" sizex:"<<tmp_sizex<<" sizey:"<<tmp_sizey<<" color:"<<colr<<"R,"<<colg<<"G,"<<colb<<" size byte:"<<size;
+        ShapeSimLDBG_<<ss<<","<<fs<<" size byte:"<<size<<" framerate:"<<framerate;
         std::memcpy(framebuf[frames&1],img.data,size );
         if(buf){
             if(frames>0){

@@ -383,7 +383,7 @@ void RTCameraBase::startGrabbing(){
     stopCapture=false;
 
     capture_th=boost::thread(&RTCameraBase::captureThread,this);
-    getAttributeCache()->setCustomDomainAsChanged();
+    getAttributeCache()->setCustomDomainAsChanged()
     pushCustomDataset();
 }
 
