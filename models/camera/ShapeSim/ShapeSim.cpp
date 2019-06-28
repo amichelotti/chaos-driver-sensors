@@ -315,19 +315,26 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
     int32_t ret=-1;
     size_t size_ret;
     boost::random::mt19937 gen(std::time(0) );
-    
+    Mat img(height,width,  CV_8UC3, Scalar::all(0));
+    std::stringstream ss,fs;
+    ss<<getUid()<<":"<<frames++;
+    RND_DIST(centerx);
+    RND_DIST(centery);
+    RND_DIST(sizex);
+    RND_DIST(sizey);
+    RND_DIST(rotangle);
+    RND_DIST(tickness);
+    fs<<shape_type<<":("<<tmp_centerx<<","<<tmp_centery<<") "<<tmp_sizex<<"x"<<tmp_sizey<<","<<tmp_rotangle<<","<<tmp_tickness;
+    rectangle(img,Point( 0, 0),Size( width, height ), Scalar( colr, colg, colb ),tmp_tickness,
+                 linetype);
     if(shape_type == "ellipse"){
-        Mat img(height,width,  CV_8UC3, Scalar::all(0));
         // get parameters
-        std::stringstream ss;
-        ss<<getUid()<<":"<<frames++;
-        RND_DIST(centerx);
-        RND_DIST(centery);
-        RND_DIST(sizex);
-        RND_DIST(sizey);
-        RND_DIST(rotangle);
-        RND_DIST(tickness);
+       
+        
         putText(img,ss.str(),Point(10,25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
+        
+        putText(img,fs.str(),Point(10,height-25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
+
         ellipse( img,
                  Point( tmp_centerx, tmp_centery),
                  Size( tmp_sizex, tmp_sizey ),
