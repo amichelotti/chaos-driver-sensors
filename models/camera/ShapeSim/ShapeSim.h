@@ -56,8 +56,9 @@ class ShapeSim:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::Camera
      int32_t gstrategy;
      uint32_t shots;
      uint64_t frames;
-     void*framebuf;
-     int framebuf_size;
+    
+     void*framebuf[2];
+     int framebuf_size[2];
      int32_t memID;
      cameraGrabCallBack fn;
      bool initialized;
