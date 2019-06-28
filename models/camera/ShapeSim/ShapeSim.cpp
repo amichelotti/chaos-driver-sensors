@@ -326,6 +326,7 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
     boost::random::mt19937 gen(std::time(0) );
     Mat img= Mat::zeros(height,width,  CV_8UC3);
     std::stringstream ss,fs;
+
     ss<<getUid()<<":"<<frames++;
     RND_DIST(centerx);
     RND_DIST(centery);
@@ -364,13 +365,18 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
             framebuf_size[frames&1]=size;
         }
         ShapeSimLDBG_<<shape_type<<"("<<width<<"X"<<height<<")"<<frames<<" center "<<tmp_centerx<<","<<tmp_centery<<" sizex:"<<tmp_sizex<<" sizey:"<<tmp_sizey<<" color:"<<colr<<"R,"<<colg<<"G,"<<colb<<" size byte:"<<size;
+        std::memcpy(framebuf[frames&1],img.data,size );
         if(buf){
-            *buf=(char*)framebuf[frames&1];
-            std::memcpy(framebuf[frames&1],img.data,size );
+            if(frames>0){
+                *buf=(char*)framebuf[!(frames&1)];
+            } else {
+                *buf=(char*)framebuf[0];
+            }
         } else {
             ShapeSimLERR_<<"BAD BUFFER GIVEN "<<shape_type<<"("<<width<<"X"<<height<<")"<<frames<<" center "<<tmp_centerx<<","<<tmp_centery<<" sizex:"<<tmp_sizex<<" sizey:"<<tmp_sizey<<" color:"<<colr<<"R,"<<colg<<"G,"<<colb<<" size byte:"<<size;
 
         }
+        
         
         ret=size;
     } else {
