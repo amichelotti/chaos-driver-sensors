@@ -35,6 +35,8 @@ class BasicSensor : public chaos::cu::control_manager::RTAbstractControlUnit {
     int driver_dataset_size;
     std::vector<int> output_size;
     std::vector<int> input_size;
+    uint64_t last_update;
+    uint32_t sensor_timeout;
 public:
     /*!
      Construct a new CU with full constructor
