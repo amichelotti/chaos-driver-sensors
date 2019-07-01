@@ -439,18 +439,17 @@ void RTCameraBase::captureThread(){
             if(captureWritePointer>=CAMERA_FRAME_BUFFERING){
                 captureWritePointer=0;
             }
-            if(framebuf_out[captureWritePointer].size<ret){
-                framebuf_out[captureWritePointer].buf=(unsigned char*)realloc(framebuf_out[captureWritePointer].buf,ret);
-                if(framebuf_out[captureWritePointer].buf==NULL){
+            buf_t data;
+            data.buf=malloc(ret);
+            if(data.buf==NULL){
                     throw chaos::CException(-1,"Heap memory exahusted",__PRETTY_FUNCTION__);
-                }
-                framebuf_out[captureWritePointer].size=ret;
             }
-            memcpy((void*)framebuf_out[captureWritePointer].buf,img,ret);
+            data.size=ret;
+            memcpy((void*)data.buf,img,ret);
             capture_time+=(chaos::common::utility::TimingUtil::getTimeStampInMicroseconds()-start);
             counter_capture++;
            
-            if(captureImg.push(framebuf_out[captureWritePointer])==false){
+            if(captureImg.push(data)==false){
                 // FULL
                 RTCameraBaseLDBG_<<"Capture FULL write pointer:"<<captureWritePointer;
                 wait_capture.notify_one();
@@ -493,11 +492,12 @@ void RTCameraBase::encodeThread(){
         }
         buf_t a;
 
-        if(captureImg.pop(a)){
+        if(captureImg.pop(a)&&a.buf){
             start=chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
             full_capture.notify_one();
-
+        
         cv::Mat image(*sizey,*sizex,framebuf_encoding,a.buf);
+        free(a.buf);
         try {
         //bool code = cv::imencode(encoding, image, buf );
            
@@ -510,13 +510,13 @@ void RTCameraBase::encodeThread(){
 
             } else {
                 setStateVariableSeverity(StateVariableTypeAlarmCU,"encode_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
-                buf_t a;
-                a.buf= reinterpret_cast<uchar*> (&encbuf[encodeWritePointer][0]);
-                a.size=encbuf[encodeWritePointer].size();
+                buf_t aa;
+                aa.buf= reinterpret_cast<uchar*> (&encbuf[encodeWritePointer][0]);
+                aa.size=encbuf[encodeWritePointer].size();
                 wait_encode.notify_one();
                 encode_time+=(chaos::common::utility::TimingUtil::getTimeStampInMicroseconds()-start);
                 counter_encode++;
-                if(encodedImg.push(a)==false){
+                if(encodedImg.push(aa)==false){
                     // FULL
                     boost::mutex::scoped_lock lock(mutex_encode);
                     RTCameraBaseLDBG_<<"Encode FULL write pointer:"<<encodeWritePointer;
