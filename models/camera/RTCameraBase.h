@@ -25,7 +25,7 @@
 #include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
 
 #define DEFAULT_RESOLUTION 640*480*3
-#define CAMERA_FRAME_BUFFERING 64
+#define CAMERA_FRAME_BUFFERING 16
 
 namespace driver{
     
@@ -61,12 +61,11 @@ protected:
        // uint8_t* camera_out;
       //  buf_t framebuf_out[CAMERA_FRAME_BUFFERING]; //capture stage
 
-        int captureWritePointer;
         void captureThread();
         bool stopCapture,stopEncoding;
         boost::thread capture_th,encode_th;
       //  std::vector<unsigned char> encbuf[CAMERA_FRAME_BUFFERING];//encode stage
-        int encodeWritePointer;
+        uint32_t captureQueue,encodeQueue;
         boost::condition_variable wait_capture,wait_encode,full_capture,full_encode;
         boost::lockfree::queue<buf_t, boost::lockfree::fixed_sized<true> > captureImg;
         boost::lockfree::queue<std::vector<unsigned char>*, boost::lockfree::fixed_sized<true> > encodedImg;
