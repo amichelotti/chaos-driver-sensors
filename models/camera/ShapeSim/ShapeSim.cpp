@@ -68,11 +68,16 @@ void ShapeSim::driverInit(const chaos::common::data::CDataWrapper& json) throw(c
 
 void ShapeSim::driverDeinit() throw(chaos::CException) {
     ShapeSimLAPP_ << "Deinit driver";
-    if(framebuf){
-        free(framebuf);
-        framebuf=NULL;
+    if(framebuf[0]){
+        free(framebuf[0]);
+        framebuf[0]=NULL;
     }
-    framebuf_size=0;
+    framebuf_size[0]=0;
+if(framebuf[1]){
+        free(framebuf[1]);
+        framebuf[1]=NULL;
+    }
+    framebuf_size[1]=0;
 
 }
 
@@ -115,9 +120,13 @@ int ShapeSim::initializeCamera(const chaos::common::data::CDataWrapper& json) {
 
     return ret;
 }
-DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,ShapeSim),shots(0),frames(0),framebuf(NULL),framebuf_size(0),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1.0),offsetx(0),offsety(0){
+DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,ShapeSim),shots(0),frames(0),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1.0),offsetx(0),offsety(0){
 
     ShapeSimLDBG_<<  "Created Driver";
+    framebuf[0]=NULL;
+    framebuf[1]=NULL;
+    framebuf_size[0]=0;
+    framebuf_size[1]=0;
     props=new chaos::common::data::CDataWrapper();
 #ifdef CVDEBUG
 
@@ -315,19 +324,26 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
     int32_t ret=-1;
     size_t size_ret;
     boost::random::mt19937 gen(std::time(0) );
-    
+    Mat img= Mat::zeros(height,width,  CV_8UC3);
+    std::stringstream ss,fs;
+
+    ss<<getUid()<<":"<<frames++;
+    RND_DIST(centerx);
+    RND_DIST(centery);
+    RND_DIST(sizex);
+    RND_DIST(sizey);
+    RND_DIST(rotangle);
+    RND_DIST(tickness);
+    fs<<shape_type<<":("<<tmp_centerx<<","<<tmp_centery<<") "<<tmp_sizex<<"x"<<tmp_sizey<<","<<tmp_rotangle<<","<<tmp_tickness;
+    rectangle(img,Point( 0, 0),Point( width-1, height-1 ), Scalar( colr, colg, colb ));
     if(shape_type == "ellipse"){
-        Mat img(height,width,  CV_8UC3, Scalar::all(0));
         // get parameters
-        std::stringstream ss;
-        ss<<getUid()<<":"<<frames++;
-        RND_DIST(centerx);
-        RND_DIST(centery);
-        RND_DIST(sizex);
-        RND_DIST(sizey);
-        RND_DIST(rotangle);
-        RND_DIST(tickness);
+       
+        
         putText(img,ss.str(),Point(10,25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
+        
+        putText(img,fs.str(),Point(10,height-25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
+
         ellipse( img,
                  Point( tmp_centerx, tmp_centery),
                  Size( tmp_sizex, tmp_sizey ),
@@ -344,18 +360,23 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
         imshow( "test", img );
         waitKey( 0 );
 #endif
-        if(framebuf_size<size){
-            framebuf=realloc(framebuf,size);
-            framebuf_size=size;
+        if(framebuf_size[frames&1]<size){
+            framebuf[frames&1]=realloc(framebuf[frames&1],size);
+            framebuf_size[frames&1]=size;
         }
-        ShapeSimLDBG_<<shape_type<<"("<<width<<"X"<<height<<")"<<frames<<" center "<<tmp_centerx<<","<<tmp_centery<<" sizex:"<<tmp_sizex<<" sizey:"<<tmp_sizey<<" color:"<<colr<<"R,"<<colg<<"G,"<<colb<<" size byte:"<<size;
+        ShapeSimLDBG_<<ss.str()<<","<<fs.str()<<" size byte:"<<size<<" framerate:"<<framerate;
+        std::memcpy(framebuf[frames&1],img.data,size );
         if(buf){
-            *buf=(char*)framebuf;
-            std::memcpy(framebuf,img.data,size );
+            if(frames>0){
+                *buf=(char*)framebuf[!(frames&1)];
+            } else {
+                *buf=(char*)framebuf[0];
+            }
         } else {
             ShapeSimLERR_<<"BAD BUFFER GIVEN "<<shape_type<<"("<<width<<"X"<<height<<")"<<frames<<" center "<<tmp_centerx<<","<<tmp_centery<<" sizex:"<<tmp_sizex<<" sizey:"<<tmp_sizey<<" color:"<<colr<<"R,"<<colg<<"G,"<<colb<<" size byte:"<<size;
 
         }
+        
         
         ret=size;
     } else {

@@ -53,23 +53,23 @@ protected:
         uint8_t* framebuf;
         uint32_t framebuf_encoding;
         typedef struct {
-            unsigned char*buf;
+            uint8_t*buf;
             int32_t size;
         } buf_t;
         char encoding[16];
         chaos::common::data::CDataWrapper camera_props;
        // uint8_t* camera_out;
-        buf_t framebuf_out[CAMERA_FRAME_BUFFERING]; //capture stage
+      //  buf_t framebuf_out[CAMERA_FRAME_BUFFERING]; //capture stage
 
         int captureWritePointer;
         void captureThread();
         bool stopCapture,stopEncoding;
         boost::thread capture_th,encode_th;
-        std::vector<unsigned char> encbuf[CAMERA_FRAME_BUFFERING];//encode stage
+      //  std::vector<unsigned char> encbuf[CAMERA_FRAME_BUFFERING];//encode stage
         int encodeWritePointer;
         boost::condition_variable wait_capture,wait_encode,full_capture,full_encode;
         boost::lockfree::queue<buf_t, boost::lockfree::fixed_sized<true> > captureImg;
-        boost::lockfree::queue<buf_t, boost::lockfree::fixed_sized<true> > encodedImg;
+        boost::lockfree::queue<std::vector<unsigned char>*, boost::lockfree::fixed_sized<true> > encodedImg;
         boost::mutex mutex_io,mutex_encode;
         uint32_t hw_trigger_timeout_us,sw_trigger_timeout_us,trigger_timeout; // 0 =wait indefinitively
 
