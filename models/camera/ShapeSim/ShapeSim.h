@@ -56,7 +56,7 @@ class ShapeSim:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::Camera
      int32_t gstrategy;
      uint32_t shots;
      uint64_t frames;
-    
+     int movex,movey,rot;
      void*framebuf[2];
      int framebuf_size[2];
      int32_t memID;
@@ -65,6 +65,7 @@ class ShapeSim:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::Camera
      int propsToCamera(chaos::common::data::CDataWrapper*p);
      int cameraToProps(chaos::common::data::CDataWrapper*p);
      int width,height,offsetx,offsety;
+     int tmp_centerx,tmp_centery,tmp_sizex,tmp_sizey,tmp_rotangle,tmp_tickness;
      double framerate;
      // shape parameters
      ChaosUniquePtr<chaos::common::data::CDataWrapper> shape_params;
