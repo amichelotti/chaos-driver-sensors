@@ -49,7 +49,7 @@ PUBLISHABLE_CONTROL_UNIT_IMPLEMENTATION(RTCameraBase)
 }
 
 RTCameraBase::RTCameraBase(const string& _control_unit_id, const string& _control_unit_param, const ControlUnitDriverList& _control_unit_drivers):
-RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers),driver(NULL),framebuf_encoding(CV_8UC3),captureImg(CAMERA_FRAME_BUFFERING),encodedImg(CAMERA_FRAME_BUFFERING),encode_time(0),capture_time(0),network_time(0),captureWritePointer(0),encodeWritePointer(0), hw_trigger_timeout_us(5000000),sw_trigger_timeout_us(0),trigger_timeout(0) {
+RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers),driver(NULL),framebuf_encoding(CV_8UC3),captureImg(CAMERA_FRAME_BUFFERING),encodedImg(CAMERA_FRAME_BUFFERING),encode_time(0),capture_time(0),network_time(0),captureQueue(0),encodeQueue(0), hw_trigger_timeout_us(5000000),sw_trigger_timeout_us(0),trigger_timeout(0) {
   RTCameraBaseLDBG_<<"Creating "<<_control_unit_id<<" params:"<<_control_unit_param;
   try{
       framebuf=NULL;
@@ -242,6 +242,9 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
     addStateVariable(StateVariableTypeAlarmDEV,"capture_error","an error occurred during capture");
     addStateVariable(StateVariableTypeAlarmDEV,"capture_timeout","a timeout has occurred");
 
+    addStateVariable(StateVariableTypeAlarmDEV,"captureQueueFull","Queue Capture Full");
+    addStateVariable(StateVariableTypeAlarmDEV,"encodeQueueFull","Queue Encode Full");
+
 
 }
 
@@ -368,14 +371,14 @@ void RTCameraBase::startGrabbing(){
     metadataLogging(chaos::common::metadata_logging::StandardLoggingChannel::LogLevelInfo,"Start grabbing");
 
     // allocate buffers;
-    encodeWritePointer=0;
-    captureWritePointer=0;
+   
   /*   for(int cnt=0;cnt<CAMERA_FRAME_BUFFERING;cnt++){
         framebuf_out[cnt].buf=(unsigned char*)malloc(*sizex * *sizey * 4);
         framebuf_out[cnt].size=*sizex * *sizey * 4;
     }*/
     RTCameraBaseLDBG_<<"Allocated "<<CAMERA_FRAME_BUFFERING<<" buffers of "<<(*sizex * *sizey * 4)<<" bytes";
     updateProperty();
+
     driver->startGrab(0);
     stopCapture=false;
 
@@ -402,14 +405,13 @@ void RTCameraBase::stopGrabbing(){
         framebuf_out[cnt].size=0;
         framebuf_out[cnt].buf=NULL;
     }*/
-    captureImg.consume_all([](buf_t i){free(i.buf); });
-    encodedImg.consume_all([](std::vector<unsigned char>* i){delete(i);});
 
     setStateVariableSeverity(StateVariableTypeAlarmDEV,"operation_not_supported", chaos::common::alarm::MultiSeverityAlarmLevelClear);
     setStateVariableSeverity(StateVariableTypeAlarmDEV,"capture_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
     setStateVariableSeverity(StateVariableTypeAlarmDEV,"capture_timeout", chaos::common::alarm::MultiSeverityAlarmLevelClear);
     setStateVariableSeverity(StateVariableTypeAlarmCU,"encode_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
-
+    setStateVariableSeverity(StateVariableTypeAlarmCU,"encodeQueueFull", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+    setStateVariableSeverity(StateVariableTypeAlarmCU,"captureQueueFull", chaos::common::alarm::MultiSeverityAlarmLevelClear);
     RTCameraBaseLDBG_<<"Stop Grabbing done"<<stopCapture;
 
 }
@@ -434,9 +436,7 @@ void RTCameraBase::captureThread(){
             setStateVariableSeverity(StateVariableTypeAlarmDEV,"capture_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
             setStateVariableSeverity(StateVariableTypeAlarmDEV,"capture_timeout", chaos::common::alarm::MultiSeverityAlarmLevelClear);
 
-            if(captureWritePointer>=CAMERA_FRAME_BUFFERING){
-                captureWritePointer=0;
-            }
+           
             buf_t data;
             data.buf=(uint8_t*)malloc(ret);
             if(data.buf==NULL){
@@ -446,20 +446,28 @@ void RTCameraBase::captureThread(){
             memcpy((void*)data.buf,img,ret);
             capture_time+=(chaos::common::utility::TimingUtil::getTimeStampInMicroseconds()-start);
             counter_capture++;
-           
-            if(captureImg.push(data)==false){
-                // FULL
-                RTCameraBaseLDBG_<<"Capture FULL write pointer:"<<captureWritePointer;
-                wait_capture.notify_one();
+            bool pushret;
+            int retry=3;
+            do{
+                pushret=captureImg.push(data);
+                if(pushret==false){
+                    
+                    setStateVariableSeverity(StateVariableTypeAlarmDEV,"captureQueueFull", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
 
-                boost::mutex::scoped_lock lock(mutex_io);
-                full_capture.wait(lock);
-            } else {
-                RTCameraBaseLDBG_<<"Capture write pointer:"<<captureWritePointer<<" read pointer:"<<encodeWritePointer;
-                captureWritePointer++;
-                wait_capture.notify_one();
+                    wait_capture.notify_one();
+                    RTCameraBaseLDBG_<<"Capture FULL Queue:"<<captureQueue<<" Waiting...";
+                    boost::mutex::scoped_lock lock(mutex_io);
+                    full_capture.wait(lock);
+                } else {
+                    setStateVariableSeverity(StateVariableTypeAlarmDEV,"captureQueueFull", chaos::common::alarm::MultiSeverityAlarmLevelClear);
 
-            }
+                    RTCameraBaseLDBG_<<"Capture Queue:"<<captureQueue;
+                    captureQueue++;
+                    wait_capture.notify_one();
+
+                }
+            } while((pushret==false)&&(!stopCapture));
+            
         } else {
 
             if(ret==TRIGGER_TIMEOUT_ERROR){
@@ -475,9 +483,11 @@ void RTCameraBase::captureThread(){
 
         }
     }
-    captureWritePointer=0;
+    RTCameraBaseLDBG_<<"Capture thread exiting Queue: "<<captureQueue;
 
-    RTCameraBaseLDBG_<<"Capture thread ENDED";
+    captureImg.consume_all([this](buf_t i){free(i.buf);captureQueue--; });
+
+    RTCameraBaseLDBG_<<"Capture thread ENDED Queue:"<<captureQueue;
 
 }
 void RTCameraBase::encodeThread(){
@@ -485,57 +495,75 @@ void RTCameraBase::encodeThread(){
     counter_encode=0;
     RTCameraBaseLDBG_<<"Encode thread STARTED";
     while(!stopCapture){ 
-        if(encodeWritePointer>=CAMERA_FRAME_BUFFERING){
-            encodeWritePointer=0;
-        }
+      
         buf_t a;
 
         if(captureImg.pop(a)&&a.buf){
             start=chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
+            captureQueue--;
+
             full_capture.notify_one();
-        
         cv::Mat image(*sizey,*sizex,framebuf_encoding,a.buf);
-        free(a.buf);
+        std::vector<unsigned char> * encbuf=NULL;
         try {
         //bool code = cv::imencode(encoding, image, buf );
            
-            std::vector<unsigned char> * encbuf=new std::vector<unsigned char>();
+            encbuf=new std::vector<unsigned char>();
 
             bool code = cv::imencode(encoding, image,  *encbuf);
+            free(a.buf);
+            image.deallocate();
             if(code==false){
                 setStateVariableSeverity(StateVariableTypeAlarmCU,"encode_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
                 LERR_<<"Encode error:"<<fmt;
-                
-
+                delete encbuf;
+                encbuf=NULL;
             } else {
                 setStateVariableSeverity(StateVariableTypeAlarmCU,"encode_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
                 wait_encode.notify_one();
                 encode_time+=(chaos::common::utility::TimingUtil::getTimeStampInMicroseconds()-start);
                 counter_encode++;
-                if(encodedImg.push(encbuf)==false){
+                bool encoderet;
+                do{
+                  encoderet=encodedImg.push(encbuf);
+                  if(encoderet==false){
                     // FULL
+                    setStateVariableSeverity(StateVariableTypeAlarmDEV,"encodeQueueFull", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
+                    RTCameraBaseLDBG_<<"Encode Queue FULL: "<<encodeQueue<<" Waiting//";
+
                     boost::mutex::scoped_lock lock(mutex_encode);
-                    RTCameraBaseLDBG_<<"Encode FULL write pointer:"<<encodeWritePointer;
                     full_encode.wait(lock);
 
                 } else {
-                    encodeWritePointer++;
+                    setStateVariableSeverity(StateVariableTypeAlarmDEV,"encodeQueueFull", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+
+                    encodeQueue++;
                 }
+                } while((encoderet==false)&&(!stopCapture));
+                
                
             }
         } catch(...){
              setStateVariableSeverity(StateVariableTypeAlarmCU,"encode_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
             LERR_<<"Encode exception:"<<fmt;
+            if(encbuf){
+                delete encbuf;
+            }
         }
+        image.release();
         } else {
             RTCameraBaseLDBG_<<"Encode EMPTY";
 
             boost::mutex::scoped_lock lock(mutex_encode);
             wait_capture.wait(lock);
         }
+        
     }
-    encodeWritePointer=0;
-    RTCameraBaseLDBG_<<"Encode thread ENDED";
+    RTCameraBaseLDBG_<<"Encode thread exiting Queue: "<<encodeQueue;
+
+    encodedImg.consume_all([this](std::vector<unsigned char>* i){delete(i);encodeQueue--;});
+
+    RTCameraBaseLDBG_<<"Encode thread ENDED Queue: "<<encodeQueue;
 
 }
 
@@ -557,7 +585,8 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
     
     std::vector<unsigned char>*a;
     if(encodedImg.pop(a)){
-        RTCameraBaseLDBG_<<"Encode Write Pointer:"<<encodeWritePointer<<" CaptureWrite:"<<captureWritePointer;
+        encodeQueue--;
+        RTCameraBaseLDBG_<<" Encode Queue:"<<encodeQueue<<" Capture Queue:"<<captureQueue;
         uchar* ptr=reinterpret_cast<uchar*>(&((*a)[0]));
         getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER",ptr,a->size());
         getAttributeCache()->setOutputDomainAsChanged();
