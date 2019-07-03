@@ -25,6 +25,9 @@
 #include <driver/sensors/core/CameraDriverBridge.h>
 #include <chaos/common/data/DatasetDB.h>
 #include <stdint.h>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc.hpp>
 #define PIXEL_CLOCK 2
 namespace cu_driver = chaos::cu::driver_manager::driver;
 
@@ -67,6 +70,7 @@ class ShapeSim:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::Camera
      int width,height,offsetx,offsety;
      int tmp_centerx,tmp_centery,tmp_sizex,tmp_sizey,tmp_rotangle,tmp_tickness;
      double framerate;
+      cv::Mat img;
      // shape parameters
      ChaosUniquePtr<chaos::common::data::CDataWrapper> shape_params;
      std::string shape_type;

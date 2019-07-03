@@ -24,9 +24,7 @@
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <math.h>
 #include <boost/lexical_cast.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc.hpp>
+
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 
@@ -324,7 +322,8 @@ int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
 
     }
     ShapeSimLDBG_<<"Start Grabbing at:"<<framerate <<" frame/s";
-
+    img.release();
+    img.create(cv::Size(width,height),  CV_8UC3);
     return ret;
 }
 #define RND_DIST(var) \
@@ -338,13 +337,15 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
     int32_t ret=-1;
     size_t size_ret;
     boost::random::mt19937 gen(std::time(0) );
-    Mat img= Mat::zeros(height,width,  CV_8UC3);
+  //  img.zeros(cv::Size(height,width),  CV_8UC3);
+    img.setTo(cv::Scalar::all(0));
+
     std::stringstream ss,fs;
 
     ss<<getUid()<<":"<<frames++;
 
     if(movex){
-        if(((tmp_centerx+movex)>=width)|| ((tmp_centerx+movex)<=0)){
+        if(((tmp_centerx+tmp_sizex+movex)>=width)|| ((tmp_centerx-tmp_sizex+movex)<=0)){
             movex=-movex;
         }
         tmp_centerx+=movex;
@@ -357,7 +358,7 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
     }
 
     if(movey){
-        if(((tmp_centery+movey)>=height)|| ((tmp_centery+movey)<=0)){
+        if(((tmp_centery+tmp_sizey+movey)>=height)|| ((tmp_centery-tmp_sizey+movey)<=0)){
             movey=-movey;
         }
         tmp_centery+=movex;
@@ -378,9 +379,7 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
         // get parameters
        
         
-        putText(img,ss.str(),Point(10,25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
-        
-        putText(img,fs.str(),Point(10,height-25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
+       
 
         ellipse( img,
                  Point( tmp_centerx, tmp_centery),
@@ -391,7 +390,9 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
                  Scalar( colr, colg, colb ),
                  tmp_tickness,
                  linetype );
-
+        putText(img,ss.str(),Point(10,25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
+        
+        putText(img,fs.str(),Point(10,height-25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
         int size = img.total() * img.elemSize();
 #ifdef CVDEBUG
 
@@ -407,7 +408,7 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
         }
         ShapeSimLDBG_<<ss.str()<<","<<fs.str()<<" size byte:"<<size<<" framerate:"<<framerate;
         std::memcpy(framebuf[frames&1],img.data,size );
-        img.deallocate();
+    
         if(buf){
             if(frames>0){
                 *buf=(char*)framebuf[!(frames&1)];
@@ -450,6 +451,8 @@ int ShapeSim::waitGrab(uint32_t timeout_ms){
 }
 int ShapeSim::stopGrab(){
     //camera->StopGrabbing();
+    img.deallocate();
+    img.release();
     return 0;
 }
 
