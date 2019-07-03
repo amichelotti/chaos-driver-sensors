@@ -24,9 +24,7 @@
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <math.h>
 #include <boost/lexical_cast.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc.hpp>
+
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 
@@ -127,6 +125,7 @@ DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,ShapeSim),
     framebuf[1]=NULL;
     framebuf_size[0]=0;
     framebuf_size[1]=0;
+    movex=movey=rot=0;
     props=new chaos::common::data::CDataWrapper();
 #ifdef CVDEBUG
 
@@ -265,6 +264,7 @@ int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
     err_rotangle=0;
     err_extangle=0;
     err_tickness=0;
+
     // fetch parameters
     if(shape_params->hasKey("framerate")){
         framerate=shape_params->getDoubleValue("framerate");
@@ -282,8 +282,15 @@ int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
         colb=0;
         tickness=2;
         linetype=8; //connected
+        GETINTPARAM(shape_params,movex);
+        GETINTPARAM(shape_params,movey);
+        GETINTPARAM(shape_params,rot);
+
         GETINTPARAM(shape_params,centerx);
+        tmp_centerx=centerx;
         GETINTPARAM(shape_params,centery);
+        tmp_centery=centery;
+
         sizex=centerx/2;
         sizey=centery/2;
 
@@ -295,14 +302,19 @@ int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
         GETDBLPARAM(shape_params,err_extangle);
         GETDBLPARAM(shape_params,err_tickness);
         GETINTPARAM(shape_params,sizex);
-
+        tmp_sizex=sizex;
         GETINTPARAM(shape_params,sizey);
+        tmp_sizey=sizey;
 
 
         GETDBLPARAM(shape_params,rotangle);
+        tmp_rotangle=rotangle;
+
         GETDBLPARAM(shape_params,extangle);
 
         GETINTPARAM(shape_params,tickness);
+        tmp_tickness=tickness;
+
         GETINTPARAM(shape_params,linetype);
         GETINTPARAM(shape_params,colg);
         GETINTPARAM(shape_params,colb);
@@ -310,11 +322,12 @@ int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
 
     }
     ShapeSimLDBG_<<"Start Grabbing at:"<<framerate <<" frame/s";
-
+    img.release();
+    img.create(cv::Size(width,height),  CV_8UC3);
     return ret;
 }
 #define RND_DIST(var) \
-    int tmp_##var=var;\
+    tmp_##var=var;\
     if(err_##var>0){\
     boost::random::uniform_int_distribution<> dist_##var(-err_##var,err_##var);\
     double err=dist_##var(gen);\
@@ -324,25 +337,49 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
     int32_t ret=-1;
     size_t size_ret;
     boost::random::mt19937 gen(std::time(0) );
-    Mat img= Mat::zeros(height,width,  CV_8UC3);
+  //  img.zeros(cv::Size(height,width),  CV_8UC3);
+    img.setTo(cv::Scalar::all(0));
+
     std::stringstream ss,fs;
 
     ss<<getUid()<<":"<<frames++;
-    RND_DIST(centerx);
-    RND_DIST(centery);
-    RND_DIST(sizex);
-    RND_DIST(sizey);
-    RND_DIST(rotangle);
-    RND_DIST(tickness);
+
+    if(movex){
+        if(((tmp_centerx+tmp_sizex+movex)>=width)|| ((tmp_centerx-tmp_sizex+movex)<=0)){
+            movex=-movex;
+        }
+        tmp_centerx+=movex;
+        
+    } else {
+        RND_DIST(centerx);
+        RND_DIST(sizex);
+
+
+    }
+
+    if(movey){
+        if(((tmp_centery+tmp_sizey+movey)>=height)|| ((tmp_centery-tmp_sizey+movey)<=0)){
+            movey=-movey;
+        }
+        tmp_centery+=movex;
+        
+    } else {
+        RND_DIST(centery);
+        RND_DIST(sizey);
+    }
+    if(rot){
+        tmp_rotangle+=rot;
+    } else {
+        RND_DIST(rotangle);
+        RND_DIST(tickness);
+    }
     fs<<shape_type<<":("<<tmp_centerx<<","<<tmp_centery<<") "<<tmp_sizex<<"x"<<tmp_sizey<<","<<tmp_rotangle<<","<<tmp_tickness;
     rectangle(img,Point( 0, 0),Point( width-1, height-1 ), Scalar( colr, colg, colb ));
     if(shape_type == "ellipse"){
         // get parameters
        
         
-        putText(img,ss.str(),Point(10,25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
-        
-        putText(img,fs.str(),Point(10,height-25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
+       
 
         ellipse( img,
                  Point( tmp_centerx, tmp_centery),
@@ -353,19 +390,25 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
                  Scalar( colr, colg, colb ),
                  tmp_tickness,
                  linetype );
-
+        putText(img,ss.str(),Point(10,25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
+        
+        putText(img,fs.str(),Point(10,height-25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
         int size = img.total() * img.elemSize();
 #ifdef CVDEBUG
+
         cv::imshow("test",img);
         imshow( "test", img );
         waitKey( 0 );
 #endif
+        
         if(framebuf_size[frames&1]<size){
-            framebuf[frames&1]=realloc(framebuf[frames&1],size);
+            free(framebuf[frames&1]);
+            framebuf[frames&1]=malloc(size);
             framebuf_size[frames&1]=size;
         }
         ShapeSimLDBG_<<ss.str()<<","<<fs.str()<<" size byte:"<<size<<" framerate:"<<framerate;
         std::memcpy(framebuf[frames&1],img.data,size );
+    
         if(buf){
             if(frames>0){
                 *buf=(char*)framebuf[!(frames&1)];
@@ -408,6 +451,8 @@ int ShapeSim::waitGrab(uint32_t timeout_ms){
 }
 int ShapeSim::stopGrab(){
     //camera->StopGrabbing();
+    img.deallocate();
+    img.release();
     return 0;
 }
 
