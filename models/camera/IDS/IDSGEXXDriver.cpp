@@ -264,7 +264,7 @@ int IDSGEXXDriver::cameraToProps(chaos::common::data::CDataWrapper*p){
         p->addDoubleValue("GAIN",gain);
     }
     double framerate;
-    if(camera.getFrameRate(&framerate)){
+    if(camera.getFrameRate(&framerate)==0){
         IDSGEXXDriverLDBG_<< "FRAMERATE:"<<framerate;
 
         p->addDoubleValue("FRAMERATE",framerate);
@@ -502,7 +502,7 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
     }
     if(p->hasKey("FRAMERATE")){
         double value=p->getAsRealValue("FRAMERATE");
-        IDSGEXXDriverLDBG_<< "FRAME RATE:"<<value;
+        IDSGEXXDriverLDBG_<< "SET FRAMERATE:"<<value;
 
         camera.setFrameRate(&value);
     }
