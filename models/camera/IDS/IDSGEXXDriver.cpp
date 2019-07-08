@@ -282,6 +282,8 @@ int IDSGEXXDriver::cameraToProps(chaos::common::data::CDataWrapper*p){
         IDSGEXXDriverLDBG_<< "GAIN:"<<exp;
 
     }
+    int pixel_clock=camera.getPixelClock();
+    p->addInt32Value("PIXELCLOCK",pixel_clock);
     switch(camera.getTriggerMode()){
     case TRIGGER_HI_LO:
         IDSGEXXDriverLDBG_<< "TRIGGER HI->LOW";
