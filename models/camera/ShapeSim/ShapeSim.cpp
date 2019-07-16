@@ -431,7 +431,7 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
         double diff=(1000000.0/framerate) - (now-last_acquisition_ts);
         last_acquisition_ts=now;
         if(diff>0){
-	  boost::this_thread::sleep_for(boost::chrono::microseconds(diff));
+	  boost::this_thread::sleep_for(boost::chrono::microseconds((uint64_t)diff));
 	  
           
         }
