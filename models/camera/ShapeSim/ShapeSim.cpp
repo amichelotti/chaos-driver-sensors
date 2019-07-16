@@ -321,6 +321,7 @@ int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
         GETINTPARAM(shape_params,colr);
 
     }
+    last_acquisition_ts=chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
     ShapeSimLDBG_<<"Start Grabbing at:"<<framerate <<" frame/s";
     img.release();
     img.create(cv::Size(width,height),  CV_8UC3);
