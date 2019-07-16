@@ -428,10 +428,12 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
     }
     if(framerate>0){
         uint64_t now=chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
-        int64_t diff=(1000000LL/framerate) - (now-last_acquisition_ts);
+        double diff=(1000000.0/framerate) - (now-last_acquisition_ts);
         last_acquisition_ts=now;
         if(diff>0){
-            usleep(diff);
+	  boost::this_thread::sleep_for(boost::chrono::microseconds(diff));
+	  
+          
         }
         
     }
