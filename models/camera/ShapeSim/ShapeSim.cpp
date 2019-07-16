@@ -426,9 +426,13 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
         ShapeSimLERR_<<"Unknown shape given:"<<shape_type;
     }
     if(framerate>0){
-        usleep(1000000/framerate);
-    } else {
-        sleep(1);
+        uint64_t now=chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
+        int64_t diff=(1000000LL/framerate) - (now-last_acquisition_ts);
+        last_acquisition_ts=now;
+        if(diff>0){
+            usleep(diff);
+        }
+        
     }
     /*    if((ret=camera.captureImage(timeout_ms,(char*)framebuf,&size_ret))==0){
         ShapeSimLDBG_<<"Retrieved Image "<<camera.getWidth()<<"x"<<camera.getHeight()<<" raw size:"<<size_ret;
