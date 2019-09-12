@@ -81,6 +81,7 @@ class ShapeSim:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::Camera
      double err_centerx,err_centery;
      double err_sizex,err_sizey;
      double err_rotangle,err_extangle,err_tickness;
+    int64_t last_acquisition_ts;
      //
 public:
 	ShapeSim();
