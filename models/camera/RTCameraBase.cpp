@@ -474,13 +474,14 @@ void RTCameraBase::captureThread() {
     start = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
     ret = driver->waitGrab(&img, trigger_timeout);
     if ((img != 0) && (ret > 0)) {
-      setStateVariableSeverity(
-          StateVariableTypeAlarmDEV, "capture_error",
-          chaos::common::alarm::MultiSeverityAlarmLevelClear);
-      setStateVariableSeverity(
-          StateVariableTypeAlarmDEV, "capture_timeout",
-          chaos::common::alarm::MultiSeverityAlarmLevelClear);
-
+        // keep alarm high 
+        setStateVariableSeverity(
+            StateVariableTypeAlarmDEV, "capture_error",
+            chaos::common::alarm::MultiSeverityAlarmLevelClear);
+        setStateVariableSeverity(
+            StateVariableTypeAlarmDEV, "capture_timeout",
+            chaos::common::alarm::MultiSeverityAlarmLevelClear);
+        
       buf_t data;
       data.buf = (uint8_t *)malloc(ret);
       if (data.buf == NULL) {
@@ -515,10 +516,11 @@ void RTCameraBase::captureThread() {
 
           full_capture.timed_wait(lock,timeout);
         } else {
-          setStateVariableSeverity(
+          if(captureQueue<(CAMERA_FRAME_BUFFERING-1)){
+            setStateVariableSeverity(
               StateVariableTypeAlarmDEV, "captureQueueFull",
               chaos::common::alarm::MultiSeverityAlarmLevelClear);
-
+          }
           RTCameraBaseLDBG_ << "Capture Queue:" << captureQueue;
           captureQueue++;
           wait_capture.notify_one();
@@ -610,10 +612,12 @@ void RTCameraBase::encodeThread() {
               full_encode.timed_wait(lock,timeout);
 
             } else {
-              setStateVariableSeverity(
+              if(encodeQueue<(CAMERA_FRAME_BUFFERING-1)){
+                // keep encode high
+                setStateVariableSeverity(
                   StateVariableTypeAlarmDEV, "encodeQueueFull",
                   chaos::common::alarm::MultiSeverityAlarmLevelClear);
-
+              }
               encodeQueue++;
             }
           } while ((encoderet == false) && (!stopCapture));
