@@ -391,7 +391,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   } else {
     snprintf(encoding, sizeof(encoding), ".%s", fmt);
   }
-  snprintf(ofmt, sizeof(encoding), encoding);
+  strncpy(ofmt, encoding,sizeof(encoding));
   getAttributeCache()->setInputDomainAsChanged();
   getAttributeCache()->setOutputDomainAsChanged();
 }
@@ -500,10 +500,10 @@ void RTCameraBase::captureThread() {
         pushret = captureImg.push(data);
         if (pushret == false) {
 
-          setStateVariableSeverity(
+        /*  setStateVariableSeverity(
               StateVariableTypeAlarmDEV, "captureQueueFull",
               chaos::common::alarm::MultiSeverityAlarmLevelWarning);
-
+  */
           wait_capture.notify_one();
           RTCameraBaseLDBG_ << "Capture FULL Queue:" << captureQueue
                             << " Waiting...";
@@ -517,9 +517,9 @@ void RTCameraBase::captureThread() {
           full_capture.timed_wait(lock,timeout);
         } else {
           if(captureQueue<(CAMERA_FRAME_BUFFERING-1)){
-            setStateVariableSeverity(
+           /* setStateVariableSeverity(
               StateVariableTypeAlarmDEV, "captureQueueFull",
-              chaos::common::alarm::MultiSeverityAlarmLevelClear);
+              chaos::common::alarm::MultiSeverityAlarmLevelClear);*/
           }
           RTCameraBaseLDBG_ << "Capture Queue:" << captureQueue;
           captureQueue++;
@@ -600,9 +600,9 @@ void RTCameraBase::encodeThread() {
             encoderet = encodedImg.push(encbuf);
             if (encoderet == false) {
               // FULL
-              setStateVariableSeverity(
+             /* setStateVariableSeverity(
                   StateVariableTypeAlarmDEV, "encodeQueueFull",
-                  chaos::common::alarm::MultiSeverityAlarmLevelWarning);
+                  chaos::common::alarm::MultiSeverityAlarmLevelWarning);*/
               RTCameraBaseLDBG_ << "Encode Queue FULL: " << encodeQueue
                                 << " Waiting//";
 
@@ -614,9 +614,9 @@ void RTCameraBase::encodeThread() {
             } else {
               if(encodeQueue<(CAMERA_FRAME_BUFFERING-1)){
                 // keep encode high
-                setStateVariableSeverity(
+               /* setStateVariableSeverity(
                   StateVariableTypeAlarmDEV, "encodeQueueFull",
-                  chaos::common::alarm::MultiSeverityAlarmLevelClear);
+                  chaos::common::alarm::MultiSeverityAlarmLevelClear);*/
               }
               encodeQueue++;
             }
