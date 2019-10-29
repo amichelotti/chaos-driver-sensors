@@ -655,10 +655,11 @@ void RTCameraBase::encodeThread() {
         apply_roi=(ROIXSIZE>0) && (ROIYSIZE>0);
        // apply_zoom=(ZOOMX!=0.0) ||(ZOOMY!=0.0);
         if(apply_roi){
+          cv::Mat res;
           cv::Rect region_of_interest = cv::Rect(ROIX, ROIY, ROIXSIZE, ROIYSIZE);
           cv::Mat roi=image(region_of_interest);
-          cv::resize(roi,image,cv::Size(*sizex,*sizey));
-
+          cv::resize(roi,res,image.size(),0,0);
+          image=res;
         }
         
           if(apply_moment){
