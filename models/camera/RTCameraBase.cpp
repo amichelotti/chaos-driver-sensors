@@ -24,6 +24,8 @@
 #include <driver/sensors/core/CameraDriverInterface.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
 using namespace chaos;
 using namespace chaos::common::data::cache;
 using namespace chaos::cu::driver_manager::driver;
@@ -58,7 +60,7 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
       captureImg(CAMERA_FRAME_BUFFERING), encodedImg(CAMERA_FRAME_BUFFERING),
       encode_time(0), capture_time(0), network_time(0), captureQueue(0),
       encodeQueue(0), hw_trigger_timeout_us(5000000), sw_trigger_timeout_us(0),
-      trigger_timeout(0) {
+      trigger_timeout(0),apply_roi(false),apply_zoom(false),apply_moment(false),ROIX(0),ROIY(0),ROIXSIZE(0),ROIYSIZE(0){
   RTCameraBaseLDBG_ << "Creating " << _control_unit_id
                     << " params:" << _control_unit_param;
   try {
@@ -96,7 +98,12 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
     if (p.hasKey(TRIGGER_SW_TIMEOUT_KEY)) {
       sw_trigger_timeout_us = p.getInt32Value(TRIGGER_SW_TIMEOUT_KEY);
     }
-
+    apply_moment=false;
+    moment_circle=0;
+    if (p.hasKey(FILTER_MOMENT_KEY)) {
+      moment_circle=p.getInt32Value(FILTER_MOMENT_KEY);
+      apply_moment=true;
+    }
   } catch (...) {
   }
 }
@@ -144,11 +151,26 @@ void RTCameraBase::updateProperty() {
     }
   }
 }
+#define SETINTPROP(name,n,value) \
+if(name == # n ){\
+  n=value;\
+  return true;\
+}
+bool RTCameraBase::setProp(const std::string &name, const std::string& value, uint32_t size){
+  return false;
+}
+
 bool RTCameraBase::setProp(const std::string &name, int32_t value,
                            uint32_t size) {
   int ret;
   int32_t valuer;
   RTCameraBaseLDBG_ << "SET IPROP:" << name << " VALUE:" << value;
+  SETINTPROP(name,ROIX,value);
+  SETINTPROP(name,ROIY,value);
+  SETINTPROP(name,ROIXSIZE,value);
+  SETINTPROP(name,ROIYSIZE,value);
+
+  
   bool stopgrab = (stopCapture == false) &&
                   (((name == WIDTH_KEY) && (value != *sizex)) ||
                    ((name == HEIGHT_KEY) && (value != *sizey)) ||
@@ -191,8 +213,9 @@ bool RTCameraBase::setProp(const std::string &name, double value,
                            uint32_t size) {
   int ret;
   double valuer;
-  RTCameraBaseLDBG_ << "SET FPROP:" << name << " VALUE:" << value
-                    << " READ:" << valuer << " ret:" << ret;
+  RTCameraBaseLDBG_ << "SET FPROP:" << name << " VALUE:" << value << endl;
+  //SETINTPROP(name,ZOOMX,value);
+  //SETINTPROP(name,ZOOMY,value);
 
   ret = driver->setCameraProperty(name, value);
   setStateVariableSeverity(StateVariableTypeAlarmDEV, "operation_not_supported",
@@ -231,6 +254,54 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
   }
   std::vector<std::string> props;
   camera_props.getAllKey(props);
+  /**
+   * filtering options
+  */
+ addAttributeToDataSet("ROIX", "Source X of Software ROI",
+                        chaos::DataType::TYPE_INT32, chaos::DataType::Input);
+
+ addAttributeToDataSet("ROIY", "Source Y of Software ROI",
+                        chaos::DataType::TYPE_INT32, chaos::DataType::Input);
+
+ addAttributeToDataSet("ROIXSIZE", "X Size of Software ROI",
+                        chaos::DataType::TYPE_INT32, chaos::DataType::Input);
+
+ addAttributeToDataSet("ROIYSIZE", "Y Size of Software ROI",
+                        chaos::DataType::TYPE_INT32, chaos::DataType::Input);
+  
+ addAttributeToDataSet("ZOOMX", "Zoom in the X",
+                        chaos::DataType::TYPE_DOUBLE, chaos::DataType::Input);
+
+ addAttributeToDataSet("ZOOMY", "Zoom in the Y",
+                        chaos::DataType::TYPE_DOUBLE, chaos::DataType::Input);
+ 
+ addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase,
+                                       double>(
+            this, &::driver::sensor::camera::RTCameraBase::setProp, "ZOOMX");
+
+addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase,
+                                       double>(
+            this, &::driver::sensor::camera::RTCameraBase::setProp, "ZOOMY");
+  
+addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase,
+                                       int32_t>(
+            this, &::driver::sensor::camera::RTCameraBase::setProp, "ROIX");
+
+ addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase,
+                                       int32_t>(
+            this, &::driver::sensor::camera::RTCameraBase::setProp, "ROIY");
+
+addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase,
+                                       int32_t>(
+            this, &::driver::sensor::camera::RTCameraBase::setProp, "ROIXSIZE");
+
+addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase,
+                                       int32_t>(
+            this, &::driver::sensor::camera::RTCameraBase::setProp, "ROIYSIZE");
+
+ /****
+  * 
+  */
   addAttributeToDataSet("FMT", "image format (jpg,png,gif...)",
                         chaos::DataType::TYPE_STRING,
                         chaos::DataType::Bidirectional);
@@ -238,6 +309,13 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
                         chaos::DataType::TYPE_INT32, chaos::DataType::Output);
   addAttributeToDataSet("ENCODE_FRAMERATE", "Encode Frame Rate",
                         chaos::DataType::TYPE_INT32, chaos::DataType::Output);
+
+if(apply_moment){
+  addAttributeToDataSet("MOMENTX", "Centroid X",
+                        chaos::DataType::TYPE_INT32, chaos::DataType::Output);
+  addAttributeToDataSet("MOMENTY", "Centroid Y",
+                        chaos::DataType::TYPE_INT32, chaos::DataType::Output);
+}
 
   for (std::vector<std::string>::iterator i = props.begin(); i != props.end();
        i++) {
@@ -568,10 +646,40 @@ void RTCameraBase::encodeThread() {
 
       full_capture.notify_one();
       cv::Mat image(*sizey, *sizex, framebuf_encoding, a.buf);
+
       std::vector<unsigned char> *encbuf = NULL;
+      encoded_t ele;
+
       try {
         // bool code = cv::imencode(encoding, image, buf );
+        apply_roi=(ROIXSIZE>0) && (ROIYSIZE>0);
+       // apply_zoom=(ZOOMX!=0.0) ||(ZOOMY!=0.0);
+        if(apply_roi){
+          cv::Rect region_of_interest = cv::Rect(ROIX, ROIY, ROIXSIZE, ROIYSIZE);
+          cv::Mat roi=image(region_of_interest);
+          cv::resize(roi,image,cv::Size(*sizex,*sizey));
 
+        }
+        
+          if(apply_moment){
+            Mat thr, gray;
+ 
+            // convert image to grayscale
+            cvtColor( image, gray, COLOR_BGR2GRAY );
+ 
+            // convert grayscale to binary image
+            threshold( gray, thr, 100,255,THRESH_BINARY );
+ 
+            // find moments of the image
+            Moments m = moments(thr,true);
+            Point p(m.m10/m.m00, m.m01/m.m00);
+            ele.momentx=p.x;
+            ele.momenty=p.y;
+            if(moment_circle>0){
+              circle(image, p, moment_circle, Scalar(128,0,0), -1);
+            }
+          }
+        
         encbuf = new std::vector<unsigned char>();
 
         bool code = cv::imencode(encoding, image, *encbuf);
@@ -595,7 +703,8 @@ void RTCameraBase::encodeThread() {
           counter_encode++;
           bool encoderet;
           do {
-            encoderet = encodedImg.push(encbuf);
+            ele.img=encbuf;
+            encoderet = encodedImg.push(ele);
             if (encoderet == false) {
               // FULL
              /* setStateVariableSeverity(
@@ -641,8 +750,8 @@ void RTCameraBase::encodeThread() {
   }
   RTCameraBaseLDBG_ << "Encode thread exiting Queue: " << encodeQueue;
 
-  encodedImg.consume_all([this](std::vector<unsigned char> *i) {
-    delete (i);
+  encodedImg.consume_all([this](encoded_t i) {
+    delete (i.img);
     encodeQueue--;
   });
 
@@ -667,14 +776,21 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
     counter_encode = 0;
     counter_capture = 0;
   }
-
+  encoded_t ele;
   std::vector<unsigned char> *a;
-  if (encodedImg.pop(a)) {
+  if (encodedImg.pop(ele)) {
+    a=ele.img;
     encodeQueue--;
     RTCameraBaseLDBG_ << " Encode Queue:" << encodeQueue
                       << " Capture Queue:" << captureQueue;
     uchar *ptr = reinterpret_cast<uchar *>(&((*a)[0]));
     getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ptr, a->size());
+    if(apply_moment){
+          getAttributeCache()->setOutputAttributeValue("MOMENTX", (void*)&ele.momentx, sizeof(int32_t));
+          getAttributeCache()->setOutputAttributeValue("MOMENTY", (void*)&ele.momenty, sizeof(int32_t));
+
+
+    }
     getAttributeCache()->setOutputDomainAsChanged();
     full_encode.notify_one();
     delete (a);

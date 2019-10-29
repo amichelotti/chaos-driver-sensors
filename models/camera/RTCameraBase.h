@@ -52,10 +52,21 @@ protected:
         const int32_t* mode;
         uint8_t* framebuf;
         uint32_t framebuf_encoding;
+        bool apply_roi,apply_zoom,apply_moment;
+        int32_t ROIX,ROIY,ROIXSIZE,ROIYSIZE;
+        int32_t moment_circle;
+        //double ZOOMX,ZOOMY;
+        chaos::common::data::CDataWrapper filters;
         typedef struct {
             uint8_t*buf;
             int32_t size;
         } buf_t;
+        typedef struct encoded {
+            std::vector<unsigned char>* img;
+            int32_t momentx,momenty;
+            encoded():momentx(-1),momenty(-1),img(NULL){};
+        } encoded_t;
+
         char encoding[16];
         chaos::common::data::CDataWrapper camera_props;
        // uint8_t* camera_out;
@@ -68,10 +79,10 @@ protected:
         uint32_t captureQueue,encodeQueue;
         boost::condition_variable wait_capture,wait_encode,full_capture,full_encode;
         boost::lockfree::queue<buf_t, boost::lockfree::fixed_sized<true> > captureImg;
-        boost::lockfree::queue<std::vector<unsigned char>*, boost::lockfree::fixed_sized<true> > encodedImg;
+        boost::lockfree::queue<encoded_t, boost::lockfree::fixed_sized<true> > encodedImg;
         boost::mutex mutex_io,mutex_encode;
         uint32_t hw_trigger_timeout_us,sw_trigger_timeout_us,trigger_timeout; // 0 =wait indefinitively
-
+        
         uint64_t encode_time,capture_time,network_time,counter_capture,counter_encode;
         void encodeThread();
         int bufinuse;
@@ -82,6 +93,8 @@ protected:
         void updateProperty();
         bool setProp(const std::string &name, int32_t value, uint32_t size);
         bool setProp(const std::string &name, double value, uint32_t size);
+        bool setProp(const std::string &name, const std::string& value, uint32_t size);
+
         void startGrabbing();
         void stopGrabbing();
 		/*!

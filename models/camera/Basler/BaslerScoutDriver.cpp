@@ -497,6 +497,8 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper 
             if (tlFactory.EnumerateDevices(devices) == 0)
             {
                 BaslerScoutDriverLERR_ << " No camera present!!!";
+                throw chaos::CException(-1, "Cannot initialize camera " + json.getCompliantJSONString()+": No camera present!", __PRETTY_FUNCTION__);
+
                 return -1;
             }
             CInstantCameraArray cameras(devices.size());
@@ -581,7 +583,9 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper 
         return 0;
     }
     } catch (const GenericException &e) {
-                BaslerScoutDriverLERR_ << "Cannot attach device "<<json.getCompliantJSONString()<<" error:"<<e.GetDescription();
+                BaslerScoutDriverLERR_ << "Cannot attach camera "<<json.getCompliantJSONString()<<" error:"<<e.GetDescription();
+                throw chaos::CException(-1, "Cannot attach camera " + json.getCompliantJSONString()+":"+e.GetDescription(), __PRETTY_FUNCTION__);
+
 
     } catch(...){
             BaslerScoutDriverLERR_ << " exception attaching device:"<<json.getCompliantJSONString();

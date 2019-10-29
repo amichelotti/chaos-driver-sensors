@@ -75,6 +75,7 @@ enum GrabStrategy {
 #define SHARPNESS_KEY "SHARPNESS"
 #define BRIGHTNESS_KEY "BRIGHTNESS"
 #define CONTRAST_KEY "CONTRAST"
+#define FILTER_MOMENT_KEY "moment"
    
  class AbstractCameraDriver{
 
