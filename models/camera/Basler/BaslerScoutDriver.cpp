@@ -474,6 +474,7 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper 
 {
     IPylonDevice *pdev = NULL;
     int found = 0;
+    try{
     if (camerap)
     {
         BaslerScoutDriverLDBG_ << "Deleting camera before";
@@ -515,12 +516,13 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper 
 
                 if (serial == cameras[i].GetDeviceInfo().GetSerialNumber().c_str())
                 {
-                    BaslerScoutDriverLDBG_ << " FOUND " << cameras[i].GetDeviceInfo().GetSerialNumber();
+
+                    BaslerScoutDriverLDBG_ << " FOUND " << cameras[i].GetDeviceInfo().GetSerialNumber();               
                     cameras[i].DetachDevice();
-               
 
                     camerap = new CInstantCamera(pdev);
 
+                    found++;
                    /* if (camerap && (!camerap->IsOpen()))
                     {
                         BaslerScoutDriverLDBG_ << "Opening Camera";
@@ -577,6 +579,13 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper 
 
          
         return 0;
+    }
+    } catch (const GenericException &e) {
+                BaslerScoutDriverLERR_ << "Cannot attach device "<<json.getCompliantJSONString()<<" error:"<<e.GetDescription();
+
+    } catch(...){
+            BaslerScoutDriverLERR_ << " exception attaching device:"<<json.getCompliantJSONString();
+
     }
     return -1;
 }
@@ -1068,7 +1077,7 @@ int BaslerScoutDriver::waitGrab(const char **img, uint32_t timeout_ms)
     Pylon::CGrabResultPtr ptrGrabResult;
     if (tmode > CAMERA_TRIGGER_SINGLE)
     {
-        if (camerap->WaitForFrameTriggerReady(500, TimeoutHandling_ThrowException))
+        if (camerap->WaitForFrameTriggerReady(timeout_ms, TimeoutHandling_ThrowException))
         {
             if (tmode == CAMERA_TRIGGER_SOFT)
             {
@@ -1084,15 +1093,14 @@ int BaslerScoutDriver::waitGrab(const char **img, uint32_t timeout_ms)
 
         while ((camerap->GetGrabResultWaitObject().Wait(0) == 0)&&(stopGrabbing==false))
         {
-            WaitObject::Sleep(100);
+            WaitObject::Sleep(1);
         }
     }
     int nBuffersInQueue = 0;
-    while (camerap->RetrieveResult(timeout_ms, ptrGrabResult, TimeoutHandling_Return))
-    {
-        if (ptrGrabResult->GetNumberOfSkippedImages())
+    if(camerap->RetrieveResult(timeout_ms, ptrGrabResult, TimeoutHandling_Return)){
+         if (ptrGrabResult->GetNumberOfSkippedImages())
         {
-            BaslerScoutDriverLDBG_ << "Skipped " << ptrGrabResult->GetNumberOfSkippedImages() << " image.";
+            BaslerScoutDriverLDBG_ << "Skipped " << ptrGrabResult->GetNumberOfSkippedImages() << " image, timeout ms"<<timeout_ms;
         }
         if (ptrGrabResult->GrabSucceeded())
         {
@@ -1130,12 +1138,60 @@ int BaslerScoutDriver::waitGrab(const char **img, uint32_t timeout_ms)
         else
         {
             BaslerScoutDriverLERR_ << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription();
+            return CAMERA_GRAB_ERROR;
+        }
+    }
+  /*  
+    while (camerap->RetrieveResult(timeout_ms, ptrGrabResult, TimeoutHandling_Return))
+    {
+        if (ptrGrabResult->GetNumberOfSkippedImages())
+        {
+            BaslerScoutDriverLDBG_ << "Skipped " << ptrGrabResult->GetNumberOfSkippedImages() << " image, timeout ms"<<timeout_ms;
+        }
+        if (ptrGrabResult->GrabSucceeded())
+        {
+            // Access the image data.
+
+            const uint8_t *pImageBuffer = (uint8_t *)ptrGrabResult->GetBuffer();
+            //      cout << "Gray value of first pixel: " << (uint32_t) pImageBuffer[0] << endl << endl;
+
+            // CPylonImage target;
+            // CImageFormatConverter converter;
+            // converter.OutputPixelFormat=PixelType_RGB8packed;
+            // converter.OutputPixelFormat=PixelType_BGR8packed;
+            //  converter.OutputPixelFormat=PixelType_Mono8;
+            //  converter.OutputBitAlignment=OutputBitAlignment_MsbAligned;
+            //converter.Convert(target,ptrGrabResult);
+
+            // int size_ret=(bcount<target.GetImageSize())?bcount:target.GetImageSize();
+            //            memcpy(buffer,target.GetBuffer(),size_ret);
+
+            //             int size_ret=(bcount<= ptrGrabResult->GetImageSize())?bcount: ptrGrabResult->GetImageSize();
+            int size_ret = ptrGrabResult->GetImageSize();
+            BaslerScoutDriverLDBG_ << " Size " << ptrGrabResult->GetWidth() << "x" << ptrGrabResult->GetHeight() << " Image Raw Size: " << size_ret;
+            if (img)
+            {
+                *img = (const char *)pImageBuffer;
+                //memcpy(hostbuf,pImageBuffer,size_ret);
+            }
+            if (fn)
+            {
+                fn(pImageBuffer, size_ret, ptrGrabResult->GetWidth(), ptrGrabResult->GetHeight());
+            }
+
+            return size_ret;
+        }
+        else
+        {
+            BaslerScoutDriverLERR_ << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription();
+            return CAMERA_GRAB_ERROR;
         }
 
         nBuffersInQueue++;
     }
-
-    BaslerScoutDriverLDBG_ << "Retrieved " << nBuffersInQueue << " grab results from output queue.";
+     BaslerScoutDriverLDBG_ << "Retrieved " << nBuffersInQueue << " grab results from output queue.";
+*/
+   
 
     return 0;
 }

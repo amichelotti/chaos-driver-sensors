@@ -56,6 +56,8 @@ enum GrabStrategy {
     CAMERA_INCOMING // start grabbing just after the SW is waiting for
 } ;
 #define TRIGGER_TIMEOUT_ERROR -100
+#define CAMERA_GRAB_ERROR -200
+
 #define TRIGGER_MODE_KEY "TRIGGER_MODE"
 #define SERIAL_KEY "serial"
 

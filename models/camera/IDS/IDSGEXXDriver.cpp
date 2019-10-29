@@ -160,6 +160,7 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
         }
     }
     // initialize properties.
+    deinitialized=false;
 
     propsToCamera((chaos::common::data::CDataWrapper*)&json);
     /*  if((ret=is_InitCamera (&hCam, NULL))!=IS_SUCCESS){
@@ -253,6 +254,11 @@ int IDSGEXXDriver::cameraToProps(chaos::common::data::CDataWrapper*p){
         return -1;
 
     }
+    if(deinitialized){
+        IDSGEXXDriverLERR_ << "Camera is deinitialized";
+
+        return 0;
+    }
     int width = camera.getWidth();
     int height = camera.getHeight();
     int gain=camera.getHardwareGain();
@@ -320,6 +326,10 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
         IDSGEXXDriverLERR_ << "Invalid Parameter";
         return -1;
 
+    }
+    if(deinitialized){
+        IDSGEXXDriverLERR_ << "Camera is deinitialized";
+        return -2;
     }
     if((ret=camera.getAOI(posx,posy,width,height))==IS_SUCCESS){
         IDSGEXXDriverLDBG_<< "CURRENT OFFSET (" << posx<<","<<posy<<") img size:"<<width<<"x"<<height;
@@ -573,7 +583,7 @@ int IDSGEXXDriver::cameraInit(void *buffer,uint32_t sizeb){
 
 int IDSGEXXDriver::cameraDeinit(){
     IDSGEXXDriverLDBG_<<"deinit";
-
+    deinitialized=true;
     camera.closeCamera();
 
 

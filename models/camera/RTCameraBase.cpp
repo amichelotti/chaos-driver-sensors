@@ -536,15 +536,13 @@ void RTCameraBase::captureThread() {
             StateVariableTypeAlarmDEV, "capture_timeout",
             chaos::common::alarm::MultiSeverityAlarmLevelWarning);
 
-      } else {
-        RTCameraBaseLERR_ << " wait returned:" << ret
-                          << " buffer  is bypass ? capture stopped:"
-                          << stopCapture;
-        setStateVariableSeverity(
+      } else if(ret<0){
+        RTCameraBaseLERR_ << " Error wait returned:" << ret;
+                                  setStateVariableSeverity(
             StateVariableTypeAlarmDEV, "capture_error",
             chaos::common::alarm::MultiSeverityAlarmLevelHigh);
       }
-      usleep(100000);
+      //usleep(100000);
     }
   }
   RTCameraBaseLDBG_ << "Capture thread exiting Queue: " << captureQueue;
