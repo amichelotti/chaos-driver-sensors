@@ -100,6 +100,9 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
     }
     apply_moment=false;
     moment_circle=0;
+    REFMOMENTX=-1;
+    REFMOMENTY=-1;
+    REFMOMENTRADIUS=0;
     if (p.hasKey(FILTER_MOMENT_KEY)) {
       moment_circle=p.getInt32Value(FILTER_MOMENT_KEY);
       apply_moment=true;
@@ -169,6 +172,9 @@ bool RTCameraBase::setProp(const std::string &name, int32_t value,
   SETINTPROP(name,ROIY,value);
   SETINTPROP(name,ROIXSIZE,value);
   SETINTPROP(name,ROIYSIZE,value);
+  SETINTPROP(name,REFMOMENTX,value);
+  SETINTPROP(name,REFMOMENTY,value);
+  SETINTPROP(name,REFMOMENTRADIUS,value);
 
   
   bool stopgrab = (stopCapture == false) &&
@@ -315,6 +321,20 @@ if(apply_moment){
                         chaos::DataType::TYPE_INT32, chaos::DataType::Output);
   addAttributeToDataSet("MOMENTY", "Centroid Y",
                         chaos::DataType::TYPE_INT32, chaos::DataType::Output);
+  addAttributeToDataSet("MOMENTERR", "Distance from reference and current",
+                        chaos::DataType::TYPE_DOUBLE, chaos::DataType::Output);
+
+  addAttributeToDataSet("REFMOMENTX", "Ref Centroid X",
+                        chaos::DataType::TYPE_INT32, chaos::DataType::Input);
+  addAttributeToDataSet("REFMOMENTY", "Ref Centroid Y",
+                        chaos::DataType::TYPE_INT32, chaos::DataType::Input);
+
+  
+  addAttributeToDataSet("REFMOMENTRADIUS", "Generate Error if outside this radius",
+                        chaos::DataType::TYPE_INT32, chaos::DataType::Input);
+  addStateVariable(StateVariableTypeAlarmCU, "moment_out_of_set",
+                   "moment out of reference moment radius");
+
 }
 
   for (std::vector<std::string>::iterator i = props.begin(); i != props.end();
@@ -619,8 +639,9 @@ void RTCameraBase::captureThread() {
                                   setStateVariableSeverity(
             StateVariableTypeAlarmDEV, "capture_error",
             chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+            usleep(100000);
       }
-      //usleep(100000);
+      
     }
   }
   RTCameraBaseLDBG_ << "Capture thread exiting Queue: " << captureQueue;
@@ -789,7 +810,21 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
     if(apply_moment){
           getAttributeCache()->setOutputAttributeValue("MOMENTX", (void*)&ele.momentx, sizeof(int32_t));
           getAttributeCache()->setOutputAttributeValue("MOMENTY", (void*)&ele.momenty, sizeof(int32_t));
+          if(REFMOMENTX>0 && REFMOMENTY>0){
+            double dist= sqrt(pow((ele.momentx - REFMOMENTX),2) + pow((ele.momenty - REFMOMENTY),2));
+             getAttributeCache()->setOutputAttributeValue("MOMENTERR", (void*)&dist, sizeof(dist));
+             if(REFMOMENTRADIUS>0){
+               if(dist>REFMOMENTRADIUS){
+                 setStateVariableSeverity(StateVariableTypeAlarmCU, "moment_out_of_set",
+                           chaos::common::alarm::MultiSeverityAlarmLevelWarning);
 
+               } else {
+                 setStateVariableSeverity(StateVariableTypeAlarmCU, "moment_out_of_set",
+                           chaos::common::alarm::MultiSeverityAlarmLevelClear);
+
+               }
+             }
+          }
 
     }
     getAttributeCache()->setOutputDomainAsChanged();

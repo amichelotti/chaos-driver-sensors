@@ -53,7 +53,7 @@ protected:
         uint8_t* framebuf;
         uint32_t framebuf_encoding;
         bool apply_roi,apply_zoom,apply_moment;
-        int32_t ROIX,ROIY,ROIXSIZE,ROIYSIZE;
+        int32_t ROIX,ROIY,ROIXSIZE,ROIYSIZE,REFMOMENTX,REFMOMENTY,REFMOMENTRADIUS;
         int32_t moment_circle;
         //double ZOOMX,ZOOMY;
         chaos::common::data::CDataWrapper filters;
