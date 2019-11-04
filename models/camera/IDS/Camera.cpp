@@ -83,6 +83,7 @@ void Camera::initPrivateVariables()
   streaming_ = false;
   stop_capture_ = false;
   color_mode_ = MONO8;
+  color_depth=8;
   auto_exposure_ = false;
   exposure_time_ = 99.0;
   hardware_gamma_ = true;
@@ -164,8 +165,9 @@ bool Camera::openCameraCamId(unsigned int id)
   CAMINFO info;
   checkError(is_GetCameraInfo(cam_, &info));
   serial_number_ = atoll(info.SerNo);
-
-  setColorMode(color_mode_);
+  cam_info_.nColorMode;
+  getColorMode();
+/*  setColorMode(color_mode_);
   setAutoExposure(&auto_exposure_);
   if (!auto_exposure_) {
     setExposure(&exposure_time_);
@@ -179,6 +181,7 @@ bool Camera::openCameraCamId(unsigned int id)
   setZoom(&zoom_);
   setPixelClock(&pixel_clock_);
   setFrameRate(&frame_rate_);
+  */
   return true;
 }
 bool Camera::openCameraDevId(unsigned int id)
@@ -247,6 +250,14 @@ TriggerMode Camera::getSupportedTriggers()
   return (TriggerMode)is_SetExternalTrigger(cam_, IS_GET_SUPPORTED_TRIGGER_MODE);
 }
 
+uEyeColor Camera::getColorMode(){ 
+  uEyeColor mode;
+  color_mode_=(uEyeColor)is_SetColorMode(cam_,IS_GET_COLOR_MODE);
+  /*if( IS_SUCCESS== is_GetColorDepth(cam_,&color_depth,(INT*)&mode)){
+    color_mode_=mode;
+  }*/
+  return color_mode_; 
+}
 void Camera::setColorMode(uEyeColor mode)
 {
   bool restart = streaming_ && (stream_callback_ != NULL);
