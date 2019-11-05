@@ -32,6 +32,8 @@ using namespace chaos::cu::driver_manager::driver;
 using namespace ::driver::sensor::camera;
 using namespace chaos::cu::control_manager;
 using namespace cv;
+using namespace boost::interprocess;
+
 PUBLISHABLE_CONTROL_UNIT_IMPLEMENTATION(RTCameraBase)
 
 /*#define RTCameraBaseLAPP_		LAPP_ << "[RTCameraBase] "
@@ -362,9 +364,14 @@ if(apply_moment){
       }
     }
   }
-  addBinaryAttributeAsSubtypeToDataSet(
+  addBinaryAttributeAsMIMETypeToDataSet("FRAMEBUFFER",
+                                          "output image",
+                                          "image/jpeg",
+                                          chaos::DataType::Output);
+
+  /*addBinaryAttributeAsSubtypeToDataSet(
       "FRAMEBUFFER", "image", chaos::DataType::SUB_TYPE_CHAR,
-      DEFAULT_RESOLUTION, chaos::DataType::Output);
+      DEFAULT_RESOLUTION, chaos::DataType::Output);*/
   addStateVariable(
       StateVariableTypeAlarmDEV, "operation_not_supported",
       "the operation in not supported i.e property not present or accesible");
@@ -508,10 +515,18 @@ void RTCameraBase::startGrabbing() {
         framebuf_out[cnt].buf=(unsigned char*)malloc(*sizex * *sizey * 4);
         framebuf_out[cnt].size=*sizex * *sizey * 4;
     }*/
+  
+  updateProperty();
   RTCameraBaseLDBG_ << "Allocated " << CAMERA_FRAME_BUFFERING << " buffers of "
                     << (*sizex * *sizey * 4) << " bytes";
-  updateProperty();
-
+  
+  try{
+    shared_mem.reset(new ::common::misc::data::SharedMem(getCUID(),(*sizex * *sizey * 4)));
+    RTCameraBaseLDBG_ << "opened sharedMem \""<<shared_mem->getName()<<"\" at @"<<std::hex<<shared_mem->getMem()<<" size:"<<std::dec<<shared_mem->getSize();
+  } catch(boost::interprocess::interprocess_exception &ex){
+    LERR_<<"##cannot open shared memory :"<<ex.what();
+  }
+  
   driver->startGrab(0);
   stopCapture = false;
 
@@ -803,10 +818,15 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
   if (encodedImg.pop(ele)) {
     a=ele.img;
     encodeQueue--;
-    RTCameraBaseLDBG_ << " Encode Queue:" << encodeQueue
+  /*  RTCameraBaseLDBG_ << " Encode Queue:" << encodeQueue
                       << " Capture Queue:" << captureQueue;
+    */
     uchar *ptr = reinterpret_cast<uchar *>(&((*a)[0]));
     getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ptr, a->size());
+    if(shared_mem.get()){
+      shared_mem->writeMsg((void*)ptr, a->size());
+      shared_mem->notify_all();
+    }
     if(apply_moment){
           getAttributeCache()->setOutputAttributeValue("MOMENTX", (void*)&ele.momentx, sizeof(int32_t));
           getAttributeCache()->setOutputAttributeValue("MOMENTY", (void*)&ele.momenty, sizeof(int32_t));
@@ -844,7 +864,8 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
 }
 
 //! Execute the Control Unit work
-void RTCameraBase::unitStop() throw(chaos::CException) { stopGrabbing(); }
+void RTCameraBase::unitStop() throw(chaos::CException) { stopGrabbing(); 
+}
 
 //! Deinit the Control Unit
 void RTCameraBase::unitDeinit() throw(chaos::CException) {

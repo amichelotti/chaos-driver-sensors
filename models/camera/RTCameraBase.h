@@ -20,8 +20,7 @@
 #ifndef ChaosRTControlUnit_RTCameraBase_h
 #define ChaosRTControlUnit_RTCameraBase_h
 #include  <boost/lockfree/queue.hpp> 
-
-
+#include <common/misc/data/core/SharedMem.h>
 #include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
 
 #define DEFAULT_RESOLUTION 640*480*3
@@ -48,6 +47,7 @@ public:
         void cameraGrabCallBack(const void*buf,uint32_t blen,uint32_t width,uint32_t heigth, uint32_t error);
 
 protected:
+        ChaosUniquePtr<::common::misc::data::SharedMem> shared_mem;
         int32_t *sizex,*sizey,*offsetx,*offsety;
         const int32_t* mode;
         uint8_t* framebuf;
