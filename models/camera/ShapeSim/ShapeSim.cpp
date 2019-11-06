@@ -173,7 +173,7 @@ int ShapeSim::propsToCamera(chaos::common::data::CDataWrapper*p){
     //   chaos::common::data::CDataWrapper*p=driver->props;
 
     if (p->hasKey("OFFSETX")){
-        offsetx=-p->getInt32Value("OFFSETX");
+        offsetx=p->getInt32Value("OFFSETX");
         ShapeSimLDBG_<< "setting OFFSETX " << offsetx;
 
     }
