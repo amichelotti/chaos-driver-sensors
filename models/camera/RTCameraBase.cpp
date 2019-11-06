@@ -440,16 +440,22 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     if (!camera_props.isCDataWrapperValue(*i)) {
 
       if (camera_props.getValueType(*i) == chaos::DataType::TYPE_DOUBLE) {
-        double tmp = cc->getValue<double>(DOMAIN_INPUT, *i);
-        RTCameraBaseLDBG_ << "Init Double \"" << *i << "\" from input:" << tmp;
 
-        setProp(*i, tmp, 0);
+        double tmp = cc->getValue<double>(DOMAIN_INPUT, *i);
+        if(tmp!=0){
+          /// to check!!!
+          RTCameraBaseLDBG_ << "Init Double \"" << *i << "\" from input:" << tmp;
+
+          setProp(*i, tmp, 0);
+        }
       }
       if (camera_props.getValueType(*i) == chaos::DataType::TYPE_INT32) {
         int32_t tmp = cc->getValue<int32_t>(DOMAIN_INPUT, *i);
-        RTCameraBaseLDBG_ << "Init Integer \"" << *i << "\" from input:" << tmp;
+        if(tmp!=0){
+          RTCameraBaseLDBG_ << "Init Integer \"" << *i << "\" from input:" << tmp;
 
-        setProp(*i, tmp, 0);
+          setProp(*i, tmp, 0);
+        }
       }
     }
   }
