@@ -3,6 +3,7 @@ project(chaos_driver_sensors_camerashared)
 include_directories(${OPENCV}/include)
 link_directories(${OPENCV}/lib)
 SET(sensors_src CameraShared.cpp)
+MESSAGE(STATUS "Adding CameraShared")
 
 IF(BUILD_FORCE_STATIC)
    ADD_LIBRARY(${PROJECT_NAME} STATIC ${sensors_src})		 

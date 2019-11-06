@@ -297,6 +297,7 @@ int CameraShared::waitGrab(const char**buf,uint32_t timeout_ms){
                 framebuf[frames&1]=malloc(size);
                 framebuf_size[frames&1]=size;
             }
+            
             std::memcpy(framebuf[frames&1],img.data,size );
             if(buf){
                 if(frames>0){

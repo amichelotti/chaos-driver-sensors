@@ -11,7 +11,8 @@ ELSE()
   ENDIF()
 
 
-	
+	MESSAGE(STATUS "Adding IDS")
+
 #separate_arguments(pylon)
 FILE(GLOB ids_libs ueye/x86_64/*.so*)
 MESSAGE(STATUS "copying ${ids_libs}")
