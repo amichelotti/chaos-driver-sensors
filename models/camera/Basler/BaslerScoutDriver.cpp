@@ -696,6 +696,31 @@ int BaslerScoutDriver::changeTriggerMode(Pylon::CInstantCamera* camera,int trigg
 
         return 0;
 }
+static Pylon::EPixelType cv2basler(const std::string& fmt){
+    if(fmt=="CV_8UC1")
+        return Pylon::EPixelType::PixelType_Mono8;
+    if(fmt=="CV_8SC1")
+        return Pylon::EPixelType::PixelType_Mono8signed;        
+    if(fmt=="CV_16UC1")
+                return  Pylon::EPixelType::PixelType_Mono16;
+    if(fmt=="CV_8UC3")
+                return Pylon::EPixelType::PixelType_RGB8packed;
+    return Pylon::EPixelType::PixelType_Mono8;
+}
+static std::string basler2cv(Pylon::EPixelType fmt){
+            switch(fmt){
+                case Pylon::EPixelType::PixelType_Mono8:
+                    return "CV_8UC1";
+            case Pylon::EPixelType::PixelType_Mono8signed:
+                return "CV_8SC1";
+            case Pylon::EPixelType::PixelType_Mono16 :
+                return "CV_16UC1";
+            case  Pylon::EPixelType::PixelType_RGB8packed:
+                return "CV_8UC3";
+            default:
+                return "NOT SUPPORTED";
+            }
+}
 
 int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera &cam, chaos::common::data::CDataWrapper *p)
 {
@@ -707,7 +732,20 @@ int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera &cam, chaos::common::
 
     }
     BaslerScoutDriverLDBG_ << "Updating Camera Properties";
+    INodeMap& nodemap = cam.GetNodeMap();
+    CEnumerationPtr pixelFormat( nodemap.GetNode( "PixelFormat"));
+    if(pixelFormat.IsValid()){
+      //   CPixelTypeMapper pixelTypeMapper(pixelFormat);
+      //  EPixelType pixelType = pixelTypeMapper.GetPylonPixelTypeFromNodeValue(pixelFormat->GetIntValue());
 
+        std::string cv=basler2cv((Pylon::EPixelType) pixelFormat->GetIntValue());
+        
+
+        p->addStringValue(FRAMEBUFFER_ENCODING_KEY,cv);
+        BaslerScoutDriverLDBG_ << "Pixel format "<<cv<< " Native:"<<pixelFormat->ToString();
+
+    }
+    
     if (getNode("TriggerMode", &cam, ivalue) == 0)
     {
         BaslerScoutDriverLDBG_ << "GETTING PROP TRIGGER_MODE";
