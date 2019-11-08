@@ -18,13 +18,134 @@
  *    	limitations under the License.
  */
 #include "AbstractCameraDriver.h"
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
 namespace driver {
 namespace sensor {
 namespace camera{
 #define AbstractCameraDriverLAPP_		LAPP_ << "[AbstractCameraDriver] "
 #define AbstractCameraDriverLDBG_		LDBG_ << "[AbstractCameraDriver:"<<__FUNCTION__<<"]"
 #define AbstractCameraDriverLERR_		LERR_ << "[AbstractCameraDriver:"<<__PRETTY_FUNCTION__<<"]"
+#define CVENCODING(e, cvenc)                                            \
+  if (e == #cvenc) { return   cvenc;}
 
+#define RCVENCODING(e, cvenc) \
+   switch(cvenc){case CV_8UC4:case CV_8SC4:bpp=4;break;\
+    case CV_8UC3:case CV_8SC3:bpp=3;break;\
+    case CV_8UC2:case CV_8SC2:bpp=2;break;\
+    case CV_8UC1:case CV_8SC1:bpp=1;break;\
+    case CV_16UC1:case CV_16SC1:bpp=2;break;\
+    case CV_16UC2:case CV_16SC2:bpp=4;break;\
+    case CV_16UC3:case CV_16SC3:bpp=6;break;\
+    case CV_32SC1:bpp=4;break;\
+    case CV_32SC2:bpp=8;break;\
+    case CV_32SC3:bpp=16;break;\
+    default:bpp=16;}}
+
+
+int fmt2cv(const std::string& enc){
+      CVENCODING(enc, CV_8UC4);
+      CVENCODING(enc, CV_8UC3);
+      CVENCODING(enc, CV_8UC2);
+      CVENCODING(enc, CV_8UC1);
+      CVENCODING(enc, CV_8SC1);
+      CVENCODING(enc, CV_8SC2);
+      CVENCODING(enc, CV_8SC3);
+      CVENCODING(enc, CV_8SC4);
+
+      CVENCODING(enc, CV_16UC4);
+      CVENCODING(enc, CV_16UC3);
+      CVENCODING(enc, CV_16UC2);
+      CVENCODING(enc, CV_16UC1);
+      CVENCODING(enc, CV_16SC1);
+      CVENCODING(enc, CV_16SC2);
+      CVENCODING(enc, CV_16SC3);
+      CVENCODING(enc, CV_16SC4);
+      CVENCODING(enc, CV_32SC1);
+      CVENCODING(enc, CV_32SC2);
+      CVENCODING(enc, CV_32SC3);
+      CVENCODING(enc, CV_32SC4);
+      return CV_8UC1;
+}
+int cv2fmt(int cvenc, std::string& enc){
+    int bpp=1;
+    switch(cvenc){
+        case CV_8UC4:
+            bpp=4;enc="CV_8UC4";
+            break;
+        case CV_8SC4:
+            bpp=4;enc="CV_8SC4";
+        break;
+    case CV_8UC3:
+        bpp=3;
+        enc="CV_8UC3";
+    break;
+    case CV_8SC3:
+        bpp=3;
+        enc="CV_8SC3";
+
+    break;
+    case CV_8UC2:
+        bpp=2;enc="CV_8UC4";
+        break;
+    case CV_8SC2:
+        bpp=2;enc="CV_8UC4";
+        break;
+    case CV_8UC1:
+        bpp=1;enc="CV_8UC4";
+        break;
+    case CV_8SC1:
+        bpp=1;enc="CV_8UC4";
+        break;
+    case CV_16UC1:
+        bpp=2;enc="CV_8UC4";
+        break;
+    case CV_16SC1:
+        bpp=2;enc="CV_8UC4";
+        break;
+    case CV_16UC2:
+        bpp=4;        
+        enc="CV_8UC4";
+        break;
+    case CV_16SC2:
+        bpp=4;
+        enc="CV_16SC2";
+
+        break;
+    case CV_16UC3:
+        bpp=6;
+        enc="CV_16UC3";
+
+        break;
+    case CV_16SC3:
+        bpp=6;
+        enc="CV_16SC3";
+
+        break;
+    case CV_32SC1:
+        bpp=4;
+        enc="CV_32SC1";
+
+        break;
+    case CV_32SC2:
+        bpp=8;        
+        enc="CV_32SC2";
+
+        break;
+    case CV_32SC3:
+        bpp=16;
+        enc="CV_32SC3";
+
+        break;
+    default:
+        bpp=16;
+        enc="UKNOWN";
+
+        }
+    return bpp;
+}
 void AbstractCameraDriver::parseInitCommonParams(const chaos::common::data::CDataWrapper& config){
     AbstractCameraDriverLDBG_<<"config:"<<config.getCompliantJSONString();
     if(config.hasKey(TRIGGER_HW_SOURCE_KEY)){

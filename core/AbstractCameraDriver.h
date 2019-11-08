@@ -61,6 +61,7 @@ enum GrabStrategy {
 #define TRIGGER_MODE_KEY "TRIGGER_MODE"
 #define SERIAL_KEY "serial"
 
+#define FRAMEBUFFER_ENCODING_KEY "FRAMEBUFFER_ENCODING"
 #define TRIGGER_HW_SOURCE_KEY "TRIGGER_HW_SOURCE"
 #define TRIGGER_DELAY_KEY "TRIGGER_DELAY"
 #define TRIGGER_HW_TIMEOUT_KEY "TRIGGER_HW_TIMEOUT"
@@ -76,7 +77,26 @@ enum GrabStrategy {
 #define BRIGHTNESS_KEY "BRIGHTNESS"
 #define CONTRAST_KEY "CONTRAST"
 #define FILTER_MOMENT_KEY "moment"
-   
+
+#define DECODE_CVENCODING(e, cvenc)                                            \
+  if (e == #cvenc) {                                                           \
+    RTCameraBaseLDBG_ << "Found Encoding:" << #cvenc;                          \
+    framebuf_encoding = cvenc;                                                 \
+    switch(cvenc){case CV_8UC4:case CV_8SC4:bpp=4;break;\
+    case CV_8UC3:case CV_8SC3:bpp=3;break;\
+    case CV_8UC2:case CV_8SC2:bpp=2;break;\
+    case CV_8UC1:case CV_8SC1:bpp=1;break;\
+    case CV_16UC1:case CV_16SC1:bpp=2;break;\
+    case CV_16UC2:case CV_16SC2:bpp=4;break;\
+    case CV_16UC3:case CV_16SC3:bpp=6;break;\
+    case CV_32SC1:bpp=4;break;\
+    case CV_32SC2:bpp=8;break;\
+    case CV_32SC3:bpp=16;break;\
+    default:bpp=16;}}
+
+int fmt2cv(const std::string&);
+int cv2fmt(int fmt,  std::string& enc);
+
  class AbstractCameraDriver{
 
 protected:

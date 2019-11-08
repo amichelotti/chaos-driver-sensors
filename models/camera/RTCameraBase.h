@@ -49,12 +49,13 @@ public:
 protected:
         ChaosUniquePtr<::common::misc::data::SharedMem> shared_mem;
         int32_t *sizex,*sizey,*offsetx,*offsety;
+        // if >0 then this is the camera window created, each grab should fit this size.
+        int32_t imagesizex,imagesizey;
+        uint8_t bpp;
+        bool apply_resize;
         const int32_t* mode;
         uint8_t* framebuf;
         uint32_t framebuf_encoding;
-        bool apply_roi,apply_zoom,apply_moment;
-        int32_t ROIX,ROIY,ROIXSIZE,ROIYSIZE,REFMOMENTX,REFMOMENTY,REFMOMENTRADIUS;
-        int32_t moment_circle;
         //double ZOOMX,ZOOMY;
         chaos::common::data::CDataWrapper filters;
         typedef struct {
@@ -63,8 +64,7 @@ protected:
         } buf_t;
         typedef struct encoded {
             std::vector<unsigned char>* img;
-            int32_t momentx,momenty;
-            encoded():momentx(-1),momenty(-1),img(NULL){};
+            encoded():img(NULL){};
         } encoded_t;
 
         char encoding[16];

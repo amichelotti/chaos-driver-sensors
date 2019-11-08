@@ -47,11 +47,6 @@ __PRETTY_FUNCTION__ << " " #define RTCameraBaseLERR_		LERR_ <<
 /*
  Construct
  */
-#define DECODE_CVENCODING(e, cvenc)                                            \
-  if (e == #cvenc) {                                                           \
-    RTCameraBaseLDBG_ << "Found Encoding:" << #cvenc;                          \
-    framebuf_encoding = cvenc;                                                 \
-  }
 
 RTCameraBase::RTCameraBase(const string &_control_unit_id,
                            const string &_control_unit_param,
@@ -61,38 +56,21 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
       driver(NULL), framebuf_encoding(CV_8UC3),
       captureImg(CAMERA_FRAME_BUFFERING), encodedImg(CAMERA_FRAME_BUFFERING),
       encode_time(0), capture_time(0), network_time(0), captureQueue(0),
-      encodeQueue(0), hw_trigger_timeout_us(5000000), sw_trigger_timeout_us(0),
-      trigger_timeout(0),apply_roi(false),apply_zoom(false),apply_moment(false),ROIX(0),ROIY(0),ROIXSIZE(0),ROIYSIZE(0){
+      encodeQueue(0), hw_trigger_timeout_us(5000000), sw_trigger_timeout_us(0),imagesizex(0),imagesizey(0),
+      apply_resize(false),trigger_timeout(0),bpp(3){
   RTCameraBaseLDBG_ << "Creating " << _control_unit_id
                     << " params:" << _control_unit_param;
-  try {
+ 
+   
     framebuf = NULL;
+    try {
     chaos::common::data::CDataWrapper p;
     p.setSerializedJsonData(_control_unit_param.c_str());
-    if (p.hasKey("FRAMEBUFFER_ENCODING") &&
-        p.isStringValue("FRAMEBUFFER_ENCODING")) {
-      std::string enc = p.getStringValue("FRAMEBUFFER_ENCODING");
-      DECODE_CVENCODING(enc, CV_8UC4);
-      DECODE_CVENCODING(enc, CV_8UC3);
-      DECODE_CVENCODING(enc, CV_8UC2);
-      DECODE_CVENCODING(enc, CV_8UC1);
-      DECODE_CVENCODING(enc, CV_8SC1);
-      DECODE_CVENCODING(enc, CV_8SC2);
-      DECODE_CVENCODING(enc, CV_8SC3);
-      DECODE_CVENCODING(enc, CV_8SC4);
-
-      DECODE_CVENCODING(enc, CV_16UC4);
-      DECODE_CVENCODING(enc, CV_16UC3);
-      DECODE_CVENCODING(enc, CV_16UC2);
-      DECODE_CVENCODING(enc, CV_16UC1);
-      DECODE_CVENCODING(enc, CV_16SC1);
-      DECODE_CVENCODING(enc, CV_16SC2);
-      DECODE_CVENCODING(enc, CV_16SC3);
-      DECODE_CVENCODING(enc, CV_16SC4);
-      DECODE_CVENCODING(enc, CV_32SC1);
-      DECODE_CVENCODING(enc, CV_32SC2);
-      DECODE_CVENCODING(enc, CV_32SC3);
-      DECODE_CVENCODING(enc, CV_32SC4);
+    if (p.hasKey(FRAMEBUFFER_ENCODING_KEY) &&
+        p.isStringValue(FRAMEBUFFER_ENCODING_KEY)) {
+      std::string enc = p.getStringValue(FRAMEBUFFER_ENCODING_KEY);
+      framebuf_encoding=fmt2cv(enc);
+      bpp=cv2fmt(framebuf_encoding,enc);
     }
     if (p.hasKey(TRIGGER_HW_TIMEOUT_KEY)) {
       hw_trigger_timeout_us = p.getInt32Value(TRIGGER_HW_TIMEOUT_KEY);
@@ -100,14 +78,15 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
     if (p.hasKey(TRIGGER_SW_TIMEOUT_KEY)) {
       sw_trigger_timeout_us = p.getInt32Value(TRIGGER_SW_TIMEOUT_KEY);
     }
-    apply_moment=false;
-    moment_circle=0;
-    REFMOMENTX=-1;
-    REFMOMENTY=-1;
-    REFMOMENTRADIUS=0;
-    if (p.hasKey(FILTER_MOMENT_KEY)) {
-      moment_circle=p.getInt32Value(FILTER_MOMENT_KEY);
-      apply_moment=true;
+    if(p.hasKey("IMAGESIZEX")){
+      imagesizex=p.getInt32Value("IMAGESIZEX");
+    }
+    if(p.hasKey("IMAGESIZEY")){
+      imagesizey=p.getInt32Value("IMAGESIZEY");
+    }
+    if(imagesizex >0 && imagesizey>0){
+      apply_resize=true;
+        RTCameraBaseLDBG_ << "Camera will resize image to fit into: " << imagesizex<<"x"<<imagesizey;
     }
   } catch (...) {
   }
@@ -170,14 +149,7 @@ bool RTCameraBase::setProp(const std::string &name, int32_t value,
   int ret;
   int32_t valuer;
   RTCameraBaseLDBG_ << "SET IPROP:" << name << " VALUE:" << value;
-  SETINTPROP(name,ROIX,value);
-  SETINTPROP(name,ROIY,value);
-  SETINTPROP(name,ROIXSIZE,value);
-  SETINTPROP(name,ROIYSIZE,value);
-  SETINTPROP(name,REFMOMENTX,value);
-  SETINTPROP(name,REFMOMENTY,value);
-  SETINTPROP(name,REFMOMENTRADIUS,value);
-
+  
   
   bool stopgrab = (stopCapture == false) &&
                   (((name == WIDTH_KEY) && (value != *sizex)) ||
@@ -252,60 +224,21 @@ The api that can be called withi this method are listed into
 (chaosframework/Documentation/html/group___control___unit___definition___api.html)
 */
 void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
-  driver = new CameraDriverInterface(getAccessoInstanceByIndex(0));
-  if (driver == NULL) {
-    throw chaos::CException(-1, "cannot create driver", __PRETTY_FUNCTION__);
-  }
+  chaos::cu::driver_manager::driver::DriverAccessor *acc=getAccessoInstanceByIndex(0);
+    if(acc==NULL){
+            throw chaos::CException(-1, "No associated camera driver", __PRETTY_FUNCTION__);
+
+    }
+    driver = new CameraDriverInterface(acc);
+    if (driver == NULL) {
+      throw chaos::CException(-1, "cannot create driver", __PRETTY_FUNCTION__);
+    }
   if (driver->getCameraProperties(camera_props) != 0) {
     throw chaos::CException(-1, "Error retrieving camera properties",
                             __PRETTY_FUNCTION__);
   }
   std::vector<std::string> props;
   camera_props.getAllKey(props);
-  /**
-   * filtering options
-  */
- addAttributeToDataSet("ROIX", "Source X of Software ROI",
-                        chaos::DataType::TYPE_INT32, chaos::DataType::Input);
-
- addAttributeToDataSet("ROIY", "Source Y of Software ROI",
-                        chaos::DataType::TYPE_INT32, chaos::DataType::Input);
-
- addAttributeToDataSet("ROIXSIZE", "X Size of Software ROI",
-                        chaos::DataType::TYPE_INT32, chaos::DataType::Input);
-
- addAttributeToDataSet("ROIYSIZE", "Y Size of Software ROI",
-                        chaos::DataType::TYPE_INT32, chaos::DataType::Input);
-  
- addAttributeToDataSet("ZOOMX", "Zoom in the X",
-                        chaos::DataType::TYPE_DOUBLE, chaos::DataType::Input);
-
- addAttributeToDataSet("ZOOMY", "Zoom in the Y",
-                        chaos::DataType::TYPE_DOUBLE, chaos::DataType::Input);
- 
- addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase,
-                                       double>(
-            this, &::driver::sensor::camera::RTCameraBase::setProp, "ZOOMX");
-
-addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase,
-                                       double>(
-            this, &::driver::sensor::camera::RTCameraBase::setProp, "ZOOMY");
-  
-addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase,
-                                       int32_t>(
-            this, &::driver::sensor::camera::RTCameraBase::setProp, "ROIX");
-
- addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase,
-                                       int32_t>(
-            this, &::driver::sensor::camera::RTCameraBase::setProp, "ROIY");
-
-addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase,
-                                       int32_t>(
-            this, &::driver::sensor::camera::RTCameraBase::setProp, "ROIXSIZE");
-
-addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase,
-                                       int32_t>(
-            this, &::driver::sensor::camera::RTCameraBase::setProp, "ROIYSIZE");
 
  /****
   * 
@@ -318,26 +251,6 @@ addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase,
   addAttributeToDataSet("ENCODE_FRAMERATE", "Encode Frame Rate",
                         chaos::DataType::TYPE_INT32, chaos::DataType::Output);
 
-if(apply_moment){
-  addAttributeToDataSet("MOMENTX", "Centroid X",
-                        chaos::DataType::TYPE_INT32, chaos::DataType::Output);
-  addAttributeToDataSet("MOMENTY", "Centroid Y",
-                        chaos::DataType::TYPE_INT32, chaos::DataType::Output);
-  addAttributeToDataSet("MOMENTERR", "Distance from reference and current",
-                        chaos::DataType::TYPE_DOUBLE, chaos::DataType::Output);
-
-  addAttributeToDataSet("REFMOMENTX", "Ref Centroid X",
-                        chaos::DataType::TYPE_INT32, chaos::DataType::Input);
-  addAttributeToDataSet("REFMOMENTY", "Ref Centroid Y",
-                        chaos::DataType::TYPE_INT32, chaos::DataType::Input);
-
-  
-  addAttributeToDataSet("REFMOMENTRADIUS", "Generate Error if outside this radius",
-                        chaos::DataType::TYPE_INT32, chaos::DataType::Input);
-  addStateVariable(StateVariableTypeAlarmCU, "moment_out_of_set",
-                   "moment out of reference moment radius");
-
-}
 
   for (std::vector<std::string>::iterator i = props.begin(); i != props.end();
        i++) {
@@ -366,7 +279,7 @@ if(apply_moment){
   }
   addBinaryAttributeAsMIMETypeToDataSet("FRAMEBUFFER",
                                           "output image",
-                                          "image/jpeg",
+                                          "image/png",
                                           chaos::DataType::Output);
 
   /*addBinaryAttributeAsSubtypeToDataSet(
@@ -392,6 +305,21 @@ if(apply_moment){
 void RTCameraBase::unitDefineCustomAttribute() {
   std::string config;
   chaos::common::data::CDataWrapper attr;
+  if(driver==NULL){
+  chaos::cu::driver_manager::driver::DriverAccessor *acc=getAccessoInstanceByIndex(0);
+  if(acc==NULL){
+            throw chaos::CException(-1, "No associated camera driver", __PRETTY_FUNCTION__);
+
+    }
+    driver = new CameraDriverInterface(acc);
+    if (driver == NULL) {
+      throw chaos::CException(-1, "cannot create driver", __PRETTY_FUNCTION__);
+    }
+  }
+  if (driver->getCameraProperties(camera_props) != 0) {
+    throw chaos::CException(-1, "Error retrieving camera properties",
+                            __PRETTY_FUNCTION__);
+  }
   getAttributeCache()->addCustomAttribute("config", 8192,
                                           chaos::DataType::TYPE_CLUSTER);
   if (driver->getCameraProperties(attr) != 0) {
@@ -485,17 +413,47 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     *sizex = width;
     *sizey = height;
   }
+  chaos::common::data::CDataWrapper cam_prop;
+  if(driver->getCameraProperties(cam_prop) == 0){
+    if(cam_prop.hasKey(FRAMEBUFFER_ENCODING_KEY)&&cam_prop.isStringValue(FRAMEBUFFER_ENCODING_KEY)){
+      std::string enc=cam_prop.getStringValue(FRAMEBUFFER_ENCODING_KEY);
+      DECODE_CVENCODING(enc, CV_8UC4);
+      DECODE_CVENCODING(enc, CV_8UC3);
+      DECODE_CVENCODING(enc, CV_8UC2);
+      DECODE_CVENCODING(enc, CV_8UC1);
+      DECODE_CVENCODING(enc, CV_8SC1);
+      DECODE_CVENCODING(enc, CV_8SC2);
+      DECODE_CVENCODING(enc, CV_8SC3);
+      DECODE_CVENCODING(enc, CV_8SC4);
+
+      DECODE_CVENCODING(enc, CV_16UC4);
+      DECODE_CVENCODING(enc, CV_16UC3);
+      DECODE_CVENCODING(enc, CV_16UC2);
+      DECODE_CVENCODING(enc, CV_16UC1);
+      DECODE_CVENCODING(enc, CV_16SC1);
+      DECODE_CVENCODING(enc, CV_16SC2);
+      DECODE_CVENCODING(enc, CV_16SC3);
+      DECODE_CVENCODING(enc, CV_16SC4);
+      DECODE_CVENCODING(enc, CV_32SC1);
+      DECODE_CVENCODING(enc, CV_32SC2);
+      DECODE_CVENCODING(enc, CV_32SC3);
+      DECODE_CVENCODING(enc, CV_32SC4);
+    }
+  }
   if ((*sizex == 0) || (*sizey == 0)) {
     RTCameraBaseLERR_ << "Invalid image sizes:" << *sizex << "x" << *sizey;
     throw chaos::CException(-3, "Invalid image size!!", __PRETTY_FUNCTION__);
   }
+  if(!apply_resize){
+    imagesizex=*sizex;
+    imagesizey=*sizey;
 
-  cc->setOutputAttributeNewSize("FRAMEBUFFER", *sizex * (*sizey) * (4), true);
+  }
+  cc->setOutputAttributeNewSize("FRAMEBUFFER", imagesizex * imagesizey * (bpp), true);
 
-  int size = *sizex * (*sizey) * 4;
 
   // framebuf = (uint8_t*)malloc(size);
-  RTCameraBaseLDBG_ << "Starting acquiring imagex " << *sizex << "x" << *sizey;
+  RTCameraBaseLDBG_ << "Starting acquiring imagex " << *sizex << "x" << *sizey <<" bpp:"<<bpp;
   if (*fmt == 0) {
     strcpy(encoding, ".png");
 
@@ -524,10 +482,10 @@ void RTCameraBase::startGrabbing() {
   
   updateProperty();
   RTCameraBaseLDBG_ << "Allocated " << CAMERA_FRAME_BUFFERING << " buffers of "
-                    << (*sizex * *sizey * 4) << " bytes";
+                    << (*sizex * *sizey * bpp) << " bytes";
   
   try{
-    shared_mem.reset(new ::common::misc::data::SharedMem(getCUID(),(*sizex * *sizey * 4)));
+    shared_mem.reset(new ::common::misc::data::SharedMem(getCUID(),(*sizex * *sizey * bpp)));
     RTCameraBaseLDBG_ << "opened sharedMem \""<<shared_mem->getName()<<"\" at @"<<std::hex<<shared_mem->getMem()<<" size:"<<std::dec<<shared_mem->getSize();
   } catch(boost::interprocess::interprocess_exception &ex){
     LERR_<<"##cannot open shared memory :"<<ex.what();
@@ -694,34 +652,15 @@ void RTCameraBase::encodeThread() {
 
       try {
         // bool code = cv::imencode(encoding, image, buf );
-        apply_roi=(ROIXSIZE>0) && (ROIYSIZE>0);
        // apply_zoom=(ZOOMX!=0.0) ||(ZOOMY!=0.0);
-        if(apply_roi){
-          cv::Mat res;
-          cv::Rect region_of_interest = cv::Rect(ROIX, ROIY, ROIXSIZE, ROIYSIZE);
-          cv::Mat roi=image(region_of_interest);
-          cv::resize(roi,res,image.size(),0,0);
-          image=res;
-        }
-        
-          if(apply_moment){
-            Mat thr, gray;
- 
-            // convert image to grayscale
-            cvtColor( image, gray, COLOR_BGR2GRAY );
- 
-            // convert grayscale to binary image
-            threshold( gray, thr, 100,255,THRESH_BINARY );
- 
-            // find moments of the image
-            Moments m = moments(thr,true);
-            Point p(m.m10/m.m00, m.m01/m.m00);
-            ele.momentx=p.x;
-            ele.momenty=p.y;
-            if(moment_circle>0){
-              circle(image, p, moment_circle, Scalar(128,0,0), -1);
+          if(apply_resize){
+            if((*sizex!=imagesizex) || (*sizey!=imagesizey)){
+                cv::Mat res;
+                cv::resize(image,res,Size(imagesizex,imagesizey),0,0);
+                image=res;
             }
           }
+         
         
         encbuf = new std::vector<unsigned char>();
 
@@ -833,26 +772,8 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       shared_mem->writeMsg((void*)ptr, a->size());
       shared_mem->notify_all();
     }
-    if(apply_moment){
-          getAttributeCache()->setOutputAttributeValue("MOMENTX", (void*)&ele.momentx, sizeof(int32_t));
-          getAttributeCache()->setOutputAttributeValue("MOMENTY", (void*)&ele.momenty, sizeof(int32_t));
-          if(REFMOMENTX>0 && REFMOMENTY>0){
-            double dist= sqrt(pow((ele.momentx - REFMOMENTX),2) + pow((ele.momenty - REFMOMENTY),2));
-             getAttributeCache()->setOutputAttributeValue("MOMENTERR", (void*)&dist, sizeof(dist));
-             if(REFMOMENTRADIUS>0){
-               if(dist>REFMOMENTRADIUS){
-                 setStateVariableSeverity(StateVariableTypeAlarmCU, "moment_out_of_set",
-                           chaos::common::alarm::MultiSeverityAlarmLevelWarning);
-
-               } else {
-                 setStateVariableSeverity(StateVariableTypeAlarmCU, "moment_out_of_set",
-                           chaos::common::alarm::MultiSeverityAlarmLevelClear);
-
-               }
-             }
-          }
-
-    }
+    
+    
     getAttributeCache()->setOutputDomainAsChanged();
     full_encode.notify_one();
     delete (a);
