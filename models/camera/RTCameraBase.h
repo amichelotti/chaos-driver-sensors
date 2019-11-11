@@ -22,6 +22,7 @@
 #include  <boost/lockfree/queue.hpp> 
 #include <common/misc/data/core/SharedMem.h>
 #include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
+#include <opencv2/core/core.hpp>
 
 #define DEFAULT_RESOLUTION 640*480*3
 #define CAMERA_FRAME_BUFFERING 16
@@ -39,7 +40,7 @@ public:
     /*!
      Construct a new CU with full constructor
      */
-    RTCameraBase(const std::string& _control_unit_id, const std::string& _control_unit_param, const ControlUnitDriverList& _control_unit_drivers);
+    RTCameraBase(const std::string& _control_unit_id, const std::string& _control_unit_param, const ControlUnitDriverList& _control_unit_drivers,const int buffering=CAMERA_FRAME_BUFFERING);
     /*!
      Destructor a new CU
      */
@@ -47,6 +48,7 @@ public:
         void cameraGrabCallBack(const void*buf,uint32_t blen,uint32_t width,uint32_t heigth, uint32_t error);
 
 protected:
+        const int buffering;
         ChaosUniquePtr<::common::misc::data::SharedMem> shared_mem;
         int32_t *sizex,*sizey,*offsetx,*offsety;
         // if >0 then this is the camera window created, each grab should fit this size.
@@ -142,6 +144,7 @@ protected:
 		*/
 		void unitInputAttributeChangedHandler() throw(chaos::CException);
 
+    virtual int filtering(cv::Mat&image);
 
 };
     }}}
