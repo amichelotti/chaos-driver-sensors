@@ -179,15 +179,19 @@ int RTCameraFilter::filtering(cv::Mat&image){
             if(moment_circle>0){
               circle(image, p, moment_circle, Scalar(128,0,0), -1);
             }
-            if(REFMOMENTX>0 && REFMOMENTY>0){
+            if((REFMOMENTX>0) && (REFMOMENTY>0)){
               double dist= sqrt(pow((p.x - REFMOMENTX),2) + pow((p.y - REFMOMENTY),2));
              getAttributeCache()->setOutputAttributeValue("MOMENTERR", (void*)&dist, sizeof(dist));
              if(REFMOMENTRADIUS>0){
                if(dist>REFMOMENTRADIUS){
+                  circle(image, Point(REFMOMENTX,REFMOMENTY), REFMOMENTRADIUS, Scalar(128,0,0), 1);
+
                  setStateVariableSeverity(StateVariableTypeAlarmCU, "moment_out_of_set",
                            chaos::common::alarm::MultiSeverityAlarmLevelWarning);
 
                } else {
+                 circle(image, Point(REFMOMENTX,REFMOMENTY), REFMOMENTRADIUS, Scalar(0,255,0), 1);
+
                  setStateVariableSeverity(StateVariableTypeAlarmCU, "moment_out_of_set",
                            chaos::common::alarm::MultiSeverityAlarmLevelClear);
 
