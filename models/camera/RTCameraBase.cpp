@@ -24,7 +24,21 @@
 #include <driver/sensors/core/CameraDriverInterface.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-
+ #define DECODE_CVENCODING(e, cvenc)                                            \
+  if (e == #cvenc) {                                                           \
+    RTCameraBaseLDBG_ << "Found Encoding:" << #cvenc;                          \
+    framebuf_encoding = cvenc;                                                 \
+    switch(cvenc){case CV_8UC4:case CV_8SC4:bpp=4;break;\
+    case CV_8UC3:case CV_8SC3:bpp=3;break;\
+    case CV_8UC2:case CV_8SC2:bpp=2;break;\
+    case CV_8UC1:case CV_8SC1:bpp=1;break;\
+    case CV_16UC1:case CV_16SC1:bpp=2;break;\
+    case CV_16UC2:case CV_16SC2:bpp=4;break;\
+    case CV_16UC3:case CV_16SC3:bpp=6;break;\
+    case CV_32SC1:bpp=4;break;\
+    case CV_32SC2:bpp=8;break;\
+    case CV_32SC3:bpp=16;break;\
+    default:bpp=16;}}
 using namespace chaos;
 using namespace chaos::common::data::cache;
 using namespace chaos::cu::driver_manager::driver;

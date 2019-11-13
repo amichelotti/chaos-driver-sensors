@@ -34,8 +34,12 @@
     case CV_32SC2:bpp=8;break;\
     case CV_32SC3:bpp=16;break;\
     default:bpp=16;}}
+
+   
+
 #else
 #define RCVENCODING(e, cvenc)
+#define DECODE_CVENCODING(e, cvenc) 
 #endif
 namespace driver {
 namespace sensor {
