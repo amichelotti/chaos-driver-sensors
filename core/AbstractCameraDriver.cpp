@@ -34,12 +34,19 @@
     case CV_32SC2:bpp=8;break;\
     case CV_32SC3:bpp=16;break;\
     default:bpp=16;}}
+#define CVENCODING(e, cvenc)                                            \
+  if (e == #cvenc) { return   cvenc;}
+
 
    
 
 #else
 #define RCVENCODING(e, cvenc)
 #define DECODE_CVENCODING(e, cvenc) 
+#define CVENCODING(e, cvenc)                                            \
+
+
+
 #endif
 namespace driver {
 namespace sensor {
@@ -47,9 +54,6 @@ namespace camera{
 #define AbstractCameraDriverLAPP_		LAPP_ << "[AbstractCameraDriver] "
 #define AbstractCameraDriverLDBG_		LDBG_ << "[AbstractCameraDriver:"<<__FUNCTION__<<"]"
 #define AbstractCameraDriverLERR_		LERR_ << "[AbstractCameraDriver:"<<__PRETTY_FUNCTION__<<"]"
-#define CVENCODING(e, cvenc)                                            \
-  if (e == #cvenc) { return   cvenc;}
-
 
 
 
