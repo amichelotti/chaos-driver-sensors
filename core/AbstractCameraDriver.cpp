@@ -84,6 +84,7 @@ int fmt2cv(const std::string& enc){
 }
 int cv2fmt(int cvenc, std::string& enc){
     int bpp=1;
+#ifdef CAMERA    
     switch(cvenc){
         case CV_8UC4:
             bpp=4;enc="CV_8UC4";
@@ -157,6 +158,7 @@ int cv2fmt(int cvenc, std::string& enc){
         enc="UKNOWN";
 
         }
+#endif
     return bpp;
 }
 void AbstractCameraDriver::parseInitCommonParams(const chaos::common::data::CDataWrapper& config){
