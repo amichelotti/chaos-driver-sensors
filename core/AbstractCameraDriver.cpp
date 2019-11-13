@@ -44,7 +44,7 @@
 #define RCVENCODING(e, cvenc)
 #define DECODE_CVENCODING(e, cvenc) 
 #define CVENCODING(e, cvenc)                                            \
-
+#define CV_8UC1 0
 
 
 #endif
