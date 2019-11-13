@@ -18,19 +18,10 @@
  *    	limitations under the License.
  */
 #include "AbstractCameraDriver.h"
+#ifdef CAMERA
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-
-namespace driver {
-namespace sensor {
-namespace camera{
-#define AbstractCameraDriverLAPP_		LAPP_ << "[AbstractCameraDriver] "
-#define AbstractCameraDriverLDBG_		LDBG_ << "[AbstractCameraDriver:"<<__FUNCTION__<<"]"
-#define AbstractCameraDriverLERR_		LERR_ << "[AbstractCameraDriver:"<<__PRETTY_FUNCTION__<<"]"
-#define CVENCODING(e, cvenc)                                            \
-  if (e == #cvenc) { return   cvenc;}
-
 #define RCVENCODING(e, cvenc) \
    switch(cvenc){case CV_8UC4:case CV_8SC4:bpp=4;break;\
     case CV_8UC3:case CV_8SC3:bpp=3;break;\
@@ -43,9 +34,23 @@ namespace camera{
     case CV_32SC2:bpp=8;break;\
     case CV_32SC3:bpp=16;break;\
     default:bpp=16;}}
+#else
+#define RCVENCODING(e, cvenc)
+#endif
+namespace driver {
+namespace sensor {
+namespace camera{
+#define AbstractCameraDriverLAPP_		LAPP_ << "[AbstractCameraDriver] "
+#define AbstractCameraDriverLDBG_		LDBG_ << "[AbstractCameraDriver:"<<__FUNCTION__<<"]"
+#define AbstractCameraDriverLERR_		LERR_ << "[AbstractCameraDriver:"<<__PRETTY_FUNCTION__<<"]"
+#define CVENCODING(e, cvenc)                                            \
+  if (e == #cvenc) { return   cvenc;}
+
+
 
 
 int fmt2cv(const std::string& enc){
+    
       CVENCODING(enc, CV_8UC4);
       CVENCODING(enc, CV_8UC3);
       CVENCODING(enc, CV_8UC2);
