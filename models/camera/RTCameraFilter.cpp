@@ -77,7 +77,6 @@ RTCameraFilter::RTCameraFilter(
  */
 RTCameraFilter::~RTCameraFilter() {}
 
-int RTCameraFilter::filtering(cv::Mat &image) {}
 
 #define SETINTPROP(name, n, value)                                             \
   if (name == #n) {                                                            \
@@ -115,7 +114,6 @@ void RTCameraFilter::unitDefineActionAndDataset() throw(chaos::CException) {
 
   addAttributeToDataSet("ROIX", "Source X of Software ROI",
                         chaos::DataType::TYPE_INT32, chaos::DataType::Input);
-
   addAttributeToDataSet("ROIY", "Source Y of Software ROI",
                         chaos::DataType::TYPE_INT32, chaos::DataType::Input);
 
@@ -161,4 +159,43 @@ void RTCameraFilter::unitDefineActionAndDataset() throw(chaos::CException) {
                      "moment out of reference moment radius");
   }
   RTCameraBase::unitDefineActionAndDataset();
+}
+int RTCameraFilter::filtering(cv::Mat&image){
+  if(apply_moment){
+            Mat thr, gray;
+ 
+            // convert image to grayscale
+            cvtColor( image, gray, COLOR_BGR2GRAY );
+ 
+            // convert grayscale to binary image
+            threshold( gray, thr, 100,255,THRESH_BINARY );
+ 
+            // find moments of the image
+            Moments m = moments(thr,true);
+            Point p(m.m10/m.m00, m.m01/m.m00);
+            getAttributeCache()->setOutputAttributeValue("MOMENTX", (void*)&p.x, sizeof(int32_t));
+            getAttributeCache()->setOutputAttributeValue("MOMENTY", (void*)&p.y, sizeof(int32_t));
+          
+            if(moment_circle>0){
+              circle(image, p, moment_circle, Scalar(128,0,0), -1);
+            }
+            if(REFMOMENTX>0 && REFMOMENTY>0){
+              double dist= sqrt(pow((p.x - REFMOMENTX),2) + pow((p.y - REFMOMENTY),2));
+             getAttributeCache()->setOutputAttributeValue("MOMENTERR", (void*)&dist, sizeof(dist));
+             if(REFMOMENTRADIUS>0){
+               if(dist>REFMOMENTRADIUS){
+                 setStateVariableSeverity(StateVariableTypeAlarmCU, "moment_out_of_set",
+                           chaos::common::alarm::MultiSeverityAlarmLevelWarning);
+
+               } else {
+                 setStateVariableSeverity(StateVariableTypeAlarmCU, "moment_out_of_set",
+                           chaos::common::alarm::MultiSeverityAlarmLevelClear);
+
+               }
+             }
+          }
+          }
+
+  return 0;
+
 }
