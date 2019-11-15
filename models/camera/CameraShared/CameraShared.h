@@ -72,7 +72,7 @@ class CameraShared:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::Ca
      int propsToCamera(chaos::common::data::CDataWrapper*p);
      int cameraToProps(chaos::common::data::CDataWrapper*p);
      int width,height,offsetx,offsety;
-     int tmp_centerx,tmp_centery,tmp_sizex,tmp_sizey,tmp_rotangle,tmp_tickness;
+     int original_width,original_height;
      double framerate;
      // shape parameters
      ChaosUniquePtr<chaos::common::data::CDataWrapper> shape_params;

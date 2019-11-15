@@ -52,10 +52,12 @@ RTCameraFilter::RTCameraFilter(
     const string &_control_unit_id, const string &_control_unit_param,
     const ControlUnitDriverList &_control_unit_drivers)
     : RTCameraBase(_control_unit_id, _control_unit_param, _control_unit_drivers,
-                   0) {
+                   0),remove_src(false)
+{
   RTCameraFilterLDBG_ << "Creating " << _control_unit_id
                       << " params:" << _control_unit_param;
-  try {
+  try
+  {
     chaos::common::data::CDataWrapper p;
     p.setSerializedJsonData(_control_unit_param.c_str());
 
@@ -64,11 +66,14 @@ RTCameraFilter::RTCameraFilter(
     REFMOMENTX = -1;
     REFMOMENTY = -1;
     REFMOMENTRADIUS = 0;
-    if (p.hasKey(FILTER_MOMENT_KEY)) {
+    if (p.hasKey(FILTER_MOMENT_KEY))
+    {
       moment_circle = p.getInt32Value(FILTER_MOMENT_KEY);
       apply_moment = true;
     }
-  } catch (...) {
+  }
+  catch (...)
+  {
   }
 }
 
@@ -77,19 +82,46 @@ RTCameraFilter::RTCameraFilter(
  */
 RTCameraFilter::~RTCameraFilter() {}
 
-
-#define SETINTPROP(name, n, value)                                             \
-  if (name == #n) {                                                            \
-    n = value;                                                                 \
-    return true;                                                               \
+#define SETINTPROP(name, n, value) \
+  if (name == #n)                  \
+  {                                \
+    n = value;                     \
+    return true;                   \
   }
-bool RTCameraFilter::setProp(const std::string &name, const std::string &value,
-                             uint32_t size) {
-  return false;
+bool RTCameraFilter::setProp(const std::string &name,  std::string value,
+                             uint32_t size)
+{
+
+  if (name != "FILTER")
+  {
+    return false;
+  }
+  try
+  {
+    chaos::common::data::CDataWrapper p;
+    p.setSerializedJsonData(value.c_str());
+    if(p.hasKey(FILTER_MOMENT_KEY)&&p.isInt32Value(FILTER_MOMENT_KEY)){
+      moment_circle = p.getInt32Value(FILTER_MOMENT_KEY);
+      apply_moment = true;
+    } else {
+      apply_moment = true;
+    }
+    if(p.hasKey(FILTER_REMOVE_SOURCE_KEY)&&p.isBoolValue(FILTER_REMOVE_SOURCE_KEY)){
+      remove_src=p.getBoolValue(FILTER_REMOVE_SOURCE_KEY);
+    }
+  }
+  catch (...)
+  {
+    RTCameraFilterLDBG_ << "BAD SPECIFICATION " << name << " VALUE:" << value;
+
+    return false;
+  }
+  return true;
 }
 
 bool RTCameraFilter::setProp(const std::string &name, int32_t value,
-                             uint32_t size) {
+                             uint32_t size)
+{
   int ret;
   int32_t valuer;
   RTCameraFilterLDBG_ << "SET IPROP:" << name << " VALUE:" << value;
@@ -101,7 +133,8 @@ bool RTCameraFilter::setProp(const std::string &name, int32_t value,
 }
 
 bool RTCameraFilter::setProp(const std::string &name, double value,
-                             uint32_t size) {
+                             uint32_t size)
+{
   return RTCameraBase::setProp(name, value, size);
 }
 //! Return the definition of the control unit
@@ -110,35 +143,18 @@ The api that can be called withi this method are listed into
 "Control Unit Definition Public API" module into html documentation
 (chaosframework/Documentation/html/group___control___unit___definition___api.html)
 */
-void RTCameraFilter::unitDefineActionAndDataset() throw(chaos::CException) {
+void RTCameraFilter::unitDefineActionAndDataset() throw(chaos::CException)
+{
 
-  addAttributeToDataSet("ROIX", "Source X of Software ROI",
-                        chaos::DataType::TYPE_INT32, chaos::DataType::Input);
-  addAttributeToDataSet("ROIY", "Source Y of Software ROI",
-                        chaos::DataType::TYPE_INT32, chaos::DataType::Input);
-
-  addAttributeToDataSet("ROIXSIZE", "X Size of Software ROI",
-                        chaos::DataType::TYPE_INT32, chaos::DataType::Input);
-
-  addAttributeToDataSet("ROIYSIZE", "Y Size of Software ROI",
-                        chaos::DataType::TYPE_INT32, chaos::DataType::Input);
-  addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraFilter,
-                                 int32_t>(
-      this, &::driver::sensor::camera::RTCameraFilter::setProp, "ROIX");
+  addAttributeToDataSet("FILTER", "Filters to apply (JSON)",
+                        chaos::DataType::TYPE_CLUSTER, chaos::DataType::Input);
 
   addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraFilter,
-                                 int32_t>(
-      this, &::driver::sensor::camera::RTCameraFilter::setProp, "ROIY");
+                                  std::string>(
+      this, &::driver::sensor::camera::RTCameraFilter::setProp, std::string("FILTER"));
 
-  addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraFilter,
-                                 int32_t>(
-      this, &::driver::sensor::camera::RTCameraFilter::setProp, "ROIXSIZE");
-
-  addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraFilter,
-                                 int32_t>(
-      this, &::driver::sensor::camera::RTCameraFilter::setProp, "ROIYSIZE");
-
-  if (apply_moment) {
+  if (apply_moment)
+  {
     addAttributeToDataSet("MOMENTX", "Centroid X", chaos::DataType::TYPE_INT32,
                           chaos::DataType::Output);
     addAttributeToDataSet("MOMENTY", "Centroid Y", chaos::DataType::TYPE_INT32,
@@ -160,46 +176,51 @@ void RTCameraFilter::unitDefineActionAndDataset() throw(chaos::CException) {
   }
   RTCameraBase::unitDefineActionAndDataset();
 }
-int RTCameraFilter::filtering(cv::Mat&image){
-  if(apply_moment){
-            Mat thr, gray;
- 
-            // convert image to grayscale
-            cvtColor( image, gray, COLOR_BGR2GRAY );
- 
-            // convert grayscale to binary image
-            threshold( gray, thr, 100,255,THRESH_BINARY );
- 
-            // find moments of the image
-            Moments m = moments(thr,true);
-            Point p(m.m10/m.m00, m.m01/m.m00);
-            getAttributeCache()->setOutputAttributeValue("MOMENTX", (void*)&p.x, sizeof(int32_t));
-            getAttributeCache()->setOutputAttributeValue("MOMENTY", (void*)&p.y, sizeof(int32_t));
-          
-            if(moment_circle>0){
-              circle(image, p, moment_circle, Scalar(128,0,0), -1);
-            }
-            if((REFMOMENTX>0) && (REFMOMENTY>0)){
-              double dist= sqrt(pow((p.x - REFMOMENTX),2) + pow((p.y - REFMOMENTY),2));
-             getAttributeCache()->setOutputAttributeValue("MOMENTERR", (void*)&dist, sizeof(dist));
-             if(REFMOMENTRADIUS>0){
-               if(dist>REFMOMENTRADIUS){
-                  circle(image, Point(REFMOMENTX,REFMOMENTY), REFMOMENTRADIUS, Scalar(128,0,0), 1);
+int RTCameraFilter::filtering(cv::Mat &image)
+{
+  if (apply_moment)
+  {
+    Mat thr, gray;
 
-                 setStateVariableSeverity(StateVariableTypeAlarmCU, "moment_out_of_set",
-                           chaos::common::alarm::MultiSeverityAlarmLevelWarning);
+    // convert image to grayscale
+    cvtColor(image, gray, COLOR_BGR2GRAY);
 
-               } else {
-                 circle(image, Point(REFMOMENTX,REFMOMENTY), REFMOMENTRADIUS, Scalar(0,255,0), 1);
+    // convert grayscale to binary image
+    threshold(gray, thr, 100, 255, THRESH_BINARY);
 
-                 setStateVariableSeverity(StateVariableTypeAlarmCU, "moment_out_of_set",
-                           chaos::common::alarm::MultiSeverityAlarmLevelClear);
+    // find moments of the image
+    Moments m = moments(thr, true);
+    Point p(m.m10 / m.m00, m.m01 / m.m00);
+    getAttributeCache()->setOutputAttributeValue("MOMENTX", (void *)&p.x, sizeof(int32_t));
+    getAttributeCache()->setOutputAttributeValue("MOMENTY", (void *)&p.y, sizeof(int32_t));
 
-               }
-             }
-          }
-          }
+    if (moment_circle > 0)
+    {
+      circle(image, p, moment_circle, Scalar(128, 0, 0), -1);
+    }
+    if ((REFMOMENTX > 0) && (REFMOMENTY > 0))
+    {
+      double dist = sqrt(pow((p.x - REFMOMENTX), 2) + pow((p.y - REFMOMENTY), 2));
+      getAttributeCache()->setOutputAttributeValue("MOMENTERR", (void *)&dist, sizeof(dist));
+      if (REFMOMENTRADIUS > 0)
+      {
+        if (dist > REFMOMENTRADIUS)
+        {
+          circle(image, Point(REFMOMENTX, REFMOMENTY), REFMOMENTRADIUS, Scalar(128, 0, 0), 1);
+
+          setStateVariableSeverity(StateVariableTypeAlarmCU, "moment_out_of_set",
+                                   chaos::common::alarm::MultiSeverityAlarmLevelWarning);
+        }
+        else
+        {
+          circle(image, Point(REFMOMENTX, REFMOMENTY), REFMOMENTRADIUS, Scalar(0, 255, 0), 1);
+
+          setStateVariableSeverity(StateVariableTypeAlarmCU, "moment_out_of_set",
+                                   chaos::common::alarm::MultiSeverityAlarmLevelClear);
+        }
+      }
+    }
+  }
 
   return 0;
-
 }

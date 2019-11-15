@@ -49,10 +49,10 @@ protected:
         bool apply_roi,apply_moment;
         int32_t ROIX,ROIY,ROIXSIZE,ROIYSIZE,REFMOMENTX,REFMOMENTY,REFMOMENTRADIUS;
         int32_t moment_circle;
-        
+        bool remove_src;
         bool setProp(const std::string &name, int32_t value, uint32_t size);
         bool setProp(const std::string &name, double value, uint32_t size);
-        bool setProp(const std::string &name, const std::string& value, uint32_t size);
+        bool setProp(const std::string &name, std::string value, uint32_t size);
 
         
 		/*!

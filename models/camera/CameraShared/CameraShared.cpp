@@ -103,9 +103,10 @@ int CameraShared::initializeCamera(const chaos::common::data::CDataWrapper& json
                 try{
                     std::vector<uchar> data = std::vector<uchar>(buf, buf + siz);
                     cv::Mat m=cv::imdecode(data,cv::IMREAD_UNCHANGED);
-                    width=m.cols;
-                    height=m.rows;
-                    CameraSharedLDBG_ << "Found image of "<<width<<"x"<<height;
+                    original_width=width=m.cols;
+                    original_height=height=m.rows;
+                    CameraSharedLDBG_ << "Found image of "<<original_width<<"x"<<original_height;
+                    
                 } catch(...){
                     std::stringstream ss;
                     ss<< "Invalid image found at:@ "<<std::hex<<buf<<std::dec;
@@ -129,7 +130,7 @@ int CameraShared::initializeCamera(const chaos::common::data::CDataWrapper& json
 }   
     return ret;
 }
-DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,CameraShared),shots(0),frames(0),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1.0),offsetx(0),offsety(0){
+DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,CameraShared),shots(0),frames(0),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1.0),offsetx(0),offsety(0),original_width(0),original_height(0){
 
     CameraSharedLDBG_<<  "Created Driver";
     framebuf[0]=NULL;
@@ -288,8 +289,13 @@ int CameraShared::waitGrab(const char**buf,uint32_t timeout_ms){
             std::vector<uchar> data = std::vector<uchar>(bufs, bufs + siz);
 
             cv::Mat img=cv::imdecode(data,cv::IMREAD_UNCHANGED);
-            width=img.cols;
-            height=img.rows;
+            original_width=img.cols;
+            original_height=img.rows;
+            if((((width>0) && (original_width!=width))|| (((height>0) && (original_height!=width))))){
+                Rect region_of_interest = Rect(offsetx, offsety, width, width);
+                Mat image_roi = img(region_of_interest);
+                img=image_roi;
+            }
             int size = img.total() * img.elemSize();
             ret= size;
             if(framebuf_size[frames&1]<size){
@@ -306,7 +312,7 @@ int CameraShared::waitGrab(const char**buf,uint32_t timeout_ms){
                     *buf=(char*)framebuf[0];
             }
         } else {
-            CameraSharedLERR_<<"BAD BUFFER GIVEN "<<shape_type<<"("<<width<<"X"<<height<<")"<<frames<<" center "<<tmp_centerx<<","<<tmp_centery<<" sizex:"<<tmp_sizex<<" sizey:"<<tmp_sizey<<" color:"<<colr<<"R,"<<colg<<"G,"<<colb<<" size byte:"<<size;
+            CameraSharedLERR_<<"BAD BUFFER GIVEN "<<shape_type<<"("<<width<<"X"<<height<<")";
 
         }
         }

@@ -77,6 +77,7 @@ enum GrabStrategy {
 #define BRIGHTNESS_KEY "BRIGHTNESS"
 #define CONTRAST_KEY "CONTRAST"
 #define FILTER_MOMENT_KEY "moment"
+#define FILTER_REMOVE_SOURCE_KEY "remove_source" //boolean
 
 
 int fmt2cv(const std::string&);
