@@ -26,9 +26,7 @@
 #define DEFAULT_RESOLUTION 640*480*3
 #define CAMERA_FRAME_BUFFERING 16
 
-namespace cv{
-  class Mat;
-};
+namespace cv {class Mat;}
 namespace driver{
     
     namespace sensor{
