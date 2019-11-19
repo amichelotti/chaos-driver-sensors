@@ -22,6 +22,8 @@
 #include <chaos/cu_toolkit/control_manager/AttributeSharedCacheWrapper.h>
 #include <driver/sensors/core/AbstractSensorDriver.h>
 #include <driver/sensors/core/CameraDriverInterface.h>
+#include <opencv2/core/core.hpp>
+
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
  #define DECODE_CVENCODING(e, cvenc)                                            \

@@ -22,11 +22,13 @@
 #include  <boost/lockfree/queue.hpp> 
 #include <common/misc/data/core/SharedMem.h>
 #include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
-#include <opencv2/core/core.hpp>
 
 #define DEFAULT_RESOLUTION 640*480*3
 #define CAMERA_FRAME_BUFFERING 16
 
+namespace cv{
+  class Mat;
+};
 namespace driver{
     
     namespace sensor{
