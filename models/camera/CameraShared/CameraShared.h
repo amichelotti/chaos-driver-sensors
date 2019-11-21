@@ -74,8 +74,8 @@ class CameraShared:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::Ca
      int width,height,offsetx,offsety;
      int original_width,original_height;
      double framerate;
-     // shape parameters
-     ChaosUniquePtr<chaos::common::data::CDataWrapper> shape_params;
+     // driver parameters
+     chaos::common::data::CDataWrapper driver_params;
      std::string shape_type;
      int centerx,centery;
      int sizex,sizey;

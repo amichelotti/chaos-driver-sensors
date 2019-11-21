@@ -48,20 +48,25 @@ REGISTER_PLUGIN(::driver::sensor::camera::CameraShared)
 CLOSE_REGISTER_PLUGIN
 
 void CameraShared::driverInit(const char *initParameter) throw(chaos::CException){
-    CameraSharedLAPP_ << "Initializing  driver:"<<initParameter;
-    props->reset();
-    if(initializeCamera(*props)!=0){
-        throw chaos::CException(-3,"cannot initialize camera ",__PRETTY_FUNCTION__);
+    if(initParameter==NULL || (*initParameter==0)){
+        throw chaos::CException(-1,"expected JSON init parameter, nothing is given ",__PRETTY_FUNCTION__);
 
     }
+    CameraSharedLAPP_ << "Initializing  driver:"<<initParameter;
+    props->reset();
+    try{
+        driver_params.setSerializedJsonData(initParameter);
+    } catch(...){
+        throw chaos::CException(-1,"not a valid JSON was given ",__PRETTY_FUNCTION__);
+
+    }
+    
 }
 
 
 void CameraShared::driverInit(const chaos::common::data::CDataWrapper& json) throw(chaos::CException){
-    CameraSharedLAPP_ << "Initializing  driver:"<<json.getCompliantJSONString();
-    if(initializeCamera(json)!=0){
-        throw chaos::CException(-1,"cannot initialize camera "+json.getCompliantJSONString(),__PRETTY_FUNCTION__);
-    }
+    CameraSharedLAPP_ << "Initializing  driver parameters:"<<json.getCompliantJSONString();
+    driver_params=json;
 
 }
 
@@ -96,8 +101,12 @@ int CameraShared::initializeCamera(const chaos::common::data::CDataWrapper& json
             std::string name=json.getStringValue("src");
             try{
             shared_mem.reset(new ::common::misc::data::SharedMem(name));
-            CameraSharedLDBG_ << "opened sharedMem \""<<shared_mem->getName()<<"\" at @"<<std::hex<<shared_mem->getMem()<<" size:"<<std::dec<<shared_mem->getSize();
+            CameraSharedLDBG_ << "opened sharedMem \""<<shared_mem->getName()<<"\" at @"<<std::hex<<shared_mem->getMem()<<" size:"<<std::dec<<shared_mem->getSize()<<" waiting the source for 60s";
            uint8_t* buf;
+           if(shared_mem->wait(60000)<0){
+                throw chaos::CException(-2, "source "+name+" not connected within 60s", __PRETTY_FUNCTION__);
+
+           }
            size_t siz=shared_mem->readMsg(&buf);
             if(siz && buf){
                 try{
@@ -105,7 +114,7 @@ int CameraShared::initializeCamera(const chaos::common::data::CDataWrapper& json
                     cv::Mat m=cv::imdecode(data,cv::IMREAD_UNCHANGED);
                     original_width=width=m.cols;
                     original_height=height=m.rows;
-                    CameraSharedLDBG_ << "Found image of "<<original_width<<"x"<<original_height;
+                    CameraSharedLDBG_ << "Found image of "<<original_width<<"x"<<original_height<< " data size:"<<data.size();
                     
                 } catch(...){
                     std::stringstream ss;
@@ -244,7 +253,7 @@ int CameraShared::cameraInit(void *buffer,uint32_t sizeb){
 
     // For demonstration purposes only, add sample configuration event handlers to print out information
     // about camera use and image grabbing.
-    return 0;
+    return initializeCamera(driver_params);
 }
 
 int CameraShared::cameraDeinit(){
@@ -285,26 +294,37 @@ int CameraShared::waitGrab(const char**buf,uint32_t timeout_ms){
     if(shared_mem->wait(timeout_ms)==0){
         uint8_t* bufs;
         size_t siz=shared_mem->readMsg(&bufs);
+        uchar*ds=NULL;
+        int size=0;
         if(siz&&bufs){
             std::vector<uchar> data = std::vector<uchar>(bufs, bufs + siz);
-
+            cv::Mat cropped;
             cv::Mat img=cv::imdecode(data,cv::IMREAD_UNCHANGED);
             original_width=img.cols;
             original_height=img.rows;
-            if((((width>0) && (original_width!=width))|| (((height>0) && (original_height!=width))))){
-                Rect region_of_interest = Rect(offsetx, offsety, width, width);
+            if((((width>0) && (original_width!=width))|| (((height>0) && 
+                (original_height!=height)))) && 
+                ((width+offsetx)<original_width)&&((height+offsety)<original_height)){
+                CameraSharedLDBG_<<"Apply ROI ("<<offsetx<<","<<offsety<<") "<<width<<"x"<<height <<" orig image:"<<original_width<<"x"<<original_height;
+
+                Rect region_of_interest = Rect(offsetx, offsety, width, height);
                 Mat image_roi = img(region_of_interest);
-                img=image_roi;
+                image_roi.copyTo(cropped);
+                ds=cropped.data;
+                size = cropped.total() * cropped.elemSize();
+            } else {
+                ds=img.data;
+                size=img.total() * img.elemSize();
             }
-            int size = img.total() * img.elemSize();
             ret= size;
             if(framebuf_size[frames&1]<size){
                 free(framebuf[frames&1]);
                 framebuf[frames&1]=malloc(size);
                 framebuf_size[frames&1]=size;
             }
-            
-            std::memcpy(framebuf[frames&1],img.data,size );
+            if(ds==NULL)
+                return 0;
+            std::memcpy(framebuf[frames&1],ds,size );
             if(buf){
                 if(frames>0){
                     *buf=(char*)framebuf[!(frames&1)];

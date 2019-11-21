@@ -53,7 +53,7 @@ CameraDriverBridge::~CameraDriverBridge() {
 
 //! Execute a command
 cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOpcode(cu_driver::DrvMsgPtr cmd) {
-    boost::mutex::scoped_lock lock(io_mux);
+   // boost::mutex::scoped_lock lock(io_mux);
 
     cu_driver::MsgManagmentResultType::MsgManagmentResult result = cu_driver::MsgManagmentResultType::MMR_EXECUTED;
     camera_params_t *in = (camera_params_t *)cmd->inputData;

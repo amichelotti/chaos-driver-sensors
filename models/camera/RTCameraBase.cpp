@@ -507,12 +507,16 @@ void RTCameraBase::startGrabbing() {
                     << (*sizex * *sizey * bpp) << " bytes";
 
   try {
-    shared_mem.reset(new ::common::misc::data::SharedMem(
-        getCUID(), (*sizex * *sizey * bpp)));
-    RTCameraBaseLDBG_ << "opened sharedMem \"" << shared_mem->getName()
-                      << "\" at @" << std::hex << shared_mem->getMem()
-                      << " size:" << std::dec << shared_mem->getSize();
-  } catch (boost::interprocess::interprocess_exception &ex) {
+    if(shared_mem.get()==NULL){
+      shared_mem.reset(new ::common::misc::data::SharedMem(
+          getCUID(), (imagesizex * imagesizey * bpp)));
+      RTCameraBaseLDBG_ << "opened sharedMem \"" << shared_mem->getName()
+                        << "\" at @" << std::hex << shared_mem->getMem()
+                        << " size:" << std::dec << shared_mem->getSize();
+    } else {
+      shared_mem->resize(imagesizex * imagesizey * bpp);
+    }
+    } catch (boost::interprocess::interprocess_exception &ex) {
     LERR_ << "##cannot open shared memory :" << ex.what();
   }
 
@@ -526,22 +530,27 @@ void RTCameraBase::startGrabbing() {
 }
 
 void RTCameraBase::stopGrabbing() {
+  RTCameraBaseLDBG_ << "Stop Grabbing..." << stopCapture;
+
+  driver->stopGrab();
+
+  if (buffering > 1) {
+ 
   stopCapture = true;
+
   metadataLogging(
       chaos::common::metadata_logging::StandardLoggingChannel::LogLevelInfo,
       "Stop grabbing");
 
-  RTCameraBaseLDBG_ << "Stop Grabbing..." << stopCapture;
-
-  driver->stopGrab();
-  if (buffering > 1) {
-    wait_capture.notify_all();
+      wait_capture.notify_all();
     wait_encode.notify_all();
     full_encode.notify_all();
     full_capture.notify_all();
     capture_th.join();
     encode_th.join();
   }
+        RTCameraBaseLDBG_ << "Stop Grabbing done" << stopCapture;
+
   /*    for(int cnt=0;cnt<CAMERA_FRAME_BUFFERING;cnt++){
         free(framebuf_out[cnt].buf);
         framebuf_out[cnt].size=0;
@@ -560,7 +569,6 @@ void RTCameraBase::stopGrabbing() {
                            chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmCU, "captureQueueFull",
                            chaos::common::alarm::MultiSeverityAlarmLevelClear);
-  RTCameraBaseLDBG_ << "Stop Grabbing done" << stopCapture;
 }
 //! Execute the work, this is called with a determinated delay, it must be as
 //! fast as possible
@@ -898,7 +906,9 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
 }
 
 //! Execute the Control Unit work
-void RTCameraBase::unitStop() throw(chaos::CException) { stopGrabbing(); }
+void RTCameraBase::unitStop() throw(chaos::CException) { 
+  stopGrabbing(); 
+  }
 
 //! Deinit the Control Unit
 void RTCameraBase::unitDeinit() throw(chaos::CException) {
