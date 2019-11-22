@@ -786,6 +786,8 @@ void RTCameraBase::encodeThread() {
 //! Execute the Control Unit work
 void RTCameraBase::unitRun() throw(chaos::CException) {
   uchar *ptr;
+  const char *img = 0;
+
   if (buffering > 1) {
     // get the output attribute pointer form the internal cache
     if ((encode_time > 0) && (capture_time > 0)) {
@@ -837,7 +839,6 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
     }
   } else {
     int ret;
-    const char *img = 0;
     ret = driver->waitGrab(&img, trigger_timeout);
     if ((img != 0) && (ret > 0)) {
       // keep alarm high

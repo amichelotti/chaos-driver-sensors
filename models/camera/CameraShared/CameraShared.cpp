@@ -331,6 +331,7 @@ int CameraShared::waitGrab(const char**buf,uint32_t timeout_ms){
             } else {
                     *buf=(char*)framebuf[0];
             }
+            frames++;
         } else {
             CameraSharedLERR_<<"BAD BUFFER GIVEN "<<shape_type<<"("<<width<<"X"<<height<<")";
 
