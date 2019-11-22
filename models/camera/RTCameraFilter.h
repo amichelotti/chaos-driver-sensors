@@ -52,7 +52,7 @@ protected:
         bool remove_src;
         bool setProp(const std::string &name, int32_t value, uint32_t size);
         bool setProp(const std::string &name, double value, uint32_t size);
-        bool setProp(const std::string &name, std::string value, uint32_t size);
+        bool setProp(const std::string &name, chaos::common::data::CDataWrapper value, uint32_t size);
 
         
 		/*!

@@ -585,6 +585,9 @@ void RTCameraBase::captureThread() {
   while (!stopCapture) {
     img = 0;
     start = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
+    if(*mode!=CAMERA_DISABLE_ACQUIRE){
+      
+    }
     ret = driver->waitGrab(&img, trigger_timeout);
     if ((img != 0) && (ret > 0)) {
       // keep alarm high

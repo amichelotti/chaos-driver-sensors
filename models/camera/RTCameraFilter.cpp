@@ -88,7 +88,7 @@ RTCameraFilter::~RTCameraFilter() {}
     n = value;                     \
     return true;                   \
   }
-bool RTCameraFilter::setProp(const std::string &name,  std::string value,
+bool RTCameraFilter::setProp(const std::string &name,  chaos::common::data::CDataWrapper p,
                              uint32_t size)
 {
 
@@ -96,11 +96,8 @@ bool RTCameraFilter::setProp(const std::string &name,  std::string value,
   {
     return false;
   }
-  try
-  {
-    chaos::common::data::CDataWrapper p;
-    p.setSerializedJsonData(value.c_str());
-    if(p.hasKey(FILTER_MOMENT_KEY)&&p.isInt32Value(FILTER_MOMENT_KEY)){
+  
+  if(p.hasKey(FILTER_MOMENT_KEY)&&p.isInt32Value(FILTER_MOMENT_KEY)){
       moment_circle = p.getInt32Value(FILTER_MOMENT_KEY);
       apply_moment = true;
     } else {
@@ -109,13 +106,8 @@ bool RTCameraFilter::setProp(const std::string &name,  std::string value,
     if(p.hasKey(FILTER_REMOVE_SOURCE_KEY)&&p.isBoolValue(FILTER_REMOVE_SOURCE_KEY)){
       remove_src=p.getBoolValue(FILTER_REMOVE_SOURCE_KEY);
     }
-  }
-  catch (...)
-  {
-    RTCameraFilterLDBG_ << "BAD SPECIFICATION " << name << " VALUE:" << value;
-
-    return false;
-  }
+  
+ 
   return true;
 }
 
@@ -150,7 +142,7 @@ void RTCameraFilter::unitDefineActionAndDataset() throw(chaos::CException)
                         chaos::DataType::TYPE_CLUSTER, chaos::DataType::Input);
 
   addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraFilter,
-                                  std::string>(
+                                  chaos::common::data::CDataWrapper>(
       this, &::driver::sensor::camera::RTCameraFilter::setProp, std::string("FILTER"));
 
   if (apply_moment)
