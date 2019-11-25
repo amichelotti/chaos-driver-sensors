@@ -303,8 +303,8 @@ int RTCameraFilter::filtering(cv::Mat &image)
     // find moments of the image
     Moments m = moments(thr, true);
     Point p(m.m10 / m.m00, m.m01 / m.m00);
-    getAttributeCache()->setOutputAttributeValue("MOMENTX", (void *)&p.x, sizeof(int32_t));
-    getAttributeCache()->setOutputAttributeValue("MOMENTY", (void *)&p.y, sizeof(int32_t));
+    getAttributeCache()->setOutputAttributeValue("MOMENTX", p.x);
+    getAttributeCache()->setOutputAttributeValue("MOMENTY", p.y);
 
     if (moment_circle > 0)
     {
@@ -313,7 +313,7 @@ int RTCameraFilter::filtering(cv::Mat &image)
     if ((REFMOMENTX > 0) && (REFMOMENTY > 0))
     {
       double dist = sqrt(pow((p.x - REFMOMENTX), 2) + pow((p.y - REFMOMENTY), 2));
-      getAttributeCache()->setOutputAttributeValue("MOMENTERR", (void *)&dist, sizeof(dist));
+      getAttributeCache()->setOutputAttributeValue("MOMENTERR", dist);
       if (REFMOMENTRADIUS > 0)
       {
         if (dist > REFMOMENTRADIUS)
