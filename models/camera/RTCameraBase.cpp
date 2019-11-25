@@ -585,9 +585,6 @@ void RTCameraBase::captureThread() {
   while (!stopCapture) {
     img = 0;
     start = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
-    if(*mode!=CAMERA_DISABLE_ACQUIRE){
-      
-    }
     ret = driver->waitGrab(&img, trigger_timeout);
     if ((img != 0) && (ret > 0)) {
       // keep alarm high
@@ -732,7 +729,7 @@ void RTCameraBase::encodeThread() {
                    StateVariableTypeAlarmDEV, "encodeQueueFull",
                    chaos::common::alarm::MultiSeverityAlarmLevelWarning);*/
               RTCameraBaseLDBG_ << "Encode Queue FULL: " << encodeQueue
-                                << " Waiting//";
+                                << " Waiting";
 
               boost::mutex::scoped_lock lock(mutex_encode);
               boost::system_time const timeout =

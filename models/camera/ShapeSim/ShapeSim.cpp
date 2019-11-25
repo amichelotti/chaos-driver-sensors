@@ -251,6 +251,19 @@ int ShapeSim::cameraDeinit(){
     name = w->getInt32Value(#name);\
     ShapeSimLDBG_<< "shape INT param '"<<#name<<" = "<<name;}
     
+void createBeam(Size size, Mat& output,int uX,int uY, float sx, float sy, float amplitude=1.0f){
+    Mat temp=Mat(size,CV_32F);
+    for(int r=0;r<size.height;r++){
+        for(int c=0;c<size.width;c++){
+            float x=(c-uX)*(c-uX)/(2.0*(sx*sx));
+            float y=(r-uY)*(r-uY)/(2.0*(sy*sy));
+            float beam=amplitude*exp(-(x+y));
+            temp.at<float>(r,c)=beam;
+        }
+    }
+    normalize(temp,temp,0.0,1.0,NORM_MINMAX);
+    cvtColor(temp, output, CV_8UC3);
+}
 int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
     int ret=-1;
     shots=_shots;
@@ -375,12 +388,14 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
         RND_DIST(tickness);
     }
     fs<<shape_type<<":("<<tmp_centerx<<","<<tmp_centery<<") "<<tmp_sizex<<"x"<<tmp_sizey<<","<<tmp_rotangle<<","<<tmp_tickness;
-    rectangle(img,Point( 0, 0),Point( width-1, height-1 ), Scalar( colr, colg, colb ));
-    if(shape_type == "ellipse"){
+    if(shape_type=="beam"){
+        createBeam(Size(width,height),img,tmp_centerx,tmp_centery,tmp_sizex,tmp_sizey,tmp_tickness);
+    } else if(shape_type == "ellipse"){
         // get parameters
        
         
-       
+        rectangle(img,Point( 0, 0),Point( width-1, height-1 ), Scalar( colr, colg, colb ));
+
 
         ellipse( img,
                  Point( tmp_centerx, tmp_centery),
