@@ -32,8 +32,13 @@ ELSE()
     ADD_LIBRARY(${PROJECT_NAME} SHARED ${sensors_src} ${camera_src})		 
 
 ENDIF()
+if(CERN_ROOT)
+ SET(CERNLIBS Core RIO Net Hist Graf Graf3d Gpad Tree Rint Imt Postscript Matrix MathCore Thread MultiProc)
+ ELSE()
+ SET(CERNLIBS )
 
- TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_metadata_service_client chaos_common common_serial pthread ${camera_lib} common_misc_data)
+ ENDIF()
+ TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_metadata_service_client chaos_common common_serial pthread ${camera_lib} ${CERNLIBS} common_misc_data)
 
 ADD_SUBDIRECTORY(models)
 

@@ -77,6 +77,7 @@ enum GrabStrategy {
 #define SHARPNESS_KEY "SHARPNESS"
 #define BRIGHTNESS_KEY "BRIGHTNESS"
 #define CONTRAST_KEY "CONTRAST"
+#define GAUSS_FIT_KEY "gauss_fit"
 #define FILTER_MOMENT_KEY "moment"
 #define FILTER_REMOVE_SOURCE_KEY "remove_source" //boolean
 
