@@ -59,17 +59,23 @@ class ShapeSim:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::Camera
      int32_t gstrategy;
      uint32_t shots;
      uint64_t frames;
-     int movex,movey,rot;
+     double movex,movey,rot;
+     double max_movex,max_movey,min_movex,min_movey;
      void*framebuf[2];
      int framebuf_size[2];
      int32_t memID;
      cameraGrabCallBack fn;
      bool initialized;
+     int pixelEncoding;
      int propsToCamera(chaos::common::data::CDataWrapper*p);
      int cameraToProps(chaos::common::data::CDataWrapper*p);
-     int width,height,offsetx,offsety;
-     int tmp_centerx,tmp_centery,tmp_sizex,tmp_sizey,tmp_rotangle,tmp_tickness;
-     double framerate;
+     int width,height,offsetx,offsety,original_width,original_height;
+     float tmp_centerx,tmp_centery,tmp_sizex,tmp_sizey,tmp_rotangle,tmp_tickness;
+     // beam
+     double amplitude,err_amplitude,max_amplitude,inc_amplitude,tmp_amplitude;
+     double sigmax,sigmay,err_sigmax,err_sigmay;
+     ///
+     double framerate,gain,brightness;
       cv::Mat img;
      // shape parameters
      ChaosUniquePtr<chaos::common::data::CDataWrapper> shape_params;
@@ -86,7 +92,9 @@ class ShapeSim:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::Camera
 public:
 	ShapeSim();
 	~ShapeSim();
+    void createBeamImage(cv::Size size, cv::Mat& output,float uX,float uY, float sx, float sy, float amplitude=1.0f);
     int setImageProperties(int32_t width,int32_t height,int32_t opencvImageType);
+    void applyCameraParams(cv::Mat& img);
 
      int getImageProperties(int32_t& width,int32_t& height,int32_t& opencvImageType);
 
