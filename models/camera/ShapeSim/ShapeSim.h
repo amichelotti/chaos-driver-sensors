@@ -73,6 +73,7 @@ class ShapeSim:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::Camera
      float tmp_centerx,tmp_centery,tmp_sizex,tmp_sizey,tmp_rotangle,tmp_tickness;
      // beam
      double amplitude,err_amplitude,max_amplitude,inc_amplitude,tmp_amplitude;
+     double rho;
      double sigmax,sigmay,err_sigmax,err_sigmay;
      ///
      double framerate,gain,brightness;
@@ -92,7 +93,7 @@ class ShapeSim:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::Camera
 public:
 	ShapeSim();
 	~ShapeSim();
-    void createBeamImage(cv::Size size, cv::Mat& output,float uX,float uY, float sx, float sy, float amplitude=1.0f);
+    void createBeamImage(cv::Size size, cv::Mat& output,float uX,float uY, float sx, float sy, float amplitude=1.0f,float rho=0);
     int setImageProperties(int32_t width,int32_t height,int32_t opencvImageType);
     void applyCameraParams(cv::Mat& img);
 

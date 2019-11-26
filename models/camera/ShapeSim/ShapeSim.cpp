@@ -28,6 +28,7 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/uniform_real.hpp>
+#include "../beamFunc.h"
 
 namespace cu_driver = chaos::cu::driver_manager::driver;
 using namespace ::driver::sensor::camera;
@@ -260,14 +261,23 @@ int ShapeSim::cameraDeinit(){
     name = w->getInt32Value(#name);\
     ShapeSimLDBG_<< "shape INT param '"<<#name<<" = "<<name;}
     
-void ShapeSim::createBeamImage(Size size, Mat& output,float uX,float uY, float sx, float sy, float amp){
+void ShapeSim::createBeamImage(Size size, Mat& output,float uX,float uY, float sx, float sy, float amp,float angle){
     Mat temp=Mat(size,CV_32F);
+    double p[6];
+    double x[2];
+
+    p[0]=amp;
+    p[1]=uX;
+    p[2]=sx;
+    p[3]=uY;
+    p[4]=sy;
+    p[5]=angle;
+   
     for(int r=0;r<size.height;r++){
         for(int c=0;c<size.width;c++){
-            float x=(c-uX)*(c-uX)/(2.0*(sx*sx));
-            float y=(r-uY)*(r-uY)/(2.0*(sy*sy));
-            float beam=(amp*exp(-(x+y)))*gain + brightness;
-            temp.at<float>(r,c)=beam;
+            x[0]=c;
+            x[1]=r;
+            temp.at<float>(r,c)=beamFunc(x,p);
             
         }
     }
@@ -316,7 +326,7 @@ int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
         colb=0;
         tickness=2;
         linetype=8; //connected
-        err_sigmax=err_sigmay=0;
+        err_sigmax=err_sigmay=rho=0;
         GETDBLPARAM(shape_params,movex);
         GETDBLPARAM(shape_params,movey);
         GETDBLPARAM(shape_params,rot);
@@ -373,6 +383,8 @@ int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
         GETDBLPARAM(shape_params,err_sigmax);
         GETDBLPARAM(shape_params,max_amplitude);
         GETDBLPARAM(shape_params,inc_amplitude);
+        GETDBLPARAM(shape_params,rho);
+
 
 
     }

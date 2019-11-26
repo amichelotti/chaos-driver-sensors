@@ -23,8 +23,9 @@
 #include <common/misc/data/core/SharedMem.h>
 #include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
 #ifdef CERN_ROOT
-#include "TASImage.h"
-#include "TCanvas.h"
+
+class TH2F;
+class TF2;
 
 #endif
 
@@ -58,8 +59,12 @@ protected:
         bool setProp(const std::string &name, int32_t value, uint32_t size);
         bool setProp(const std::string &name, double value, uint32_t size);
         bool setProp(const std::string &name, chaos::common::data::CDataWrapper value, uint32_t size);
+#ifdef CERN_ROOT
 
-
+        TH2F* h;
+        TF2* g2d;
+        int gauss_fit_level;
+#endif
 		/*!
 		Define the Control Unit Dataset and Actions
 		*/

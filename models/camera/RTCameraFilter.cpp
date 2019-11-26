@@ -26,9 +26,11 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #ifdef CERN_ROOT
-#include <TH2D.h>
+#include <TH2F.h>
 #include <TF2.h>
 #endif
+#include "beamFunc.h"
+
 using namespace chaos;
 using namespace chaos::common::data::cache;
 using namespace chaos::cu::driver_manager::driver;
@@ -55,7 +57,7 @@ RTCameraFilter::RTCameraFilter(
     const string &_control_unit_id, const string &_control_unit_param,
     const ControlUnitDriverList &_control_unit_drivers)
     : RTCameraBase(_control_unit_id, _control_unit_param, _control_unit_drivers,
-                   0),remove_src(false),apply_gauss_fit(false)
+                   0),remove_src(false),apply_gauss_fit(false),h(NULL),g2d(NULL)
 {
   RTCameraFilterLDBG_ << "Creating " << _control_unit_id
                       << " params:" << _control_unit_param;
@@ -77,9 +79,14 @@ RTCameraFilter::RTCameraFilter(
     #ifdef CERN_ROOT
     if (p.hasKey(GAUSS_FIT_KEY))
     {
+      gauss_fit_level=0;
+      if(p.isCDataWrapperValue(GAUSS_FIT_KEY)){
+        chaos::common::data::CDWUniquePtr gf=p.getCSDataValue(GAUSS_FIT_KEY);
+        if(gf->hasKey("level")){
+          gauss_fit_level=gf->getInt32Value("level");
+        }
+      }
       apply_gauss_fit = true;
-      //timage=TImage::Create();
-
     }
     #endif
   }
@@ -94,6 +101,13 @@ RTCameraFilter::RTCameraFilter(
 RTCameraFilter::~RTCameraFilter() {
 #ifdef CERN_ROOT
     if (apply_gauss_fit){
+      if(g2d){
+        delete g2d;
+      
+      }
+    if(h){
+      delete h;
+    }
 
     }
 #endif
@@ -207,22 +221,7 @@ void RTCameraFilter::unitDefineActionAndDataset() throw(chaos::CException)
   }
   RTCameraBase::unitDefineActionAndDataset();
 }
-static double gaus2d(double *x, double *p) {
-    double amplitude  = p[0];
-    double mean_x     = p[1];
-    double sigma_x    = p[2];
-    double mean_y     = p[3];
-    double sigma_y    = p[4];
-    double rho        = p[5];
-    double u = (x[0]-mean_x) / sigma_x ;
-    double v = (x[1]-mean_y) / sigma_y ;
-    double c = 1 - rho*rho ;
-    double result = amplitude*exp (-(u * u - 2 * rho * u * v + v * v ) / (2 * c));
 
-    //(1 / (2 * TMath::Pi() * sigma_x * sigma_y * sqrt(c)))
-
-    return result;
-}
 int RTCameraFilter::filtering(cv::Mat &image)
 {
     Mat thr, gray;
@@ -236,52 +235,57 @@ int RTCameraFilter::filtering(cv::Mat &image)
   }
   if(apply_gauss_fit){
 #ifdef CERN_ROOT
-    TH2D* h = new TH2D("slm"," ",gray.cols,0,gray.cols,gray.rows,0,gray.rows);
-    TF2* g2d = new TF2("g2d",gaus2d,0.,gray.cols,0.,gray.rows,6);
-    
+    if(h==NULL){
+     h = new TH2F("slm"," ",gray.cols,0,gray.cols,gray.rows,0,gray.rows);
+     h->SetStats(0);
+
+    }
+    if(g2d==NULL){
+      g2d = new TF2("g2d",beamFunc,0.,gray.cols,0.,gray.rows,6);
+      //g2d->Draw("SAME");
+      g2d->SetParNames("Amplitude","X_m","S_x","Y_m","S_y","rho");
+
+    }
       int xPixels=gray.cols;
       int yPixels=gray.rows;
       for (int row=0; row<xPixels; ++row) {
         for (int col=0; col<yPixels; ++col) {
-            float greyv = (255.0*1.0-gray.at<uchar>(row,col))/256.0;
+            //float greyv = (255.0*1.0-gray.at<uchar>(row,col))/256.0;
+            float greyv = (gray.at<uchar>(col,row))/256.0;
             //if (row<5 || row > xPixels-5 || col < 5 || col>yPixels-5) {
             //    grey = 0;
             //}
             //printf("%d(%d,%d) -> %f\n",index,row,col,grey);
-            h->SetBinContent(row+1,yPixels-col,greyv);
+            h->SetBinContent(row,col,greyv);
             //  h->SetBinError(row+1,yPixels-col,TMath::Sqrt(grey));
         }
     }
+    double Amplitude =h->GetMaximum();
+    double X_m       =h->GetMean(1);
+    double S_x       = h->GetRMS(1);
+    double Y_m       = h->GetMean(2);
+    double S_y       = h->GetRMS(2);
+    double rho       = h->GetCorrelationFactor();
+    double par[6] = {Amplitude,X_m,S_x,Y_m,S_y,rho};
 
-    h->Rebin2D(2,2);
-    h->Draw("colz");
+    if(gauss_fit_level>0){
+      g2d->SetParameters(par);
+      
+      RTCameraFilterLDBG_ << "Start Fitting params: A:"<<par[0]<<" Mx:"<<par[1]<<" Sx:"<<par[2]<<" My:"<<par[3]<<" Sy:"<<par[4]<<" rho:"<<par[5];
 
+      h->Fit("g2d","N","");
+     Amplitude = g2d->GetParameter(0);
+     X_m       = g2d->GetParameter(1);
+     S_x       = g2d->GetParameter(2);
+     Y_m       = g2d->GetParameter(3);
+     S_y       = g2d->GetParameter(4);
+     rho       = g2d->GetParameter(5);
 
-    double par[6] = {h->GetMaximum(),h->GetMean(1),h->GetRMS(1),h->GetMean(2),h->GetRMS(2),h->GetCorrelationFactor()};
-    g2d->SetParameters(par);
-    //g2d->Draw("SAME");
-    g2d->SetParNames("Amplitude","X_m","S_x","Y_m","S_y","rho");
-    Double_t xmax = (Double_t)xPixels-10.;
-    Double_t ymax = (Double_t)yPixels-10.;
+    } 
+   
 
+    RTCameraFilterLDBG_ << "End Fitting C:"<<X_m<<","<<Y_m<<" S:"<<S_x<<","<<S_y<<" angle:"<<rho;
 
-    TH1* hpx = h->ProjectionX();
-    TH1* hpy = h->ProjectionY();
-
-
-    h->SetStats(0);
-    //h->Draw("SURF3");
-
-    std::cout<<"fitting..."<<std::endl;
-
-    h->Fit("g2d","N","");
-    std::cout<<"end fitting..."<<std::endl;
-    double Amplitude = g2d->GetParameter(0);
-    double X_m       = g2d->GetParameter(1);
-    double S_x       = g2d->GetParameter(2);
-    double Y_m       = g2d->GetParameter(3);
-    double S_y       = g2d->GetParameter(4);
-    double rho       = g2d->GetParameter(5);
     getAttributeCache()->setOutputAttributeValue("Amplitude",Amplitude);
     getAttributeCache()->setOutputAttributeValue("X_m",X_m);
     getAttributeCache()->setOutputAttributeValue("S_x",S_x);
@@ -289,16 +293,12 @@ int RTCameraFilter::filtering(cv::Mat &image)
     getAttributeCache()->setOutputAttributeValue("S_y",S_y);
     getAttributeCache()->setOutputAttributeValue("rho",rho);
 
-    delete g2d;
-    delete h;
-
+    
 
 #endif
   }
   if (apply_moment)
   {
-    Mat thr, gray;
-
     
     // find moments of the image
     Moments m = moments(thr, true);
