@@ -165,13 +165,19 @@ bool RTCameraBase::setProp(const std::string &name, int32_t value,
                            uint32_t size) {
   int ret;
   int32_t valuer;
-  RTCameraBaseLDBG_ << "SET IPROP:" << name << " VALUE:" << value;
+    AttributeSharedCacheWrapper *cc = getAttributeCache();
 
+  RTCameraBaseLDBG_ << "SET IPROP:" << name << " VALUE:" << value;
+ int32_t *pmode = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, name);
   bool stopgrab = (stopCapture == false) &&
                   (((name == WIDTH_KEY) && (value != *sizex)) ||
                    ((name == HEIGHT_KEY) && (value != *sizey)) ||
                    ((name == OFFSETX_KEY) && (value != *offsetx)) ||
-                   ((name == OFFSETY_KEY) && (value != *offsety)));
+                   ((name == OFFSETY_KEY) && (value != *offsety))||
+                   ((name == TRIGGER_MODE_KEY) && (value == CAMERA_DISABLE_ACQUIRE))
+                   );
+
+  
   if (stopgrab) {
     stopGrabbing();
   }
@@ -192,12 +198,11 @@ bool RTCameraBase::setProp(const std::string &name, int32_t value,
 
   // updateProperty();
   driver->getCameraProperty(name, valuer);
-  AttributeSharedCacheWrapper *cc = getAttributeCache();
-  int32_t *p = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, name);
-  *p = valuer;
+ 
+  mode=*pmode = valuer;
   RTCameraBaseLDBG_ << "SET IPROP:" << name << " SET VALUE:" << value
                     << " READ VALUE:" << valuer << " ret:" << ret;
-  if (stopgrab) {
+  if (stopgrab && !((name == TRIGGER_MODE_KEY) && (value == CAMERA_DISABLE_ACQUIRE))) {
     startGrabbing();
   }
   getAttributeCache()->setInputDomainAsChanged();
@@ -269,7 +274,13 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
     addAttributeToDataSet("ENCODE_FRAMERATE", "Encode Frame Rate",
                           chaos::DataType::TYPE_INT32, chaos::DataType::Output);
   }
-
+  addAttributeToDataSet("ACQUIRE", "Is Acquiring",
+                          chaos::DataType::TYPE_BOOLEAN, chaos::DataType::Output);
+  addAttributeToDataSet("TRIGGER", "Is triggered ",
+                          chaos::DataType::TYPE_BOOLEAN, chaos::DataType::Output);
+  addAttributeToDataSet("PULSE", "Is pulse",
+                          chaos::DataType::TYPE_BOOLEAN, chaos::DataType::Output);
+  
   for (std::vector<std::string>::iterator i = props.begin(); i != props.end();
        i++) {
     if (!camera_props.isCDataWrapperValue(*i)) {
@@ -364,10 +375,17 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   offsetx = cc->getRWPtr<int32_t>(DOMAIN_INPUT, OFFSETX_KEY);
   offsety = cc->getRWPtr<int32_t>(DOMAIN_INPUT, OFFSETY_KEY);
   //
-  mode = cc->getROPtr<int32_t>(DOMAIN_INPUT, TRIGGER_MODE_KEY);
+  mode = *cc->getROPtr<int32_t>(DOMAIN_INPUT, TRIGGER_MODE_KEY);
   //   camera_out=cc->getRWPtr<uint8_t>(DOMAIN_OUTPUT, "FRAMEBUFFER");
   fmt = cc->getRWPtr<char>(DOMAIN_INPUT, "FMT");
   ofmt = cc->getRWPtr<char>(DOMAIN_OUTPUT, "FMT");
+  pacquire=cc->getRWPtr<bool>(DOMAIN_OUTPUT, "ACQUIRE");
+  ptrigger=cc->getRWPtr<bool>(DOMAIN_OUTPUT, "TRIGGER");
+  ppulse=cc->getRWPtr<bool>(DOMAIN_OUTPUT, "PULSE");
+  *pacquire=false;
+  *ptrigger=false;
+  *ppulse=false;  
+
   if (buffering > 1) {
     capture_frame_rate =
         cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, "CAPTURE_FRAMERATE");
@@ -787,7 +805,12 @@ void RTCameraBase::encodeThread() {
 void RTCameraBase::unitRun() throw(chaos::CException) {
   uchar *ptr;
   const char *img = 0;
+  *pacquire= (mode!=CAMERA_DISABLE_ACQUIRE);
+  *ptrigger=(mode!=CAMERA_DISABLE_ACQUIRE)&&(mode!=CAMERA_TRIGGER_CONTINOUS);
+  *ppulse= ((mode==CAMERA_TRIGGER_SINGLE)||(mode==CAMERA_TRIGGER_SOFT));
 
+                                                  
+ 
   if (buffering > 1) {
     // get the output attribute pointer form the internal cache
     if ((encode_time > 0) && (capture_time > 0)) {

@@ -55,9 +55,11 @@ protected:
         int32_t imagesizex,imagesizey;
         uint8_t bpp;
         bool apply_resize;
-        const int32_t* mode;
+        int32_t mode;
         uint8_t* framebuf;
         uint32_t framebuf_encoding;
+          bool*pacquire,*ptrigger,*ppulse;
+
         //double ZOOMX,ZOOMY;
         chaos::common::data::CDataWrapper filters;
         typedef struct {
