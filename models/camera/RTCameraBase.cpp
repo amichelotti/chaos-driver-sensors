@@ -348,17 +348,17 @@ void RTCameraBase::unitDefineCustomAttribute() {
     throw chaos::CException(-1, "Error retrieving camera properties",
                             __PRETTY_FUNCTION__);
   }
-  getAttributeCache()->addCustomAttribute("config", 8192,
-                                          chaos::DataType::TYPE_CLUSTER);
+  
   if (driver->getCameraProperties(attr) != 0) {
     throw chaos::CException(-1, "Error retrieving camera properties",
                             __PRETTY_FUNCTION__);
   }
   config = attr.getCompliantJSONString();
   RTCameraBaseLDBG_ << "ADDING CONFIG:" << config;
-  getAttributeCache()->setCustomAttributeValue("config", (void *)config.c_str(),
-                                               config.size());
-  getAttributeCache()->setCustomDomainAsChanged();
+  setDriverInfo(attr);
+  //getAttributeCache()->setCustomAttributeValue(chaos::ControlUnitNodeDefinitionKey::CONTROL_UNIT_DRIVER_INFO, (void *)config.c_str(),
+                                           //    config.size()+1);
+  //getAttributeCache()->setCustomDomainAsChanged();
   pushCustomDataset();
 }
 
