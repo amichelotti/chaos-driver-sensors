@@ -139,7 +139,7 @@ void BasicSensor::unitRun() throw(chaos::CException) {
         char buffer[*i];
         if((ret=driver->readChannel(buffer,cnt,*i))){
 	        changed++;
-            BasicSensorLDBG_<<"Reading output channel "<<cnt<<", size :"<<*i <<" ret:"<<ret;
+          //  BasicSensorLDBG_<<"Reading output channel "<<cnt<<", size :"<<*i <<" ret:"<<ret;
             getAttributeCache()->setOutputAttributeValue(cnt, (void*)buffer, *i);
         }
     }

@@ -46,7 +46,8 @@ enum TriggerModes {
     CAMERA_TRIGGER_SINGLE,
     CAMERA_TRIGGER_SOFT,
     CAMERA_TRIGGER_HW_HI,
-    CAMERA_TRIGGER_HW_LOW
+    CAMERA_TRIGGER_HW_LOW,
+    CAMERA_DISABLE_ACQUIRE
 
 } ;
 enum GrabStrategy {
@@ -56,9 +57,12 @@ enum GrabStrategy {
     CAMERA_INCOMING // start grabbing just after the SW is waiting for
 } ;
 #define TRIGGER_TIMEOUT_ERROR -100
+#define CAMERA_GRAB_ERROR -200
+
 #define TRIGGER_MODE_KEY "TRIGGER_MODE"
 #define SERIAL_KEY "serial"
 
+#define FRAMEBUFFER_ENCODING_KEY "FRAMEBUFFER_ENCODING"
 #define TRIGGER_HW_SOURCE_KEY "TRIGGER_HW_SOURCE"
 #define TRIGGER_DELAY_KEY "TRIGGER_DELAY"
 #define TRIGGER_HW_TIMEOUT_KEY "TRIGGER_HW_TIMEOUT"
@@ -73,7 +77,14 @@ enum GrabStrategy {
 #define SHARPNESS_KEY "SHARPNESS"
 #define BRIGHTNESS_KEY "BRIGHTNESS"
 #define CONTRAST_KEY "CONTRAST"
-   
+#define GAUSS_FIT_KEY "gauss_fit"
+#define FILTER_MOMENT_KEY "moment"
+#define FILTER_REMOVE_SOURCE_KEY "remove_source" //boolean
+
+
+int fmt2cv(const std::string&);
+int cv2fmt(int fmt,  std::string& enc);
+
  class AbstractCameraDriver{
 
 protected:

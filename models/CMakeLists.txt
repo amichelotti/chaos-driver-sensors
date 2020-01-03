@@ -6,9 +6,15 @@ add_subdirectory(ZBSensor)
 
 IF(OPENCV)
 FILE(REMOVE camera/ShapeSim/UnitServerIgnore)
+FILE(REMOVE camera/CameraShared/UnitServerIgnore)
+
 add_subdirectory(camera/ShapeSim)
+add_subdirectory(camera/CameraShared)
+
 ELSE()
 FILE(WRITE camera/ShapeSim/UnitServerIgnore "disabled ${PROJECT_NAME}")
+FILE(WRITE camera/CameraShred/UnitServerIgnore "disabled ${PROJECT_NAME}")
+
 ENDIF()
 
 IF (BASLER)
