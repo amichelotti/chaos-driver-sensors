@@ -53,11 +53,12 @@ CameraDriverBridge::~CameraDriverBridge() {
 
 //! Execute a command
 cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOpcode(cu_driver::DrvMsgPtr cmd) {
-    boost::mutex::scoped_lock lock(io_mux);
+   // boost::mutex::scoped_lock lock(io_mux);
 
     cu_driver::MsgManagmentResultType::MsgManagmentResult result = cu_driver::MsgManagmentResultType::MMR_EXECUTED;
     camera_params_t *in = (camera_params_t *)cmd->inputData;
     camera_params_t *out = (camera_params_t *)cmd->resultData;
+    memset(out,0,sizeof(camera_params_t));
     CameraDriverBridgeLDBG_ <<" SKELETON Opcode:"<<cmd->opcode;
     switch(cmd->opcode) {
     case CameraDriverInterfaceOpcode_SET_IMAGE_PROP:{
@@ -112,7 +113,7 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
         int sizeb;
         out->result=getCameraProperties(props);
         const char*ptr=props.getBSONRawData(sizeb);
-
+     
         if((sizeb>0)&& ptr){
             out->str=(char*)malloc(sizeb);
             out->strl=sizeb;

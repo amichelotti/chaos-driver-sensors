@@ -58,7 +58,7 @@ class IDSGEXXDriver:ADD_CU_DRIVER_PLUGIN_SUPERCLASS,  ::driver::sensor::camera::
      bool initialized;
      int propsToCamera(chaos::common::data::CDataWrapper*p);
      int cameraToProps(chaos::common::data::CDataWrapper*p);
-
+    bool deinitialized;
 public:
 	IDSGEXXDriver();
 	~IDSGEXXDriver();

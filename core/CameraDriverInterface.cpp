@@ -196,10 +196,8 @@ int CameraDriverInterface::getCameraProperties(chaos::common::data::CDataWrapper
     boost::mutex::scoped_lock lock(io_mux);
 
     PREPARE_OP(CameraDriverInterfaceOpcode_GET_PROPERTIES);
-    int cnt;
-    char* start_str=0;
     SEND;
-    if(ret.str){
+    if(ret.str && (ret.strl>0)){
         proplist.setSerializedData(ret.str);
         free(ret.str);
         ret.str=NULL;

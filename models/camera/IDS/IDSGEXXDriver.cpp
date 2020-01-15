@@ -160,6 +160,7 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
         }
     }
     // initialize properties.
+    deinitialized=false;
 
     propsToCamera((chaos::common::data::CDataWrapper*)&json);
     /*  if((ret=is_InitCamera (&hCam, NULL))!=IS_SUCCESS){
@@ -246,12 +247,45 @@ IDSGEXXDriver::~IDSGEXXDriver() {
     if(getNodeInPercentage(# x,camera,per)==0){\
     p->addInt32Value(y,(int32_t)per);}}
 */
+
+static std::string ids2cv(uEyeColor fmt){
+            switch(fmt){
+                case MONO8:
+                    return "CV_8UC1";
+            case MONO16:
+                return "CV_16UC1";
+            case RGB8:
+            case BGR8:
+                return "CV_8UC3";
+            default:
+                return "NOT SUPPORTED";
+            }
+                return "NOT SUPPORTED";
+
+}
+static uEyeColor cv2ids(const std::string& fmt){
+     if(fmt=="CV_8UC1")
+        return MONO8;
+    if(fmt=="CV_8SC1")
+        return MONO8;        
+    if(fmt=="CV_16UC1")
+                return MONO16;
+    if(fmt=="CV_8UC3")
+                return RGB8;
+    return MONO8;
+
+}
 int IDSGEXXDriver::cameraToProps(chaos::common::data::CDataWrapper*p){
 
    if(p==NULL){
         IDSGEXXDriverLERR_ << "Invalid Parameter";
         return -1;
 
+    }
+    if(deinitialized){
+        IDSGEXXDriverLERR_ << "Camera is deinitialized";
+
+        return 0;
     }
     int width = camera.getWidth();
     int height = camera.getHeight();
@@ -305,6 +339,8 @@ int IDSGEXXDriver::cameraToProps(chaos::common::data::CDataWrapper*p){
     p->addInt32Value("OFFSETX",0);
     p->addInt32Value("OFFSETY",0);
 
+    p->addStringValue(FRAMEBUFFER_ENCODING_KEY,ids2cv(camera.getColorMode()));
+
     return 0;
 }
 
@@ -320,6 +356,10 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
         IDSGEXXDriverLERR_ << "Invalid Parameter";
         return -1;
 
+    }
+    if(deinitialized){
+        IDSGEXXDriverLERR_ << "Camera is deinitialized";
+        return -2;
     }
     if((ret=camera.getAOI(posx,posy,width,height))==IS_SUCCESS){
         IDSGEXXDriverLDBG_<< "CURRENT OFFSET (" << posx<<","<<posy<<") img size:"<<width<<"x"<<height;
@@ -432,12 +472,12 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
         }
 
     }
-    if (p->hasKey("PIXELFMT")){
+    if (p->hasKey(FRAMEBUFFER_ENCODING_KEY)){
         uEyeColor  color = (uEyeColor)0;
 
         // Set the pixel data format.
-        std::string fmt=p->getStringValue("PIXELFMT");
-        PXL2COLOR(MONO8);
+        std::string fmt=p->getStringValue(FRAMEBUFFER_ENCODING_KEY);
+        /*PXL2COLOR(MONO8);
         PXL2COLOR(MONO16);
         PXL2COLOR(YUV);
         PXL2COLOR(YCbCr);
@@ -449,12 +489,11 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
         PXL2COLOR(RGB8);
         PXL2COLOR(RGBA8);
         PXL2COLOR(RGBY8);
+*/
+        IDSGEXXDriverLDBG_<< "setting Pixel Format " <<fmt;
 
-        if(color>0){
-            IDSGEXXDriverLDBG_<< "setting Pixel Format " <<fmt;
-
-            camera.setColorMode(color);
-        }
+        camera.setColorMode(cv2ids(fmt));
+        
     }
 
 
@@ -573,7 +612,7 @@ int IDSGEXXDriver::cameraInit(void *buffer,uint32_t sizeb){
 
 int IDSGEXXDriver::cameraDeinit(){
     IDSGEXXDriverLDBG_<<"deinit";
-
+    deinitialized=true;
     camera.closeCamera();
 
 

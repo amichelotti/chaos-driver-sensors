@@ -1,8 +1,7 @@
 /*
- *	ShapeSim.h
- *  Software emulated beam camera
- *	!CHOAS
- *	Created by Andrea Michelotti
+ *	CameraShared.h
+ *  Software shared beam camera
+ *	!CHOASmg
  *
  *    	Copyright 2013 INFN, National Institute of Nuclear Physics
  *
@@ -18,8 +17,8 @@
  *    	See the License for the specific language governing permissions and
  *    	limitations under the License.
  */
-#ifndef ShapeSim_H
-#define ShapeSim_H
+#ifndef CameraShared_H
+#define CameraShared_H
 
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <driver/sensors/core/CameraDriverBridge.h>
@@ -28,13 +27,15 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc.hpp>
+#include <common/misc/data/core/SharedMem.h>
+
 #define PIXEL_CLOCK 2
 namespace cu_driver = chaos::cu::driver_manager::driver;
 
 /*
  driver definition
  */
-DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(ShapeSim)
+DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(CameraShared)
 
 namespace driver {
     namespace sensor {
@@ -43,7 +44,7 @@ namespace driver {
 #define CAM_DEFAULT_WIDTH 659
 #define CAM_DEFAULT_HEIGTH 494
 
-class ShapeSim:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::CameraDriverBridge {
+class CameraShared:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::CameraDriverBridge {
 
 
    chaos::common::data::CDataWrapper* props;
@@ -56,46 +57,37 @@ class ShapeSim:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::Camera
   void driverDeinit() throw(chaos::CException) ;
     // This smart pointer will receive the grab result data.
      int32_t tmode; //0 continous, 1 software,2 hw,3 singleshot
+     ChaosUniquePtr<::common::misc::data::SharedMem> shared_mem;
+
+     
      int32_t gstrategy;
      uint32_t shots;
      uint64_t frames;
-     double movex,movey,rot;
-     double max_movex,max_movey,min_movex,min_movey;
+     int movex,movey,rot;
      void*framebuf[2];
      int framebuf_size[2];
      int32_t memID;
      cameraGrabCallBack fn;
      bool initialized;
-     int pixelEncoding;
      int propsToCamera(chaos::common::data::CDataWrapper*p);
      int cameraToProps(chaos::common::data::CDataWrapper*p);
-     int width,height,offsetx,offsety,original_width,original_height;
-     float tmp_centerx,tmp_centery,tmp_sizex,tmp_sizey,tmp_rotangle,tmp_tickness;
-     // beam
-     double amplitude,err_amplitude,max_amplitude,inc_amplitude,tmp_amplitude;
-     double rho;
-     double sigmax,sigmay,err_sigmax,err_sigmay;
-     ///
-     double framerate,gain,brightness;
-      cv::Mat img;
-     // shape parameters
-     ChaosUniquePtr<chaos::common::data::CDataWrapper> shape_params;
+     int width,height,offsetx,offsety;
+     int original_width,original_height;
+     double framerate;
+     // driver parameters
+     chaos::common::data::CDataWrapper driver_params;
      std::string shape_type;
      int centerx,centery;
      int sizex,sizey;
      double rotangle,extangle;
      int colr,colg,colb,tickness,linetype;
-     double err_centerx,err_centery;
-     double err_sizex,err_sizey;
-     double err_rotangle,err_extangle,err_tickness;
+    
     int64_t last_acquisition_ts;
      //
 public:
-	ShapeSim();
-	~ShapeSim();
-    void createBeamImage(cv::Size size, cv::Mat& output,float uX,float uY, float sx, float sy, float amplitude=1.0f,float rho=0);
+	CameraShared();
+	~CameraShared();
     int setImageProperties(int32_t width,int32_t height,int32_t opencvImageType);
-    void applyCameraParams(cv::Mat& img);
 
      int getImageProperties(int32_t& width,int32_t& height,int32_t& opencvImageType);
 

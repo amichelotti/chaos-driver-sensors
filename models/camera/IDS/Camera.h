@@ -114,7 +114,7 @@ public:
   
   
   int getZoom() const { return zoom_; }
-  uEyeColor getColorMode() const { return color_mode_; }
+  uEyeColor getColorMode();
   bool getAutoExposure() const { return auto_exposure_; }
   double getExposure();
   bool getHardwareGamma() const { return hardware_gamma_; }
@@ -191,6 +191,7 @@ private:
   void restartVideoCapture();
 
   uEyeColor color_mode_;
+  int color_depth;
   bool auto_exposure_;
   double exposure_time_;
   bool hardware_gamma_;
@@ -198,6 +199,7 @@ private:
   int zoom_;
   int pixel_clock_;
   bool auto_gain_;
+  
   int hardware_gain_;
   double frame_rate_;
   bool flash_global_params_;

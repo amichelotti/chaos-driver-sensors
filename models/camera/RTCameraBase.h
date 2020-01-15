@@ -20,13 +20,13 @@
 #ifndef ChaosRTControlUnit_RTCameraBase_h
 #define ChaosRTControlUnit_RTCameraBase_h
 #include  <boost/lockfree/queue.hpp> 
-
-
+#include <common/misc/data/core/SharedMem.h>
 #include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
 
 #define DEFAULT_RESOLUTION 640*480*3
 #define CAMERA_FRAME_BUFFERING 16
 
+namespace cv {class Mat;}
 namespace driver{
     
     namespace sensor{
@@ -40,7 +40,7 @@ public:
     /*!
      Construct a new CU with full constructor
      */
-    RTCameraBase(const std::string& _control_unit_id, const std::string& _control_unit_param, const ControlUnitDriverList& _control_unit_drivers);
+    RTCameraBase(const std::string& _control_unit_id, const std::string& _control_unit_param, const ControlUnitDriverList& _control_unit_drivers,const int buffering=CAMERA_FRAME_BUFFERING);
     /*!
      Destructor a new CU
      */
@@ -48,14 +48,29 @@ public:
         void cameraGrabCallBack(const void*buf,uint32_t blen,uint32_t width,uint32_t heigth, uint32_t error);
 
 protected:
+        const int buffering;
+        ChaosUniquePtr<::common::misc::data::SharedMem> shared_mem;
         int32_t *sizex,*sizey,*offsetx,*offsety;
-        const int32_t* mode;
+        // if >0 then this is the camera window created, each grab should fit this size.
+        int32_t imagesizex,imagesizey;
+        uint8_t bpp;
+        bool apply_resize;
+        int32_t mode;
         uint8_t* framebuf;
         uint32_t framebuf_encoding;
+          bool*pacquire,*ptrigger,*ppulse;
+
+        //double ZOOMX,ZOOMY;
+        chaos::common::data::CDataWrapper filters;
         typedef struct {
             uint8_t*buf;
             int32_t size;
         } buf_t;
+        typedef struct encoded {
+            std::vector<unsigned char>* img;
+            encoded():img(NULL){};
+        } encoded_t;
+
         char encoding[16];
         chaos::common::data::CDataWrapper camera_props;
        // uint8_t* camera_out;
@@ -68,10 +83,10 @@ protected:
         uint32_t captureQueue,encodeQueue;
         boost::condition_variable wait_capture,wait_encode,full_capture,full_encode;
         boost::lockfree::queue<buf_t, boost::lockfree::fixed_sized<true> > captureImg;
-        boost::lockfree::queue<std::vector<unsigned char>*, boost::lockfree::fixed_sized<true> > encodedImg;
+        boost::lockfree::queue<encoded_t, boost::lockfree::fixed_sized<true> > encodedImg;
         boost::mutex mutex_io,mutex_encode;
         uint32_t hw_trigger_timeout_us,sw_trigger_timeout_us,trigger_timeout; // 0 =wait indefinitively
-
+        
         uint64_t encode_time,capture_time,network_time,counter_capture,counter_encode;
         void encodeThread();
         int bufinuse;
@@ -82,6 +97,8 @@ protected:
         void updateProperty();
         bool setProp(const std::string &name, int32_t value, uint32_t size);
         bool setProp(const std::string &name, double value, uint32_t size);
+        bool setProp(const std::string &name, const std::string& value, uint32_t size);
+
         void startGrabbing();
         void stopGrabbing();
 		/*!
@@ -129,6 +146,7 @@ protected:
 		*/
 		void unitInputAttributeChangedHandler() throw(chaos::CException);
 
+    virtual int filtering(cv::Mat&image);
 
 };
     }}}

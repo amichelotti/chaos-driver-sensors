@@ -27,6 +27,8 @@
 
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
+#include <boost/random/uniform_real.hpp>
+#include "../beamFunc.h"
 
 namespace cu_driver = chaos::cu::driver_manager::driver;
 using namespace ::driver::sensor::camera;
@@ -47,12 +49,7 @@ REGISTER_PLUGIN(::driver::sensor::camera::ShapeSim)
 CLOSE_REGISTER_PLUGIN
 
 void ShapeSim::driverInit(const char *initParameter) throw(chaos::CException){
-    ShapeSimLAPP_ << "Initializing  driver:"<<initParameter;
-    props->reset();
-    if(initializeCamera(*props)!=0){
-        throw chaos::CException(-3,"cannot initialize camera ",__PRETTY_FUNCTION__);
-
-    }
+    throw chaos::CException(-1,"cannot intialize camera expected bad JSON parameters"+std::string(initParameter),__PRETTY_FUNCTION__);
 }
 
 
@@ -90,6 +87,9 @@ namespace camera{
 int ShapeSim::initializeCamera(const chaos::common::data::CDataWrapper& json) {
     int ret=-2;
     ShapeSimLDBG_<<"intialize camera:"<<json.getCompliantJSONString();
+    propsToCamera(( chaos::common::data::CDataWrapper*)&json);
+    original_width=width;
+    original_height=height;
     if(json.hasKey("SHAPE")){
         if(json.isCDataWrapperValue("SHAPE")){
             shape_params=json.getCSDataValue("SHAPE");
@@ -118,7 +118,7 @@ int ShapeSim::initializeCamera(const chaos::common::data::CDataWrapper& json) {
 
     return ret;
 }
-DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,ShapeSim),shots(0),frames(0),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1.0),offsetx(0),offsety(0){
+DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,ShapeSim),shots(0),frames(0),fn(NULL),props(NULL),pixelEncoding(CV_8UC3),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1.0),offsetx(0),offsety(0){
 
     ShapeSimLDBG_<<  "Created Driver";
     framebuf[0]=NULL;
@@ -126,6 +126,12 @@ DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,ShapeSim),
     framebuf_size[0]=0;
     framebuf_size[1]=0;
     movex=movey=rot=0;
+    max_movex=max_movey=min_movex=min_movey=0;
+    amplitude=1.0;
+    err_amplitude=0;
+    sigmax=sigmay=10.0;
+    gain=1.0;
+    brightness=0;
     props=new chaos::common::data::CDataWrapper();
 #ifdef CVDEBUG
 
@@ -147,8 +153,11 @@ int ShapeSim::cameraToProps(chaos::common::data::CDataWrapper*p){
     p->addDoubleValue("FRAMERATE",framerate);
     p->addInt32Value("WIDTH",width);
     p->addInt32Value("HEIGHT",height);
-    p->addInt32Value("TRIGGER_MODE",0);
 
+    p->addInt32Value("TRIGGER_MODE",0);
+    p->addDoubleValue("GAIN",gain);
+    p->addDoubleValue("BRIGHTNESS",brightness);
+    
     p->addInt32Value("OFFSETX",offsetx);
     p->addInt32Value("OFFSETY",offsety);
     return 0;
@@ -162,9 +171,6 @@ int ShapeSim::propsToCamera(chaos::common::data::CDataWrapper*p){
     // Get the camera control object.
     int32_t ret=0;
 
-    if(p == NULL){
-        p = props;
-    }
     ShapeSimLDBG_<<"setting props: " << p->getCompliantJSONString() ;
 
     // Get the parameters for setting the image area of interest (Image AOI).
@@ -173,7 +179,7 @@ int ShapeSim::propsToCamera(chaos::common::data::CDataWrapper*p){
     //   chaos::common::data::CDataWrapper*p=driver->props;
 
     if (p->hasKey("OFFSETX")){
-        offsetx=-p->getInt32Value("OFFSETX");
+        offsetx=p->getInt32Value("OFFSETX");
         ShapeSimLDBG_<< "setting OFFSETX " << offsetx;
 
     }
@@ -191,11 +197,14 @@ int ShapeSim::propsToCamera(chaos::common::data::CDataWrapper*p){
         ShapeSimLDBG_<< "setting HEIGHT " << p->getInt32Value("HEIGHT");
         height=p->getInt32Value("HEIGHT");
     }
-    if (p->hasKey("PIXELFMT")){
+    if (p->hasKey(FRAMEBUFFER_ENCODING_KEY)&&p->isStringValue(FRAMEBUFFER_ENCODING_KEY)){
+        ShapeSimLDBG_<< "setting FRAMEBUFFER_ENCODING " << p->getStringValue(FRAMEBUFFER_ENCODING_KEY);
 
+        pixelEncoding=fmt2cv(p->getStringValue(FRAMEBUFFER_ENCODING_KEY));
     }
 
     if(p->hasKey("GAIN")){
+        gain=p->getDoubleValue("GAIN");
     }
 
     if(p->hasKey("SHUTTER")){
@@ -214,6 +223,7 @@ int ShapeSim::propsToCamera(chaos::common::data::CDataWrapper*p){
     if(p->hasKey("SHARPNESS")){
     }
     if(p->hasKey("BRIGHTNESS")){
+        brightness=p->getDoubleValue("BRIGHTNESS");
     }
     if(p->hasKey("CONTRAST")){
     }
@@ -251,6 +261,40 @@ int ShapeSim::cameraDeinit(){
     name = w->getInt32Value(#name);\
     ShapeSimLDBG_<< "shape INT param '"<<#name<<" = "<<name;}
     
+void ShapeSim::createBeamImage(Size size, Mat& output,float uX,float uY, float sx, float sy, float amp,float angle){
+    Mat temp=Mat(size,CV_32F);
+    double p[6];
+    double x[2];
+
+    p[0]=amp;
+    p[1]=uX;
+    p[2]=sx;
+    p[3]=uY;
+    p[4]=sy;
+    p[5]=angle;
+   
+    for(int r=0;r<size.height;r++){
+        for(int c=0;c<size.width;c++){
+            x[0]=c;
+            x[1]=r;
+            temp.at<float>(r,c)=beamFunc(x,p);
+            
+        }
+    }
+    ShapeSimLDBG_<<"Gaussian("<<uX<<","<<uY<<") sx:"<<sx<<" sy:"<<sy<<" amp:"<<amp;
+
+    normalize(temp,temp,0.0,255,NORM_MINMAX);
+    if(pixelEncoding==CV_8UC3){
+        temp.convertTo(temp,CV_8U);
+        cvtColor(temp, output, CV_GRAY2BGR);
+    } else if(pixelEncoding==CV_8UC1){
+            temp.convertTo(output,CV_8U);
+
+    } else {
+        throw chaos::CException(-4,"Unsupported Encoding ",__PRETTY_FUNCTION__);
+
+    }
+}
 int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
     int ret=-1;
     shots=_shots;
@@ -282,9 +326,10 @@ int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
         colb=0;
         tickness=2;
         linetype=8; //connected
-        GETINTPARAM(shape_params,movex);
-        GETINTPARAM(shape_params,movey);
-        GETINTPARAM(shape_params,rot);
+        err_sigmax=err_sigmay=rho=0;
+        GETDBLPARAM(shape_params,movex);
+        GETDBLPARAM(shape_params,movey);
+        GETDBLPARAM(shape_params,rot);
 
         GETINTPARAM(shape_params,centerx);
         tmp_centerx=centerx;
@@ -319,12 +364,34 @@ int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
         GETINTPARAM(shape_params,colg);
         GETINTPARAM(shape_params,colb);
         GETINTPARAM(shape_params,colr);
+         max_movex=width-tmp_sizex;
+         max_movey=height-tmp_sizey;
+         min_movex=tmp_sizex;
+         min_movey=tmp_sizey;
+         max_amplitude=inc_amplitude=0;
+        GETDBLPARAM(shape_params,max_movex);
+        GETDBLPARAM(shape_params,max_movey);
+        GETDBLPARAM(shape_params,min_movey);
+        GETDBLPARAM(shape_params,min_movex);
+
+        GETDBLPARAM(shape_params,amplitude);
+        tmp_amplitude=amplitude;
+        max_amplitude=amplitude;
+        GETDBLPARAM(shape_params,sigmax);
+        GETDBLPARAM(shape_params,sigmay);
+        GETDBLPARAM(shape_params,err_sigmay);
+        GETDBLPARAM(shape_params,err_sigmax);
+        GETDBLPARAM(shape_params,max_amplitude);
+        GETDBLPARAM(shape_params,inc_amplitude);
+        GETDBLPARAM(shape_params,rho);
+
+
 
     }
     last_acquisition_ts=chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
     ShapeSimLDBG_<<"Start Grabbing at:"<<framerate <<" frame/s";
     img.release();
-    img.create(cv::Size(width,height),  CV_8UC3);
+    img.create(cv::Size(original_width,original_height),  pixelEncoding);
     return ret;
 }
 #define RND_DIST(var) \
@@ -334,9 +401,27 @@ int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
     double err=dist_##var(gen);\
     tmp_##var+= err;}
 
+static double getError(double mxerror,boost::random::mt19937& gen){
+        if(mxerror==0) return 0;
+        boost::random::uniform_real_distribution<> dist_err(-mxerror,mxerror);
+        return dist_err(gen);
+
+}
+void ShapeSim::applyCameraParams(cv::Mat& image){
+    for( int y = 0; y < image.rows; y++ ) {
+        for( int x = 0; x < image.cols; x++ ) {
+            for( int c = 0; c < image.channels(); c++ ) {
+                image.at<Vec3b>(y,x)[c] =
+                  saturate_cast<uchar>( gain*image.at<Vec3b>(y,x)[c] + brightness );
+            }
+        }
+    }
+}
+
 int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
     int32_t ret=-1;
     size_t size_ret;
+    int size=0;
     boost::random::mt19937 gen(std::time(0) );
   //  img.zeros(cv::Size(height,width),  CV_8UC3);
     img.setTo(cv::Scalar::all(0));
@@ -346,7 +431,7 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
     ss<<getUid()<<":"<<frames++;
 
     if(movex){
-        if(((tmp_centerx+tmp_sizex+movex)>=width)|| ((tmp_centerx-tmp_sizex+movex)<=0)){
+        if(((tmp_centerx+movex)>=max_movex)|| ((tmp_centerx+movex)<=min_movex)){
             movex=-movex;
         }
         tmp_centerx+=movex;
@@ -359,7 +444,7 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
     }
 
     if(movey){
-        if(((tmp_centery+tmp_sizey+movey)>=height)|| ((tmp_centery-tmp_sizey+movey)<=0)){
+        if(((tmp_centery+movey)>=max_movey)|| ((tmp_centery+movey)<=min_movey)){
             movey=-movey;
         }
         tmp_centery+=movex;
@@ -374,13 +459,31 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
         RND_DIST(rotangle);
         RND_DIST(tickness);
     }
-    fs<<shape_type<<":("<<tmp_centerx<<","<<tmp_centery<<") "<<tmp_sizex<<"x"<<tmp_sizey<<","<<tmp_rotangle<<","<<tmp_tickness;
-    rectangle(img,Point( 0, 0),Point( width-1, height-1 ), Scalar( colr, colg, colb ));
-    if(shape_type == "ellipse"){
+    if(shape_type=="beam"){
+        if(inc_amplitude>0){
+            if(tmp_amplitude<(amplitude+max_amplitude)){
+                tmp_amplitude+=inc_amplitude;
+            } else {
+                tmp_amplitude=amplitude;
+            }
+
+        } else {
+            tmp_amplitude=amplitude;
+
+        }
+        createBeamImage(Size(original_width,original_height),img,
+        tmp_centerx+getError((double)err_centerx,gen),
+        tmp_centery+getError((double)err_centery,gen),
+        sigmax+getError(err_sigmax,gen),
+        sigmay+getError(err_sigmay,gen),
+        tmp_amplitude+getError(err_amplitude,gen));
+    } else if(shape_type == "ellipse"){
         // get parameters
        
-        
-       
+        fs<<shape_type<<":("<<tmp_centerx<<","<<tmp_centery<<") "<<tmp_sizex<<"x"<<tmp_sizey<<","<<tmp_rotangle<<","<<tmp_tickness;
+
+        rectangle(img,Point( 0, 0),Point( width-1, height-1 ), Scalar( colr, colg, colb ));
+
 
         ellipse( img,
                  Point( tmp_centerx, tmp_centery),
@@ -394,7 +497,21 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
         putText(img,ss.str(),Point(10,25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
         
         putText(img,fs.str(),Point(10,height-25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
-        int size = img.total() * img.elemSize();
+        } else {
+        ShapeSimLERR_<<"Unknown shape given:"<<shape_type;
+        }
+        cv::Mat cropped;
+        if(((offsetx+width) <= img.cols)&&((offsety+height)<img.rows)){
+            Rect region_of_interest = Rect(offsetx, offsety, width, height);
+            Mat image_roi = img(region_of_interest);
+            image_roi.copyTo(cropped);
+        } else {
+            cropped=img;
+        }
+
+        applyCameraParams(cropped);
+         size = cropped.total() * cropped.elemSize();
+
 #ifdef CVDEBUG
 
         cv::imshow("test",img);
@@ -408,7 +525,7 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
             framebuf_size[frames&1]=size;
         }
         ShapeSimLDBG_<<ss.str()<<","<<fs.str()<<" size byte:"<<size<<" framerate:"<<framerate;
-        std::memcpy(framebuf[frames&1],img.data,size );
+        std::memcpy(framebuf[frames&1],cropped.data,size );
     
         if(buf){
             if(frames>0){
@@ -423,9 +540,7 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
         
         
         ret=size;
-    } else {
-        ShapeSimLERR_<<"Unknown shape given:"<<shape_type;
-    }
+    
     if(framerate>0){
         uint64_t now=chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
         double diff=(1000000.0/framerate) - (now-last_acquisition_ts);
