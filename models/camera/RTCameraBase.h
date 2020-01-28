@@ -53,7 +53,7 @@ protected:
         int32_t *sizex,*sizey,*offsetx,*offsety;
         // if >0 then this is the camera window created, each grab should fit this size.
         int32_t imagesizex,imagesizey;
-        uint8_t bpp;
+        int bpp;
         bool apply_resize;
         int32_t mode;
         uint8_t* framebuf;

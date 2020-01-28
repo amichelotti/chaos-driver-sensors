@@ -59,6 +59,7 @@ enum GrabStrategy {
 #define TRIGGER_TIMEOUT_ERROR -100
 #define CAMERA_GRAB_ERROR -200
 
+#define LOG_FREQUENCY 10000
 #define TRIGGER_MODE_KEY "TRIGGER_MODE"
 #define SERIAL_KEY "serial"
 
