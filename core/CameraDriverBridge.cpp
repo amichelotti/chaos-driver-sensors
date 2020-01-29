@@ -59,7 +59,7 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
     camera_params_t *in = (camera_params_t *)cmd->inputData;
     camera_params_t *out = (camera_params_t *)cmd->resultData;
     memset(out,0,sizeof(camera_params_t));
-    CameraDriverBridgeLDBG_ <<" SKELETON Opcode:"<<cmd->opcode;
+ //   CameraDriverBridgeLDBG_ <<" SKELETON Opcode:"<<cmd->opcode;
     switch(cmd->opcode) {
     case CameraDriverInterfaceOpcode_SET_IMAGE_PROP:{
         int32_t width=in->arg0;
