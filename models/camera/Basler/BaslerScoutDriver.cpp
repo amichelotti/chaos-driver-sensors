@@ -35,8 +35,11 @@ using namespace Pylon;
 namespace cu_driver = chaos::cu::driver_manager::driver;
 using namespace ::driver::sensor::camera;
 #define BaslerScoutDriverLAPP_ LAPP_ << "[BaslerScoutDriver] "
-#define BaslerScoutDriverLDBG_ LDBG_ << "[BaslerScoutDriver:" << __FUNCTION__ << "]"
-#define BaslerScoutDriverLERR_ LERR_ << "[BaslerScoutDriver:" << __PRETTY_FUNCTION__ << "]"
+#define BaslerScoutDriverLDBG LDBG_ << "[BaslerScoutDriver] "
+
+#define BaslerScoutDriverLDBG_ LDBG_ << "[BaslerScoutDriver ("<<serial_dev<<","<<friendly_name<<"):" << __FUNCTION__ << "]"
+#define BaslerScoutDriverLERR_ LERR_ << "[BaslerScoutDriver ("<<serial_dev<<","<<friendly_name<<"):" << __PRETTY_FUNCTION__ << "]"
+#define BaslerScoutDriverLERR LERR_ << "[BaslerScoutDriver] "
 
 //GET_PLUGIN_CLASS_DEFINITION
 //we need only to define the driver because we don't are makeing a plugin
@@ -64,12 +67,12 @@ CLOSE_REGISTER_PLUGIN
 #define SETINODE(name, cam, val, ret)                                           \
     if (setNode(name, cam, (int64_t)val) == 0)                                  \
     {                                                                           \
-        BaslerScoutDriverLDBG_ << "setting \"" << name << "\" = " << val;       \
+        BaslerScoutDriverLDBG << "setting \"" << name << "\" = " << val;       \
     }                                                                           \
     else                                                                        \
     {                                                                           \
         ret++;                                                                  \
-        BaslerScoutDriverLERR_ << "ERROR setting \"" << name << "\" = " << val; \
+        BaslerScoutDriverLERR << "ERROR setting \"" << name << "\" = " << val; \
     }
 
 template <typename T>
@@ -150,12 +153,12 @@ static int setNode(const std::string &node_name, CInstantCamera &camera, int64_t
 
     try
     {
-        BaslerScoutDriverLDBG_ << "setting int node:" << node_name << " to " << val;
+        BaslerScoutDriverLDBG << "setting int node:" << node_name << " to " << val;
         INodeMap &control = camera.GetNodeMap();
         GenApi::CIntegerPtr node = control.GetNode(node_name.c_str());
         if (node.IsValid() == false)
         {
-            BaslerScoutDriverLERR_ << "Node:" << node_name << " is invalid";
+            BaslerScoutDriverLERR << "Node:" << node_name << " is invalid";
 
             return -1;
         }
@@ -165,20 +168,20 @@ static int setNode(const std::string &node_name, CInstantCamera &camera, int64_t
         }
         else
         {
-            BaslerScoutDriverLERR_ << "Node:" << node_name << " is not writable";
+            BaslerScoutDriverLERR << "Node:" << node_name << " is not writable";
             return -100;
         }
     }
     catch (const GenericException &e)
     {
         // Error handling.
-        BaslerScoutDriverLERR_ << "An exception occurred during set of Node:" << node_name;
-        BaslerScoutDriverLERR_ << e.GetDescription();
+        BaslerScoutDriverLERR << "An exception occurred during set of Node:" << node_name;
+        BaslerScoutDriverLERR << e.GetDescription();
         return -3;
     }
     catch (...)
     {
-        BaslerScoutDriverLERR_ << "An exception occurre during set of Node:" << node_name;
+        BaslerScoutDriverLERR << "An exception occurre during set of Node:" << node_name;
         return -2;
     }
     return 0;
@@ -188,13 +191,13 @@ static int setNode(const std::string &node_name, CInstantCamera &camera, double 
 {
     try
     {
-        BaslerScoutDriverLDBG_ << "setting float node:" << node_name << " to:" << val;
+        BaslerScoutDriverLDBG << "setting float node:" << node_name << " to:" << val;
 
         INodeMap &control = camera.GetNodeMap();
         GenApi::CFloatPtr node = control.GetNode(node_name.c_str());
         if (node.IsValid() == false)
         {
-            BaslerScoutDriverLERR_ << "Node:" << node_name << " is invalid";
+            BaslerScoutDriverLERR << "Node:" << node_name << " is invalid";
 
             return -1;
         }
@@ -210,13 +213,13 @@ static int setNode(const std::string &node_name, CInstantCamera &camera, double 
     catch (const GenericException &e)
     {
         // Error handling.
-        BaslerScoutDriverLERR_ << "An exception occurred during SET of Node:" << node_name;
-        BaslerScoutDriverLERR_ << e.GetDescription();
+        BaslerScoutDriverLERR << "An exception occurred during SET of Node:" << node_name;
+        BaslerScoutDriverLERR << e.GetDescription();
         return -3;
     }
     catch (...)
     {
-        BaslerScoutDriverLERR_ << "An exception occurre during SET of Node:" << node_name;
+        BaslerScoutDriverLERR<< "An exception occurre during SET of Node:" << node_name;
         return -2;
     }
     return 0;
@@ -226,13 +229,13 @@ static int setNodeInPercentage(const std::string &node_name, CInstantCamera &cam
 {
     try
     {
-        BaslerScoutDriverLDBG_ << "setting int node:" << node_name << " to: " << percent * 100 << " %";
+        BaslerScoutDriverLDBG << "setting int node:" << node_name << " to: " << percent * 100 << " %";
 
         INodeMap &control = camera.GetNodeMap();
         GenApi::CIntegerPtr node = control.GetNode(node_name.c_str());
         if (node.IsValid() == false)
         {
-            BaslerScoutDriverLERR_ << "Node:" << node_name << " is invalid";
+            BaslerScoutDriverLERR << "Node:" << node_name << " is invalid";
 
             return -1;
         }
@@ -242,7 +245,7 @@ static int setNodeInPercentage(const std::string &node_name, CInstantCamera &cam
         inc = node->GetInc();
         int64_t newGainRaw = min + ((max - min) * percent);
         // Make sure the calculated value is valid
-        BaslerScoutDriverLDBG_ << "MIN:" << min << " MAX:" << max << " INC:" << inc << " VALUE:" << newGainRaw << " percent:" << percent * 100;
+        BaslerScoutDriverLDBG << "MIN:" << min << " MAX:" << max << " INC:" << inc << " VALUE:" << newGainRaw << " percent:" << percent * 100;
 
         newGainRaw = Adjust(newGainRaw, min, max, inc);
         node->SetValue(newGainRaw);
@@ -250,13 +253,13 @@ static int setNodeInPercentage(const std::string &node_name, CInstantCamera &cam
     catch (const GenericException &e)
     {
         // Error handling.
-        BaslerScoutDriverLERR_ << "An exception occurred during SET of Node:" << node_name;
-        BaslerScoutDriverLERR_ << e.GetDescription();
+        BaslerScoutDriverLERR << "An exception occurred during SET of Node:" << node_name;
+        BaslerScoutDriverLERR << e.GetDescription();
         return -3;
     }
     catch (...)
     {
-        BaslerScoutDriverLERR_ << "An exception occurre during SET of Node:" << node_name;
+        BaslerScoutDriverLERR<< "An exception occurre during SET of Node:" << node_name;
         return -2;
     }
     return 0;
@@ -370,17 +373,17 @@ class CConfigurationEvent : public CConfigurationEventHandler
 
     void OnAttach(CInstantCamera & /*camera*/)
     {
-        BaslerScoutDriverLDBG_ << "OnAttach event";
+        BaslerScoutDriverLDBG << "OnAttach event";
     }
 
     void OnAttached(CInstantCamera &camera)
     {
-        BaslerScoutDriverLDBG_ << "OnAttached event for device " << camera.GetDeviceInfo().GetModelName();
+        BaslerScoutDriverLDBG << "OnAttached event for device " << camera.GetDeviceInfo().GetModelName();
     }
 
     void OnOpen(CInstantCamera &camera)
     {
-        BaslerScoutDriverLDBG_ << "OnOpen event for device " << camera.GetDeviceInfo().GetModelName();
+        BaslerScoutDriverLDBG << "OnOpen event for device " << camera.GetDeviceInfo().GetModelName();
     }
 
     void OnOpened(CInstantCamera &camera)
@@ -390,63 +393,63 @@ class CConfigurationEvent : public CConfigurationEventHandler
 
     void OnGrabStart(CInstantCamera &camera)
     {
-        BaslerScoutDriverLDBG_ << "OnGrabStart event for device " << camera.GetDeviceInfo().GetModelName();
+        BaslerScoutDriverLDBG << "OnGrabStart event for device " << camera.GetDeviceInfo().GetModelName();
     }
 
     void OnGrabStarted(CInstantCamera &camera)
     {
-        BaslerScoutDriverLDBG_ << "OnGrabStarted event for device " << camera.GetDeviceInfo().GetModelName();
+        BaslerScoutDriverLDBG << "OnGrabStarted event for device " << camera.GetDeviceInfo().GetModelName();
     }
 
     void OnGrabStop(CInstantCamera &camera)
     {
-        BaslerScoutDriverLDBG_ << "OnGrabStop event for device " << camera.GetDeviceInfo().GetModelName();
+        BaslerScoutDriverLDBG << "OnGrabStop event for device " << camera.GetDeviceInfo().GetModelName();
     }
 
     void OnGrabStopped(CInstantCamera &camera)
     {
-        BaslerScoutDriverLDBG_ << "OnGrabStopped event for device " << camera.GetDeviceInfo().GetModelName();
+        BaslerScoutDriverLDBG << "OnGrabStopped event for device " << camera.GetDeviceInfo().GetModelName();
     }
 
     void OnClose(CInstantCamera &camera)
     {
-        BaslerScoutDriverLDBG_ << "OnClose event for device " << camera.GetDeviceInfo().GetModelName();
+        BaslerScoutDriverLDBG << "OnClose event for device " << camera.GetDeviceInfo().GetModelName();
     }
 
     void OnClosed(CInstantCamera &camera)
     {
-        BaslerScoutDriverLDBG_ << "OnClosed event for device " << camera.GetDeviceInfo().GetModelName();
+        BaslerScoutDriverLDBG << "OnClosed event for device " << camera.GetDeviceInfo().GetModelName();
     }
 
     void OnDestroy(CInstantCamera &camera)
     {
-        BaslerScoutDriverLDBG_ << "OnDestroy event for device " << camera.GetDeviceInfo().GetModelName();
+        BaslerScoutDriverLDBG << "OnDestroy event for device " << camera.GetDeviceInfo().GetModelName();
     }
 
     void OnDestroyed(CInstantCamera & /*camera*/)
     {
-        BaslerScoutDriverLDBG_ << "OnDestroyed event";
+        BaslerScoutDriverLDBG << "OnDestroyed event";
     }
 
     void OnDetach(CInstantCamera &camera)
     {
-        BaslerScoutDriverLDBG_ << "OnDetach event for device " << camera.GetDeviceInfo().GetModelName();
+        BaslerScoutDriverLDBG << "OnDetach event for device " << camera.GetDeviceInfo().GetModelName();
     }
 
     void OnDetached(CInstantCamera &camera)
     {
-        BaslerScoutDriverLDBG_ << "OnDetached event for device " << camera.GetDeviceInfo().GetModelName();
+        BaslerScoutDriverLDBG << "OnDetached event for device " << camera.GetDeviceInfo().GetModelName();
     }
 
     void OnGrabError(CInstantCamera &camera, const String_t errorMessage)
     {
-        BaslerScoutDriverLDBG_ << "OnGrabError event for device " << camera.GetDeviceInfo().GetModelName();
-        BaslerScoutDriverLDBG_ << "Error Message: " << errorMessage;
+        BaslerScoutDriverLDBG << "OnGrabError event for device " << camera.GetDeviceInfo().GetModelName();
+        BaslerScoutDriverLDBG << "Error Message: " << errorMessage;
     }
 
     void OnCameraDeviceRemoved(CInstantCamera &camera)
     {
-        BaslerScoutDriverLDBG_ << "OnCameraDeviceRemoved event for device " << camera.GetDeviceInfo().GetModelName();
+        BaslerScoutDriverLDBG << "OnCameraDeviceRemoved event for device " << camera.GetDeviceInfo().GetModelName();
     }
 };
 
@@ -455,13 +458,13 @@ class CCameraEvent : public CCameraEventHandler
   public:
     virtual void OnCameraEvent(CInstantCamera &camera, intptr_t userProvidedId, GenApi::INode *pNode)
     {
-        BaslerScoutDriverLDBG_ << "OnCameraEvent event for device " << camera.GetDeviceInfo().GetModelName();
-        BaslerScoutDriverLDBG_ << "User provided ID: " << userProvidedId;
-        BaslerScoutDriverLDBG_ << "Event data node name: " << pNode->GetName();
+        BaslerScoutDriverLDBG << "OnCameraEvent event for device " << camera.GetDeviceInfo().GetModelName();
+        BaslerScoutDriverLDBG << "User provided ID: " << userProvidedId;
+        BaslerScoutDriverLDBG << "Event data node name: " << pNode->GetName();
         GenApi::CValuePtr ptrValue(pNode);
         if (ptrValue.IsValid())
         {
-            BaslerScoutDriverLDBG_ << "Event node data: " << ptrValue->ToString();
+            BaslerScoutDriverLDBG << "Event node data: " << ptrValue->ToString();
         }
     }
 };
@@ -520,8 +523,10 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper 
                 {
 
                     BaslerScoutDriverLDBG_ << " FOUND " << cameras[i].GetDeviceInfo().GetSerialNumber();               
+                    serial_dev=serial;
+                    friendly_name=cameras[i].GetDeviceInfo().GetFriendlyName();
+                    
                     cameras[i].DetachDevice();
-
                     camerap = new CInstantCamera(pdev);
 
                     found++;
@@ -534,7 +539,7 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper 
                 }
                 else
                 {
-                    BaslerScoutDriverLDBG_ << " removing " << cameras[i].GetDeviceInfo().GetSerialNumber();
+                    //BaslerScoutDriverLDBG_ << " removing " << cameras[i].GetDeviceInfo().GetSerialNumber();
                     cameras[i].DetachDevice();
                     tlFactory.DestroyDevice(pdev);
                     // delete pdev;
@@ -550,7 +555,9 @@ int BaslerScoutDriver::initializeCamera(const chaos::common::data::CDataWrapper 
             BaslerScoutDriverLDBG_ << "Friendly Name: " << camerap->GetDeviceInfo().GetFriendlyName();
             BaslerScoutDriverLDBG_ << "Full Name    : " << camerap->GetDeviceInfo().GetFullName();
             BaslerScoutDriverLDBG_ << "SerialNumber : " << camerap->GetDeviceInfo().GetSerialNumber();
-                
+            serial_dev=camerap->GetDeviceInfo().GetSerialNumber();
+            friendly_name=camerap->GetDeviceInfo().GetFriendlyName();
+                        
 
         }
         if(camerap){

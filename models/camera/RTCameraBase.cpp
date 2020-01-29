@@ -267,7 +267,7 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
    */
   addAttributeToDataSet("FMT", "image format (jpg,png,gif...)",
                         chaos::DataType::TYPE_STRING,
-                        chaos::DataType::Bidirectional);
+                        chaos::DataType::Bidirectional,16);
   if (buffering > 1) {
     addAttributeToDataSet("CAPTURE_FRAMERATE", "Capture Frame Rate",
                           chaos::DataType::TYPE_INT32, chaos::DataType::Output);
@@ -316,16 +316,16 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
       StateVariableTypeAlarmDEV, "operation_not_supported",
       "the operation in not supported i.e property not present or accesible");
   addStateVariable(StateVariableTypeAlarmCU, "encode_error",
-                   "an error occurred during encode");
+                   "an error occurred during encode",LOG_FREQUENCY);
   addStateVariable(StateVariableTypeAlarmDEV, "capture_error",
-                   "an error occurred during capture");
+                   "an error occurred during capture",LOG_FREQUENCY);
   addStateVariable(StateVariableTypeAlarmDEV, "capture_timeout",
-                   "a timeout has occurred");
+                   "a timeout has occurred",LOG_FREQUENCY);
 
   addStateVariable(StateVariableTypeAlarmDEV, "captureQueueFull",
-                   "Queue Capture Full");
+                   "Queue Capture Full",LOG_FREQUENCY);
   addStateVariable(StateVariableTypeAlarmDEV, "encodeQueueFull",
-                   "Queue Encode Full");
+                   "Queue Encode Full",LOG_FREQUENCY);
 }
 
 //! Define custom control unit attribute
@@ -481,8 +481,10 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     }
   }
   if ((*sizex == 0) || (*sizey == 0)) {
-    RTCameraBaseLERR_ << "Invalid image sizes:" << *sizex << "x" << *sizey;
-    throw chaos::CException(-3, "Invalid image size!!", __PRETTY_FUNCTION__);
+    std::stringstream ss;
+    ss<< "Invalid image sizes:" << *sizex << "x" << *sizey;
+    
+    throw chaos::CException(-3, ss.str(), __PRETTY_FUNCTION__);
   }
   if (!apply_resize) {
     imagesizex = *sizex;
@@ -700,6 +702,11 @@ void RTCameraBase::encodeThread() {
       captureQueue--;
 
       full_capture.notify_one();
+      if(*sizey * *sizex* bpp > a.size){
+          RTCameraBaseLERR_ << "Cannot encode an image bigger "<<*sizex<<"x"<<*sizey<<" bpp:"<<bpp<<" ="<< (*sizex**sizey*bpp)<<" than size allocated:" << a.size;
+          continue;
+
+      }
       cv::Mat image(*sizey, *sizex, framebuf_encoding, a.buf);
 
       std::vector<unsigned char> *encbuf = NULL;
@@ -720,7 +727,7 @@ void RTCameraBase::encodeThread() {
 
         bool code = cv::imencode(encoding, image, *encbuf);
         free(a.buf);
-        image.deallocate();
+//image.deallocate();
         if (code == false) {
           setStateVariableSeverity(
               StateVariableTypeAlarmCU, "encode_error",
@@ -844,10 +851,10 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
         shared_mem->writeMsg((void *)ptr, a->size());
         shared_mem->notify_all();
       }
+      delete (a);
 
       getAttributeCache()->setOutputDomainAsChanged();
       full_encode.notify_one();
-      delete (a);
 
     } else {
       // RTCameraBaseLDBG_<<"Encode EMPTY :"<<encodeWritePointer<<"
