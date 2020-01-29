@@ -55,7 +55,7 @@ protected:
         int32_t imagesizex,imagesizey;
         int bpp;
         bool apply_resize;
-        int32_t mode;
+        int32_t mode,*omode;
         uint8_t* framebuf;
         uint32_t framebuf_encoding;
           bool*pacquire,*ptrigger,*ppulse;
