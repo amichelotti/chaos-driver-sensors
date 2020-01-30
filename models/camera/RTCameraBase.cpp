@@ -408,7 +408,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   offsety = cc->getRWPtr<int32_t>(DOMAIN_INPUT, OFFSETY_KEY);
   //
   mode = *cc->getROPtr<int32_t>(DOMAIN_INPUT, TRIGGER_MODE_KEY);
-  omode=cc->getROPtr<int32_t>(DOMAIN_OUTPUT, TRIGGER_MODE_KEY);
+  omode=cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, TRIGGER_MODE_KEY);
   //   camera_out=cc->getRWPtr<uint8_t>(DOMAIN_OUTPUT, "FRAMEBUFFER");
   fmt = cc->getRWPtr<char>(DOMAIN_INPUT, "FMT");
   ofmt = cc->getRWPtr<char>(DOMAIN_OUTPUT, "FMT");
