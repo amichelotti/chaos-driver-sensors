@@ -231,13 +231,13 @@ int ShapeSim::propsToCamera(chaos::common::data::CDataWrapper*p){
     if(p->hasKey("GAIN")){
         gain_raw=p->getDoubleValue("GAIN")*CAM_MAX_GAIN/100;
         ShapeSimLDBG_<< "SETTING GAIN RAW:"<<gain_raw <<" norm:"<<p->getDoubleValue("GAIN");
-
+        gain=p->getDoubleValue("GAIN");
     }
 
     if(p->hasKey("SHUTTER")){
         shutter_raw=(p->getDoubleValue("SHUTTER")*CAM_MAX_SHUTTER)/100;
         ShapeSimLDBG_<< "SETTING SHUTTER RAW:"<<shutter_raw <<" norm:"<<p->getDoubleValue("SHUTTER");
-
+        shutter=p->getDoubleValue("SHUTTER");
     }
     if(p->hasKey("ZOOM")){
 
@@ -255,7 +255,7 @@ int ShapeSim::propsToCamera(chaos::common::data::CDataWrapper*p){
     if(p->hasKey("BRIGHTNESS")){
         brightness_raw=p->getDoubleValue("BRIGHTNESS")*CAM_MAX_BRIGHTNESS/100;
         ShapeSimLDBG_<< "SETTING BRIGHTNESS RAW:"<<brightness_raw <<" norm:"<<p->getDoubleValue("BRIGHTNESS");
-
+        brightness=p->getDoubleValue("BRIGHTNESS");
     }
     if(p->hasKey("CONTRAST")){
     }
