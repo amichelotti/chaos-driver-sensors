@@ -151,6 +151,7 @@ RTCameraBase::~RTCameraBase() {
 }
 void RTCameraBase::updateProperty() {
   std::vector<std::string> props;
+  chaos::common::data::CDataWrapper camera_props;
   if (driver->getCameraProperties(camera_props) != 0) {
     throw chaos::CException(-1, "Error retrieving camera properties",
                             __PRETTY_FUNCTION__);
@@ -276,6 +277,7 @@ The api that can be called withi this method are listed into
 (chaosframework/Documentation/html/group___control___unit___definition___api.html)
 */
 void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
+  chaos::common::data::CDataWrapper camera_props;
   chaos::cu::driver_manager::driver::DriverAccessor *acc =
       getAccessoInstanceByIndex(0);
   if (acc == NULL) {
@@ -375,11 +377,7 @@ void RTCameraBase::unitDefineCustomAttribute() {
       throw chaos::CException(-1, "cannot create driver", __PRETTY_FUNCTION__);
     }
   }
-  if (driver->getCameraProperties(camera_props) != 0) {
-    throw chaos::CException(-1, "Error retrieving camera properties",
-                            __PRETTY_FUNCTION__);
-  }
-
+ 
   if (driver->getCameraProperties(attr) != 0) {
     throw chaos::CException(-1, "Error retrieving camera properties",
                             __PRETTY_FUNCTION__);
@@ -399,6 +397,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   int ret;
   int32_t itype;
   int32_t width, height;
+
   AttributeSharedCacheWrapper *cc = getAttributeCache();
   // this properties must exist
   //
@@ -424,15 +423,17 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
         cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, "CAPTURE_FRAMERATE");
     enc_frame_rate = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, "ENCODE_FRAMERATE");
   }
-  std::vector<std::string> props;
-  camera_props.getAllKey(props);
+  
   // breanch number and soft reset
 
   if ((ret = driver->cameraInit(0, 0)) != 0) {
     throw chaos::CException(ret, "cannot initialize camera",
                             __PRETTY_FUNCTION__);
   }
-
+  // not needed any mode
+/*
+std::vector<std::string> props;
+  camera_props.getAllKey(props);
   for (std::vector<std::string>::iterator i = props.begin(); i != props.end();
        i++) {
     if (!camera_props.isCDataWrapperValue(*i)) {
@@ -479,7 +480,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
       }
     }
   }
-
+*/
   if (driver->getImageProperties(width, height, itype) == 0) {
     RTCameraBaseLDBG_ << "CAMERA IMAGE:" << width << "x" << height;
     *sizex = width;
