@@ -95,8 +95,10 @@ protected:
          char*fmt,*ofmt;
         CameraDriverInterface*driver;
         void updateProperty();
-        bool setProp(const std::string &name, int32_t value, uint32_t size);
-        bool setProp(const std::string &name, double value, uint32_t size);
+        bool setCamera(const std::string &name, bool value, uint32_t size=sizeof(bool));
+
+        bool setProp(const std::string &name, int32_t value, uint32_t size=sizeof(int32_t));
+        bool setProp(const std::string &name, double value, uint32_t size=sizeof(double));
         bool setProp(const std::string &name, const std::string& value, uint32_t size);
 
         void startGrabbing();

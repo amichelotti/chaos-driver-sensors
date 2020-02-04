@@ -142,6 +142,7 @@ DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,ShapeSim),
     gain=1.0;
     shutter=1.0;
     brightness=1.0;
+    trigger_mode=0;
     props=new chaos::common::data::CDataWrapper();
     ownprops->reset();
     ownprops->createProperty("ExposureTimeRaw",shutter_raw,0,CAM_MAX_SHUTTER,1,"SHUTTER");
@@ -175,7 +176,7 @@ int ShapeSim::cameraToProps(chaos::common::data::CDataWrapper*p){
     p->addInt32Value("WIDTH",width);
     p->addInt32Value("HEIGHT",height);
 
-    p->addInt32Value("TRIGGER_MODE",0);
+    p->addInt32Value("TRIGGER_MODE",trigger_mode);
     p->addDoubleValue("GAIN",gain);
     p->addDoubleValue("BRIGHTNESS",brightness);
     p->addDoubleValue("SHUTTER",shutter);
@@ -248,7 +249,9 @@ int ShapeSim::propsToCamera(chaos::common::data::CDataWrapper*p){
         framerate=p->getDoubleValue("FRAMERATE");
         ShapeSimLDBG_<< "FRAME RATE:"<<framerate;
     }
-
+    if(p->hasKey("TRIGGER_MODE")){
+        trigger_mode=p->getInt32Value("TRIGGER_MODE");
+    }
 
     if(p->hasKey("SHARPNESS")){
     }
@@ -440,11 +443,21 @@ static double getError(double mxerror,boost::random::mt19937& gen){
 
 }
 void ShapeSim::applyCameraParams(cv::Mat& image){
+    if(gain_raw<0){
+        gain_raw=CAM_MAX_GAIN;
+    }
+    if(brightness_raw<0){
+        brightness_raw=CAM_MAX_BRIGHTNESS;
+    }
+    if(shutter_raw<0){
+        shutter_raw=CAM_MAX_SHUTTER;
+     }
+    
     for( int y = 0; y < image.rows; y++ ) {
         for( int x = 0; x < image.cols; x++ ) {
             for( int c = 0; c < image.channels(); c++ ) {
                 image.at<Vec3b>(y,x)[c] =
-                  saturate_cast<uchar> ( (1.0*gain_raw/CAM_MAX_GAIN*image.at<Vec3b>(y,x)[c] + (1.0*brightness_raw)/CAM_MAX_BRIGHTNESS)*(1.0*shutter_raw/CAM_MAX_SHUTTER) );
+                  saturate_cast<uchar> ( (((double)1.0*gain_raw)/CAM_MAX_GAIN*image.at<Vec3b>(y,x)[c] + (((double)1.0*brightness_raw))/CAM_MAX_BRIGHTNESS)*(((double)1.0*shutter_raw)/CAM_MAX_SHUTTER) );
             }
         }
     }

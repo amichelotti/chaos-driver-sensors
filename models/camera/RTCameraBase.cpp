@@ -104,7 +104,8 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
       captureImg(_buffering), encodedImg(_buffering), encode_time(0),
       capture_time(0), network_time(0), captureQueue(0), encodeQueue(0),
       hw_trigger_timeout_us(5000000), sw_trigger_timeout_us(0), imagesizex(0),
-      imagesizey(0), apply_resize(false), trigger_timeout(0), bpp(3) {
+      imagesizey(0), apply_resize(false), trigger_timeout(0), bpp(3),  stopCapture(true),stopEncoding(true)
+ {
   RTCameraBaseLDBG_ << "Creating " << _control_unit_id
                     << " params:" << _control_unit_param;
 
@@ -192,6 +193,18 @@ bool RTCameraBase::setProp(const std::string &name, const std::string &value,
                            uint32_t size) {
   return false;
 }
+bool RTCameraBase::setCamera(const std::string &name, bool value, uint32_t size){
+  if(name=="ACQUIRE"){
+    return setProp(TRIGGER_MODE_KEY,(value==false)?CAMERA_DISABLE_ACQUIRE:CAMERA_TRIGGER_CONTINOUS);
+  } else if(name=="TRIGGER"){
+    return setProp(TRIGGER_MODE_KEY,(value==false)?CAMERA_TRIGGER_CONTINOUS:CAMERA_TRIGGER_HW_HI);
+
+  }else if(name=="PULSE"){
+    return setProp(TRIGGER_MODE_KEY,(value==false)?CAMERA_TRIGGER_CONTINOUS:CAMERA_TRIGGER_SINGLE);
+
+  }
+  return false;
+}
 
 bool RTCameraBase::setProp(const std::string &name, int32_t value,
                            uint32_t size) {
@@ -202,7 +215,6 @@ bool RTCameraBase::setProp(const std::string &name, int32_t value,
   RTCameraBaseLDBG_ << "SET IPROP:" << name << " VALUE:" << value;
   int32_t *pmode = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, name);
   bool stopgrab =
-      (stopCapture == false) &&
       (((name == WIDTH_KEY) && (value != *sizex)) ||
        ((name == HEIGHT_KEY) && (value != *sizey)) ||
        ((name == OFFSETX_KEY) && (value != *offsetx)) ||
@@ -231,11 +243,39 @@ bool RTCameraBase::setProp(const std::string &name, int32_t value,
   driver->getCameraProperty(name, valuer);
 
   mode = *pmode = valuer;
+  switch(mode){
+    case CAMERA_DISABLE_ACQUIRE:
+      getAttributeCache()->setInputAttributeValue("ACQUIRE",false);  
+      getAttributeCache()->setInputAttributeValue("TRIGGER",false); 
+      getAttributeCache()->setInputAttributeValue("PULSE",false);  
+    break;
+    case CAMERA_TRIGGER_CONTINOUS:
+      getAttributeCache()->setInputAttributeValue("ACQUIRE",true);  
+      getAttributeCache()->setInputAttributeValue("TRIGGER",false); 
+      getAttributeCache()->setInputAttributeValue("PULSE",false);  
+    break;
+    case CAMERA_TRIGGER_HW_HI:case CAMERA_TRIGGER_HW_LOW:
+      getAttributeCache()->setInputAttributeValue("ACQUIRE",true);  
+      getAttributeCache()->setInputAttributeValue("TRIGGER",true); 
+      getAttributeCache()->setInputAttributeValue("PULSE",false);  
+    break;
+    case CAMERA_TRIGGER_SINGLE:case CAMERA_TRIGGER_SOFT:
+      getAttributeCache()->setInputAttributeValue("ACQUIRE",true);  
+      getAttributeCache()->setInputAttributeValue("TRIGGER",false); 
+      getAttributeCache()->setInputAttributeValue("PULSE",true);  
+    break;
+  }
+  if(mode!=CAMERA_DISABLE_ACQUIRE){
+  getAttributeCache()->setInputAttributeValue("ACQUIRE",true)  
+  }
   RTCameraBaseLDBG_ << "SET IPROP:" << name << " SET VALUE:" << value
                     << " READ VALUE:" << valuer << " ret:" << ret;
   if (stopgrab &&
       !((name == TRIGGER_MODE_KEY) && (value == CAMERA_DISABLE_ACQUIRE))) {
     startGrabbing();
+  } else if(stopCapture&& ((name == TRIGGER_MODE_KEY) && (value != CAMERA_DISABLE_ACQUIRE))){
+        startGrabbing();
+
   }
   getAttributeCache()->setInputDomainAsChanged();
   getAttributeCache()->setOutputDomainAsChanged();
@@ -264,7 +304,6 @@ bool RTCameraBase::setProp(const std::string &name, double value,
   AttributeSharedCacheWrapper *cc = getAttributeCache();
   double *p = cc->getRWPtr<double>(DOMAIN_OUTPUT, name);
   *p = valuer;
-
   getAttributeCache()->setInputDomainAsChanged();
   getAttributeCache()->setOutputDomainAsChanged();
 
@@ -308,11 +347,20 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
                           chaos::DataType::TYPE_INT32, chaos::DataType::Output);
   }
   addAttributeToDataSet("ACQUIRE", "Is Acquiring",
-                        chaos::DataType::TYPE_BOOLEAN, chaos::DataType::Output);
+                        chaos::DataType::TYPE_BOOLEAN, chaos::DataType::Bidirectional);
   addAttributeToDataSet("TRIGGER", "Is triggered ",
-                        chaos::DataType::TYPE_BOOLEAN, chaos::DataType::Output);
+                        chaos::DataType::TYPE_BOOLEAN, chaos::DataType::Bidirectional);
   addAttributeToDataSet("PULSE", "Is pulse", chaos::DataType::TYPE_BOOLEAN,
-                        chaos::DataType::Output);
+                        chaos::DataType::Bidirectional);
+addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase,
+                                       bool>(
+            this, &::driver::sensor::camera::RTCameraBase::setCamera, "ACQUIRE");
+addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase,
+                                       bool>(
+            this, &::driver::sensor::camera::RTCameraBase::setCamera, "TRIGGER");
+addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase,
+                                       bool>(
+            this, &::driver::sensor::camera::RTCameraBase::setCamera, "PULSE");
 
   for (std::vector<std::string>::iterator i = props.begin(); i != props.end();
        i++) {
@@ -575,9 +623,11 @@ void RTCameraBase::startGrabbing() {
   }
 
   driver->startGrab(0);
-  stopCapture = false;
-  if (buffering > 1) {
-    capture_th = boost::thread(&RTCameraBase::captureThread, this);
+  if(stopCapture==true){
+    stopCapture = false;
+    if (buffering > 1) {
+      capture_th = boost::thread(&RTCameraBase::captureThread, this);
+    }
   }
   getAttributeCache()->setCustomDomainAsChanged();
   pushCustomDataset();
@@ -587,10 +637,10 @@ void RTCameraBase::stopGrabbing() {
   RTCameraBaseLDBG_ << "Stop Grabbing..." << stopCapture;
 
   driver->stopGrab();
+  stopCapture = true;
 
   if (buffering > 1) {
 
-    stopCapture = true;
 
     metadataLogging(
         chaos::common::metadata_logging::StandardLoggingChannel::LogLevelInfo,
@@ -626,7 +676,9 @@ void RTCameraBase::stopGrabbing() {
 }
 //! Execute the work, this is called with a determinated delay, it must be as
 //! fast as possible
-void RTCameraBase::unitStart() throw(chaos::CException) { startGrabbing(); }
+void RTCameraBase::unitStart() throw(chaos::CException) { 
+  startGrabbing(); 
+  }
 
 void RTCameraBase::captureThread() {
   int ret;

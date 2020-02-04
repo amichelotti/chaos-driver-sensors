@@ -69,6 +69,7 @@ class ShapeSim:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::Camera
      cameraGrabCallBack fn;
      bool initialized;
      int pixelEncoding;
+     int trigger_mode;
      int propsToCamera(chaos::common::data::CDataWrapper*p);
      int cameraToProps(chaos::common::data::CDataWrapper*p);
      int width,height,offsetx,offsety,original_width,original_height;
