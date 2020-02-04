@@ -265,9 +265,7 @@ bool RTCameraBase::setProp(const std::string &name, int32_t value,
       getAttributeCache()->setInputAttributeValue("PULSE",true);  
     break;
   }
-  if(mode!=CAMERA_DISABLE_ACQUIRE){
-  getAttributeCache()->setInputAttributeValue("ACQUIRE",true)  
-  }
+  
   RTCameraBaseLDBG_ << "SET IPROP:" << name << " SET VALUE:" << value
                     << " READ VALUE:" << valuer << " ret:" << ret;
   if (stopgrab &&
