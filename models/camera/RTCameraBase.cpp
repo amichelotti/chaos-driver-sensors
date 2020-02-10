@@ -537,7 +537,10 @@ std::vector<std::string> props;
     if (cam_prop.hasKey(FRAMEBUFFER_ENCODING_KEY) &&
         cam_prop.isStringValue(FRAMEBUFFER_ENCODING_KEY)) {
       std::string enc = cam_prop.getStringValue(FRAMEBUFFER_ENCODING_KEY);
-      DECODE_CVENCODING(enc, CV_8UC4);
+     framebuf_encoding = fmt2cv(enc);
+      bpp = cv2fmt(framebuf_encoding, enc);
+     
+     /* DECODE_CVENCODING(enc, CV_8UC4);
       DECODE_CVENCODING(enc, CV_8UC3);
       DECODE_CVENCODING(enc, CV_8UC2);
       DECODE_CVENCODING(enc, CV_8UC1);
@@ -558,6 +561,9 @@ std::vector<std::string> props;
       DECODE_CVENCODING(enc, CV_32SC2);
       DECODE_CVENCODING(enc, CV_32SC3);
       DECODE_CVENCODING(enc, CV_32SC4);
+      if(enc=="BayerBG16"){
+        bpp=2;
+      }*/
     }
   }
   if ((*sizex == 0) || (*sizey == 0)) {
@@ -793,7 +799,18 @@ void RTCameraBase::encodeThread() {
                           << " than size allocated:" << a.size;
         continue;
       }
-      cv::Mat image(*sizey, *sizex, framebuf_encoding, a.buf);
+      cv::Mat image;
+      if(framebuf_encoding==cv::COLOR_BayerBG2RGB){
+        cv::Mat mat16uc1(*sizey,*sizex,CV_16UC1,a.buf);
+        cv::Mat mat16uc3_rgb(*sizey,*sizex,CV_16UC3);
+        cv::cvtColor(mat16uc1,mat16uc3_rgb,cv::COLOR_BayerBG2RGB);
+        cv::Mat mat8uc3_rgb(*sizey, *sizex,CV_8UC3);
+        mat16uc3_rgb.convertTo(mat8uc3_rgb,CV_8UC3);
+        image=mat8uc3_rgb;
+      } else {
+              cv::Mat img(*sizey, *sizex, framebuf_encoding, a.buf);
+        image=img;
+      }
 
       std::vector<unsigned char> *encbuf = NULL;
       encoded_t ele;

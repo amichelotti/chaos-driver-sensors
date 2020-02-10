@@ -716,6 +716,18 @@ static Pylon::EPixelType cv2basler(const std::string& fmt){
 }
 static std::string basler2cv(Pylon::EPixelType fmt){
             switch(fmt){
+                case Pylon::EPixelType::PixelType_BayerBG16:{
+                    return "BAYERBG16";
+                }
+                case Pylon::EPixelType::PixelType_BayerGB16:{
+                    return "BAYERGB16";
+                }
+                case Pylon::EPixelType::PixelType_BayerGR16:{
+                    return "BAYERGR16";
+                }
+                case Pylon::EPixelType::PixelType_BayerRG16:{
+                    return "BAYERRG16";
+                }
                 case Pylon::EPixelType::PixelType_Mono8:
                     return "CV_8UC1";
             case Pylon::EPixelType::PixelType_Mono8signed:
@@ -724,8 +736,10 @@ static std::string basler2cv(Pylon::EPixelType fmt){
                 return "CV_16UC1";
             case  Pylon::EPixelType::PixelType_RGB8packed:
                 return "CV_8UC3";
-            default:
+            default:{
                 return "NOT SUPPORTED";
+            }
+
             }
 }
 
@@ -747,8 +761,13 @@ int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera &cam, chaos::common::
 
         std::string cv=basler2cv((Pylon::EPixelType) pixelFormat->GetIntValue());
         
+        if(cv=="NOT SUPPORTED"){
+        p->addStringValue(FRAMEBUFFER_ENCODING_KEY,pixelFormat->ToString().c_str());
 
+        } else {
         p->addStringValue(FRAMEBUFFER_ENCODING_KEY,cv);
+
+        }
         BaslerScoutDriverLDBG_ << "Pixel format "<<cv<< " Native:"<<pixelFormat->ToString();
 
     }
@@ -1251,6 +1270,8 @@ int BaslerScoutDriver::waitGrab(uint32_t timeout_ms)
 }
 int BaslerScoutDriver::stopGrab()
 {
+     BaslerScoutDriverLDBG_ << "Stop  Grabbing" ;
+
     stopGrabbing=true;
     camerap->StopGrabbing();
     return 0;
