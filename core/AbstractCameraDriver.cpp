@@ -80,9 +80,11 @@ int fmt2cv(const std::string& enc){
       CVENCODING(enc, CV_32SC2);
       CVENCODING(enc, CV_32SC3);
       CVENCODING(enc, CV_32SC4);
+#ifdef CAMERA
       if(enc=="BayerBG16"|| enc=="BAYERBG16"){
           return cv::COLOR_BayerBG2RGB ;
       }
+#endif
       return CV_8UC1;
 }
 int cv2fmt(int cvenc, std::string& enc){
