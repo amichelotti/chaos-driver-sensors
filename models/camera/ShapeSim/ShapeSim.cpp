@@ -28,10 +28,16 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/uniform_real.hpp>
+#include <chaos/common/data/structured/DatasetAttribute.h>
+
+
 #include "../beamFunc.h"
 
 namespace cu_driver = chaos::cu::driver_manager::driver;
 using namespace ::driver::sensor::camera;
+using namespace chaos::common::data::structured;
+
+
 using namespace cv;
 
 #define ShapeSimLAPP_		LAPP_ << "[ShapeSim] "
@@ -130,13 +136,23 @@ DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,ShapeSim),
     amplitude=1.0;
     err_amplitude=0;
     sigmax=sigmay=10.0;
+    gain_raw=600;
+    brightness_raw=500;
+    shutter_raw=500;
     gain=1.0;
-    brightness=0;
+    shutter=1.0;
+    brightness=1.0;
+    trigger_mode=0;
     props=new chaos::common::data::CDataWrapper();
+    ownprops->reset();
+    ownprops->createProperty("ExposureTimeRaw",shutter_raw,0,CAM_MAX_SHUTTER,1,"SHUTTER");
+    ownprops->createProperty("GainRaw",gain_raw,0,CAM_MAX_GAIN,1,"GAIN");
+    ownprops->createProperty("BslBrightnessRaw",brightness_raw,0,CAM_MAX_BRIGHTNESS,1,"BRIGHTNESS");
 #ifdef CVDEBUG
 
     cv::namedWindow("test");
 #endif
+ShapeSimLDBG_<<" Internal property:"<<ownprops->getProperty().getJSONString();
 }
 //default descrutcor
 ShapeSim::~ShapeSim() {
@@ -148,18 +164,28 @@ int ShapeSim::cameraToProps(chaos::common::data::CDataWrapper*p){
     if(p == NULL){
         p = props;
     }
+    /*DatasetAttribute speed("speed", "Max speed of trapezoidal profile",
+                         chaos::DataType::DataType::TYPE_DOUBLE,
+                         chaos::DataType::Input, "0.001", "500.0", "400.0",
+                         "0.1", "mm/s");
+
+*/
     ShapeSimLDBG_<< "WIDTH:"<<width<<" HEIGHT:"<<height;
     ShapeSimLDBG_<< "FRAMERATE:"<<framerate;
     p->addDoubleValue("FRAMERATE",framerate);
     p->addInt32Value("WIDTH",width);
     p->addInt32Value("HEIGHT",height);
 
-    p->addInt32Value("TRIGGER_MODE",0);
+    p->addInt32Value("TRIGGER_MODE",trigger_mode);
     p->addDoubleValue("GAIN",gain);
     p->addDoubleValue("BRIGHTNESS",brightness);
-    
+    p->addDoubleValue("SHUTTER",shutter);
     p->addInt32Value("OFFSETX",offsetx);
     p->addInt32Value("OFFSETY",offsety);
+   
+    p->addCSDataValue("custom",ownprops->getProperty());
+    ShapeSimLDBG_<<" Properties:"<<p->getJSONString();
+
     return 0;
 }
 
@@ -204,10 +230,15 @@ int ShapeSim::propsToCamera(chaos::common::data::CDataWrapper*p){
     }
 
     if(p->hasKey("GAIN")){
+        gain_raw=p->getDoubleValue("GAIN")*CAM_MAX_GAIN/100;
+        ShapeSimLDBG_<< "SETTING GAIN RAW:"<<gain_raw <<" norm:"<<p->getDoubleValue("GAIN");
         gain=p->getDoubleValue("GAIN");
     }
 
     if(p->hasKey("SHUTTER")){
+        shutter_raw=(p->getDoubleValue("SHUTTER")*CAM_MAX_SHUTTER)/100;
+        ShapeSimLDBG_<< "SETTING SHUTTER RAW:"<<shutter_raw <<" norm:"<<p->getDoubleValue("SHUTTER");
+        shutter=p->getDoubleValue("SHUTTER");
     }
     if(p->hasKey("ZOOM")){
 
@@ -218,11 +249,15 @@ int ShapeSim::propsToCamera(chaos::common::data::CDataWrapper*p){
         framerate=p->getDoubleValue("FRAMERATE");
         ShapeSimLDBG_<< "FRAME RATE:"<<framerate;
     }
-
+    if(p->hasKey("TRIGGER_MODE")){
+        trigger_mode=p->getInt32Value("TRIGGER_MODE");
+    }
 
     if(p->hasKey("SHARPNESS")){
     }
     if(p->hasKey("BRIGHTNESS")){
+        brightness_raw=p->getDoubleValue("BRIGHTNESS")*CAM_MAX_BRIGHTNESS/100;
+        ShapeSimLDBG_<< "SETTING BRIGHTNESS RAW:"<<brightness_raw <<" norm:"<<p->getDoubleValue("BRIGHTNESS");
         brightness=p->getDoubleValue("BRIGHTNESS");
     }
     if(p->hasKey("CONTRAST")){
@@ -408,11 +443,21 @@ static double getError(double mxerror,boost::random::mt19937& gen){
 
 }
 void ShapeSim::applyCameraParams(cv::Mat& image){
+    if(gain_raw<0){
+        gain_raw=CAM_MAX_GAIN;
+    }
+    if(brightness_raw<0){
+        brightness_raw=CAM_MAX_BRIGHTNESS;
+    }
+    if(shutter_raw<0){
+        shutter_raw=CAM_MAX_SHUTTER;
+     }
+    
     for( int y = 0; y < image.rows; y++ ) {
         for( int x = 0; x < image.cols; x++ ) {
             for( int c = 0; c < image.channels(); c++ ) {
                 image.at<Vec3b>(y,x)[c] =
-                  saturate_cast<uchar>( gain*image.at<Vec3b>(y,x)[c] + brightness );
+                  saturate_cast<uchar> ( (((double)1.0*gain_raw)/CAM_MAX_GAIN*image.at<Vec3b>(y,x)[c] + (((double)1.0*brightness_raw))/CAM_MAX_BRIGHTNESS)*(((double)1.0*shutter_raw)/CAM_MAX_SHUTTER) );
             }
         }
     }

@@ -42,7 +42,9 @@ namespace driver {
 
 #define CAM_DEFAULT_WIDTH 659
 #define CAM_DEFAULT_HEIGTH 494
-
+#define CAM_MAX_SHUTTER 1000
+#define CAM_MAX_GAIN 1000
+#define CAM_MAX_BRIGHTNESS 1500
 class ShapeSim:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::CameraDriverBridge {
 
 
@@ -67,6 +69,7 @@ class ShapeSim:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::Camera
      cameraGrabCallBack fn;
      bool initialized;
      int pixelEncoding;
+     int trigger_mode;
      int propsToCamera(chaos::common::data::CDataWrapper*p);
      int cameraToProps(chaos::common::data::CDataWrapper*p);
      int width,height,offsetx,offsety,original_width,original_height;
@@ -76,7 +79,8 @@ class ShapeSim:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::Camera
      double rho;
      double sigmax,sigmay,err_sigmax,err_sigmay;
      ///
-     double framerate,gain,brightness;
+     double framerate,gain,brightness,shutter;
+     int32_t gain_raw,brightness_raw,shutter_raw;
       cv::Mat img;
      // shape parameters
      ChaosUniquePtr<chaos::common::data::CDataWrapper> shape_params;
