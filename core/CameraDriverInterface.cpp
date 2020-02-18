@@ -124,6 +124,8 @@ CameraDriverInterface::~CameraDriverInterface() {
 
 
 int CameraDriverInterface::setImageProperties(int32_t width,int32_t height,int32_t opencvImageType){
+    boost::mutex::scoped_lock lock(io_mux);
+
     PREPARE_OP(CameraDriverInterfaceOpcode_SET_IMAGE_PROP);
     idata.arg0=width;
     idata.arg1=height;
@@ -132,6 +134,8 @@ int CameraDriverInterface::setImageProperties(int32_t width,int32_t height,int32
 }
 
 int CameraDriverInterface::getImageProperties(int32_t& width,int32_t& height,int32_t& opencvImageType){
+    boost::mutex::scoped_lock lock(io_mux);
+
     PREPARE_OP(CameraDriverInterfaceOpcode_GET_IMAGE_PROP);
     SEND;
     width=ret.arg0;
@@ -143,10 +147,11 @@ int CameraDriverInterface::getImageProperties(int32_t& width,int32_t& height,int
 
 int CameraDriverInterface::setCameraProperty(const std::string& propname,int32_t val){
     boost::mutex::scoped_lock lock(io_mux);
-
     PREPARE_OP(CameraDriverInterfaceOpcode_SET_PROP);
+        memset(idata.property,0,MAX_PROP_STRING);
+
     strncpy(idata.property,propname.c_str(),MAX_PROP_STRING);
-    idata.strl=propname.size();
+    idata.strl=strlen(idata.property);
     idata.arg0=val;
     SEND;
 //    free(idata.str);
@@ -157,8 +162,10 @@ int CameraDriverInterface::setCameraProperty(const std::string& propname,double 
     boost::mutex::scoped_lock lock(io_mux);
 
     PREPARE_OP(CameraDriverInterfaceOpcode_SET_FPROP);
+        memset(idata.property,0,MAX_PROP_STRING);
+
     strncpy(idata.property,propname.c_str(),MAX_PROP_STRING);
-    idata.strl=propname.size();
+    idata.strl==strlen(idata.property);
     idata.farg=val;
     SEND;
  //   free(idata.str);
@@ -169,9 +176,11 @@ int CameraDriverInterface::getCameraProperty(const std::string& propname,int32_t
     boost::mutex::scoped_lock lock(io_mux);
 
     PREPARE_OP(CameraDriverInterfaceOpcode_GET_PROP);
+    memset(idata.property,0,MAX_PROP_STRING);
+
     strncpy(idata.property,propname.c_str(),MAX_PROP_STRING);
     
-    idata.strl=propname.size();
+    idata.strl=strlen(idata.property);
     SEND;
 
     val=ret.arg0;
@@ -183,6 +192,8 @@ int CameraDriverInterface::getCameraProperty(const std::string& propname,double&
     boost::mutex::scoped_lock lock(io_mux);
 
     PREPARE_OP(CameraDriverInterfaceOpcode_GET_FPROP);
+    memset(idata.property,0,MAX_PROP_STRING);
+
     strncpy(idata.property,propname.c_str(),MAX_PROP_STRING);
     SEND;
 
@@ -194,8 +205,10 @@ int CameraDriverInterface::getCameraProperty(const std::string& propname,double&
 
 int CameraDriverInterface::getCameraProperties(chaos::common::data::CDataWrapper& proplist){
     boost::mutex::scoped_lock lock(io_mux);
-
+    
     PREPARE_OP(CameraDriverInterfaceOpcode_GET_PROPERTIES);
+    ret.str=0;
+    ret.strl=0;
     SEND;
     if(ret.str && (ret.strl>0)){
         proplist.setSerializedData(ret.str);
@@ -208,6 +221,8 @@ int CameraDriverInterface::getCameraProperties(chaos::common::data::CDataWrapper
 }
 
 int CameraDriverInterface::startGrab(uint32_t shots,void*framebuf,cameraGrabCallBack c){
+    boost::mutex::scoped_lock lock(io_mux);
+
     PREPARE_OP(CameraDriverInterfaceOpcode_START_GRAB);
     idata.arg0=shots;
     idata.buffer=framebuf;
@@ -215,6 +230,7 @@ int CameraDriverInterface::startGrab(uint32_t shots,void*framebuf,cameraGrabCall
     SEND_AND_RETURN;
 }
 int CameraDriverInterface::waitGrab(uint32_t timeout_ms){
+
     PREPARE_OP(CameraDriverInterfaceOpcode_WAIT_GRAB);
     idata.arg0=timeout_ms;
     SEND_AND_RETURN;
@@ -226,10 +242,14 @@ int CameraDriverInterface::waitGrab(const char**hostbuf,uint32_t timeout_ms){
     SEND_AND_RETURN;
 }
 int CameraDriverInterface::stopGrab(){
+        boost::mutex::scoped_lock lock(io_mux);
+
     PREPARE_OP(CameraDriverInterfaceOpcode_STOP_GRAB);
     SEND_AND_RETURN;
 }
 int CameraDriverInterface::cameraInit(void *buffer,uint32_t sizeb){
+        boost::mutex::scoped_lock lock(io_mux);
+
     PREPARE_OP(CameraDriverInterfaceOpcode_INIT);
 
     idata.buffer=buffer;

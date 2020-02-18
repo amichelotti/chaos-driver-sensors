@@ -153,9 +153,9 @@ RTCameraBase::~RTCameraBase() {
 void RTCameraBase::updateProperty() {
   std::vector<std::string> props;
   chaos::common::data::CDataWrapper camera_props;
-  if (driver->getCameraProperties(camera_props) != 0) {
-    throw chaos::CException(-1, "Error retrieving camera properties",
-                            __PRETTY_FUNCTION__);
+  int ret=0;
+  if ((ret=driver->getCameraProperties(camera_props)) != 0) {
+   LERR_<< "Error retriving camera properties ret:"<<ret;
   }
   camera_props.getAllKey(props);
   AttributeSharedCacheWrapper *cc = getAttributeCache();
@@ -165,21 +165,32 @@ void RTCameraBase::updateProperty() {
     if (!camera_props.isCDataWrapperValue(*i)) {
 
       if (camera_props.getValueType(*i) == chaos::DataType::TYPE_DOUBLE) {
-        double tmp, *p;
-        driver->getCameraProperty(*i, tmp);
+        double tmp;
+        tmp=camera_props.getDoubleValue(*i);
+
+        //driver->getCameraProperty(*i, tmp);
         RTCameraBaseLDBG_ << "Camera Property double " << *i
                           << " VALUE:" << tmp;
-
-        p = cc->getRWPtr<double>(DOMAIN_OUTPUT, *i);
-        *p = tmp;
+        cc->setOutputAttributeValue(*i,tmp);
+        
       }
       if (camera_props.getValueType(*i) == chaos::DataType::TYPE_INT32) {
         int32_t tmp, *p;
-        driver->getCameraProperty(*i, tmp);
+        //driver->getCameraProperty(*i, tmp);
+        tmp=camera_props.getInt32Value(*i);
         RTCameraBaseLDBG_ << "Camera Property int " << *i << " VALUE:" << tmp;
 
-        p = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, *i);
-        *p = tmp;
+        cc->setOutputAttributeValue(*i,tmp);
+
+      }
+      if (camera_props.getValueType(*i) == chaos::DataType::TYPE_STRING) {
+        std::string tmp;
+        tmp=camera_props.getStringValue(*i);
+        
+        RTCameraBaseLDBG_ << "Camera Property  " << *i << " VALUE:" << tmp;
+
+        cc->setOutputAttributeValue(*i,tmp);
+
       }
     }
   }
@@ -589,6 +600,8 @@ std::vector<std::string> props;
     snprintf(encoding, sizeof(encoding), ".%s", fmt);
   }
   strncpy(ofmt, encoding, sizeof(encoding));
+    updateProperty();
+
   getAttributeCache()->setInputDomainAsChanged();
   getAttributeCache()->setOutputDomainAsChanged();
 }
