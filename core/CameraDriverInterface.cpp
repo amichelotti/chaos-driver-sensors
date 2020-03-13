@@ -165,7 +165,7 @@ int CameraDriverInterface::setCameraProperty(const std::string& propname,double 
         memset(idata.property,0,MAX_PROP_STRING);
 
     strncpy(idata.property,propname.c_str(),MAX_PROP_STRING);
-    idata.strl==strlen(idata.property);
+    idata.strl=strlen(idata.property);
     idata.farg=val;
     SEND;
  //   free(idata.str);
