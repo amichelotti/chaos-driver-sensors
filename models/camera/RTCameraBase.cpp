@@ -891,14 +891,25 @@ void RTCameraBase::encodeThread() {
             }
           } while ((encoderet == false) && (!stopCapture));
         }
-      } catch (...) {
+      } catch (std::runtime_error& e) {
         setStateVariableSeverity(
             StateVariableTypeAlarmCU, "encode_error",
             chaos::common::alarm::MultiSeverityAlarmLevelHigh);
-        LERR_ << "Encode exception:" << fmt;
+        LERR_ << "Encode exception:" << e.what()<<" orher:"<<fmt;
         if (encbuf) {
           delete encbuf;
         }
+        usleep(100000);
+      } catch(...){
+        setStateVariableSeverity(
+            StateVariableTypeAlarmCU, "encode_error",
+            chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+        LERR_ << "Uknown Encode exception:"<<fmt;
+        if (encbuf) {
+          delete encbuf;
+        }
+                usleep(100000);
+
       }
       image.release();
     } else {
@@ -1063,6 +1074,7 @@ void RTCameraBase::unitStop() throw(chaos::CException) { stopGrabbing(); }
 
 //! Deinit the Control Unit
 void RTCameraBase::unitDeinit() throw(chaos::CException) {
+  stopGrabbing();
 
   driver->cameraDeinit();
 }
