@@ -667,8 +667,9 @@ void RTCameraBase::stopGrabbing() {
     wait_encode.notify_all();
     full_encode.notify_all();
     full_capture.notify_all();
-    capture_th.join();
     encode_th.join();
+
+    capture_th.join();
   }
   RTCameraBaseLDBG_ << "Stop Grabbing done" << stopCapture;
 
@@ -910,6 +911,8 @@ void RTCameraBase::encodeThread() {
       wait_capture.timed_wait(lock, timeout);
     }
   }
+  boost::mutex::scoped_lock lock(mutex_encode);
+
   RTCameraBaseLDBG_ << "Encode thread exiting Queue: " << encodeQueue;
 
   encodedImg.consume_all([this](encoded_t i) {
