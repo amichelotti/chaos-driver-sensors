@@ -92,9 +92,9 @@ __PRETTY_FUNCTION__ << " " #define RTCameraBaseLERR_		LERR_ <<
 #define DBG DBG_LOG(RTCameraBase)
 #define ERR ERR_LOG(RTCameraBase)
 
-#define RTCameraBaseLAPP_ INFO
-#define RTCameraBaseLDBG_ DBG
-#define RTCameraBaseLERR_ ERR
+#define RTCameraBaseLAPP_ INFO<< "[" << getDeviceID() << "] "
+#define RTCameraBaseLDBG_ DBG<< "[" << getDeviceID() << "] "
+#define RTCameraBaseLERR_ ERR << "[" << getDeviceID() << "] "
 /*
  Construct
  */
