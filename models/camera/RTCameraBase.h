@@ -78,6 +78,7 @@ protected:
 
         void captureThread();
         bool stopCapture,stopEncoding;
+        bool isRunning;
         boost::thread capture_th,encode_th;
       //  std::vector<unsigned char> encbuf[CAMERA_FRAME_BUFFERING];//encode stage
         uint32_t captureQueue,encodeQueue;

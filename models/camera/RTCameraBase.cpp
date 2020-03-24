@@ -110,7 +110,7 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
       capture_time(0), network_time(0), captureQueue(0), encodeQueue(0),
       hw_trigger_timeout_us(5000000), sw_trigger_timeout_us(0), imagesizex(0),
       imagesizey(0), apply_resize(false), trigger_timeout(0), bpp(3),
-      stopCapture(true), stopEncoding(true) {
+      stopCapture(true), stopEncoding(true),isRunning(false) {
   RTCameraBaseLDBG_ << "Creating " << _control_unit_id
                     << " params:" << _control_unit_param;
 
@@ -611,13 +611,19 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
 
   getAttributeCache()->setInputDomainAsChanged();
   getAttributeCache()->setOutputDomainAsChanged();
-   pushCustomDataset();
+    getAttributeCache()->setCustomDomainAsChanged();
+
+  // pushCustomDataset();
 
 }
 void RTCameraBase::cameraGrabCallBack(const void *buf, uint32_t blen,
                                       uint32_t width, uint32_t heigth,
                                       uint32_t error) {}
 void RTCameraBase::startGrabbing() {
+  if(isRunning==false){
+    return;
+  }
+
   RTCameraBaseLDBG_ << "Start Grabbing";
   metadataLogging(
       chaos::common::metadata_logging::StandardLoggingChannel::LogLevelInfo,
@@ -702,7 +708,10 @@ void RTCameraBase::stopGrabbing() {
 }
 //! Execute the work, this is called with a determinated delay, it must be as
 //! fast as possible
-void RTCameraBase::unitStart() throw(chaos::CException) { startGrabbing(); }
+void RTCameraBase::unitStart() throw(chaos::CException) { 
+  isRunning=true;
+  startGrabbing();
+   }
 
 void RTCameraBase::captureThread() {
   int ret;
@@ -1077,7 +1086,10 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
 }
 
 //! Execute the Control Unit work
-void RTCameraBase::unitStop() throw(chaos::CException) { stopGrabbing(); }
+void RTCameraBase::unitStop() throw(chaos::CException) { 
+  isRunning=false;
+  stopGrabbing();
+   }
 
 //! Deinit the Control Unit
 void RTCameraBase::unitDeinit() throw(chaos::CException) {
