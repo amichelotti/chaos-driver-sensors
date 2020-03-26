@@ -413,6 +413,10 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
 
             }
             break;
+        case CAMERA_DISABLE_ACQUIRE:
+                IDSGEXXDriverLDBG_<< "DISABLE ACQUIRE";
+                break;
+
         }
     }
     IDSGEXXDriverLDBG_<<"setting props: " << p->getCompliantJSONString() ;

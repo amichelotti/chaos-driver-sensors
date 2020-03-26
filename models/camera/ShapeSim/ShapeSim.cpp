@@ -565,12 +565,13 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
 #endif
         
         if(framebuf_size[frames&1]<size){
-            free(framebuf[frames&1]);
-            framebuf[frames&1]=malloc(size);
+            //free(framebuf[frames&1]);
+            framebuf[frames&1]=realloc(framebuf[frames&1],size);
             framebuf_size[frames&1]=size;
         }
-        ShapeSimLDBG_<<ss.str()<<","<<fs.str()<<" size byte:"<<size<<" framerate:"<<framerate;
-        std::memcpy(framebuf[frames&1],cropped.data,size );
+        if(size>0 && cropped.data &&framebuf[frames&1]){
+            ShapeSimLDBG_<<ss.str()<<","<<fs.str()<<" size byte:"<<size<<" framerate:"<<framerate;
+            std::memcpy(framebuf[frames&1],cropped.data,size );
     
         if(buf){
             if(frames>0){
@@ -582,7 +583,7 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
             ShapeSimLERR_<<"BAD BUFFER GIVEN "<<shape_type<<"("<<width<<"X"<<height<<")"<<frames<<" center "<<tmp_centerx<<","<<tmp_centery<<" sizex:"<<tmp_sizex<<" sizey:"<<tmp_sizey<<" color:"<<colr<<"R,"<<colg<<"G,"<<colb<<" size byte:"<<size;
 
         }
-        
+        }
         
         ret=size;
     
