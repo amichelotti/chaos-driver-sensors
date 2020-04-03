@@ -26,21 +26,52 @@
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
- #define DECODE_CVENCODING(e, cvenc)                                            \
+#define DECODE_CVENCODING(e, cvenc)                                            \
   if (e == #cvenc) {                                                           \
     RTCameraBaseLDBG_ << "Found Encoding:" << #cvenc;                          \
     framebuf_encoding = cvenc;                                                 \
-    switch(cvenc){case CV_8UC4:case CV_8SC4:bpp=4;break;\
-    case CV_8UC3:case CV_8SC3:bpp=3;break;\
-    case CV_8UC2:case CV_8SC2:bpp=2;break;\
-    case CV_8UC1:case CV_8SC1:bpp=1;break;\
-    case CV_16UC1:case CV_16SC1:bpp=2;break;\
-    case CV_16UC2:case CV_16SC2:bpp=4;break;\
-    case CV_16UC3:case CV_16SC3:bpp=6;break;\
-    case CV_32SC1:bpp=4;break;\
-    case CV_32SC2:bpp=8;break;\
-    case CV_32SC3:bpp=16;break;\
-    default:bpp=16;}}
+    switch (cvenc) {                                                           \
+    case CV_8UC4:                                                              \
+    case CV_8SC4:                                                              \
+      bpp = 4;                                                                 \
+      break;                                                                   \
+    case CV_8UC3:                                                              \
+    case CV_8SC3:                                                              \
+      bpp = 3;                                                                 \
+      break;                                                                   \
+    case CV_8UC2:                                                              \
+    case CV_8SC2:                                                              \
+      bpp = 2;                                                                 \
+      break;                                                                   \
+    case CV_8UC1:                                                              \
+    case CV_8SC1:                                                              \
+      bpp = 1;                                                                 \
+      break;                                                                   \
+    case CV_16UC1:                                                             \
+    case CV_16SC1:                                                             \
+      bpp = 2;                                                                 \
+      break;                                                                   \
+    case CV_16UC2:                                                             \
+    case CV_16SC2:                                                             \
+      bpp = 4;                                                                 \
+      break;                                                                   \
+    case CV_16UC3:                                                             \
+    case CV_16SC3:                                                             \
+      bpp = 6;                                                                 \
+      break;                                                                   \
+    case CV_32SC1:                                                             \
+      bpp = 4;                                                                 \
+      break;                                                                   \
+    case CV_32SC2:                                                             \
+      bpp = 8;                                                                 \
+      break;                                                                   \
+    case CV_32SC3:                                                             \
+      bpp = 16;                                                                \
+      break;                                                                   \
+    default:                                                                   \
+      bpp = 16;                                                                \
+    }                                                                          \
+  }
 using namespace chaos;
 using namespace chaos::common::data::cache;
 using namespace chaos::cu::driver_manager::driver;
@@ -56,9 +87,14 @@ PUBLISHABLE_CONTROL_UNIT_IMPLEMENTATION(RTCameraBase)
 __PRETTY_FUNCTION__ << " " #define RTCameraBaseLERR_		LERR_ <<
 "[RTCameraBase] " << __PRETTY_FUNCTION__ << "("<<__LINE__<<") "
 */
-#define RTCameraBaseLAPP_ CUAPP
-#define RTCameraBaseLDBG_ CUDBG
-#define RTCameraBaseLERR_ CUERR
+
+#define INFO INFO_LOG(RTCameraBase)
+#define DBG DBG_LOG(RTCameraBase)
+#define ERR ERR_LOG(RTCameraBase)
+
+#define RTCameraBaseLAPP_ INFO<< "[" << getDeviceID() << "] "
+#define RTCameraBaseLDBG_ DBG<< "[" << getDeviceID() << "] "
+#define RTCameraBaseLERR_ ERR << "[" << getDeviceID() << "] "
 /*
  Construct
  */
@@ -73,7 +109,8 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
       captureImg(_buffering), encodedImg(_buffering), encode_time(0),
       capture_time(0), network_time(0), captureQueue(0), encodeQueue(0),
       hw_trigger_timeout_us(5000000), sw_trigger_timeout_us(0), imagesizex(0),
-      imagesizey(0), apply_resize(false), trigger_timeout(0), bpp(3) {
+      imagesizey(0), apply_resize(false), trigger_timeout(0), bpp(3),
+      stopCapture(true), stopEncoding(true),isRunning(false) {
   RTCameraBaseLDBG_ << "Creating " << _control_unit_id
                     << " params:" << _control_unit_param;
 
@@ -120,9 +157,10 @@ RTCameraBase::~RTCameraBase() {
 }
 void RTCameraBase::updateProperty() {
   std::vector<std::string> props;
-  if (driver->getCameraProperties(camera_props) != 0) {
-    throw chaos::CException(-1, "Error retrieving camera properties",
-                            __PRETTY_FUNCTION__);
+  chaos::common::data::CDataWrapper camera_props;
+  int ret = 0;
+  if ((ret = driver->getCameraProperties(camera_props)) != 0) {
+    RTCameraBaseLERR_ << "Error retriving camera properties ret:" << ret;
   }
   camera_props.getAllKey(props);
   AttributeSharedCacheWrapper *cc = getAttributeCache();
@@ -132,21 +170,29 @@ void RTCameraBase::updateProperty() {
     if (!camera_props.isCDataWrapperValue(*i)) {
 
       if (camera_props.getValueType(*i) == chaos::DataType::TYPE_DOUBLE) {
-        double tmp, *p;
-        driver->getCameraProperty(*i, tmp);
+        double tmp;
+        tmp = camera_props.getDoubleValue(*i);
+
+        // driver->getCameraProperty(*i, tmp);
         RTCameraBaseLDBG_ << "Camera Property double " << *i
                           << " VALUE:" << tmp;
-
-        p = cc->getRWPtr<double>(DOMAIN_OUTPUT, *i);
-        *p = tmp;
+        cc->setOutputAttributeValue(*i, tmp);
       }
       if (camera_props.getValueType(*i) == chaos::DataType::TYPE_INT32) {
         int32_t tmp, *p;
-        driver->getCameraProperty(*i, tmp);
+        // driver->getCameraProperty(*i, tmp);
+        tmp = camera_props.getInt32Value(*i);
         RTCameraBaseLDBG_ << "Camera Property int " << *i << " VALUE:" << tmp;
 
-        p = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, *i);
-        *p = tmp;
+        cc->setOutputAttributeValue(*i, tmp);
+      }
+      if (camera_props.getValueType(*i) == chaos::DataType::TYPE_STRING) {
+        std::string tmp;
+        tmp = camera_props.getStringValue(*i);
+
+        RTCameraBaseLDBG_ << "Camera Property  " << *i << " VALUE:" << tmp;
+
+        cc->setOutputAttributeValue(*i, tmp);
       }
     }
   }
@@ -160,24 +206,38 @@ bool RTCameraBase::setProp(const std::string &name, const std::string &value,
                            uint32_t size) {
   return false;
 }
+bool RTCameraBase::setCamera(const std::string &name, bool value,
+                             uint32_t size) {
+  if (name == "ACQUIRE") {
+    return setProp(TRIGGER_MODE_KEY, (value == false)
+                                         ? CAMERA_DISABLE_ACQUIRE
+                                         : CAMERA_TRIGGER_CONTINOUS);
+  } else if (name == "TRIGGER") {
+    return setProp(TRIGGER_MODE_KEY, (value == false) ? CAMERA_TRIGGER_CONTINOUS
+                                                      : CAMERA_TRIGGER_HW_HI);
+
+  } else if (name == "PULSE") {
+    return setProp(TRIGGER_MODE_KEY, (value == false) ? CAMERA_TRIGGER_CONTINOUS
+                                                      : CAMERA_TRIGGER_SINGLE);
+  }
+  return false;
+}
 
 bool RTCameraBase::setProp(const std::string &name, int32_t value,
                            uint32_t size) {
   int ret;
   int32_t valuer;
-    AttributeSharedCacheWrapper *cc = getAttributeCache();
+  AttributeSharedCacheWrapper *cc = getAttributeCache();
 
   RTCameraBaseLDBG_ << "SET IPROP:" << name << " VALUE:" << value;
- int32_t *pmode = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, name);
-  bool stopgrab = (stopCapture == false) &&
-                  (((name == WIDTH_KEY) && (value != *sizex)) ||
-                   ((name == HEIGHT_KEY) && (value != *sizey)) ||
-                   ((name == OFFSETX_KEY) && (value != *offsetx)) ||
-                   ((name == OFFSETY_KEY) && (value != *offsety))||
-                   ((name == TRIGGER_MODE_KEY) && (value == CAMERA_DISABLE_ACQUIRE))
-                   );
+  int32_t *pmode = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, name);
+  bool stopgrab =
+      (((name == WIDTH_KEY) && (value != *sizex)) ||
+       ((name == HEIGHT_KEY) && (value != *sizey)) ||
+       ((name == OFFSETX_KEY) && (value != *offsetx)) ||
+       ((name == OFFSETY_KEY) && (value != *offsety)) ||
+       ((name == TRIGGER_MODE_KEY) && (value == CAMERA_DISABLE_ACQUIRE)));
 
-  
   if (stopgrab) {
     stopGrabbing();
   }
@@ -198,11 +258,40 @@ bool RTCameraBase::setProp(const std::string &name, int32_t value,
 
   // updateProperty();
   driver->getCameraProperty(name, valuer);
- 
-  mode=*pmode = valuer;
+
+  mode = *pmode = valuer;
+  switch (mode) {
+  case CAMERA_DISABLE_ACQUIRE:
+    getAttributeCache()->setInputAttributeValue("ACQUIRE", false);
+    getAttributeCache()->setInputAttributeValue("TRIGGER", false);
+    getAttributeCache()->setInputAttributeValue("PULSE", false);
+    break;
+  case CAMERA_TRIGGER_CONTINOUS:
+    getAttributeCache()->setInputAttributeValue("ACQUIRE", true);
+    getAttributeCache()->setInputAttributeValue("TRIGGER", false);
+    getAttributeCache()->setInputAttributeValue("PULSE", false);
+    break;
+  case CAMERA_TRIGGER_HW_HI:
+  case CAMERA_TRIGGER_HW_LOW:
+    getAttributeCache()->setInputAttributeValue("ACQUIRE", true);
+    getAttributeCache()->setInputAttributeValue("TRIGGER", true);
+    getAttributeCache()->setInputAttributeValue("PULSE", false);
+    break;
+  case CAMERA_TRIGGER_SINGLE:
+  case CAMERA_TRIGGER_SOFT:
+    getAttributeCache()->setInputAttributeValue("ACQUIRE", true);
+    getAttributeCache()->setInputAttributeValue("TRIGGER", false);
+    getAttributeCache()->setInputAttributeValue("PULSE", true);
+    break;
+  }
+
   RTCameraBaseLDBG_ << "SET IPROP:" << name << " SET VALUE:" << value
                     << " READ VALUE:" << valuer << " ret:" << ret;
-  if (stopgrab && !((name == TRIGGER_MODE_KEY) && (value == CAMERA_DISABLE_ACQUIRE))) {
+  if (stopgrab &&
+      !((name == TRIGGER_MODE_KEY) && (value == CAMERA_DISABLE_ACQUIRE))) {
+    startGrabbing();
+  } else if (stopCapture && ((name == TRIGGER_MODE_KEY) &&
+                             (value != CAMERA_DISABLE_ACQUIRE))) {
     startGrabbing();
   }
   getAttributeCache()->setInputDomainAsChanged();
@@ -232,7 +321,6 @@ bool RTCameraBase::setProp(const std::string &name, double value,
   AttributeSharedCacheWrapper *cc = getAttributeCache();
   double *p = cc->getRWPtr<double>(DOMAIN_OUTPUT, name);
   *p = valuer;
-
   getAttributeCache()->setInputDomainAsChanged();
   getAttributeCache()->setOutputDomainAsChanged();
 
@@ -245,6 +333,7 @@ The api that can be called withi this method are listed into
 (chaosframework/Documentation/html/group___control___unit___definition___api.html)
 */
 void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
+  chaos::common::data::CDataWrapper camera_props;
   chaos::cu::driver_manager::driver::DriverAccessor *acc =
       getAccessoInstanceByIndex(0);
   if (acc == NULL) {
@@ -267,7 +356,7 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
    */
   addAttributeToDataSet("FMT", "image format (jpg,png,gif...)",
                         chaos::DataType::TYPE_STRING,
-                        chaos::DataType::Bidirectional,16);
+                        chaos::DataType::Bidirectional, 16);
   if (buffering > 1) {
     addAttributeToDataSet("CAPTURE_FRAMERATE", "Capture Frame Rate",
                           chaos::DataType::TYPE_INT32, chaos::DataType::Output);
@@ -275,12 +364,20 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
                           chaos::DataType::TYPE_INT32, chaos::DataType::Output);
   }
   addAttributeToDataSet("ACQUIRE", "Is Acquiring",
-                          chaos::DataType::TYPE_BOOLEAN, chaos::DataType::Output);
+                        chaos::DataType::TYPE_BOOLEAN,
+                        chaos::DataType::Bidirectional);
   addAttributeToDataSet("TRIGGER", "Is triggered ",
-                          chaos::DataType::TYPE_BOOLEAN, chaos::DataType::Output);
-  addAttributeToDataSet("PULSE", "Is pulse",
-                          chaos::DataType::TYPE_BOOLEAN, chaos::DataType::Output);
-  
+                        chaos::DataType::TYPE_BOOLEAN,
+                        chaos::DataType::Bidirectional);
+  addAttributeToDataSet("PULSE", "Is pulse", chaos::DataType::TYPE_BOOLEAN,
+                        chaos::DataType::Bidirectional);
+  addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase, bool>(
+      this, &::driver::sensor::camera::RTCameraBase::setCamera, "ACQUIRE");
+  addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase, bool>(
+      this, &::driver::sensor::camera::RTCameraBase::setCamera, "TRIGGER");
+  addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase, bool>(
+      this, &::driver::sensor::camera::RTCameraBase::setCamera, "PULSE");
+
   for (std::vector<std::string>::iterator i = props.begin(); i != props.end();
        i++) {
     if (!camera_props.isCDataWrapperValue(*i)) {
@@ -316,16 +413,16 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
       StateVariableTypeAlarmDEV, "operation_not_supported",
       "the operation in not supported i.e property not present or accesible");
   addStateVariable(StateVariableTypeAlarmCU, "encode_error",
-                   "an error occurred during encode",LOG_FREQUENCY);
+                   "an error occurred during encode", LOG_FREQUENCY);
   addStateVariable(StateVariableTypeAlarmDEV, "capture_error",
-                   "an error occurred during capture",LOG_FREQUENCY);
+                   "an error occurred during capture", LOG_FREQUENCY);
   addStateVariable(StateVariableTypeAlarmDEV, "capture_timeout",
-                   "a timeout has occurred",LOG_FREQUENCY);
+                   "a timeout has occurred", LOG_FREQUENCY);
 
   addStateVariable(StateVariableTypeAlarmDEV, "captureQueueFull",
-                   "Queue Capture Full",LOG_FREQUENCY);
+                   "Queue Capture Full", LOG_FREQUENCY);
   addStateVariable(StateVariableTypeAlarmDEV, "encodeQueueFull",
-                   "Queue Encode Full",LOG_FREQUENCY);
+                   "Queue Encode Full", LOG_FREQUENCY);
 }
 
 //! Define custom control unit attribute
@@ -344,11 +441,7 @@ void RTCameraBase::unitDefineCustomAttribute() {
       throw chaos::CException(-1, "cannot create driver", __PRETTY_FUNCTION__);
     }
   }
-  if (driver->getCameraProperties(camera_props) != 0) {
-    throw chaos::CException(-1, "Error retrieving camera properties",
-                            __PRETTY_FUNCTION__);
-  }
-  
+
   if (driver->getCameraProperties(attr) != 0) {
     throw chaos::CException(-1, "Error retrieving camera properties",
                             __PRETTY_FUNCTION__);
@@ -356,10 +449,11 @@ void RTCameraBase::unitDefineCustomAttribute() {
   config = attr.getCompliantJSONString();
   RTCameraBaseLDBG_ << "ADDING CONFIG:" << config;
   setDriverInfo(attr);
-  //getAttributeCache()->setCustomAttributeValue(chaos::ControlUnitNodeDefinitionKey::CONTROL_UNIT_DRIVER_INFO, (void *)config.c_str(),
-                                           //    config.size()+1);
-  //getAttributeCache()->setCustomDomainAsChanged();
-  pushCustomDataset();
+  // getAttributeCache()->setCustomAttributeValue(chaos::ControlUnitNodeDefinitionKey::CONTROL_UNIT_DRIVER_INFO,
+  // (void *)config.c_str(),
+  //    config.size()+1);
+  // getAttributeCache()->setCustomDomainAsChanged();
+ // pushCustomDataset();
 }
 
 //! Initialize the Custom Control Unit
@@ -367,6 +461,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   int ret;
   int32_t itype;
   int32_t width, height;
+
   AttributeSharedCacheWrapper *cc = getAttributeCache();
   // this properties must exist
   //
@@ -376,77 +471,80 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   offsety = cc->getRWPtr<int32_t>(DOMAIN_INPUT, OFFSETY_KEY);
   //
   mode = *cc->getROPtr<int32_t>(DOMAIN_INPUT, TRIGGER_MODE_KEY);
+  omode = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, TRIGGER_MODE_KEY);
   //   camera_out=cc->getRWPtr<uint8_t>(DOMAIN_OUTPUT, "FRAMEBUFFER");
   fmt = cc->getRWPtr<char>(DOMAIN_INPUT, "FMT");
   ofmt = cc->getRWPtr<char>(DOMAIN_OUTPUT, "FMT");
-  pacquire=cc->getRWPtr<bool>(DOMAIN_OUTPUT, "ACQUIRE");
-  ptrigger=cc->getRWPtr<bool>(DOMAIN_OUTPUT, "TRIGGER");
-  ppulse=cc->getRWPtr<bool>(DOMAIN_OUTPUT, "PULSE");
-  *pacquire=false;
-  *ptrigger=false;
-  *ppulse=false;  
+  pacquire = cc->getRWPtr<bool>(DOMAIN_OUTPUT, "ACQUIRE");
+  ptrigger = cc->getRWPtr<bool>(DOMAIN_OUTPUT, "TRIGGER");
+  ppulse = cc->getRWPtr<bool>(DOMAIN_OUTPUT, "PULSE");
+  *pacquire = false;
+  *ptrigger = false;
+  *ppulse = false;
 
   if (buffering > 1) {
     capture_frame_rate =
         cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, "CAPTURE_FRAMERATE");
     enc_frame_rate = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, "ENCODE_FRAMERATE");
   }
-  std::vector<std::string> props;
-  camera_props.getAllKey(props);
+
   // breanch number and soft reset
 
   if ((ret = driver->cameraInit(0, 0)) != 0) {
     throw chaos::CException(ret, "cannot initialize camera",
                             __PRETTY_FUNCTION__);
   }
+  // not needed any mode
+  /*
+  std::vector<std::string> props;
+    camera_props.getAllKey(props);
+    for (std::vector<std::string>::iterator i = props.begin(); i != props.end();
+         i++) {
+      if (!camera_props.isCDataWrapperValue(*i)) {
 
-  for (std::vector<std::string>::iterator i = props.begin(); i != props.end();
-       i++) {
-    if (!camera_props.isCDataWrapperValue(*i)) {
+        if (camera_props.getValueType(*i) == chaos::DataType::TYPE_DOUBLE) {
 
-      if (camera_props.getValueType(*i) == chaos::DataType::TYPE_DOUBLE) {
+          double tmp = cc->getValue<double>(DOMAIN_INPUT, *i);
+          if (tmp != 0) {
+            /// to check!!!
+            RTCameraBaseLDBG_ << "Init Double \"" << *i
+                              << "\" from input:" << tmp;
 
-        double tmp = cc->getValue<double>(DOMAIN_INPUT, *i);
-        if (tmp != 0) {
-          /// to check!!!
-          RTCameraBaseLDBG_ << "Init Double \"" << *i
-                            << "\" from input:" << tmp;
-
-          setProp(*i, tmp, 0);
+            setProp(*i, tmp, 0);
+          }
         }
-      }
-      if (camera_props.getValueType(*i) == chaos::DataType::TYPE_INT32) {
-        int32_t tmp = cc->getValue<int32_t>(DOMAIN_INPUT, *i);
-        if (tmp != 0) {
-          RTCameraBaseLDBG_ << "Init Integer \"" << *i
-                            << "\" from input:" << tmp;
+        if (camera_props.getValueType(*i) == chaos::DataType::TYPE_INT32) {
+          int32_t tmp = cc->getValue<int32_t>(DOMAIN_INPUT, *i);
+          if (tmp != 0) {
+            RTCameraBaseLDBG_ << "Init Integer \"" << *i
+                              << "\" from input:" << tmp;
 
-          setProp(*i, tmp, 0);
+            setProp(*i, tmp, 0);
+          }
         }
       }
     }
-  }
 
-  for (std::vector<std::string>::iterator i = props.begin(); i != props.end();
-       i++) {
-    if (!camera_props.isCDataWrapperValue(*i)) {
+    for (std::vector<std::string>::iterator i = props.begin(); i != props.end();
+         i++) {
+      if (!camera_props.isCDataWrapperValue(*i)) {
 
-      if (camera_props.getValueType(*i) == chaos::DataType::TYPE_DOUBLE) {
-        double tmp, *p;
+        if (camera_props.getValueType(*i) == chaos::DataType::TYPE_DOUBLE) {
+          double tmp, *p;
 
-        driver->getCameraProperty(*i, tmp);
-        p = cc->getRWPtr<double>(DOMAIN_INPUT, *i);
-        *p = tmp;
-      }
-      if (camera_props.getValueType(*i) == chaos::DataType::TYPE_INT32) {
-        int32_t tmp, *p;
-        driver->getCameraProperty(*i, tmp);
-        p = cc->getRWPtr<int32_t>(DOMAIN_INPUT, *i);
-        *p = tmp;
+          driver->getCameraProperty(*i, tmp);
+          p = cc->getRWPtr<double>(DOMAIN_INPUT, *i);
+          *p = tmp;
+        }
+        if (camera_props.getValueType(*i) == chaos::DataType::TYPE_INT32) {
+          int32_t tmp, *p;
+          driver->getCameraProperty(*i, tmp);
+          p = cc->getRWPtr<int32_t>(DOMAIN_INPUT, *i);
+          *p = tmp;
+        }
       }
     }
-  }
-
+  */
   if (driver->getImageProperties(width, height, itype) == 0) {
     RTCameraBaseLDBG_ << "CAMERA IMAGE:" << width << "x" << height;
     *sizex = width;
@@ -457,33 +555,39 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     if (cam_prop.hasKey(FRAMEBUFFER_ENCODING_KEY) &&
         cam_prop.isStringValue(FRAMEBUFFER_ENCODING_KEY)) {
       std::string enc = cam_prop.getStringValue(FRAMEBUFFER_ENCODING_KEY);
-      DECODE_CVENCODING(enc, CV_8UC4);
-      DECODE_CVENCODING(enc, CV_8UC3);
-      DECODE_CVENCODING(enc, CV_8UC2);
-      DECODE_CVENCODING(enc, CV_8UC1);
-      DECODE_CVENCODING(enc, CV_8SC1);
-      DECODE_CVENCODING(enc, CV_8SC2);
-      DECODE_CVENCODING(enc, CV_8SC3);
-      DECODE_CVENCODING(enc, CV_8SC4);
+      framebuf_encoding = fmt2cv(enc);
+      bpp = cv2fmt(framebuf_encoding, enc);
 
-      DECODE_CVENCODING(enc, CV_16UC4);
-      DECODE_CVENCODING(enc, CV_16UC3);
-      DECODE_CVENCODING(enc, CV_16UC2);
-      DECODE_CVENCODING(enc, CV_16UC1);
-      DECODE_CVENCODING(enc, CV_16SC1);
-      DECODE_CVENCODING(enc, CV_16SC2);
-      DECODE_CVENCODING(enc, CV_16SC3);
-      DECODE_CVENCODING(enc, CV_16SC4);
-      DECODE_CVENCODING(enc, CV_32SC1);
-      DECODE_CVENCODING(enc, CV_32SC2);
-      DECODE_CVENCODING(enc, CV_32SC3);
-      DECODE_CVENCODING(enc, CV_32SC4);
+      /* DECODE_CVENCODING(enc, CV_8UC4);
+       DECODE_CVENCODING(enc, CV_8UC3);
+       DECODE_CVENCODING(enc, CV_8UC2);
+       DECODE_CVENCODING(enc, CV_8UC1);
+       DECODE_CVENCODING(enc, CV_8SC1);
+       DECODE_CVENCODING(enc, CV_8SC2);
+       DECODE_CVENCODING(enc, CV_8SC3);
+       DECODE_CVENCODING(enc, CV_8SC4);
+
+       DECODE_CVENCODING(enc, CV_16UC4);
+       DECODE_CVENCODING(enc, CV_16UC3);
+       DECODE_CVENCODING(enc, CV_16UC2);
+       DECODE_CVENCODING(enc, CV_16UC1);
+       DECODE_CVENCODING(enc, CV_16SC1);
+       DECODE_CVENCODING(enc, CV_16SC2);
+       DECODE_CVENCODING(enc, CV_16SC3);
+       DECODE_CVENCODING(enc, CV_16SC4);
+       DECODE_CVENCODING(enc, CV_32SC1);
+       DECODE_CVENCODING(enc, CV_32SC2);
+       DECODE_CVENCODING(enc, CV_32SC3);
+       DECODE_CVENCODING(enc, CV_32SC4);
+       if(enc=="BayerBG16"){
+         bpp=2;
+       }*/
     }
   }
   if ((*sizex == 0) || (*sizey == 0)) {
     std::stringstream ss;
-    ss<< "Invalid image sizes:" << *sizex << "x" << *sizey;
-    
+    ss << "Invalid image sizes:" << *sizex << "x" << *sizey;
+
     throw chaos::CException(-3, ss.str(), __PRETTY_FUNCTION__);
   }
   if (!apply_resize) {
@@ -503,13 +607,23 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     snprintf(encoding, sizeof(encoding), ".%s", fmt);
   }
   strncpy(ofmt, encoding, sizeof(encoding));
+  updateProperty();
+
   getAttributeCache()->setInputDomainAsChanged();
   getAttributeCache()->setOutputDomainAsChanged();
+    getAttributeCache()->setCustomDomainAsChanged();
+
+  // pushCustomDataset();
+
 }
 void RTCameraBase::cameraGrabCallBack(const void *buf, uint32_t blen,
                                       uint32_t width, uint32_t heigth,
                                       uint32_t error) {}
 void RTCameraBase::startGrabbing() {
+  if(isRunning==false){
+    return;
+  }
+
   RTCameraBaseLDBG_ << "Start Grabbing";
   metadataLogging(
       chaos::common::metadata_logging::StandardLoggingChannel::LogLevelInfo,
@@ -527,7 +641,7 @@ void RTCameraBase::startGrabbing() {
                     << (*sizex * *sizey * bpp) << " bytes";
 
   try {
-    if(shared_mem.get()==NULL){
+    if (shared_mem.get() == NULL) {
       shared_mem.reset(new ::common::misc::data::SharedMem(
           getCUID(), (imagesizex * imagesizey * bpp)));
       RTCameraBaseLDBG_ << "opened sharedMem \"" << shared_mem->getName()
@@ -536,14 +650,16 @@ void RTCameraBase::startGrabbing() {
     } else {
       shared_mem->resize(imagesizex * imagesizey * bpp);
     }
-    } catch (boost::interprocess::interprocess_exception &ex) {
-    LERR_ << "##cannot open shared memory :" << ex.what();
+  } catch (boost::interprocess::interprocess_exception &ex) {
+    RTCameraBaseLERR_ << "##cannot open shared memory :" << ex.what();
   }
 
   driver->startGrab(0);
-  stopCapture = false;
-  if (buffering > 1) {
-    capture_th = boost::thread(&RTCameraBase::captureThread, this);
+  if (stopCapture == true) {
+    stopCapture = false;
+    if (buffering > 1) {
+      capture_th = boost::thread(&RTCameraBase::captureThread, this);
+    }
   }
   getAttributeCache()->setCustomDomainAsChanged();
   pushCustomDataset();
@@ -553,23 +669,23 @@ void RTCameraBase::stopGrabbing() {
   RTCameraBaseLDBG_ << "Stop Grabbing..." << stopCapture;
 
   driver->stopGrab();
-
-  if (buffering > 1) {
- 
   stopCapture = true;
 
-  metadataLogging(
-      chaos::common::metadata_logging::StandardLoggingChannel::LogLevelInfo,
-      "Stop grabbing");
+  if (buffering > 1) {
 
-      wait_capture.notify_all();
+    metadataLogging(
+        chaos::common::metadata_logging::StandardLoggingChannel::LogLevelInfo,
+        "Stop grabbing");
+
+    wait_capture.notify_all();
     wait_encode.notify_all();
     full_encode.notify_all();
     full_capture.notify_all();
-    capture_th.join();
     encode_th.join();
+
+    capture_th.join();
   }
-        RTCameraBaseLDBG_ << "Stop Grabbing done" << stopCapture;
+  RTCameraBaseLDBG_ << "Stop Grabbing done" << stopCapture;
 
   /*    for(int cnt=0;cnt<CAMERA_FRAME_BUFFERING;cnt++){
         free(framebuf_out[cnt].buf);
@@ -592,7 +708,10 @@ void RTCameraBase::stopGrabbing() {
 }
 //! Execute the work, this is called with a determinated delay, it must be as
 //! fast as possible
-void RTCameraBase::unitStart() throw(chaos::CException) { startGrabbing(); }
+void RTCameraBase::unitStart() throw(chaos::CException) { 
+  isRunning=true;
+  startGrabbing();
+   }
 
 void RTCameraBase::captureThread() {
   int ret;
@@ -663,20 +782,21 @@ void RTCameraBase::captureThread() {
       } while ((pushret == false) && (!stopCapture));
 
     } else {
+      if (stopCapture == false) {
+        if (ret == TRIGGER_TIMEOUT_ERROR) {
+          RTCameraBaseLERR_ << " wait returned:" << ret
+                            << " timeout stopped:" << stopCapture;
+          setStateVariableSeverity(
+              StateVariableTypeAlarmDEV, "capture_timeout",
+              chaos::common::alarm::MultiSeverityAlarmLevelWarning);
 
-      if (ret == TRIGGER_TIMEOUT_ERROR) {
-        RTCameraBaseLERR_ << " wait returned:" << ret
-                          << " timeout stopped:" << stopCapture;
-        setStateVariableSeverity(
-            StateVariableTypeAlarmDEV, "capture_timeout",
-            chaos::common::alarm::MultiSeverityAlarmLevelWarning);
-
-      } else if (ret < 0) {
-        RTCameraBaseLERR_ << " Error wait returned:" << ret;
-        setStateVariableSeverity(
-            StateVariableTypeAlarmDEV, "capture_error",
-            chaos::common::alarm::MultiSeverityAlarmLevelHigh);
-        usleep(100000);
+        } else if (ret < 0) {
+          RTCameraBaseLERR_ << " Error wait returned:" << ret;
+          setStateVariableSeverity(
+              StateVariableTypeAlarmDEV, "capture_error",
+              chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+          usleep(100000);
+        }
       }
     }
   }
@@ -702,12 +822,25 @@ void RTCameraBase::encodeThread() {
       captureQueue--;
 
       full_capture.notify_one();
-      if(*sizey * *sizex* bpp > a.size){
-          RTCameraBaseLERR_ << "Cannot encode an image bigger "<<*sizex<<"x"<<*sizey<<" bpp:"<<bpp<<" ="<< (*sizex**sizey*bpp)<<" than size allocated:" << a.size;
-          continue;
-
+      if (*sizey * *sizex * bpp > a.size) {
+        RTCameraBaseLERR_ << "Cannot encode an image bigger " << *sizex << "x"
+                          << *sizey << " bpp:" << bpp << " ="
+                          << (*sizex * *sizey * bpp)
+                          << " than size allocated:" << a.size;
+        continue;
       }
-      cv::Mat image(*sizey, *sizex, framebuf_encoding, a.buf);
+      cv::Mat image;
+      if (framebuf_encoding == cv::COLOR_BayerBG2RGB) {
+        cv::Mat mat16uc1(*sizey, *sizex, CV_16UC1, a.buf);
+        cv::Mat mat16uc3_rgb(*sizey, *sizex, CV_16UC3);
+        cv::cvtColor(mat16uc1, mat16uc3_rgb, cv::COLOR_BayerBG2RGB);
+        cv::Mat mat8uc3_rgb(*sizey, *sizex, CV_8UC3);
+        mat16uc3_rgb.convertTo(mat8uc3_rgb, CV_8UC3);
+        image = mat8uc3_rgb;
+      } else {
+        cv::Mat img(*sizey, *sizex, framebuf_encoding, a.buf);
+        image = img;
+      }
 
       std::vector<unsigned char> *encbuf = NULL;
       encoded_t ele;
@@ -727,12 +860,12 @@ void RTCameraBase::encodeThread() {
 
         bool code = cv::imencode(encoding, image, *encbuf);
         free(a.buf);
-//image.deallocate();
+        // image.deallocate();
         if (code == false) {
           setStateVariableSeverity(
               StateVariableTypeAlarmCU, "encode_error",
               chaos::common::alarm::MultiSeverityAlarmLevelHigh);
-          LERR_ << "Encode error:" << fmt;
+          RTCameraBaseLERR_ << "Encode error:" << fmt;
           delete encbuf;
           encbuf = NULL;
         } else {
@@ -774,14 +907,25 @@ void RTCameraBase::encodeThread() {
             }
           } while ((encoderet == false) && (!stopCapture));
         }
+      } catch (std::runtime_error &e) {
+        setStateVariableSeverity(
+            StateVariableTypeAlarmCU, "encode_error",
+            chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+        RTCameraBaseLERR_ << "Encode exception:" << e.what()
+                          << " orher:" << fmt;
+        if (encbuf) {
+          delete encbuf;
+        }
+        usleep(100000);
       } catch (...) {
         setStateVariableSeverity(
             StateVariableTypeAlarmCU, "encode_error",
             chaos::common::alarm::MultiSeverityAlarmLevelHigh);
-        LERR_ << "Encode exception:" << fmt;
+        RTCameraBaseLERR_ << "Uknown Encode exception:" << fmt;
         if (encbuf) {
           delete encbuf;
         }
+        usleep(100000);
       }
       image.release();
     } else {
@@ -794,6 +938,8 @@ void RTCameraBase::encodeThread() {
       wait_capture.timed_wait(lock, timeout);
     }
   }
+  boost::mutex::scoped_lock lock(mutex_encode);
+
   RTCameraBaseLDBG_ << "Encode thread exiting Queue: " << encodeQueue;
 
   encodedImg.consume_all([this](encoded_t i) {
@@ -804,20 +950,23 @@ void RTCameraBase::encodeThread() {
   RTCameraBaseLDBG_ << "Encode thread ENDED Queue: " << encodeQueue;
 }
 
- int RTCameraBase::filtering(cv::Mat&image){
-   return 0;
-}
+int RTCameraBase::filtering(cv::Mat &image) { return 0; }
 
 //! Execute the Control Unit work
 void RTCameraBase::unitRun() throw(chaos::CException) {
   uchar *ptr;
   const char *img = 0;
-  *pacquire= (mode!=CAMERA_DISABLE_ACQUIRE);
-  *ptrigger=(mode!=CAMERA_DISABLE_ACQUIRE)&&(mode!=CAMERA_TRIGGER_CONTINOUS);
-  *ppulse= ((mode==CAMERA_TRIGGER_SINGLE)||(mode==CAMERA_TRIGGER_SOFT));
+  *pacquire = (mode != CAMERA_DISABLE_ACQUIRE);
+  *ptrigger =
+      (mode != CAMERA_DISABLE_ACQUIRE) && (mode != CAMERA_TRIGGER_CONTINOUS);
+  *ppulse = ((mode == CAMERA_TRIGGER_SINGLE) || (mode == CAMERA_TRIGGER_SOFT));
+  *omode = mode;
+  if (mode == CAMERA_DISABLE_ACQUIRE) {
 
-                                                  
- 
+    getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", 0, 0);
+    getAttributeCache()->setOutputDomainAsChanged();
+    sleep(1);
+  }
   if (buffering > 1) {
     // get the output attribute pointer form the internal cache
     if ((encode_time > 0) && (capture_time > 0)) {
@@ -878,7 +1027,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       setStateVariableSeverity(
           StateVariableTypeAlarmDEV, "capture_timeout",
           chaos::common::alarm::MultiSeverityAlarmLevelClear);
-      cv::Mat image(*sizey, *sizex, framebuf_encoding, (uint8_t*)img);
+      cv::Mat image(*sizey, *sizex, framebuf_encoding, (uint8_t *)img);
       std::vector<unsigned char> *encbuf = NULL;
       try {
         // bool code = cv::imencode(encoding, image, buf );
@@ -898,7 +1047,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
           setStateVariableSeverity(
               StateVariableTypeAlarmCU, "encode_error",
               chaos::common::alarm::MultiSeverityAlarmLevelHigh);
-          LERR_ << "Encode error:" << fmt;
+          RTCameraBaseLERR_ << "Encode error:" << fmt;
         } else {
           setStateVariableSeverity(
               StateVariableTypeAlarmCU, "encode_error",
@@ -917,7 +1066,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
         setStateVariableSeverity(
             StateVariableTypeAlarmCU, "encode_error",
             chaos::common::alarm::MultiSeverityAlarmLevelHigh);
-        LERR_ << "Encode exception:" << fmt;
+        RTCameraBaseLERR_ << "Encode exception:" << fmt;
       }
     } else {
       if (ret == TRIGGER_TIMEOUT_ERROR) {
@@ -938,11 +1087,13 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
 
 //! Execute the Control Unit work
 void RTCameraBase::unitStop() throw(chaos::CException) { 
-  stopGrabbing(); 
-  }
+  isRunning=false;
+  stopGrabbing();
+   }
 
 //! Deinit the Control Unit
 void RTCameraBase::unitDeinit() throw(chaos::CException) {
+  stopGrabbing();
 
   driver->cameraDeinit();
 }

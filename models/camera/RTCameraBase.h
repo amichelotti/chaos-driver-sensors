@@ -55,7 +55,7 @@ protected:
         int32_t imagesizex,imagesizey;
         int bpp;
         bool apply_resize;
-        int32_t mode;
+        int32_t mode,*omode;
         uint8_t* framebuf;
         uint32_t framebuf_encoding;
           bool*pacquire,*ptrigger,*ppulse;
@@ -72,12 +72,13 @@ protected:
         } encoded_t;
 
         char encoding[16];
-        chaos::common::data::CDataWrapper camera_props;
+     //   chaos::common::data::CDataWrapper camera_props;
        // uint8_t* camera_out;
       //  buf_t framebuf_out[CAMERA_FRAME_BUFFERING]; //capture stage
 
         void captureThread();
         bool stopCapture,stopEncoding;
+        bool isRunning;
         boost::thread capture_th,encode_th;
       //  std::vector<unsigned char> encbuf[CAMERA_FRAME_BUFFERING];//encode stage
         uint32_t captureQueue,encodeQueue;
@@ -95,8 +96,10 @@ protected:
          char*fmt,*ofmt;
         CameraDriverInterface*driver;
         void updateProperty();
-        bool setProp(const std::string &name, int32_t value, uint32_t size);
-        bool setProp(const std::string &name, double value, uint32_t size);
+        bool setCamera(const std::string &name, bool value, uint32_t size=sizeof(bool));
+
+        bool setProp(const std::string &name, int32_t value, uint32_t size=sizeof(int32_t));
+        bool setProp(const std::string &name, double value, uint32_t size=sizeof(double));
         bool setProp(const std::string &name, const std::string& value, uint32_t size);
 
         void startGrabbing();
