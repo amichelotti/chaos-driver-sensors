@@ -44,6 +44,8 @@ public:
     //! Execute a command
     cu_driver::MsgManagmentResultType::MsgManagmentResult execOpcode(cu_driver::DrvMsgPtr cmd);
 
+    chaos::common::data::CDWUniquePtr getDrvProperties();
+
 };
 }
 }
