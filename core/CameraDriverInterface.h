@@ -184,6 +184,8 @@ public:
      */
     virtual int cameraDeinit();
 
+
+
 };
 }
 }
