@@ -19,5 +19,8 @@ SET(DRIVERS_LIB ${DRIVERS_LIB} ${PROJECT_NAME} PARENT_SCOPE)
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_common  chaos_driver_sensors ${FrameworkLib} opencv_core  opencv_highgui opencv_imgproc opencv_imgcodecs)
 FILE(GLOB files "*.h")
 INSTALL(FILES ${files} DESTINATION include/driver/sensors/models/camera/CameraShared)
-INSTALL_TARGETS(/lib ${PROJECT_NAME})
+#INSTALL_TARGETS(/lib ${PROJECT_NAME})
+INSTALL(TARGETS ${PROJECT_NAME}
+        DESTINATION "lib"
+        PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 
