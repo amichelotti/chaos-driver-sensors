@@ -165,7 +165,7 @@ bool Camera::openCameraCamId(unsigned int id)
   CAMINFO info;
   checkError(is_GetCameraInfo(cam_, &info));
   serial_number_ = atoll(info.SerNo);
-  cam_info_.nColorMode;
+  //cam_info_.nColorMode;
   getColorMode();
 /*  setColorMode(color_mode_);
   setAutoExposure(&auto_exposure_);
