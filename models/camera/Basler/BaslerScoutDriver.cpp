@@ -44,14 +44,10 @@ using namespace ::driver::sensor::camera;
   LERR_ << "[BaslerScoutDriver (" << serial_dev << "," << friendly_name        \
         << "):" << __PRETTY_FUNCTION__ << "] "
 #define BaslerScoutDriverLERR LERR_ << "[BaslerScoutDriver] "
-
 // GET_PLUGIN_CLASS_DEFINITION
 // we need only to define the driver because we don't are makeing a plugin
-OPEN_CU_DRIVER_PLUGIN_CLASS_DEFINITION(
-    BaslerScoutDriver, 1.0.0, ::driver::sensor::camera::BaslerScoutDriver)
-REGISTER_CU_DRIVER_PLUGIN_CLASS_INIT_ATTRIBUTE(
-    ::driver::sensor::camera::BaslerScoutDriver, http_address / dnsname
-    : port)
+OPEN_CU_DRIVER_PLUGIN_CLASS_DEFINITION(BaslerScoutDriver, 1.0.0, ::driver::sensor::camera::BaslerScoutDriver)
+REGISTER_CU_DRIVER_PLUGIN_CLASS_INIT_ATTRIBUTE(::driver::sensor::camera::BaslerScoutDriver, http_address / dnsname: port)
 CLOSE_CU_DRIVER_PLUGIN_CLASS_DEFINITION
 OPEN_REGISTER_PLUGIN
 REGISTER_PLUGIN(::driver::sensor::camera::BaslerScoutDriver)
