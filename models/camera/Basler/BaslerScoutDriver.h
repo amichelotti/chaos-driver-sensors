@@ -59,6 +59,8 @@ class BaslerScoutDriver:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camer
      int cameraToProps(Pylon::CInstantCamera& camera,chaos::common::data::CDataWrapper*p);
      int changeTriggerMode(Pylon::CInstantCamera* camera,int trigger_mode);
      int getNode(const std::string &node_name, Pylon::CInstantCamera *camera, int32_t &percent,const std::string pub="");
+     int getNode(const std::string &node_name, Pylon::CInstantCamera *camera, double &percent,const std::string pub="");
+
     int getNodeInPercentage(const std::string &node_name, Pylon::CInstantCamera*camera, float &percent,const std::string& pub="");
 
 public:

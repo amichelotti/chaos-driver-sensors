@@ -110,7 +110,7 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
       capture_time(0), network_time(0), captureQueue(0), encodeQueue(0),
       hw_trigger_timeout_us(5000000), sw_trigger_timeout_us(0), imagesizex(0),
       imagesizey(0), apply_resize(false), trigger_timeout(0), bpp(3),
-      stopCapture(true), stopEncoding(true),isRunning(false) {
+      stopCapture(true), stopEncoding(true),isRunning(false),subImage(NULL),applyCalib(false) {
   RTCameraBaseLDBG_ << "Creating " << _control_unit_id
                     << " params:" << _control_unit_param;
 
@@ -136,6 +136,21 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
     if (p.hasKey("IMAGESIZEY")) {
       imagesizey = p.getInt32Value("IMAGESIZEY");
     }
+    if(p.hasKey("APPLY_CALIB")){
+      std::stringstream ss;
+         std::string fname=getDeviceID();
+          replace(fname.begin(),fname.end(),'/','_');
+          ss<<fname<<"_calib.png";
+       
+      cv::Mat sub=imread(ss.str());
+      if(sub.data){
+        subImage=new cv::Mat(sub);
+        RTCameraBaseLDBG_<<" Loading CALIB DATA:"<<ss.str();
+        applyCalib=true;
+      } else {
+        RTCameraBaseLERR_<<" CALIB DATA does not exists:"<<ss.str();
+      }
+    }
     if (imagesizex > 0 && imagesizey > 0) {
       apply_resize = true;
       RTCameraBaseLDBG_ << "Camera will resize image to fit into: "
@@ -153,6 +168,9 @@ RTCameraBase::~RTCameraBase() {
     driver->cameraDeinit();
     delete driver;
     driver = NULL;
+  }
+  if(subImage){
+    delete subImage;
   }
 }
 void RTCameraBase::updateProperty() {
@@ -836,15 +854,47 @@ void RTCameraBase::encodeThread() {
         cv::cvtColor(mat16uc1, mat16uc3_rgb, cv::COLOR_BayerBG2RGB);
         cv::Mat mat8uc3_rgb(*sizey, *sizex, CV_8UC3);
         mat16uc3_rgb.convertTo(mat8uc3_rgb, CV_8UC3);
-        image = mat8uc3_rgb;
+        if(applyCalib&&subImage){
+            image = (mat8uc3_rgb-*subImage);
+
+        } else {
+          image=mat8uc3_rgb;
+        }
       } else {
         cv::Mat img(*sizey, *sizex, framebuf_encoding, a.buf);
-        image = img;
-      }
+        if(applyCalib&&subImage){
+          image = (img-*subImage);
 
+        }else {
+          image=img;
+        }
+      }
+      if(performCalib){
+        RTCameraBaseLDBG_<<"Calibrate";
+        if(image.data){
+          if(subImage){
+            delete subImage;
+          }
+          subImage=new cv::Mat(image);
+          std::stringstream ss;
+          std::string fname=getDeviceID();
+          replace(fname.begin(),fname.end(),'/','_');
+          ss<<fname<<"_calib.png";
+           try {
+                imwrite(ss.str(),image);
+                metadataLogging(chaos::common::metadata_logging::StandardLoggingChannel::LogLevelInfo,ss.str());
+         } catch (runtime_error& ex) {
+           ss<<"Exception converting image to PNG format:"<<ex.what();
+            metadataLogging(chaos::common::metadata_logging::StandardLoggingChannel::LogLevelError,ss.str());
+          }
+        
+      }
+        performCalib=false;
+
+      }
       std::vector<unsigned char> *encbuf = NULL;
       encoded_t ele;
-
+      
       try {
         // bool code = cv::imencode(encoding, image, buf );
         // apply_zoom=(ZOOMX!=0.0) ||(ZOOMY!=0.0);
@@ -855,6 +905,7 @@ void RTCameraBase::encodeThread() {
             image = res;
           }
         }
+        
         filtering(image);
         encbuf = new std::vector<unsigned char>();
 
@@ -951,6 +1002,24 @@ void RTCameraBase::encodeThread() {
 }
 
 int RTCameraBase::filtering(cv::Mat &image) { return 0; }
+
+
+  chaos::common::data::CDWUniquePtr RTCameraBase::unitPerformCalibration(chaos::common::data::CDWUniquePtr data){
+    applyCalib=false;
+    performCalib=true;
+    RTCameraBaseLDBG_ << "Perform calibration";
+
+    while(performCalib){
+      usleep(100000);
+    }
+    if(!(data.get()&&data->hasKey("disable"))){
+      applyCalib=true;
+
+    }
+    RTCameraBaseLDBG_ << "END calibration";
+    return chaos::common::data::CDWUniquePtr();
+
+  }
 
 //! Execute the Control Unit work
 void RTCameraBase::unitRun() throw(chaos::CException) {

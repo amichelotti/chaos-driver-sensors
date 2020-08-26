@@ -24,7 +24,7 @@
 #include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
 
 #define DEFAULT_RESOLUTION 640*480*3
-#define CAMERA_FRAME_BUFFERING 16
+#define CAMERA_FRAME_BUFFERING 2
 
 namespace cv {class Mat;}
 namespace driver{
@@ -49,6 +49,8 @@ public:
 
 protected:
         const int buffering;
+        cv::Mat* subImage;
+        bool applyCalib,performCalib;
         ChaosUniquePtr<::common::misc::data::SharedMem> shared_mem;
         int32_t *sizex,*sizey,*offsetx,*offsety;
         // if >0 then this is the camera window created, each grab should fit this size.
@@ -148,6 +150,7 @@ protected:
 		is called
 		*/
 		void unitInputAttributeChangedHandler() throw(chaos::CException);
+    chaos::common::data::CDWUniquePtr unitPerformCalibration(chaos::common::data::CDWUniquePtr data);
 
     virtual int filtering(cv::Mat&image);
 
