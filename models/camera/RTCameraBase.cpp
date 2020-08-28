@@ -616,8 +616,10 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
                                 true);
 
   // framebuf = (uint8_t*)malloc(size);
+  bpp = cv2fmt(framebuf_encoding, framebuf_encoding_s);
+
   RTCameraBaseLDBG_ << "Starting acquiring imagex " << *sizex << "x" << *sizey
-                    << " bpp:" << bpp;
+                    << " bpp:" << bpp<<" framebuf_encoding:"<<framebuf_encoding_s<<" ("<<framebuf_encoding<<")";
   if (*fmt == 0) {
     strcpy(encoding, ".png");
 
@@ -743,6 +745,8 @@ void RTCameraBase::captureThread() {
     img = 0;
     start = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
     ret = driver->waitGrab(&img, trigger_timeout);
+   // RTCameraBaseLDBG_ << "grabbing ret:"<<ret;
+
     if ((img != 0) && (ret > 0)) {
       // keep alarm high
       setStateVariableSeverity(
@@ -830,7 +834,9 @@ void RTCameraBase::captureThread() {
 void RTCameraBase::encodeThread() {
   uint64_t start;
   counter_encode = 0;
-  RTCameraBaseLDBG_ << "Encode thread STARTED";
+  bpp = cv2fmt(framebuf_encoding, framebuf_encoding_s);
+
+  RTCameraBaseLDBG_ << "Encode "<<encoding<<" , assuming framebuf:"<<framebuf_encoding_s<<"("<<framebuf_encoding<<") bpp:"<<bpp<<" thread STARTED";
   while (!stopCapture) {
 
     buf_t a;
@@ -908,6 +914,7 @@ void RTCameraBase::encodeThread() {
         
         filtering(image);
         encbuf = new std::vector<unsigned char>();
+        RTCameraBaseLDBG_ << "Encoding "<<encoding<<" , row:"<<image.rows<<" col:"<<image.cols<<" channels:"<<image.channels();
 
         bool code = cv::imencode(encoding, image, *encbuf);
         free(a.buf);

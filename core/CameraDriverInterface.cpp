@@ -35,11 +35,11 @@ message.resultDataLength=sizeof(camera_params_t);\
 message.resultData = (void*)&ret;\
 
 #define SEND_AND_RETURN \
- accessor->send(&message,100);			\
+ accessor->send(&message);			\
 return ret.result;
 
 #define SEND \
-    accessor->send(&message,100);
+    accessor->send(&message);
 
 
 #define WRITE_OP_64INT_TIM(op,ival,timeout) \
@@ -51,7 +51,7 @@ return ret.result;
 #define WRITE_OP_FLOAT_TIM(op,fval,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
 idata.fvalue0=fval;\
- accessor->send(&message,100);			\
+ accessor->send(&message);			\
 return ret.result;
 
 #define WRITE_OP_2FLOAT_TIM(op,fval0,fval1,timeout) \

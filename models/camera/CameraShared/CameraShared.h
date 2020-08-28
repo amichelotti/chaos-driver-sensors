@@ -78,7 +78,7 @@ class CameraShared:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::Ca
      chaos::common::data::CDataWrapper driver_params;
      std::string shape_type;
      int centerx,centery;
-     int sizex,sizey;
+     int sizex,sizey,channels;
      double rotangle,extangle;
      int colr,colg,colb,tickness,linetype;
     

@@ -110,26 +110,26 @@ int cv2fmt(int cvenc, std::string& enc){
 
     break;
     case CV_8UC2:
-        bpp=2;enc="CV_8UC4";
+        bpp=2;enc="CV_8UC2";
         break;
     case CV_8SC2:
-        bpp=2;enc="CV_8UC4";
+        bpp=2;enc="CV_8USC2";
         break;
     case CV_8UC1:
-        bpp=1;enc="CV_8UC4";
+        bpp=1;enc="CV_8UC1";
         break;
     case CV_8SC1:
-        bpp=1;enc="CV_8UC4";
+        bpp=1;enc="CV_8USC1";
         break;
     case CV_16UC1:
-        bpp=2;enc="CV_8UC4";
+        bpp=2;enc="CV_16UC1";
         break;
     case CV_16SC1:
-        bpp=2;enc="CV_8UC4";
+        bpp=2;enc="CV_16SC1";
         break;
     case CV_16UC2:
         bpp=4;        
-        enc="CV_8UC4";
+        enc="CV_16UC2";
         break;
     case CV_16SC2:
         bpp=4;

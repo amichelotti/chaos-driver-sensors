@@ -23,7 +23,6 @@
 #include <driver/sensors/core/AbstractSensorDriver.h>
 #include <driver/sensors/core/CameraDriverInterface.h>
 #include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #ifdef CERN_ROOT
 #include <TH2F.h>
@@ -254,11 +253,22 @@ void RTCameraFilter::unitDefineActionAndDataset() throw(chaos::CException)
 int RTCameraFilter::filtering(cv::Mat &image)
 {
   Mat thr, gray;
-  if (apply_moment || apply_gauss_fit)
-  {
-    // convert image to grayscale
-    cvtColor(image, gray, COLOR_BGR2GRAY);
+  if(image.data==NULL){
+    RTCameraFilterLERR_<<" BAD IMAGE";
+    return -1;
   }
+  RTCameraFilterLDBG_<<" NCHANNELS:"<<image.channels()<<" size:"<<image.rows<<"x"<<image.cols;
+  if ((apply_moment || apply_gauss_fit))
+  {
+    if(image.channels()>1){
+    // convert image to grayscale
+      cvtColor(image, gray, cv::COLOR_BGR2GRAY);
+    //gray=image;
+
+    } else {
+      gray=image;
+    }
+  } 
   if(apply_moment && !apply_gauss_fit){
     // convert grayscale to binary image
     threshold(gray, thr, 100, 255, THRESH_BINARY);

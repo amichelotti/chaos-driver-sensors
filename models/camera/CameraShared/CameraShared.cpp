@@ -111,10 +111,12 @@ int CameraShared::initializeCamera(const chaos::common::data::CDataWrapper& json
             if(siz && buf){
                 try{
                     std::vector<uchar> data = std::vector<uchar>(buf, buf + siz);
-                    cv::Mat m=cv::imdecode(data,cv::IMREAD_UNCHANGED);
+                    cv::Mat m=cv::imdecode(data,IMREAD_ANYCOLOR | IMREAD_ANYDEPTH);
                     original_width=width=m.cols;
                     original_height=height=m.rows;
-                    CameraSharedLDBG_ << "Found image of "<<original_width<<"x"<<original_height<< " data size:"<<data.size();
+                    channels=m.channels();
+                    CameraSharedLDBG_ << "Found image of "<<original_width<<"x"<<original_height<< " data size:"<<data.size()<<" channels:"<<channels;
+                    
                     
                 } catch(...){
                     std::stringstream ss;
@@ -147,6 +149,7 @@ DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,CameraShar
     framebuf_size[0]=0;
     framebuf_size[1]=0;
     movex=movey=rot=0;
+    channels=1;
     props=new chaos::common::data::CDataWrapper();
 #ifdef CVDEBUG
 
@@ -169,7 +172,12 @@ int CameraShared::cameraToProps(chaos::common::data::CDataWrapper*p){
     p->addInt32Value("WIDTH",width);
     p->addInt32Value("HEIGHT",height);
     p->addInt32Value("TRIGGER_MODE",0);
+    if(channels==1){
+        p->addStringValue(FRAMEBUFFER_ENCODING_KEY,"CV_8UC1");
+    } else {
+        p->addStringValue(FRAMEBUFFER_ENCODING_KEY,"CV_8UC3");
 
+    }
     p->addInt32Value("OFFSETX",offsetx);
     p->addInt32Value("OFFSETY",offsety);
     return 0;
@@ -290,16 +298,21 @@ int CameraShared::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _f
     tmp_##var+= err;}
 
 int CameraShared::waitGrab(const char**buf,uint32_t timeout_ms){
-    int32_t ret=-1;
+    int32_t ret=0;
+    int size=0;
     if(shared_mem->wait(timeout_ms)==0){
-        uint8_t* bufs;
-        size_t siz=shared_mem->readMsg(&bufs);
+        std::vector<uchar> data = shared_mem->read();
+
         uchar*ds=NULL;
-        int size=0;
-        if(siz&&bufs){
-            std::vector<uchar> data = std::vector<uchar>(bufs, bufs + siz);
+        if(data.size()){
             cv::Mat cropped;
-            cv::Mat img=cv::imdecode(data,cv::IMREAD_UNCHANGED);
+
+            cv::Mat img=cv::imdecode(data, IMREAD_ANYCOLOR | IMREAD_ANYDEPTH);
+            if(img.data==NULL){
+                CameraSharedLERR_<<"Bad Image";
+                return ret;
+            }
+            channels=img.channels();
             original_width=img.cols;
             original_height=img.rows;
             if((((width>0) && (original_width!=width))|| (((height>0) && 
@@ -342,6 +355,7 @@ int CameraShared::waitGrab(const char**buf,uint32_t timeout_ms){
     }
      
 
+    //CameraSharedLDBG_<<"channels:"<<channels<<" size:"<<ret<<" off ("<<offsetx<<","<<offsety<<") "<<width<<"x"<<height <<" orig image:"<<original_width<<"x"<<original_height;
 
     return ret;
 

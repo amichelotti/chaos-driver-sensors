@@ -60,6 +60,7 @@ protected:
         int32_t mode,*omode;
         uint8_t* framebuf;
         uint32_t framebuf_encoding;
+        std::string framebuf_encoding_s;
           bool*pacquire,*ptrigger,*ppulse;
 
         //double ZOOMX,ZOOMY;
