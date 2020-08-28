@@ -84,10 +84,10 @@ CLOSE_REGISTER_PLUGIN
 
 #define SETINODE(name, cam, val, ret)                                          \
   if (setNode(name, cam, (int64_t)val) == 0) {                                 \
-    BaslerScoutDriverLDBG << "setting \"" << name << "\" = " << val;           \
+    BaslerScoutDriverLDBG_ << "setting \"" << name << "\" = " << val;           \
   } else {                                                                     \
     ret++;                                                                     \
-    BaslerScoutDriverLERR << "ERROR setting \"" << name << "\" = " << val;     \
+    BaslerScoutDriverLERR_ << "ERROR setting \"" << name << "\" = " << val;     \
   }
 
 template <typename T> static T Adjust(T val, T minimum, T maximum, T inc) {
@@ -169,17 +169,17 @@ static int setNode(const std::string &node_name, CInstantCamera &camera,
     if (IsWritable(node)) {
       node->SetValue(val);
     } else {
-      BaslerScoutDriverLERR << "Node:" << node_name << " is not writable";
+      BaslerScoutDriverLERR_ << "Node:" << node_name << " is not writable";
       return -100;
     }
   } catch (const GenericException &e) {
     // Error handling.
-    BaslerScoutDriverLERR << "An exception occurred during set of Node:"
+    BaslerScoutDriverLERR_ << "An exception occurred during set of Node:"
                           << node_name;
-    BaslerScoutDriverLERR << e.GetDescription();
+    BaslerScoutDriverLERR_ << e.GetDescription();
     return -3;
   } catch (...) {
-    BaslerScoutDriverLERR << "An exception occurre during set of Node:"
+    BaslerScoutDriverLERR_ << "An Uknown exception occurre during set of Node:"
                           << node_name;
     return -2;
   }

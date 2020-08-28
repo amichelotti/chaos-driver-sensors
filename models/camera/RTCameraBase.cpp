@@ -247,13 +247,13 @@ bool RTCameraBase::setProp(const std::string &name, int32_t value,
   int32_t valuer;
   AttributeSharedCacheWrapper *cc = getAttributeCache();
 
-  RTCameraBaseLDBG_ << "SET IPROP:" << name << " VALUE:" << value;
+  RTCameraBaseLDBG_ << "SETTING IPROP:" << name << " VALUE:" << value;
   int32_t *pmode = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, name);
   bool stopgrab =
-      (((name == WIDTH_KEY) && (value != *sizex)) ||
-       ((name == HEIGHT_KEY) && (value != *sizey)) ||
-       ((name == OFFSETX_KEY) && (value != *offsetx)) ||
-       ((name == OFFSETY_KEY) && (value != *offsety)) ||
+      (((name == WIDTH_KEY) /*&& (value != *sizex)*/) ||
+       ((name == HEIGHT_KEY) /*&& (value != *sizey)*/) ||
+       ((name == OFFSETX_KEY) /*&& (value != *offsetx)*/) ||
+       ((name == OFFSETY_KEY) /*&& (value != *offsety)*/) ||
        ((name == TRIGGER_MODE_KEY) && (value == CAMERA_DISABLE_ACQUIRE)));
 
   if (stopgrab) {
@@ -576,31 +576,16 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
       std::string enc = cam_prop.getStringValue(FRAMEBUFFER_ENCODING_KEY);
       framebuf_encoding = fmt2cv(enc);
       bpp = cv2fmt(framebuf_encoding, enc);
-
-      /* DECODE_CVENCODING(enc, CV_8UC4);
-       DECODE_CVENCODING(enc, CV_8UC3);
-       DECODE_CVENCODING(enc, CV_8UC2);
-       DECODE_CVENCODING(enc, CV_8UC1);
-       DECODE_CVENCODING(enc, CV_8SC1);
-       DECODE_CVENCODING(enc, CV_8SC2);
-       DECODE_CVENCODING(enc, CV_8SC3);
-       DECODE_CVENCODING(enc, CV_8SC4);
-
-       DECODE_CVENCODING(enc, CV_16UC4);
-       DECODE_CVENCODING(enc, CV_16UC3);
-       DECODE_CVENCODING(enc, CV_16UC2);
-       DECODE_CVENCODING(enc, CV_16UC1);
-       DECODE_CVENCODING(enc, CV_16SC1);
-       DECODE_CVENCODING(enc, CV_16SC2);
-       DECODE_CVENCODING(enc, CV_16SC3);
-       DECODE_CVENCODING(enc, CV_16SC4);
-       DECODE_CVENCODING(enc, CV_32SC1);
-       DECODE_CVENCODING(enc, CV_32SC2);
-       DECODE_CVENCODING(enc, CV_32SC3);
-       DECODE_CVENCODING(enc, CV_32SC4);
-       if(enc=="BayerBG16"){
-         bpp=2;
-       }*/
+    }
+    if (cam_prop.hasKey(OFFSETX_KEY) &&
+        cam_prop.isInt32Value(OFFSETX_KEY)) {
+      *offsetx = cam_prop.getInt32Value(OFFSETX_KEY);
+      
+    }
+    if (cam_prop.hasKey(OFFSETY_KEY) &&
+        cam_prop.isInt32Value(OFFSETY_KEY)) {
+      *offsety = cam_prop.getInt32Value(OFFSETY_KEY);
+      
     }
   }
   if ((*sizex == 0) || (*sizey == 0)) {
@@ -688,9 +673,9 @@ void RTCameraBase::startGrabbing() {
 
 void RTCameraBase::stopGrabbing() {
   RTCameraBaseLDBG_ << "Stop Grabbing..." << stopCapture;
+  stopCapture = true;
 
   driver->stopGrab();
-  stopCapture = true;
 
   if (buffering > 1) {
 
@@ -706,7 +691,7 @@ void RTCameraBase::stopGrabbing() {
 
     capture_th.join();
   }
-  RTCameraBaseLDBG_ << "Stop Grabbing done" << stopCapture;
+  RTCameraBaseLDBG_ << "Stop Grabbing done:" << stopCapture;
 
   /*    for(int cnt=0;cnt<CAMERA_FRAME_BUFFERING;cnt++){
         free(framebuf_out[cnt].buf);
@@ -823,13 +808,8 @@ void RTCameraBase::captureThread() {
       }
     }
   }
-  RTCameraBaseLDBG_ << "Capture thread exiting Queue: " << captureQueue;
 
-  captureImg.consume_all([this](buf_t i) {
-    free(i.buf);
-    captureQueue--;
-  });
-
+  
   RTCameraBaseLDBG_ << "Capture thread ENDED Queue:" << captureQueue;
 }
 void RTCameraBase::encodeThread() {
@@ -915,7 +895,7 @@ void RTCameraBase::encodeThread() {
         
         filtering(image);
         encbuf = new std::vector<unsigned char>();
-        RTCameraBaseLDBG_ << "Encoding "<<encoding<<" , row:"<<image.rows<<" col:"<<image.cols<<" channels:"<<image.channels();
+       // RTCameraBaseLDBG_ << "Encoding "<<encoding<<" , row:"<<image.rows<<" col:"<<image.cols<<" channels:"<<image.channels();
 
         bool code = cv::imencode(encoding, image, *encbuf);
         free(a.buf);
@@ -1001,12 +981,14 @@ void RTCameraBase::encodeThread() {
 
   RTCameraBaseLDBG_ << "Encode thread exiting Queue: " << encodeQueue;
 
-  encodedImg.consume_all([this](encoded_t i) {
+ /* 
+ encodedImg.consume_all([this](encoded_t i) {
     delete (i.img);
     encodeQueue--;
   });
 
   RTCameraBaseLDBG_ << "Encode thread ENDED Queue: " << encodeQueue;
+  */
 }
 
 int RTCameraBase::filtering(cv::Mat &image) { return 0; }
@@ -1172,6 +1154,17 @@ void RTCameraBase::unitStop() throw(chaos::CException) {
 void RTCameraBase::unitDeinit() throw(chaos::CException) {
   stopGrabbing();
 
+captureImg.consume_all([this](buf_t i) {
+    free(i.buf);
+    captureQueue--;
+  });
+
+ encodedImg.consume_all([this](encoded_t i) {
+    delete (i.img);
+    encodeQueue--;
+  });
+
+  
   driver->cameraDeinit();
 }
 
