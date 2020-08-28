@@ -274,6 +274,7 @@ bool RTCameraBase::setProp(const std::string &name, int32_t value,
         ss.str());
   }
 
+  if((name == TRIGGER_MODE_KEY)){
   // updateProperty();
   driver->getCameraProperty(name, valuer);
 
@@ -302,7 +303,7 @@ bool RTCameraBase::setProp(const std::string &name, int32_t value,
     getAttributeCache()->setInputAttributeValue("PULSE", true);
     break;
   }
-
+  }
   RTCameraBaseLDBG_ << "SET IPROP:" << name << " SET VALUE:" << value
                     << " READ VALUE:" << valuer << " ret:" << ret;
   if (stopgrab &&
