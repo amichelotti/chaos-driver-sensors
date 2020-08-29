@@ -36,6 +36,7 @@ namespace cu_driver = chaos::cu::driver_manager::driver;
 using namespace ::driver::sensor::camera;
 #define BaslerScoutDriverLAPP_ LAPP_ << "[BaslerScoutDriver] "
 #define BaslerScoutDriverLDBG LDBG_ << "[BaslerScoutDriver] "
+#define BaslerScoutDriverLERR LERR_ << "[BaslerScoutDriver] "
 
 #define BaslerScoutDriverLDBG_                                                 \
   LDBG_ << "[BaslerScoutDriver (" << serial_dev << "," << friendly_name        \
@@ -59,7 +60,7 @@ CLOSE_REGISTER_PLUGIN
     if (getNode(#x, (&cam), val) == 0) {                                       \
       p->addInt32Value(y, (int32_t)val);                                       \
     } else {                                                                   \
-      BaslerScoutDriverLERR_ << "cannot read basler node \"" << #x << "\"";    \
+      BaslerScoutDriverLERR << "cannot read basler node \"" << #x << "\"";    \
     }                                                                          \
   }
 #define GETDOUBLEVALUE(x, y, LOG)                                                 \
@@ -69,7 +70,7 @@ CLOSE_REGISTER_PLUGIN
     if (getNode(#x, (&cam), val) == 0) {                                       \
       p->addDoubleValue(y, val);                                       \
     } else {                                                                   \
-      BaslerScoutDriverLERR_ << "cannot read basler node \"" << #x << "\"";    \
+      BaslerScoutDriverLERR << "cannot read basler node \"" << #x << "\"";    \
     }                                                                          \
   }
 
@@ -84,10 +85,10 @@ CLOSE_REGISTER_PLUGIN
 
 #define SETINODE(name, cam, val, ret)                                          \
   if (setNode(name, cam, (int64_t)val) == 0) {                                 \
-    BaslerScoutDriverLDBG_ << "setting \"" << name << "\" = " << val;           \
+    LDBG_ << "setting \"" << name << "\" = " << val;           \
   } else {                                                                     \
     ret++;                                                                     \
-    BaslerScoutDriverLERR_ << "ERROR setting \"" << name << "\" = " << val;     \
+    BaslerScoutDriverLERR << "ERROR setting \"" << name << "\" = " << val;     \
   }
 
 template <typename T> static T Adjust(T val, T minimum, T maximum, T inc) {
@@ -169,17 +170,17 @@ static int setNode(const std::string &node_name, CInstantCamera &camera,
     if (IsWritable(node)) {
       node->SetValue(val);
     } else {
-      BaslerScoutDriverLERR_ << "Node:" << node_name << " is not writable";
+      BaslerScoutDriverLERR << "Node:" << node_name << " is not writable";
       return -100;
     }
   } catch (const GenericException &e) {
     // Error handling.
-    BaslerScoutDriverLERR_ << "An exception occurred during set of Node:"
+    BaslerScoutDriverLERR << "An exception occurred during set of Node:"
                           << node_name;
-    BaslerScoutDriverLERR_ << e.GetDescription();
+    BaslerScoutDriverLERR << e.GetDescription();
     return -3;
   } catch (...) {
-    BaslerScoutDriverLERR_ << "An Uknown exception occurre during set of Node:"
+    BaslerScoutDriverLERR << "An Uknown exception occurre during set of Node:"
                           << node_name;
     return -2;
   }
