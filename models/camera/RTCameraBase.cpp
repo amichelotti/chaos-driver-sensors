@@ -422,6 +422,7 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
       }
     }
   }
+  
   addBinaryAttributeAsMIMETypeToDataSet("FRAMEBUFFER", "output image",
                                         "image/png", chaos::DataType::Output);
 
