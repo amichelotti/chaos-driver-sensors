@@ -864,6 +864,9 @@ static std::string basler2cv(Pylon::EPixelType fmt) {
   case Pylon::EPixelType::PixelType_BayerGB16: {
     return "BAYERGB16";
   }
+  case Pylon::EPixelType::PixelType_YUV422packed: {
+    return "YUV422packed";
+  }
   case Pylon::EPixelType::PixelType_BayerBG8: {
     return "BAYERBG8";
   }

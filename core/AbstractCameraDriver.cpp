@@ -87,6 +87,9 @@ int fmt2cv(const std::string& enc){
           return cv::COLOR_BayerBG2RGB|0x1000 ;
 
       } 
+      if(enc=="YUV422packed"){
+          return cv::COLOR_YUV2RGB_NV21;
+      }
 #endif
       return CV_8UC1;
 }
@@ -94,6 +97,9 @@ int cv2fmt(int cvenc, std::string& enc){
     int bpp=1;
 #ifdef CAMERA    
     switch(cvenc){
+        case cv::COLOR_YUV2RGB_NV21:
+            bpp=2;enc="YUV422packed";
+            break;
         case cv::COLOR_BayerBG2RGB:
         bpp=1;enc="BAYERBG8";
         break;
