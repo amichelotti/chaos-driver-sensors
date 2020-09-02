@@ -80,6 +80,7 @@ enum GrabStrategy {
 #define CONTRAST_KEY "CONTRAST"
 #define GAUSS_FIT_KEY "gauss_fit"
 #define FILTER_MOMENT_KEY "moment"
+#define CAMERA_CUSTOM_PROPERTY "custom_property"
 #define FILTER_REMOVE_SOURCE_KEY "remove_source" //boolean
 
 
@@ -99,7 +100,7 @@ protected:
      std::string serial;
      uint32_t shots;
      GrabStrategy gstrategy;
-
+     chaos::common::data::CDataWrapper camera_custom_props;
      void*framebuf;
      cameraGrabCallBack fn;
      uint32_t hw_trigger_timeout_us,sw_trigger_timeout_us; // 0 =wait indefinitively

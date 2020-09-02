@@ -106,6 +106,8 @@ protected:
         bool setProp(const std::string &name, const std::string& value, uint32_t size);
 
         void startGrabbing();
+        void haltThreads();
+        void fatalErrorHandler(const chaos::CException & r);
         void stopGrabbing();
 		/*!
 		Define the Control Unit Dataset and Actions

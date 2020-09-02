@@ -163,7 +163,7 @@ static int setNode(const std::string &node_name, CInstantCamera &camera,
     INodeMap &control = camera.GetNodeMap();
     GenApi::CBooleanPtr node = control.GetNode(node_name.c_str());
     if (node.IsValid() == false) {
-      BaslerScoutDriverLERR << "Node:" << node_name << " is invalid";
+      BaslerScoutDriverLERR << "Boolean Node:" << node_name << " is invalid";
 
       return -1;
     }
@@ -186,6 +186,37 @@ static int setNode(const std::string &node_name, CInstantCamera &camera,
   }
   return 0;
 }
+static int setNode(const std::string &node_name, CInstantCamera &camera,
+                   std::string val) {
+
+  try {
+    BaslerScoutDriverLDBG << "setting enumeration node:" << node_name << " to " << val;
+    INodeMap &control = camera.GetNodeMap();
+    GenApi::CEnumerationPtr node = control.GetNode(node_name.c_str());
+    if (node.IsValid() == false) {
+      BaslerScoutDriverLERR << "Enumeration Node:\"" << node_name << "\" is invalid";
+      
+      return -1;
+    }
+    if (IsWritable(node)) {
+      node->FromString(val.c_str());
+    } else {
+      BaslerScoutDriverLERR << "Node:\"" << node_name << "\" is not writable";
+      return -100;
+    }
+  } catch (const GenericException &e) {
+    // Error handling.
+    BaslerScoutDriverLERR << "An exception occurred during set of Node:"
+                          << node_name;
+    BaslerScoutDriverLERR << e.GetDescription();
+    return -3;
+  } catch (...) {
+    BaslerScoutDriverLERR << "An exception occurre during set of Node:"
+                          << node_name;
+    return -2;
+  }
+  return 0;
+}
 
 static int setNode(const std::string &node_name, CInstantCamera &camera,
                    int64_t val) {
@@ -195,8 +226,7 @@ static int setNode(const std::string &node_name, CInstantCamera &camera,
     INodeMap &control = camera.GetNodeMap();
     GenApi::CIntegerPtr node = control.GetNode(node_name.c_str());
     if (node.IsValid() == false) {
-      BaslerScoutDriverLERR << "Node:" << node_name << " is invalid";
-
+      BaslerScoutDriverLERR << "Integer Node:" << node_name << " is invalid";
       return -1;
     }
     if (IsWritable(node)) {
@@ -228,7 +258,7 @@ static int setNode(const std::string &node_name, CInstantCamera &camera,
     INodeMap &control = camera.GetNodeMap();
     GenApi::CFloatPtr node = control.GetNode(node_name.c_str());
     if (node.IsValid() == false) {
-      BaslerScoutDriverLERR << "Node:" << node_name << " is invalid";
+      BaslerScoutDriverLERR << "Double Node:" << node_name << " is invalid";
 
       return -1;
     }
@@ -335,7 +365,7 @@ int BaslerScoutDriver::getNode(const std::string &node_name,
     INodeMap &control = camera->GetNodeMap();
     GenApi::CIntegerPtr node = control.GetNode(node_name.c_str());
     if (node.IsValid() == false) {
-      BaslerScoutDriverLERR_ << "Node:" << node_name << " is invalid";
+      BaslerScoutDriverLERR_ << " Integer Node:" << node_name << " is invalid";
 
       return -1;
     }
@@ -642,8 +672,33 @@ int BaslerScoutDriver::initializeCamera(
 
         camerap->Open();
       }
-      propsToCamera(*camerap, (chaos::common::data::CDataWrapper *)&json);
+        /** initial settings */
+      ChaosStringVector contained_key;
+      camera_custom_props.getAllKey(contained_key);
+      int ret;
+      for(ChaosStringVector::iterator i =contained_key.begin();i!=contained_key.end();i++ ){
+        if(camera_custom_props.isInt32Value(*i)){
+          SETINODE(*i,*camerap,camera_custom_props.getInt32Value(*i),ret);
+        } else if(camera_custom_props.isDoubleValue(*i)){
+          if(setNode(*i,*camerap,camera_custom_props.getDoubleValue(*i))!=0){
+            BaslerScoutDriverLERR_<<" cannot set Double "<<*i<<" to:"<<camera_custom_props.getDoubleValue(*i);
+          }
 
+        } else if(camera_custom_props.isBoolValue(*i)){
+          if(setNode(*i,*camerap,camera_custom_props.getBoolValue(*i))!=0){
+            BaslerScoutDriverLERR_<<" cannot set Bool "<<*i<<" to:"<<camera_custom_props.getBoolValue(*i);
+          }
+        }else if(camera_custom_props.isStringValue(*i)){
+          if(setNode(*i,*camerap,camera_custom_props.getStringValue(*i))!=0){
+            BaslerScoutDriverLERR_<<" cannot set Enumeration "<<*i<<" to:"<<camera_custom_props.getStringValue(*i);
+          }
+        } 
+      }
+     /***********/ 
+    
+      propsToCamera(*camerap, (chaos::common::data::CDataWrapper *)&json);
+     
+     
       return 0;
     }
   } catch (const GenericException &e) {
@@ -809,6 +864,9 @@ static std::string basler2cv(Pylon::EPixelType fmt) {
   case Pylon::EPixelType::PixelType_BayerGB16: {
     return "BAYERGB16";
   }
+  case Pylon::EPixelType::PixelType_BayerBG8: {
+    return "BAYERBG8";
+  }
   case Pylon::EPixelType::PixelType_BayerGR16: {
     return "BAYERGR16";
   }
@@ -847,8 +905,10 @@ int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera &cam,
       std::string cv = basler2cv((Pylon::EPixelType)pixelFormat->GetIntValue());
 
       if (cv == "NOT SUPPORTED") {
+        std::stringstream ss;
+        ss<<"Not Supported:"<<pixelFormat->ToString().c_str();
         p->addStringValue(FRAMEBUFFER_ENCODING_KEY,
-                          pixelFormat->ToString().c_str());
+                         ss.str() );
 
       } else {
         p->addStringValue(FRAMEBUFFER_ENCODING_KEY, cv);

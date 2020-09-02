@@ -40,7 +40,7 @@ namespace driver {
 #define CAM_DEFAULT_WIDTH 659
 #define CAM_DEFAULT_HEIGTH 494
 
-class IDSGEXXDriver:ADD_CU_DRIVER_PLUGIN_SUPERCLASS,  ::driver::sensor::camera::CameraDriverBridge {
+class IDSGEXXDriver:public chaos::cu::driver_manager::driver::AbstractDriverPlugin, public ::driver::sensor::camera::CameraDriverBridge {
 
 
  protected:
