@@ -230,6 +230,16 @@ static int setNode(const std::string &node_name, CInstantCamera &camera,
       return -1;
     }
     if (IsWritable(node)) {
+      if(val<node->GetMin()){
+
+        val=node->GetMin();
+        BaslerScoutDriverLDBG << "Min is "<<node->GetMin()<<" setting int node:" << node_name << " to " << val;
+
+      }else if(val>node->GetMax()){
+        val=node->GetMax();
+        BaslerScoutDriverLDBG << "Max is "<<node->GetMax()<<" setting int node:" << node_name << " to " << val;
+
+      }
       node->SetValue(val);
     } else {
       BaslerScoutDriverLERR << "Node:" << node_name << " is not writable";
@@ -262,6 +272,16 @@ static int setNode(const std::string &node_name, CInstantCamera &camera,
 
       return -1;
     }
+    if(val<node->GetMin()){
+
+        val=node->GetMin();
+        BaslerScoutDriverLDBG << "Min is "<<node->GetMin()<<" setting Double node:" << node_name << " to " << val;
+
+      }else if(val>node->GetMax()){
+        val=node->GetMax();
+        BaslerScoutDriverLDBG << "Max is "<<node->GetMax()<<" setting Double node:" << node_name << " to " << val;
+
+      }
     node->SetValue(val);
     /*  if(IsWritable(node)){
         node->SetValue(val);
@@ -1028,7 +1048,7 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera &camera,
      }
      */
   }
-  STOP_GRABBING(&camera);
+ // STOP_GRABBING(&camera);
   if (p->hasKey("OFFSETX")) {
     SETINODE("OffsetX", camera, p->getInt32Value("OFFSETX"), ret);
   }
@@ -1164,7 +1184,7 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera &camera,
   }
   //         p->addInt32Value("WIDTH", (int32_t)width->GetValue());
   //       p->addInt32Value("HEIGHT", (int32_t)height->GetValue());
-  RESTORE_GRABBING(&camera);
+  //RESTORE_GRABBING(&camera);
   return ret;
 }
 
@@ -1281,8 +1301,9 @@ int BaslerScoutDriver::waitGrab(const char **img, uint32_t timeout_ms) {
   }
   if (stopGrabbing) {
     BaslerScoutDriverLERR_ << "Grabbing is stopped ";
-    return -2;
+    return CAMERA_GRAB_STOP;
   }
+  try {
   Pylon::CGrabResultPtr ptrGrabResult;
   if (tmode > CAMERA_TRIGGER_SINGLE) {
     if (camerap->WaitForFrameTriggerReady(timeout_ms,
@@ -1409,7 +1430,15 @@ int BaslerScoutDriver::waitGrab(const char **img, uint32_t timeout_ms) {
      BaslerScoutDriverLDBG_ << "Retrieved " << nBuffersInQueue << " grab results
     from output queue.";
 */
-
+ } catch (const GenericException &e) {
+    // Error handling.
+    BaslerScoutDriverLERR << "An exception occurred during wait :"
+                          << e.GetDescription();
+    return -300;
+  } catch (...) {
+    BaslerScoutDriverLERR << "An Uknown exception occurre during wait";
+    return -250;
+  }
   return 0;
 }
 
@@ -1457,7 +1486,7 @@ int BaslerScoutDriver::setCameraProperty(const std::string &propname,
                                          int32_t val) {
   ChaosUniquePtr<chaos::common::data::CDataWrapper> cw(
       new chaos::common::data::CDataWrapper());
-  BaslerScoutDriverLDBG_ << "Setting Int\"" << propname << "\"=" << (int32_t)val;
+  BaslerScoutDriverLDBG_ << "Setting Int \"" << propname << "\"=" << (int32_t)val;
 
   cw->addInt32Value(propname, val);
   int ret=propsToCamera(*camerap, cw.get());

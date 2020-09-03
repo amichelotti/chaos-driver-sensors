@@ -25,91 +25,87 @@ using namespace ::driver::sensor::camera;
 
 
 #define PREPARE_OP(op) \
-camera_params_t ret;\
-camera_params_t idata;\
+camera_params_t* ret=(camera_params_t*)calloc(1,sizeof(camera_params_t));\
+camera_params_t* idata=(camera_params_t*)calloc(1,sizeof(camera_params_t));\
 message.opcode = op; \
  /*CameraDriverInterfaceLDBG_<<"STUB Opcode:\""<<# op<<"\" :"<<op;*/	\
-message.inputData=(void*)&idata;\
+message.inputData=(void*)idata;\
 message.inputDataLength=sizeof(camera_params_t);\
 message.resultDataLength=sizeof(camera_params_t);\
-message.resultData = (void*)&ret;\
+message.resultData = (void*)ret;\
 
 #define SEND_AND_RETURN \
  accessor->send(&message);			\
-return ret.result;
+ {int tmp=ret->result;free(ret);free(idata);return tmp;}
 
 #define SEND \
-    accessor->send(&message);
+    accessor->send(&message);\
+    free(ret);free(idata);
+
 
 
 #define WRITE_OP_64INT_TIM(op,ival,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
-idata.alarm_mask=ival;\
-accessor->send(&message);\
-return ret.result;
+idata->alarm_mask=ival;\
+SEND_AND_RETURN
 
 #define WRITE_OP_FLOAT_TIM(op,fval,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
-idata.fvalue0=fval;\
- accessor->send(&message);			\
-return ret.result;
+idata->fvalue0=fval;\
+SEND_AND_RETURN
 
 #define WRITE_OP_2FLOAT_TIM(op,fval0,fval1,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
-idata.fvalue0=fval0;\
-idata.fvalue1=fval1;\
-accessor->send(&message);\
-return ret.result;
+idata->fvalue0=fval0;\
+idata->fvalue1=fval1;\
+SEND_AND_RETURN
 
 #define READ_OP_FLOAT_TIM(op,pfval,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
 accessor->send(&message);\
-*pfval = ret.fvalue0;\
-return ret.result;
+*pfval = ret->fvalue0;\
+int tmp=ret->result;free(ret);free(idata);return tmp;
 
 #define READ_OP_INT_TIM(op,pival,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
 accessor->send(&message);\
-*pival = ret.ivalue;\
-return ret.result;
+*pival = ret->ivalue;\
+int tmp=ret->result;free(ret);free(idata);return tmp;
 
 #define READ_OP_INT_STRING_TIM(op,pival,pstring,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
 accessor->send(&message);\
-*pival = ret.ivalue;\
-pstring = ret.str;\
-return ret.result;
+*pival = ret->ivalue;\
+pstring = ret->str;\
+int tmp=ret->result;free(ret);free(idata);return tmp;
 
 #define READ_OP_INT_TIM(op,pival,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
 accessor->send(&message);\
-*pival = ret.ivalue;\
-return ret.result;
+*pival = ret->ivalue;\
+int tmp=ret->result;free(ret);free(idata);return tmp;
 
 #define READ_OP_64INT_TIM(op,pival,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
 accessor->send(&message);\
-*pival = ret.alarm_mask;\
-return ret.result;
+*pival = ret->alarm_mask;\
+int tmp=ret->result;free(ret);free(idata);return tmp;
 
 #define READ_OP_64INT_TIM_NORET(op,pival,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
 accessor->send(&message);\
-*pival = ret.alarm_mask;
-
+*pival = ret->alarm_mask;free(ret);free(idata);
 
 #define READ_OP_2FLOAT_TIM(op,pfval0,pfval1,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
 accessor->send(&message);\
-*pfval0 = ret.fvalue0;\
-*pfval1 = ret.fvalue1;\
-return ret.result;
+*pfval0 = ret->fvalue0;\
+*pfval1 = ret->fvalue1;\
+int tmp=ret->result;free(ret);free(idata);return tmp;
 
 #define WRITE_OP_TIM(op,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
-accessor->send(&message);\
-return ret.result;
-
+SEND_AND_RETURN
 
 
 #define CameraDriverInterfaceLAPP_		LAPP_ << "[CameraDriverInterface] "
@@ -127,9 +123,9 @@ int CameraDriverInterface::setImageProperties(int32_t width,int32_t height,int32
     boost::mutex::scoped_lock lock(io_mux);
 
     PREPARE_OP(CameraDriverInterfaceOpcode_SET_IMAGE_PROP);
-    idata.arg0=width;
-    idata.arg1=height;
-    idata.arg2=opencvImageType;
+    idata->arg0=width;
+    idata->arg1=height;
+    idata->arg2=opencvImageType;
     SEND_AND_RETURN;
 }
 
@@ -138,68 +134,64 @@ int CameraDriverInterface::getImageProperties(int32_t& width,int32_t& height,int
 
     PREPARE_OP(CameraDriverInterfaceOpcode_GET_IMAGE_PROP);
     SEND;
-    width=ret.arg0;
-    height=ret.arg1;
-    opencvImageType=ret.arg2;
-    return ret.result;
+    width=ret->arg0;
+    height=ret->arg1;
+    opencvImageType=ret->arg2;
+    int tmp=ret->result;free(ret);free(idata);return tmp;
 }
 
 
 int CameraDriverInterface::setCameraProperty(const std::string& propname,int32_t val){
     boost::mutex::scoped_lock lock(io_mux);
     PREPARE_OP(CameraDriverInterfaceOpcode_SET_PROP);
-        memset(idata.property,0,MAX_PROP_STRING);
+    memset(idata->property,0,MAX_PROP_STRING);
 
-    strncpy(idata.property,propname.c_str(),MAX_PROP_STRING);
-    idata.strl=strlen(idata.property);
-    idata.arg0=val;
-    SEND;
-//    free(idata.str);
-    return ret.result;
+    strncpy(idata->property,propname.c_str(),MAX_PROP_STRING);
+    idata->strl=strlen(idata->property);
+    idata->arg0=val;
+    SEND_AND_RETURN
 }
 
 int CameraDriverInterface::setCameraProperty(const std::string& propname,double val){
     boost::mutex::scoped_lock lock(io_mux);
 
     PREPARE_OP(CameraDriverInterfaceOpcode_SET_FPROP);
-        memset(idata.property,0,MAX_PROP_STRING);
+        memset(idata->property,0,MAX_PROP_STRING);
 
-    strncpy(idata.property,propname.c_str(),MAX_PROP_STRING);
-    idata.strl=strlen(idata.property);
-    idata.farg=val;
-    SEND;
- //   free(idata.str);
-    return ret.result;
+    strncpy(idata->property,propname.c_str(),MAX_PROP_STRING);
+    idata->strl=strlen(idata->property);
+    idata->farg=val;
+   SEND_AND_RETURN
 }
 
 int CameraDriverInterface::getCameraProperty(const std::string& propname,int32_t& val){
     boost::mutex::scoped_lock lock(io_mux);
 
     PREPARE_OP(CameraDriverInterfaceOpcode_GET_PROP);
-    memset(idata.property,0,MAX_PROP_STRING);
+    memset(idata->property,0,MAX_PROP_STRING);
 
-    strncpy(idata.property,propname.c_str(),MAX_PROP_STRING);
+    strncpy(idata->property,propname.c_str(),MAX_PROP_STRING);
     
-    idata.strl=strlen(idata.property);
+    idata->strl=strlen(idata->property);
     SEND;
 
-    val=ret.arg0;
- //   free(idata.str);
-    return ret.result;
+    val=ret->arg0;
+     int tmp=ret->result;free(ret);free(idata);return tmp;
+
 }
 
 int CameraDriverInterface::getCameraProperty(const std::string& propname,double& val){
     boost::mutex::scoped_lock lock(io_mux);
 
     PREPARE_OP(CameraDriverInterfaceOpcode_GET_FPROP);
-    memset(idata.property,0,MAX_PROP_STRING);
+    memset(idata->property,0,MAX_PROP_STRING);
 
-    strncpy(idata.property,propname.c_str(),MAX_PROP_STRING);
+    strncpy(idata->property,propname.c_str(),MAX_PROP_STRING);
     SEND;
 
-    val=ret.farg;
-  //  free(idata.str);
-    return ret.result;
+    val=ret->farg;
+      int tmp=ret->result;free(ret);free(idata);return tmp;
+
 }
 
 
@@ -207,38 +199,36 @@ int CameraDriverInterface::getCameraProperties(chaos::common::data::CDataWrapper
     boost::mutex::scoped_lock lock(io_mux);
     
     PREPARE_OP(CameraDriverInterfaceOpcode_GET_PROPERTIES);
-    ret.str=0;
-    ret.strl=0;
+    ret->str=0;
+    ret->strl=0;
     SEND;
-    if(ret.str && (ret.strl>0)){
-        proplist.setSerializedData(ret.str);
-        free(ret.str);
-        ret.str=NULL;
-
+    if(ret->str && (ret->strl>0)){
+        proplist.setSerializedData(ret->str);
+        free(ret->str);
     }
-
-    return ret.result;
+    int tmp=ret->result;free(ret);free(idata);return tmp;
 }
 
 int CameraDriverInterface::startGrab(uint32_t shots,void*framebuf,cameraGrabCallBack c){
     boost::mutex::scoped_lock lock(io_mux);
 
     PREPARE_OP(CameraDriverInterfaceOpcode_START_GRAB);
-    idata.arg0=shots;
-    idata.buffer=framebuf;
-    idata.fn=(void*)c;
+    idata->arg0=shots;
+    idata->buffer=framebuf;
+    idata->fn=(void*)c;
     SEND_AND_RETURN;
 }
 int CameraDriverInterface::waitGrab(uint32_t timeout_ms){
 
     PREPARE_OP(CameraDriverInterfaceOpcode_WAIT_GRAB);
-    idata.arg0=timeout_ms;
+    idata->arg0=timeout_ms;
     SEND_AND_RETURN;
 }
 int CameraDriverInterface::waitGrab(const char**hostbuf,uint32_t timeout_ms){
+
     PREPARE_OP(CameraDriverInterfaceOpcode_WAIT_GRABBUF);
-    idata.buffer=(void*)hostbuf;
-    idata.arg0=timeout_ms;
+    idata->buffer=(void*)hostbuf;
+    idata->arg0=timeout_ms;
     SEND_AND_RETURN;
 }
 int CameraDriverInterface::stopGrab(){
@@ -252,8 +242,8 @@ int CameraDriverInterface::cameraInit(void *buffer,uint32_t sizeb){
 
     PREPARE_OP(CameraDriverInterfaceOpcode_INIT);
 
-    idata.buffer=buffer;
-    idata.arg0=sizeb;
+    idata->buffer=buffer;
+    idata->arg0=sizeb;
     SEND_AND_RETURN;
 }
 

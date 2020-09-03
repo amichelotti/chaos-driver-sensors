@@ -56,9 +56,10 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
    boost::mutex::scoped_lock lock(io_mux);
 
     cu_driver::MsgManagmentResultType::MsgManagmentResult result = cu_driver::MsgManagmentResultType::MMR_EXECUTED;
+    CHAOS_ASSERT(cmd);
     camera_params_t *in = (camera_params_t *)cmd->inputData;
     camera_params_t *out = (camera_params_t *)cmd->resultData;
-    memset(out,0,sizeof(camera_params_t));
+    //memset(out,0,sizeof(camera_params_t));
  //   CameraDriverBridgeLDBG_ <<" SKELETON Opcode:"<<cmd->opcode;
     switch(cmd->opcode) {
     case CameraDriverInterfaceOpcode_SET_IMAGE_PROP:{

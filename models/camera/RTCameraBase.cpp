@@ -203,7 +203,22 @@ void RTCameraBase::updateProperty() {
         // driver->getCameraProperty(*i, tmp);
         tmp = camera_props.getInt32Value(*i);
         RTCameraBaseLDBG_ << "Camera Property int " << *i << " VALUE:" << tmp;
+        #define WIDTH_KEY "WIDTH"
+#define HEIGHT_KEY "HEIGHT"
+#define OFFSETX_KEY "OFFSETX"
+#define OFFSETY_KEY "OFFSETY"
 
+        if(*i == WIDTH_KEY){
+          *sizex=tmp;
+        }
+        if(*i == HEIGHT_KEY){
+          *sizey=tmp;
+        }
+        if(*i == OFFSETX_KEY){
+          *offsetx=tmp;
+        }if(*i == OFFSETY_KEY){
+          *offsety=tmp;
+        }
         cc->setOutputAttributeValue(*i, tmp);
       }
       if (camera_props.getValueType(*i) == chaos::DataType::TYPE_STRING) {
@@ -250,26 +265,27 @@ bool RTCameraBase::setProp(const std::string &name, int32_t value,
   AttributeSharedCacheWrapper *cc = getAttributeCache();
 
   RTCameraBaseLDBG_ << "SETTING IPROP:" << name << " VALUE:" << value;
-  int32_t *pmode = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, name);
   bool stopgrab =
-      (((name == WIDTH_KEY) /*&& (value != *sizex)*/) ||
-       ((name == HEIGHT_KEY) /*&& (value != *sizey)*/) ||
-       ((name == OFFSETX_KEY) /*&& (value != *offsetx)*/) ||
-       ((name == OFFSETY_KEY) /*&& (value != *offsety)*/) ||
+      (((name == WIDTH_KEY) ) ||
+       ((name == HEIGHT_KEY) ) ||
+       ((name == OFFSETX_KEY) ) ||
+       ((name == OFFSETY_KEY) ) ||
        ((name == TRIGGER_MODE_KEY) && (value == CAMERA_DISABLE_ACQUIRE)));
+  
+  //bool stopgrab = ((name == TRIGGER_MODE_KEY) && (value == CAMERA_DISABLE_ACQUIRE));
 
   if (stopgrab) {
     stopGrabbing();
   }
   ret = driver->setCameraProperty(name, value);
-  setStateVariableSeverity(StateVariableTypeAlarmDEV, "operation_not_supported",
+  setStateVariableSeverity(StateVariableTypeAlarmDEV, "error_setting_property",
                            chaos::common::alarm::MultiSeverityAlarmLevelClear);
 
   if (ret != 0) {
     std::stringstream ss;
     ss << "error setting \"" << name << "\" to " << value;
     setStateVariableSeverity(
-        StateVariableTypeAlarmDEV, "operation_not_supported",
+        StateVariableTypeAlarmDEV, "error_setting_property",
         chaos::common::alarm::MultiSeverityAlarmLevelWarning);
     metadataLogging(
         chaos::common::metadata_logging::StandardLoggingChannel::LogLevelError,
@@ -279,6 +295,7 @@ bool RTCameraBase::setProp(const std::string &name, int32_t value,
   if ((name == TRIGGER_MODE_KEY)) {
     // updateProperty();
     driver->getCameraProperty(name, valuer);
+    int32_t *pmode = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, name);
 
     mode = *pmode = valuer;
     switch (mode) {
@@ -329,12 +346,12 @@ bool RTCameraBase::setProp(const std::string &name, double value,
   // SETINTPROP(name,ZOOMY,value);
 
   ret = driver->setCameraProperty(name, value);
-  setStateVariableSeverity(StateVariableTypeAlarmDEV, "operation_not_supported",
+  setStateVariableSeverity(StateVariableTypeAlarmDEV, "error_setting_property",
                            chaos::common::alarm::MultiSeverityAlarmLevelClear);
 
   if (ret != 0) {
     setStateVariableSeverity(
-        StateVariableTypeAlarmDEV, "operation_not_supported",
+        StateVariableTypeAlarmDEV, "error_setting_property",
         chaos::common::alarm::MultiSeverityAlarmLevelWarning);
   }
   // updateProperty();
@@ -436,7 +453,7 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
       "FRAMEBUFFER", "image", chaos::DataType::SUB_TYPE_CHAR,
       DEFAULT_RESOLUTION, chaos::DataType::Output);*/
   addStateVariable(
-      StateVariableTypeAlarmDEV, "operation_not_supported",
+      StateVariableTypeAlarmDEV, "error_setting_property",
       "the operation in not supported i.e property not present or accesible");
   addStateVariable(StateVariableTypeAlarmCU, "encode_error",
                    "an error occurred during encode", LOG_FREQUENCY);
@@ -614,7 +631,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   getAttributeCache()->setOutputDomainAsChanged();
   getAttributeCache()->setCustomDomainAsChanged();
 
-  // pushCustomDataset();
+   pushCustomDataset();
 }
 void RTCameraBase::cameraGrabCallBack(const void *buf, uint32_t blen,
                                       uint32_t width, uint32_t heigth,
@@ -675,10 +692,10 @@ void RTCameraBase::stopGrabbing() {
   haltThreads();
   if (buffering > 1) {
 
-    metadataLogging(
+   /* metadataLogging(
         chaos::common::metadata_logging::StandardLoggingChannel::LogLevelInfo,
         "Stop grabbing");
-
+*/
     wait_capture.notify_all();
     wait_encode.notify_all();
     full_encode.notify_all();
@@ -698,7 +715,7 @@ void RTCameraBase::stopGrabbing() {
         framebuf_out[cnt].buf=NULL;
     }*/
 
-  setStateVariableSeverity(StateVariableTypeAlarmDEV, "operation_not_supported",
+  setStateVariableSeverity(StateVariableTypeAlarmDEV, "error_setting_property",
                            chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmDEV, "capture_error",
                            chaos::common::alarm::MultiSeverityAlarmLevelClear);
@@ -797,6 +814,12 @@ void RTCameraBase::captureThread() {
               StateVariableTypeAlarmDEV, "capture_timeout",
               chaos::common::alarm::MultiSeverityAlarmLevelWarning);
 
+        } else if (ret==CAMERA_GRAB_STOP){
+            metadataLogging(chaos::common::metadata_logging::StandardLoggingChannel::LogLevelError,"unexplectly driver stopped grabbing");
+            haltThreads();
+            setStateVariableSeverity(
+              StateVariableTypeAlarmDEV, "capture_error",
+              chaos::common::alarm::MultiSeverityAlarmLevelHigh);
         } else if (ret < 0) {
           RTCameraBaseLERR_ << " Error wait returned:" << ret;
           setStateVariableSeverity(
@@ -846,6 +869,8 @@ void RTCameraBase::encodeThread() {
         //  throw chaos::CException(-3, ss.str(), __PRETTY_FUNCTION__);
       }
       cv::Mat image;
+      try {
+
       if (framebuf_encoding == cv::COLOR_BayerBG2RGB) {
 
         //   cv::Mat mat16uc1(*sizey, *sizex, CV_16UC1, a.buf);
@@ -864,10 +889,12 @@ void RTCameraBase::encodeThread() {
         }
 
       } else if (framebuf_encoding == cv::COLOR_YUV2RGB_NV21) {
-        cv::Mat mat8uc1 = cv::Mat(*sizey * 1.5, *sizex, CV_8UC1, a.buf);
+        cv::Mat mat16uc1 = cv::Mat(*sizey, *sizex, CV_8UC2, a.buf);
+        //cv::Mat mat16uc3_rgb(*sizey, *sizex, CV_16UC3);
+
         cv::Mat mat8uc3_rgb(*sizey, *sizex, CV_8UC3);
-      //  cv::cvtColor(mat8uc1, mat8uc3_rgb, cv::COLOR_YUV2RGB_NV21);//
-        cv::cvtColor(mat8uc1, mat8uc3_rgb, cv::COLOR_YUV2RGB_NV21);//
+       // cv::cvtColor(mat16uc1, mat8uc3_rgb, cv::COLOR_YUV2RGB );//
+        cv::cvtColor(mat16uc1, mat8uc3_rgb, cv::COLOR_YUV2RGB_UYVY);//
 
         if (applyCalib && subImage) {
           image = (mat8uc3_rgb - *subImage);
@@ -895,19 +922,28 @@ void RTCameraBase::encodeThread() {
           std::string fname = getDeviceID();
           replace(fname.begin(), fname.end(), '/', '_');
           ss << fname << "_calib.png";
-          try {
             imwrite(ss.str(), image);
             metadataLogging(chaos::common::metadata_logging::
                                 StandardLoggingChannel::LogLevelInfo,
                             ss.str());
-          } catch (runtime_error &ex) {
-            ss << "Exception converting image to PNG format:" << ex.what();
+          
+        }
+        performCalib = false;
+      }
+      } catch (cv::Exception& ex){
+          std::stringstream ss;
+
+            ss << "OpenCV Exception converting image:" << ex.what();
+            goInFatalError(ss.str(), -1000, __PRETTY_FUNCTION__);
+
+        
+      } catch (runtime_error &ex) {
+                std::stringstream ss;
+
+            ss << "Exception converting image:" << ex.what();
             goInFatalError(ss.str(), -1000, __PRETTY_FUNCTION__);
 
             //  metadataLogging(chaos::common::metadata_logging::StandardLoggingChannel::LogLevelError,ss.str());
-          }
-        }
-        performCalib = false;
       }
       std::vector<unsigned char> *encbuf = NULL;
       encoded_t ele;
@@ -978,6 +1014,16 @@ void RTCameraBase::encodeThread() {
             }
           } while ((encoderet == false) && (!stopCapture));
         }
+      } catch (cv::Exception& ex){
+          std::stringstream ss;
+
+            ss << "OpenCV Exception Encoding format:" << ex.what();
+            goInFatalError(ss.str(), -1000, __PRETTY_FUNCTION__);
+
+        if (encbuf) {
+          delete encbuf;
+        }
+
       } catch (std::runtime_error &e) {
         std::stringstream ss;
         ss << "Encode exception:" << e.what() << " orher:" << fmt;
