@@ -34,15 +34,16 @@ message.inputDataLength=sizeof(camera_params_t);\
 message.resultDataLength=sizeof(camera_params_t);\
 message.resultData = (void*)ret;\
 
-#define SEND_AND_RETURN \
- accessor->send(&message);			\
- {int tmp=ret->result;free(ret);free(idata);return tmp;}
 
 #define SEND \
-    accessor->send(&message);\
-    free(ret);free(idata);
+    accessor->send(&message);
 
+#define RETURN \
+    {int tmp=ret->result;free(ret);free(idata);return tmp;}
 
+#define SEND_AND_RETURN \
+ accessor->send(&message);			\
+RETURN
 
 #define WRITE_OP_64INT_TIM(op,ival,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
@@ -137,7 +138,7 @@ int CameraDriverInterface::getImageProperties(int32_t& width,int32_t& height,int
     width=ret->arg0;
     height=ret->arg1;
     opencvImageType=ret->arg2;
-    int tmp=ret->result;free(ret);free(idata);return tmp;
+    RETURN;
 }
 
 
@@ -176,8 +177,7 @@ int CameraDriverInterface::getCameraProperty(const std::string& propname,int32_t
     SEND;
 
     val=ret->arg0;
-     int tmp=ret->result;free(ret);free(idata);return tmp;
-
+    RETURN
 }
 
 int CameraDriverInterface::getCameraProperty(const std::string& propname,double& val){
@@ -190,8 +190,7 @@ int CameraDriverInterface::getCameraProperty(const std::string& propname,double&
     SEND;
 
     val=ret->farg;
-      int tmp=ret->result;free(ret);free(idata);return tmp;
-
+    RETURN;
 }
 
 
@@ -199,14 +198,19 @@ int CameraDriverInterface::getCameraProperties(chaos::common::data::CDataWrapper
     boost::mutex::scoped_lock lock(io_mux);
     
     PREPARE_OP(CameraDriverInterfaceOpcode_GET_PROPERTIES);
+    int sizeb=0;
+    void *ptr=(void*)proplist.getBSONRawData(sizeb);
+    message.inputData=ptr;
+    message.inputDataLength=sizeb;
     ret->str=0;
     ret->strl=0;
+
     SEND;
     if(ret->str && (ret->strl>0)){
         proplist.setSerializedData(ret->str);
         free(ret->str);
     }
-    int tmp=ret->result;free(ret);free(idata);return tmp;
+    RETURN;
 }
 
 int CameraDriverInterface::startGrab(uint32_t shots,void*framebuf,cameraGrabCallBack c){
@@ -232,7 +236,7 @@ int CameraDriverInterface::waitGrab(const char**hostbuf,uint32_t timeout_ms){
     SEND_AND_RETURN;
 }
 int CameraDriverInterface::stopGrab(){
-        boost::mutex::scoped_lock lock(io_mux);
+    boost::mutex::scoped_lock lock(io_mux);
 
     PREPARE_OP(CameraDriverInterfaceOpcode_STOP_GRAB);
     SEND_AND_RETURN;

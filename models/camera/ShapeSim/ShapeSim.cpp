@@ -694,7 +694,7 @@ int  ShapeSim::getCameraProperty(const std::string& propname,double& val){
 }
 
 int  ShapeSim::getCameraProperties(chaos::common::data::CDataWrapper& proplist){
-
+    
     return cameraToProps(&proplist);
 
 

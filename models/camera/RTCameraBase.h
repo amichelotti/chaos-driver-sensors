@@ -156,6 +156,9 @@ protected:
     chaos::common::data::CDWUniquePtr unitPerformCalibration(chaos::common::data::CDWUniquePtr data);
 
     virtual int filtering(cv::Mat&image);
+    
+    chaos::common::data::CDWUniquePtr getAction(chaos::common::data::CDWUniquePtr );
+    chaos::common::data::CDWUniquePtr setAction(chaos::common::data::CDWUniquePtr );
 
 };
     }}}

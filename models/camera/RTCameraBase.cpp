@@ -1240,6 +1240,18 @@ void RTCameraBase::unitDeinit() throw(chaos::CException) {
 
   driver->cameraDeinit();
 }
+
+chaos::common::data::CDWUniquePtr RTCameraBase::getAction(chaos::common::data::CDWUniquePtr p){
+  chaos::common::data::CDataWrapper* camera_props=new chaos::common::data::CDataWrapper();
+  int ret = 0;
+  if ((ret = driver->getCameraProperties(*camera_props)) != 0) {
+    RTCameraBaseLERR_ << "Error retriving camera properties ret:" << ret;
+  }
+  return chaos::common::data::CDWUniquePtr(camera_props);
+}
+chaos::common::data::CDWUniquePtr RTCameraBase::setAction(chaos::common::data::CDWUniquePtr p){
+
+}
 void RTCameraBase::fatalErrorHandler(const chaos::CException &r) {
   stopGrabbing();
 }

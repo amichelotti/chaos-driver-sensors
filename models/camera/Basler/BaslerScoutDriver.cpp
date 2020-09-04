@@ -993,9 +993,15 @@ int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera &cam,
   GETINTPERCVALUE(SharpnessEnhancementRaw, "SHARPNESS", BaslerScoutDriverLDBG_);
   GETINTPERCVALUE(BslBrightnessRaw, "BRIGHTNESS", BaslerScoutDriverLDBG_);
   GETINTPERCVALUE(BslContrastRaw, "CONTRAST", BaslerScoutDriverLDBG_);
-
-
-  p->addCSDataValue("custom", ownprops->getProperty());
+  ChaosStringVector sv;
+  ownprops->getProperty().getAllKey(sv);
+  for(ChaosStringVector::iterator i=sv.begin();i!=sv.end();i++){
+    chaos::common::data::CDataWrapper cd;
+    if(ownprops->getProperty().isCDataWrapperValue(*i)){
+      ownprops->getProperty().getCSDataValue(*i,cd);
+        p->addCSDataValue(*i, cd);
+    }
+  }
   return 0;
 }
 

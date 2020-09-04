@@ -112,15 +112,16 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
     case CameraDriverInterfaceOpcode_GET_PROPERTIES:{
         chaos::common::data::CDataWrapper props;
         int sizeb;
-        out->result=getCameraProperties(props);
-        const char*ptr=props.getBSONRawData(sizeb);
-     
-        if((sizeb>0)&& ptr){
-            out->str=(char*)malloc(sizeb);
-            out->strl=sizeb;
-            memcpy(out->str,ptr,sizeb);
+        if(cmd->inputData && cmd->inputDataLength){
+            chaos::common::data::CDataWrapper props((const char*)cmd->inputData); 
+            out->result=getCameraProperties(props);
+            const char*ptr=props.getBSONRawData(sizeb);
+            if((sizeb>0)&& ptr){
+                out->str=(char*)malloc(sizeb);
+                out->strl=sizeb;
+                memcpy(out->str,ptr,sizeb);
+            }
         }
-
         break;
     }
     case CameraDriverInterfaceOpcode_INIT:{
