@@ -1250,7 +1250,7 @@ chaos::common::data::CDWUniquePtr RTCameraBase::getAction(chaos::common::data::C
   return chaos::common::data::CDWUniquePtr(camera_props);
 }
 chaos::common::data::CDWUniquePtr RTCameraBase::setAction(chaos::common::data::CDWUniquePtr p){
-
+  return chaos::common::data::CDWUniquePtr();
 }
 void RTCameraBase::fatalErrorHandler(const chaos::CException &r) {
   stopGrabbing();

@@ -154,8 +154,9 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
 }
 
 chaos::common::data::CDWUniquePtr CameraDriverBridge::getDrvProperties(){
-    chaos::common::data::CDataWrapper *pnt=new chaos::common::data::CDataWrapper();
-    getCameraProperties(*pnt);
-    chaos::common::data::CDWUniquePtr ret(pnt);
-    return ret;
+    return getProperties();
+    
 }
+/*chaos::common::data::CDWUniquePtr CameraDriverBridge::setDrvProperties(chaos::common::data::CDWUniquePtr s){
+
+}*/

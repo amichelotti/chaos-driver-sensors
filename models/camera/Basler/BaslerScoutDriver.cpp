@@ -53,6 +53,27 @@ CLOSE_CU_DRIVER_PLUGIN_CLASS_DEFINITION
 OPEN_REGISTER_PLUGIN
 REGISTER_PLUGIN(::driver::sensor::camera::BaslerScoutDriver)
 CLOSE_REGISTER_PLUGIN
+
+
+#define GETINTNODE(x,camp, pub)                                                 \
+  {                                                                            \
+    int32_t val;                                                               \
+    LDBG_ << "GETTING INT PROP \"" << #x << "\" alias:" << pub;                    \
+    if (getNode(#x, camp, val,pub) == 0) {                                       \
+    } else {                                                                   \
+      BaslerScoutDriverLERR << "cannot read basler node \"" << #x << "\"";    \
+    }                                                                          \
+  }
+#define GETDOUBLENODE(x,camp, pub)                                                 \
+  {                                                                            \
+    double val;                                                               \
+    LDBG_ << "GETTING double PROP \"" << #x << "\" alias:" << pub;                    \
+    if (getNode(#x, camp, val) == 0) {                                       \
+    } else {                                                                   \
+      BaslerScoutDriverLERR << "cannot read basler double node \"" << #x << "\"";    \
+    }                                                                          \
+  }
+
 #define GETINTVALUE(x, y, LOG)                                                 \
   {                                                                            \
     int32_t val;                                                               \
@@ -134,11 +155,9 @@ void BaslerScoutDriver::driverInit(
     const chaos::common::data::CDataWrapper &json) throw(chaos::CException) {
   BaslerScoutDriverLDBG_ << "Initializing BASLER json driver:"
                          << json.getCompliantJSONString();
-  props->reset();
-  ownprops->reset();
-  props->appendAllElement((chaos::common::data::CDataWrapper &)json);
+  //props->appendAllElement((chaos::common::data::CDataWrapper &)json);
   parseInitCommonParams(json);
-  if (initializeCamera(*props) != 0) {
+  if (initializeCamera(json) != 0) {
     throw chaos::CException(
         -1, "cannot initialize camera " + json.getCompliantJSONString(),
         __PRETTY_FUNCTION__);
@@ -357,10 +376,10 @@ int BaslerScoutDriver::getNode(const std::string &node_name,
     }
     percent = -1;
     percent = node->GetValue();
-    /*  if(ownprops->hasKey(node_name)){
-            ownprops->setProperty(node_name,node->GetValue());
+    /*  if(hasKey(node_name)){
+            setProperty(node_name,node->GetValue());
         } else*/ {
-      ownprops->createProperty(node_name, node->GetValue(), node->GetMin(),
+      createProperty(node_name, node->GetValue(), node->GetMin(),
                                node->GetMax(), 0.0, pub);
     }
     BaslerScoutDriverLDBG_ << "DOUBLE VAL:" << percent;
@@ -391,10 +410,10 @@ int BaslerScoutDriver::getNode(const std::string &node_name,
     }
     percent = -1;
     percent = node->GetValue();
-    /*  if(ownprops->hasKey(node_name)){
-            ownprops->setProperty(node_name,node->GetValue());
+    /*  if(hasKey(node_name)){
+            setProperty(node_name,node->GetValue());
         } else*/ {
-      ownprops->createProperty(node_name, node->GetValue(), node->GetMin(),
+      createProperty(node_name, node->GetValue(), node->GetMin(),
                                node->GetMax(), node->GetInc(), pub);
     }
     BaslerScoutDriverLDBG_ << "VAL:" << percent;
@@ -430,10 +449,10 @@ int BaslerScoutDriver::getNodeInPercentage(const std::string &node_name,
     max = node->GetMax();
     inc = node->GetInc();
     val = node->GetValue();
-    /*if(ownprops->hasKey(node_name)){
-            ownprops->setProperty(node_name,node->GetValue());
+    /*if(hasKey(node_name)){
+            setProperty(node_name,node->GetValue());
         } else*/ {
-      ownprops->createProperty(node_name, node->GetValue(), node->GetMin(),
+      createProperty(node_name, node->GetValue(), node->GetMin(),
                                node->GetMax(), node->GetInc(), pub);
     }
     if ((max - min) > 0) {
@@ -675,10 +694,15 @@ int BaslerScoutDriver::initializeCamera(
             camerap->GetDeviceInfo().GetFriendlyName().c_str();
         std::string fullname = camerap->GetDeviceInfo().GetFullName().c_str();
         std::string sn = camerap->GetDeviceInfo().GetSerialNumber().c_str();
-        ownprops->createProperty("Model", (const std::string &)model_name);
-        ownprops->createProperty("Friend", (const std::string &)friendname);
-        ownprops->createProperty("FullName", (const std::string &)fullname);
-        ownprops->createProperty("SerialNumber", (const std::string &)sn);
+        createProperty("Model", (const std::string &)model_name);
+        createProperty("Friend", (const std::string &)friendname);
+        createProperty("FullName", (const std::string &)fullname);
+        createProperty("SerialNumber", (const std::string &)sn);
+
+
+          
+
+
       }
       if (camerap && json.hasKey("TRIGGER_MODE")) {
         int tmode = json.getInt32Value("TRIGGER_MODE");
@@ -715,8 +739,16 @@ int BaslerScoutDriver::initializeCamera(
         } 
       }
      /***********/ 
-    
-      propsToCamera(*camerap, (chaos::common::data::CDataWrapper *)&json);
+    GETINTNODE(Width,camerap,"WIDTH");
+    GETINTNODE(Height,camerap,"HEIGHT");
+    GETINTNODE(OffsetX,camerap,"OFFSETX");
+    GETINTNODE(OffsetY,camerap,"OFFSETY");
+    GETDOUBLENODE(AcquisitionFrameRateAbs,camerap,"FRAMERATE");
+    GETINTNODE(GainRaw,camerap,"GAIN");
+    GETINTNODE(ExposureTimeRaw,camerap,"SHUTTER");
+    GETINTNODE(BslBrightnessRaw,camerap,"BRIGHTNESS");
+    GETINTNODE(BslContrastRaw,camerap,"CONTRAST");
+     // propsToCamera(*camerap, (chaos::common::data::CDataWrapper *)&json);
      
      
       return 0;
@@ -993,15 +1025,8 @@ int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera &cam,
   GETINTPERCVALUE(SharpnessEnhancementRaw, "SHARPNESS", BaslerScoutDriverLDBG_);
   GETINTPERCVALUE(BslBrightnessRaw, "BRIGHTNESS", BaslerScoutDriverLDBG_);
   GETINTPERCVALUE(BslContrastRaw, "CONTRAST", BaslerScoutDriverLDBG_);
-  ChaosStringVector sv;
-  ownprops->getProperty().getAllKey(sv);
-  for(ChaosStringVector::iterator i=sv.begin();i!=sv.end();i++){
-    chaos::common::data::CDataWrapper cd;
-    if(ownprops->getProperty().isCDataWrapperValue(*i)){
-      ownprops->getProperty().getCSDataValue(*i,cd);
-        p->addCSDataValue(*i, cd);
-    }
-  }
+  appendPropertiesTo(*p);
+  
   return 0;
 }
 
@@ -1195,12 +1220,14 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera &camera,
 }
 
 int BaslerScoutDriver::cameraInit(void *buffer, uint32_t sizeb) {
-  BaslerScoutDriverLDBG_ << "Initialization";
+  BaslerScoutDriverLDBG_ << "Deprecated Initialization";
   // simple initialization
   if (camerap == NULL) {
     BaslerScoutDriverLERR_ << "no camera available";
     return -1;
   }
+  return 0;
+  #if 0
   try {
     if (props->hasKey("TRIGGER_MODE")) {
       tmode = (TriggerModes)props->getInt32Value("TRIGGER_MODE");
@@ -1256,6 +1283,7 @@ int BaslerScoutDriver::cameraInit(void *buffer, uint32_t sizeb) {
   }
 
   return 0;
+  #endif
 }
 
 int BaslerScoutDriver::cameraDeinit() {
@@ -1273,9 +1301,12 @@ int BaslerScoutDriver::startGrab(uint32_t _shots, void *_framebuf,
   framebuf = _framebuf;
   fn = _fn;
   EGrabStrategy strategy;
-  if (props->hasKey("GRAB_STRATEGY")) {
+  /*if (props->hasKey("GRAB_STRATEGY")) {
     gstrategy = (GrabStrategy)props->getInt32Value("GRAB_STRATEGY");
-  }
+  }*/
+  int32_t istrategy=gstrategy;
+  getProperty("GRAB_STRATEGY",istrategy);
+  gstrategy=(driver::sensor::camera::GrabStrategy)istrategy;
   switch (gstrategy) {
   case CAMERA_ONE_BY_ONE:
     strategy = GrabStrategy_OneByOne;
@@ -1461,12 +1492,16 @@ int BaslerScoutDriver::stopGrab() {
 
 int BaslerScoutDriver::setImageProperties(int32_t width, int32_t height,
                                           int32_t opencvImageType) {
-  props->setValue("WIDTH", width);
-  props->setValue("HEIGHT", width);
+  //props->setValue("WIDTH", width);
+  //props->setValue("HEIGHT", width);
+  int ret=0;
   if (camerap) {
-    return propsToCamera(*camerap, props.get());
+   // return propsToCamera(*camerap, props.get());
+   ret =(setPropertyValue("WIDTH", width).get())?0:-1;
+   ret +=(setPropertyValue("HEIGHT", height).get())?0:-1;
+
   }
-  return -1;
+  return ret;
 }
 
 int BaslerScoutDriver::getImageProperties(int32_t &width, int32_t &height,

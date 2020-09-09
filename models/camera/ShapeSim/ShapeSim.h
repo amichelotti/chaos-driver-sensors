@@ -48,7 +48,6 @@ namespace driver {
 class ShapeSim:public chaos::cu::driver_manager::driver::AbstractDriverPlugin,public ::driver::sensor::camera::CameraDriverBridge {
 
 
-   chaos::common::data::CDataWrapper* props;
  protected:
 
  void driverInit(const char *initParameter) throw(chaos::CException);
@@ -125,7 +124,7 @@ public:
      int cameraDeinit();
       cu_driver::MsgManagmentResultType::MsgManagmentResult execOpcode(cu_driver::DrvMsgPtr cmd){return CameraDriverBridge::execOpcode(cmd);}
 
-        
+      chaos::common::data::CDWUniquePtr setDrvProperties(chaos::common::data::CDWUniquePtr);  
 };
         }}}
 #endif /* defined(__ControlUnitTest__DummyDriver__) */

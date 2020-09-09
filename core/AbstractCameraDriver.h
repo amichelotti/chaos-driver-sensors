@@ -86,12 +86,12 @@ enum GrabStrategy {
 int fmt2cv(const std::string&);
 int cv2fmt(int fmt,  std::string& enc);
 
- class AbstractCameraDriver{
+ class AbstractCameraDriver:public ::common::misc::data::Property<AbstractCameraDriver> {
 
 protected:
-    ChaosUniquePtr< ::common::misc::data::Property > ownprops; //camera own props,
+    //ChaosUniquePtr< ::common::misc::data::Property<AbstractCameraDriver> > ownprops; //camera own props,
 
-    ChaosUniquePtr<chaos::common::data::CDataWrapper> props; //camera generic props
+    //ChaosUniquePtr<chaos::common::data::CDataWrapper> props; //camera generic props
     TriggerModes tmode; //0 continous, 1 software,2 hw,3 singleshot
      bool stopGrabbing;
      bool restore_grab;
@@ -106,7 +106,7 @@ protected:
 
     void parseInitCommonParams(const chaos::common::data::CDataWrapper& params);
 public:
-   AbstractCameraDriver():stopGrabbing(true),restore_grab(false),shots(1),framebuf(NULL),fn(NULL),hw_trigger_timeout_us(5000000),sw_trigger_timeout_us(0),ownprops(new ::common::misc::data::Property),props(new chaos::common::data::CDataWrapper){}
+   AbstractCameraDriver():stopGrabbing(true),restore_grab(false),shots(1),framebuf(NULL),fn(NULL),hw_trigger_timeout_us(5000000),sw_trigger_timeout_us(0)/*,ownprops(new ::common::misc::data::Property<AbstractCameraDriver>),props(new chaos::common::data::CDataWrapper)*/{}
 
     //! Execute a command
     /**
