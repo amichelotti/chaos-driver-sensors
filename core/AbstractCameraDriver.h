@@ -86,7 +86,7 @@ enum GrabStrategy {
 int fmt2cv(const std::string&);
 int cv2fmt(int fmt,  std::string& enc);
 
- class AbstractCameraDriver:public ::common::misc::data::Property<AbstractCameraDriver> {
+ class AbstractCameraDriver/*:public ::common::misc::data::Property<AbstractCameraDriver>*/ {
 
 protected:
     //ChaosUniquePtr< ::common::misc::data::Property<AbstractCameraDriver> > ownprops; //camera own props,

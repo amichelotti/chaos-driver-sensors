@@ -126,23 +126,23 @@ int ShapeSim::initializeCamera(const chaos::common::data::CDataWrapper& json) {
 }
 
 #define CREATE_INT_PROP(n,pub,var,min,max,inc) \
-createProperty(n,var,min,max,inc,pub,[](AbstractCameraDriver*thi,const std::string&name,\
+createProperty(n,var,(int32_t)min,(int32_t)max,(int32_t)inc,pub,[](AbstractDriver*thi,const std::string&name,\
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {\
         chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());\
         ret->addInt32Value("value",((ShapeSim*)thi)->var);\
         return ret;\
-      },[](AbstractCameraDriver*thi,const std::string&name,\
+      },[](AbstractDriver*thi,const std::string&name,\
        const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr { \
           ((ShapeSim*)thi)->var=p.getInt32Value("value");\
           return p.clone();});
 
 #define CREATE_DOUBLE_PROP(n,pub,var,min,max,inc) \
-createProperty(n,var,min,max,inc,pub,[](AbstractCameraDriver*thi,const std::string&name,\
+createProperty(n,var,min,max,inc,pub,[](AbstractDriver*thi,const std::string&name,\
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {\
         chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());\
         ret->addDoubleValue("value",((ShapeSim*)thi)->var);\
         return ret;\
-      },[](AbstractCameraDriver*thi,const std::string&name,\
+      },[](AbstractDriver*thi,const std::string&name,\
        const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr { \
           ((ShapeSim*)thi)->var=p.getDoubleValue("value");\
           return p.clone();});
@@ -158,7 +158,7 @@ DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,ShapeSim),
     max_movex=max_movey=min_movex=min_movey=0;
     amplitude=1.0;
     err_amplitude=0;
-    sigmax=sigmay=10.0;
+    sigmax=sigmay=10.2;
     gain_raw=600;
     brightness_raw=500;
     shutter_raw=500;
@@ -166,6 +166,8 @@ DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,ShapeSim),
     shutter=1.0;
     brightness=1.0;
     trigger_mode=0;
+     centerx=width/2;
+    centery=height/2;
    /* createProperty("ExposureTimeRaw",shutter_raw,0,CAM_MAX_SHUTTER,1,"SHUTTER",[](AbstractCameraDriver*thi,const std::string&name,
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
           // get value
@@ -189,7 +191,15 @@ DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,ShapeSim),
       CREATE_INT_PROP("height","HEIGHT",height,0,4096,1);
       CREATE_INT_PROP("offsetx","OFFSETX",offsetx,0,4096,1);
       CREATE_INT_PROP("offsety","OFFSETY",offsety,0,4096,1);
+
+      CREATE_INT_PROP("trigger_mode","TRIGGER_MODE",trigger_mode,0,10,1);
+
       CREATE_DOUBLE_PROP("framerate","FRAMERATE",framerate,0.0,100.0,1.0);
+     CREATE_INT_PROP("centerx","",centerx,0,4096,1);
+     CREATE_INT_PROP("centery","",centerx,0,4096,1);
+      CREATE_DOUBLE_PROP("sigmax","",sigmax,0.0,100.0,1.0);
+      CREATE_DOUBLE_PROP("sigmay","",sigmay,0.0,100.0,1.0);
+
 
 
 /*
@@ -217,14 +227,14 @@ DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,ShapeSim),
           ((ShapeSim*)thi)->brightness_raw=p.getInt32Value("value");
           return p.clone();
       });*/
-    createProperty("shape_type","ellipse","","","","",[](AbstractCameraDriver*thi,const std::string&name,
+    createProperty("shape_type","ellipse","","","","",[](AbstractDriver*thi,const std::string&name,
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
           // get value
         chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
         ret->addStringValue("value",((ShapeSim*)thi)->shape_type);
 
         return ret;
-      },[](AbstractCameraDriver*thi,const std::string&name,
+      },[](AbstractDriver*thi,const std::string&name,
        const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr { 
           ((ShapeSim*)thi)->shape_type=p.getStringValue("value");
           return p.clone();
@@ -261,7 +271,7 @@ int ShapeSim::cameraToProps(chaos::common::data::CDataWrapper*p){
     p->addInt32Value("OFFSETX",offsetx);
     p->addInt32Value("OFFSETY",offsety);
     */
-    appendPropertiesTo(*p);
+    appendPubPropertiesTo(*p);
     ShapeSimLDBG_<<" Properties:"<<p->getJSONString();
 
     return 0;
