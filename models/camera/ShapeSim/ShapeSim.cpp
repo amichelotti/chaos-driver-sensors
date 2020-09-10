@@ -247,7 +247,7 @@ int ShapeSim::cameraToProps(chaos::common::data::CDataWrapper*p){
                          chaos::DataType::Input, "0.001", "500.0", "400.0",
                          "0.1", "mm/s");
 
-*/
+
     ShapeSimLDBG_<< "WIDTH:"<<width<<" HEIGHT:"<<height;
     ShapeSimLDBG_<< "FRAMERATE:"<<framerate;
     p->addDoubleValue("FRAMERATE",framerate);
@@ -260,6 +260,7 @@ int ShapeSim::cameraToProps(chaos::common::data::CDataWrapper*p){
     p->addDoubleValue("SHUTTER",shutter);
     p->addInt32Value("OFFSETX",offsetx);
     p->addInt32Value("OFFSETY",offsety);
+    */
     appendPropertiesTo(*p);
     ShapeSimLDBG_<<" Properties:"<<p->getJSONString();
 
