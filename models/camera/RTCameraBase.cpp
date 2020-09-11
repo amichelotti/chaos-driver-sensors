@@ -110,7 +110,7 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
       capture_time(0), network_time(0), captureQueue(0), encodeQueue(0),
       hw_trigger_timeout_us(5000000), sw_trigger_timeout_us(0), imagesizex(0),
       imagesizey(0), apply_resize(false), trigger_timeout(0), bpp(3),
-      stopCapture(true), stopEncoding(true), isRunning(false), subImage(NULL),
+      stopCapture(true), stopEncoding(true), isRunning(false), subImage(NULL),performCalib(false),
       applyCalib(false) {
   RTCameraBaseLDBG_ << "Creating " << _control_unit_id
                     << " params:" << _control_unit_param;
@@ -495,6 +495,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   int32_t width, height;
 
   AttributeSharedCacheWrapper *cc = getAttributeCache();
+  performCalib=false;
   // this properties must exist
   //
   sizex = cc->getRWPtr<int32_t>(DOMAIN_INPUT, WIDTH_KEY);
@@ -851,7 +852,7 @@ void RTCameraBase::encodeThread() {
       captureQueue--;
 
       full_capture.notify_one();
-      if (*sizey * *sizex * bpp < a.size) {
+      if (*sizey * *sizex * bpp > a.size) {
         std::stringstream ss;
 
         ss << "Cannot encode an image bigger " << *sizex << "x" << *sizey

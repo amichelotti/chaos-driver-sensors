@@ -44,6 +44,15 @@ using namespace cv;
 #define ShapeSimLDBG_		LDBG_ << "[ShapeSim:"<<__PRETTY_FUNCTION__<<"]"
 #define ShapeSimLERR_		LERR_ << "[ShapeSim:"<<__PRETTY_FUNCTION__<<"]"
 
+#define GETDBLPARAM(w,name) \
+    if(w->hasKey(#name)){\
+    name = w->getDoubleValue(#name);\
+    ShapeSimLDBG_<< "shape DBL param '"<<#name<<" = "<<name;}
+#define GETINTPARAM(w,name) \
+    if(w->hasKey(#name)){\
+    name = w->getInt32Value(#name);\
+    ShapeSimLDBG_<< "shape INT param '"<<#name<<" = "<<name;}
+
 
 //GET_PLUGIN_CLASS_DEFINITION
 //we need only to define the driver because we don't are makeing a plugin
@@ -122,7 +131,82 @@ int ShapeSim::initializeCamera(const chaos::common::data::CDataWrapper& json) {
         ShapeSimLERR_<<  "Missing 'SHAPE' key:"<<json.getCompliantJSONString();
     }
 
+ // fetch parameters
+    if(shape_params->hasKey("framerate")){
+        framerate=shape_params->getDoubleValue("framerate");
+    }
 
+    if(shape_params->hasKey("type")){
+        shape_type=shape_params->getStringValue("type");
+        ret =0;
+        centerx=width/2;
+        centery=height/2;
+        rotangle=0;
+        extangle=0;
+        colr=255;
+        colg=0;
+        colb=0;
+        tickness=2;
+        linetype=8; //connected
+        err_sigmax=err_sigmay=rho=0;
+        GETDBLPARAM(shape_params,movex);
+        GETDBLPARAM(shape_params,movey);
+        GETDBLPARAM(shape_params,rot);
+
+        GETINTPARAM(shape_params,centerx);
+        tmp_centerx=centerx;
+        GETINTPARAM(shape_params,centery);
+        tmp_centery=centery;
+
+        GETDBLPARAM(shape_params,err_centerx);
+        GETDBLPARAM(shape_params,err_centery);
+        GETDBLPARAM(shape_params,err_sizex);
+        GETDBLPARAM(shape_params,err_sizey);
+        GETDBLPARAM(shape_params,err_rotangle);
+        GETDBLPARAM(shape_params,err_extangle);
+        GETDBLPARAM(shape_params,err_tickness);
+        GETINTPARAM(shape_params,sizex);
+        tmp_sizex=sizex;
+        GETINTPARAM(shape_params,sizey);
+        tmp_sizey=sizey;
+
+
+        GETDBLPARAM(shape_params,rotangle);
+        tmp_rotangle=rotangle;
+
+        GETDBLPARAM(shape_params,extangle);
+
+        GETINTPARAM(shape_params,tickness);
+        tmp_tickness=tickness;
+
+        GETINTPARAM(shape_params,linetype);
+        GETINTPARAM(shape_params,colg);
+        GETINTPARAM(shape_params,colb);
+        GETINTPARAM(shape_params,colr);
+         max_movex=width-tmp_sizex;
+         max_movey=height-tmp_sizey;
+         min_movex=tmp_sizex;
+         min_movey=tmp_sizey;
+         max_amplitude=inc_amplitude=0;
+        GETDBLPARAM(shape_params,max_movex);
+        GETDBLPARAM(shape_params,max_movey);
+        GETDBLPARAM(shape_params,min_movey);
+        GETDBLPARAM(shape_params,min_movex);
+
+        GETDBLPARAM(shape_params,amplitude);
+        tmp_amplitude=amplitude;
+        max_amplitude=amplitude;
+        GETDBLPARAM(shape_params,sigmax);
+        GETDBLPARAM(shape_params,sigmay);
+        GETDBLPARAM(shape_params,err_sigmay);
+        GETDBLPARAM(shape_params,err_sigmax);
+        GETDBLPARAM(shape_params,max_amplitude);
+        GETDBLPARAM(shape_params,inc_amplitude);
+        GETDBLPARAM(shape_params,rho);
+
+
+
+    }
     return ret;
 }
 
@@ -148,7 +232,7 @@ createProperty(n,var,min,max,inc,pub,[](AbstractDriver*thi,const std::string&nam
           ((ShapeSim*)thi)->var=p.getDoubleValue("value");\
           return p.clone();});
 
-DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,ShapeSim),shots(0),frames(0),fn(NULL),pixelEncoding(CV_8UC3),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1.0),offsetx(0),offsety(0){
+DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,ShapeSim),shots(0),frames(0),fn(NULL),pixelEncoding(CV_8UC3),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1.0),offsetx(0),offsety(0),rot(0){
 
     ShapeSimLDBG_<<  "Created Driver";
     framebuf[0]=NULL;
@@ -169,6 +253,10 @@ DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,ShapeSim),
     trigger_mode=0;
      centerx=width/2;
     centery=height/2;
+
+        sizex=centerx/4;
+        sizey=centery/4;
+
    /* createProperty("ExposureTimeRaw",shutter_raw,0,CAM_MAX_SHUTTER,1,"SHUTTER",[](AbstractCameraDriver*thi,const std::string&name,
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
           // get value
@@ -190,14 +278,17 @@ DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,ShapeSim),
       CREATE_INT_PROP("BslBrightnessRaw","BRIGHTNESS",brightness_raw,0,CAM_MAX_BRIGHTNESS,1);
       CREATE_INT_PROP("width","WIDTH",width,0,4096,1);
       CREATE_INT_PROP("height","HEIGHT",height,0,4096,1);
-      CREATE_INT_PROP("offsetx","OFFSETX",offsetx,0,4096,1);
-      CREATE_INT_PROP("offsety","OFFSETY",offsety,0,4096,1);
+      CREATE_INT_PROP("offsetx","OFFSETX",offsetx,0,width,1);
+      CREATE_INT_PROP("offsety","OFFSETY",offsety,0,height,1);
 
       CREATE_INT_PROP("trigger_mode","TRIGGER_MODE",trigger_mode,0,10,1);
 
       CREATE_DOUBLE_PROP("framerate","FRAMERATE",framerate,0.0,100.0,1.0);
-     CREATE_INT_PROP("centerx","",centerx,0,4096,1);
-     CREATE_INT_PROP("centery","",centerx,0,4096,1);
+     CREATE_INT_PROP("centerx","",centerx,0,width,1);
+     CREATE_INT_PROP("centery","",centery,0,height,1);
+      CREATE_INT_PROP("sizex","",sizex,0,width,1);
+     CREATE_INT_PROP("sizey","",sizey,0,height,1);
+    
       CREATE_DOUBLE_PROP("sigmax","",sigmax,0.0,100.0,1.0);
       CREATE_DOUBLE_PROP("sigmay","",sigmay,0.0,100.0,1.0);
 
@@ -296,7 +387,8 @@ int ShapeSim::propsToCamera(chaos::common::data::CDataWrapper*p){
 
     // Maximize the Image AOI.
     //   chaos::common::data::CDataWrapper*p=driver->props;
-
+    importKeysAsProperties(*p);
+    /*
     if (p->hasKey("OFFSETX")){
         offsetx=p->getInt32Value("OFFSETX");
         ShapeSimLDBG_<< "setting OFFSETX " << offsetx;
@@ -316,13 +408,8 @@ int ShapeSim::propsToCamera(chaos::common::data::CDataWrapper*p){
         ShapeSimLDBG_<< "setting HEIGHT " << p->getInt32Value("HEIGHT");
         height=p->getInt32Value("HEIGHT");
     }
-    if (p->hasKey(FRAMEBUFFER_ENCODING_KEY)&&p->isStringValue(FRAMEBUFFER_ENCODING_KEY)){
-        ShapeSimLDBG_<< "setting FRAMEBUFFER_ENCODING " << p->getStringValue(FRAMEBUFFER_ENCODING_KEY);
 
-        pixelEncoding=fmt2cv(p->getStringValue(FRAMEBUFFER_ENCODING_KEY));
-    }
-
-    if(p->hasKey("GAIN")){
+     if(p->hasKey("GAIN")){
         gain_raw=p->getDoubleValue("GAIN")*CAM_MAX_GAIN/100;
         ShapeSimLDBG_<< "SETTING GAIN RAW:"<<gain_raw <<" norm:"<<p->getDoubleValue("GAIN");
         gain=p->getDoubleValue("GAIN");
@@ -357,6 +444,14 @@ int ShapeSim::propsToCamera(chaos::common::data::CDataWrapper*p){
     }
 
 
+    */
+    if (p->hasKey(FRAMEBUFFER_ENCODING_KEY)&&p->isStringValue(FRAMEBUFFER_ENCODING_KEY)){
+        ShapeSimLDBG_<< "setting FRAMEBUFFER_ENCODING " << p->getStringValue(FRAMEBUFFER_ENCODING_KEY);
+
+        pixelEncoding=fmt2cv(p->getStringValue(FRAMEBUFFER_ENCODING_KEY));
+    }
+
+   
     return ret;
 }
 
@@ -379,15 +474,6 @@ int ShapeSim::cameraDeinit(){
 
     return 0;
 }
-
-#define GETDBLPARAM(w,name) \
-    if(w->hasKey(#name)){\
-    name = w->getDoubleValue(#name);\
-    ShapeSimLDBG_<< "shape DBL param '"<<#name<<" = "<<name;}
-#define GETINTPARAM(w,name) \
-    if(w->hasKey(#name)){\
-    name = w->getInt32Value(#name);\
-    ShapeSimLDBG_<< "shape INT param '"<<#name<<" = "<<name;}
     
 void ShapeSim::createBeamImage(Size size, Mat& output,float uX,float uY, float sx, float sy, float amp,float angle){
     Mat temp=Mat(size,CV_32F);
@@ -436,90 +522,11 @@ int ShapeSim::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
     err_rotangle=0;
     err_extangle=0;
     err_tickness=0;
+    tmp_rotangle=0;
 
-    // fetch parameters
-    if(shape_params->hasKey("framerate")){
-        framerate=shape_params->getDoubleValue("framerate");
-    }
-
-    if(shape_params->hasKey("type")){
-        shape_type=shape_params->getStringValue("type");
-        ret =0;
-        centerx=width/2;
-        centery=height/2;
-        rotangle=0;
-        extangle=0;
-        colr=255;
-        colg=0;
-        colb=0;
-        tickness=2;
-        linetype=8; //connected
-        err_sigmax=err_sigmay=rho=0;
-        GETDBLPARAM(shape_params,movex);
-        GETDBLPARAM(shape_params,movey);
-        GETDBLPARAM(shape_params,rot);
-
-        GETINTPARAM(shape_params,centerx);
-        tmp_centerx=centerx;
-        GETINTPARAM(shape_params,centery);
-        tmp_centery=centery;
-
-        sizex=centerx/2;
-        sizey=centery/2;
-
-        GETDBLPARAM(shape_params,err_centerx);
-        GETDBLPARAM(shape_params,err_centery);
-        GETDBLPARAM(shape_params,err_sizex);
-        GETDBLPARAM(shape_params,err_sizey);
-        GETDBLPARAM(shape_params,err_rotangle);
-        GETDBLPARAM(shape_params,err_extangle);
-        GETDBLPARAM(shape_params,err_tickness);
-        GETINTPARAM(shape_params,sizex);
-        tmp_sizex=sizex;
-        GETINTPARAM(shape_params,sizey);
-        tmp_sizey=sizey;
-
-
-        GETDBLPARAM(shape_params,rotangle);
-        tmp_rotangle=rotangle;
-
-        GETDBLPARAM(shape_params,extangle);
-
-        GETINTPARAM(shape_params,tickness);
-        tmp_tickness=tickness;
-
-        GETINTPARAM(shape_params,linetype);
-        GETINTPARAM(shape_params,colg);
-        GETINTPARAM(shape_params,colb);
-        GETINTPARAM(shape_params,colr);
-         max_movex=width-tmp_sizex;
-         max_movey=height-tmp_sizey;
-         min_movex=tmp_sizex;
-         min_movey=tmp_sizey;
-         max_amplitude=inc_amplitude=0;
-        GETDBLPARAM(shape_params,max_movex);
-        GETDBLPARAM(shape_params,max_movey);
-        GETDBLPARAM(shape_params,min_movey);
-        GETDBLPARAM(shape_params,min_movex);
-
-        GETDBLPARAM(shape_params,amplitude);
-        tmp_amplitude=amplitude;
-        max_amplitude=amplitude;
-        GETDBLPARAM(shape_params,sigmax);
-        GETDBLPARAM(shape_params,sigmay);
-        GETDBLPARAM(shape_params,err_sigmay);
-        GETDBLPARAM(shape_params,err_sigmax);
-        GETDBLPARAM(shape_params,max_amplitude);
-        GETDBLPARAM(shape_params,inc_amplitude);
-        GETDBLPARAM(shape_params,rho);
-
-
-
-    }
+   
     last_acquisition_ts=chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
     ShapeSimLDBG_<<"Start Grabbing at:"<<framerate <<" frame/s";
-    img.release();
-    img.create(cv::Size(original_width,original_height),  pixelEncoding);
     return ret;
 }
 #define RND_DIST(var) \
@@ -561,8 +568,10 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
     size_t size_ret;
     int size=0;
     boost::random::mt19937 gen(std::time(0) );
-  //  img.zeros(cv::Size(height,width),  CV_8UC3);
-    img.setTo(cv::Scalar::all(0));
+    cv::Mat img= Mat::zeros(original_height,original_width,  pixelEncoding);
+
+    //img.zeros(cv::Size(height,width),  CV_8UC3);
+    //img.setTo(cv::Scalar::all(0));
 
     std::stringstream ss,fs;
 
@@ -618,7 +627,7 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
     } else if(shape_type == "ellipse"){
         // get parameters
        
-        fs<<shape_type<<":("<<tmp_centerx<<","<<tmp_centery<<") "<<tmp_sizex<<"x"<<tmp_sizey<<","<<tmp_rotangle<<","<<tmp_tickness;
+        fs<<img.cols<<"x"<<img.rows<< " orig ["<<original_width<<"x"<<original_height<<" "<<shape_type<<":("<<tmp_centerx<<","<<tmp_centery<<") "<<tmp_sizex<<"x"<<tmp_sizey<<","<<tmp_rotangle<<","<<tmp_tickness;
 
         rectangle(img,Point( 0, 0),Point( width-1, height-1 ), Scalar( colr, colg, colb ));
 
@@ -634,20 +643,23 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
                  linetype );
         putText(img,ss.str(),Point(10,25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
         
-        putText(img,fs.str(),Point(10,height-25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
+       // putText(img,fs.str(),Point(10,height-25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
         } else {
         ShapeSimLERR_<<"Unknown shape given:"<<shape_type;
         }
         cv::Mat cropped;
-        if(((offsetx+width) <= img.cols)&&((offsety+height)<img.rows)){
+        if(((offsetx+width) < img.cols)&&((offsety+height)<img.rows)){
+
             Rect region_of_interest = Rect(offsetx, offsety, width, height);
             Mat image_roi = img(region_of_interest);
             image_roi.copyTo(cropped);
+            ShapeSimLDBG_<<"Apply ROI:"<<"("<<offsetx<<","<<offsety<<") "<<width<<"x"<<height<<" new image:"<<cropped.cols<<"x"<<cropped.rows;
+
         } else {
             cropped=img;
         }
 
-        applyCameraParams(cropped);
+      //  applyCameraParams(cropped);
          size = cropped.total() * cropped.elemSize();
 
 #ifdef CVDEBUG
@@ -663,7 +675,7 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
             framebuf_size[frames&1]=size;
         }
         if(size>0 && cropped.data &&framebuf[frames&1]){
-            ShapeSimLDBG_<<ss.str()<<","<<fs.str()<<" size byte:"<<size<<" framerate:"<<framerate;
+            ShapeSimLDBG_<<ss.str()<<","<<fs.str()<<" size byte:"<<size<<" framerate:"<<framerate<<" Framebuf encoding:"<<pixelEncoding;
             std::memcpy(framebuf[frames&1],cropped.data,size );
     
         if(buf){
@@ -712,8 +724,7 @@ int ShapeSim::waitGrab(uint32_t timeout_ms){
 }
 int ShapeSim::stopGrab(){
     //camera->StopGrabbing();
-    img.deallocate();
-    img.release();
+    
     return 0;
 }
 

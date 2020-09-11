@@ -80,7 +80,6 @@ class ShapeSim:public chaos::cu::driver_manager::driver::AbstractDriverPlugin,pu
      ///
      double framerate,gain,brightness,shutter;
      int32_t gain_raw,brightness_raw,shutter_raw;
-      cv::Mat img;
      // shape parameters
      ChaosUniquePtr<chaos::common::data::CDataWrapper> shape_params;
      std::string shape_type;
