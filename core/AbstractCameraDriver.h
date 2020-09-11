@@ -20,7 +20,6 @@
 #ifndef __ASTRACTCAMERADRIVER_H__
 #define __ASTRACTCAMERADRIVER_H__
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
-#include <common/misc/data/core/Property.h>
 
 namespace cu_driver = chaos::cu::driver_manager::driver;
 #include <string>
@@ -79,7 +78,6 @@ enum GrabStrategy {
 #define CONTRAST_KEY "CONTRAST"
 #define GAUSS_FIT_KEY "gauss_fit"
 #define FILTER_MOMENT_KEY "moment"
-#define CAMERA_CUSTOM_PROPERTY "custom_property"
 #define FILTER_REMOVE_SOURCE_KEY "remove_source" //boolean
 
 

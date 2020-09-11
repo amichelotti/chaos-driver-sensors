@@ -204,11 +204,7 @@ void AbstractCameraDriver::parseInitCommonParams(const chaos::common::data::CDat
         gstrategy=(GrabStrategy)config.getInt32Value("GRAB_STRATEGY");
     }
 
-    if(config.hasKey(CAMERA_CUSTOM_PROPERTY)&&config.isCDataWrapperValue(CAMERA_CUSTOM_PROPERTY)){
-        config.getCSDataValue(CAMERA_CUSTOM_PROPERTY,camera_custom_props);
-        AbstractCameraDriverLDBG_<<"Custom property:"<<camera_custom_props.getJSONString();
-        
-    }
+   
 }
 
 }

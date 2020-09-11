@@ -60,7 +60,8 @@ void ShapeSim::driverInit(const char *initParameter) throw(chaos::CException){
 
 
 void ShapeSim::driverInit(const chaos::common::data::CDataWrapper& json) throw(chaos::CException){
-    ShapeSimLAPP_ << "Initializing  driver:"<<json.getCompliantJSONString();
+    ShapeSimLDBG_ << "Initializing  driver:"<<json.getCompliantJSONString();
+    ShapeSimLDBG_<< "Inital properties"<<getProperties()->getJSONString();
     if(initializeCamera(json)!=0){
         throw chaos::CException(-1,"cannot initialize camera "+json.getCompliantJSONString(),__PRETTY_FUNCTION__);
     }
