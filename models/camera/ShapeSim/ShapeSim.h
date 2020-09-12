@@ -62,8 +62,6 @@ class ShapeSim:public chaos::cu::driver_manager::driver::AbstractDriverPlugin,pu
      uint64_t frames;
      double movex,movey,rot;
      double max_movex,max_movey,min_movex,min_movey;
-     void*framebuf[2];
-     int framebuf_size[2];
      int32_t memID;
      cameraGrabCallBack fn;
      bool initialized;
@@ -114,7 +112,7 @@ public:
      int startGrab(uint32_t shots,void*framebuf=NULL,cameraGrabCallBack=NULL);
 
      int waitGrab(uint32_t timeout_ms);
-     int waitGrab(const char**buf,uint32_t timeout_ms);
+     int waitGrab(camera_buf_t**buf,uint32_t timeout_ms);
 
      int stopGrab();
 

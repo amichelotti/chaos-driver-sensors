@@ -84,6 +84,30 @@ enum GrabStrategy {
 int fmt2cv(const std::string&);
 int cv2fmt(int fmt,  std::string& enc);
 
+
+struct camera_buf_t {
+            uint8_t*buf;
+            int32_t size;
+            int32_t width;
+            int32_t height;
+            camera_buf_t(int32_t _size,int32_t _width,int32_t _height):width(_width),height(_height){
+                buf=(uint8_t*)malloc(_size);
+                if(buf){
+                    size=_size;
+                }
+            }
+            camera_buf_t(const uint8_t*ptr, int32_t _size,int32_t _width,int32_t _height):width(_width),height(_height){
+                buf=(uint8_t*)malloc(_size);
+                if(buf){
+                    size=_size;
+                    memcpy(buf,ptr,size);
+                }
+            }
+            camera_buf_t():size(0),buf(NULL),width(0),height(0){}
+            ~camera_buf_t(){free(buf);}
+            
+} ;
+
  class AbstractCameraDriver/*:public ::common::misc::data::Property<AbstractCameraDriver>*/ {
 
 protected:
@@ -98,13 +122,13 @@ protected:
      uint32_t shots;
      GrabStrategy gstrategy;
      chaos::common::data::CDataWrapper camera_custom_props;
-     void*framebuf;
      cameraGrabCallBack fn;
      uint32_t hw_trigger_timeout_us,sw_trigger_timeout_us; // 0 =wait indefinitively
 
     void parseInitCommonParams(const chaos::common::data::CDataWrapper& params);
 public:
-   AbstractCameraDriver():stopGrabbing(true),restore_grab(false),shots(1),framebuf(NULL),fn(NULL),hw_trigger_timeout_us(5000000),sw_trigger_timeout_us(0)/*,ownprops(new ::common::misc::data::Property<AbstractCameraDriver>),props(new chaos::common::data::CDataWrapper)*/{}
+
+   AbstractCameraDriver():stopGrabbing(true),restore_grab(false),shots(1),fn(NULL),hw_trigger_timeout_us(5000000),sw_trigger_timeout_us(0)/*,ownprops(new ::common::misc::data::Property<AbstractCameraDriver>),props(new chaos::common::data::CDataWrapper)*/{}
 
     //! Execute a command
     /**
@@ -178,8 +202,14 @@ public:
      */
     virtual int waitGrab(uint32_t timeout_ms)=0;
 
-
-    virtual int waitGrab(const char**buf,uint32_t timeout_ms)=0;
+    /**
+     * @brief return an allocated camera buf that must released by caller
+     * 
+     * @param buf 
+     * @param timeout_ms 
+     * @return int 
+     */
+    virtual int waitGrab(camera_buf_t**buf,uint32_t timeout_ms)=0;
 
 
     /**

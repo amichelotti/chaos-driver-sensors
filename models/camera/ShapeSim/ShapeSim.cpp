@@ -79,17 +79,7 @@ void ShapeSim::driverInit(const chaos::common::data::CDataWrapper& json) throw(c
 
 void ShapeSim::driverDeinit() throw(chaos::CException) {
     ShapeSimLAPP_ << "Deinit driver";
-    if(framebuf[0]){
-        free(framebuf[0]);
-        framebuf[0]=NULL;
-    }
-    framebuf_size[0]=0;
-if(framebuf[1]){
-        free(framebuf[1]);
-        framebuf[1]=NULL;
-    }
-    framebuf_size[1]=0;
-
+  
 }
 
 namespace driver{
@@ -235,10 +225,6 @@ createProperty(n,var,min,max,inc,pub,[](AbstractDriver*thi,const std::string&nam
 DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,ShapeSim),shots(0),frames(0),fn(NULL),pixelEncoding(CV_8UC3),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1.0),offsetx(0),offsety(0),rot(0){
 
     ShapeSimLDBG_<<  "Created Driver";
-    framebuf[0]=NULL;
-    framebuf[1]=NULL;
-    framebuf_size[0]=0;
-    framebuf_size[1]=0;
     movex=movey=rot=0;
     max_movex=max_movey=min_movex=min_movey=0;
     amplitude=1.0;
@@ -251,11 +237,11 @@ DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,ShapeSim),
     shutter=1.0;
     brightness=1.0;
     trigger_mode=0;
-     centerx=width/2;
+    centerx=width/2;
     centery=height/2;
 
-        sizex=centerx/4;
-        sizey=centery/4;
+    sizex=centerx/4;
+    sizey=centery/4;
 
    /* createProperty("ExposureTimeRaw",shutter_raw,0,CAM_MAX_SHUTTER,1,"SHUTTER",[](AbstractCameraDriver*thi,const std::string&name,
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
@@ -563,7 +549,7 @@ void ShapeSim::applyCameraParams(cv::Mat& image){
     }
 }
 
-int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
+int ShapeSim::waitGrab(camera_buf_t**buf,uint32_t timeout_ms){
     int32_t ret=-1;
     size_t size_ret;
     int size=0;
@@ -669,26 +655,15 @@ int ShapeSim::waitGrab(const char**buf,uint32_t timeout_ms){
         waitKey( 0 );
 #endif
         
-        if(framebuf_size[frames&1]<size){
-            //free(framebuf[frames&1]);
-            framebuf[frames&1]=realloc(framebuf[frames&1],size);
-            framebuf_size[frames&1]=size;
-        }
-        if(size>0 && cropped.data &&framebuf[frames&1]){
+        
+        if(size>0 && cropped.data){
             ShapeSimLDBG_<<ss.str()<<","<<fs.str()<<" size byte:"<<size<<" framerate:"<<framerate<<" Framebuf encoding:"<<pixelEncoding;
-            std::memcpy(framebuf[frames&1],cropped.data,size );
-    
-        if(buf){
-            if(frames>0){
-                *buf=(char*)framebuf[!(frames&1)];
-            } else {
-                *buf=(char*)framebuf[0];
-            }
+            *buf=new camera_buf_t(cropped.data,size,cropped.cols,cropped.rows);  
         } else {
             ShapeSimLERR_<<"BAD BUFFER GIVEN "<<shape_type<<"("<<width<<"X"<<height<<")"<<frames<<" center "<<tmp_centerx<<","<<tmp_centery<<" sizex:"<<tmp_sizex<<" sizey:"<<tmp_sizey<<" color:"<<colr<<"R,"<<colg<<"G,"<<colb<<" size byte:"<<size;
 
         }
-        }
+        
         
         ret=size;
     

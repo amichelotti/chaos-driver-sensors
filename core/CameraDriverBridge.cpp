@@ -142,7 +142,7 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
         break;
     }
     case CameraDriverInterfaceOpcode_WAIT_GRABBUF:{
-        out->result=waitGrab((const char**)in->buffer,in->arg0);
+        out->result=waitGrab((camera_buf_t**)in->buffer,in->arg0);
         break;
     }
     case CameraDriverInterfaceOpcode_STOP_GRAB:{

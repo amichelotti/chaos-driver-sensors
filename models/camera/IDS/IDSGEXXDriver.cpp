@@ -625,7 +625,6 @@ int IDSGEXXDriver::cameraDeinit(){
 int IDSGEXXDriver::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
     IDSGEXXDriverLDBG_<<"Start Grabbing";
     shots=_shots;
-    framebuf=_framebuf;
     fn=_fn;
     
     camera.initMemoryPool(4);
@@ -645,7 +644,7 @@ int IDSGEXXDriver::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _
     }
     return 0;
 }
-int IDSGEXXDriver::waitGrab(const char**hostbuf,uint32_t timeout_ms){
+int IDSGEXXDriver::waitGrab(camera_buf_t **hostbuf,uint32_t timeout_ms){
   int32_t ret=0;
     size_t size_ret=0;
     const char *buf=0;
@@ -654,7 +653,7 @@ int IDSGEXXDriver::waitGrab(const char**hostbuf,uint32_t timeout_ms){
             ret= size_ret;
             if(hostbuf&&buf){
        // memcpy(hostbuf,buf,size_ret);
-                *hostbuf=buf;
+                *hostbuf=new camera_buf_t((uint8_t*)buf,size_ret,camera.getWidth(),camera.getHeight()) ;
         }
     } else{
       //      IDSGEXXDriverLERR_<<"No Image..";
@@ -667,7 +666,7 @@ int IDSGEXXDriver::waitGrab(const char**hostbuf,uint32_t timeout_ms){
 }
 int IDSGEXXDriver::waitGrab(uint32_t timeout_ms){
   
-    return waitGrab((const char**)&framebuf,timeout_ms);
+    return waitGrab(NULL,timeout_ms);
 }
 int IDSGEXXDriver::stopGrab(){
     //camera->StopGrabbing();

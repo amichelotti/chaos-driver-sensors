@@ -738,7 +738,7 @@ void RTCameraBase::unitStart() throw(chaos::CException) {
 
 void RTCameraBase::captureThread() {
   int ret;
-  const char *img = 0;
+  camera_buf_t *img = 0;
   uint64_t start;
   counter_capture = 0;
   RTCameraBaseLDBG_ << "Capture thread STARTED";
@@ -759,14 +759,6 @@ void RTCameraBase::captureThread() {
           StateVariableTypeAlarmDEV, "capture_timeout",
           chaos::common::alarm::MultiSeverityAlarmLevelClear);
 
-      buf_t data;
-      data.buf = (uint8_t *)malloc(ret);
-      if (data.buf == NULL) {
-        throw chaos::CException(-1, "Heap memory exahusted",
-                                __PRETTY_FUNCTION__);
-      }
-      data.size = ret;
-      memcpy((void *)data.buf, img, ret);
       capture_time +=
           (chaos::common::utility::TimingUtil::getTimeStampInMicroseconds() -
            start);
@@ -774,7 +766,7 @@ void RTCameraBase::captureThread() {
       bool pushret;
       int retry = 3;
       do {
-        pushret = captureImg.push(data);
+        pushret = captureImg.push(img);
         if (pushret == false) {
 
           /*  setStateVariableSeverity(
@@ -845,37 +837,37 @@ void RTCameraBase::encodeThread() {
                     << " thread STARTED";
   while (!stopCapture) {
 
-    buf_t a;
+    camera_buf_t* framebuf;
 
-    if (captureImg.pop(a) && a.buf) {
+    if (captureImg.pop(framebuf) && framebuf->buf) {
       start = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
       captureQueue--;
 
       full_capture.notify_one();
-      if (*sizey * *sizex * bpp > a.size) {
+      
+      /*if (*sizey * *sizex * bpp > a.size) {
         std::stringstream ss;
 
         ss << "Cannot encode an image bigger " << *sizex << "x" << *sizey
            << " bpp:" << bpp << " =" << (*sizex * *sizey * bpp)
            << " than size allocated:" << a.size
            << " framebuf encoding:" << framebuf_encoding_s;
-        free(a.buf);
-        /*    setStateVariableSeverity(
-                  StateVariableTypeAlarmCU, "encode_error",
-                  chaos::common::alarm::MultiSeverityAlarmLevelHigh);
-            metadataLogging(chaos::common::metadata_logging::StandardLoggingChannel::LogLevelError,ss.str());
-            */
+        delete(a);
+       
         goInFatalError(ss.str(), -1000, __PRETTY_FUNCTION__);
         continue;
         //  throw chaos::CException(-3, ss.str(), __PRETTY_FUNCTION__);
-      }
+      }*/
+      *sizey=framebuf->height;
+      *sizex=framebuf->width;
+
       cv::Mat image;
       try {
 
       if (framebuf_encoding == cv::COLOR_BayerBG2RGB) {
 
         //   cv::Mat mat16uc1(*sizey, *sizex, CV_16UC1, a.buf);
-        cv::Mat mat8uc1(*sizey, *sizex, CV_8UC1, a.buf);
+        cv::Mat mat8uc1(*sizey, *sizex, CV_8UC1, framebuf->buf);
         // cv::Mat mat16uc3_rgb(*sizey, *sizex, CV_16UC3);
         // cv::cvtColor(mat16uc1, mat16uc3_rgb, cv::COLOR_BayerBG2RGB);
         cv::Mat mat8uc3_rgb(*sizey, *sizex, CV_8UC3);
@@ -890,7 +882,7 @@ void RTCameraBase::encodeThread() {
         }
 
       } else if (framebuf_encoding == cv::COLOR_YUV2RGB_NV21) {
-        cv::Mat mat16uc1 = cv::Mat(*sizey, *sizex, CV_8UC2, a.buf);
+        cv::Mat mat16uc1 = cv::Mat(*sizey, *sizex, CV_8UC2, framebuf->buf);
         //cv::Mat mat16uc3_rgb(*sizey, *sizex, CV_16UC3);
 
         cv::Mat mat8uc3_rgb(*sizey, *sizex, CV_8UC3);
@@ -904,7 +896,7 @@ void RTCameraBase::encodeThread() {
           image = mat8uc3_rgb;
         }
       } else {
-        cv::Mat img(*sizey, *sizex, framebuf_encoding, a.buf);
+        cv::Mat img(*sizey, *sizex, framebuf_encoding, framebuf->buf);
         if (applyCalib && subImage) {
           image = (img - *subImage);
 
@@ -966,7 +958,7 @@ void RTCameraBase::encodeThread() {
         // col:"<<image.cols<<" channels:"<<image.channels();
 
         bool code = cv::imencode(encoding, image, *encbuf);
-        free(a.buf);
+        delete(framebuf);
         // image.deallocate();
         if (code == false) {
           setStateVariableSeverity(
@@ -1092,7 +1084,7 @@ RTCameraBase::unitPerformCalibration(chaos::common::data::CDWUniquePtr data) {
 //! Execute the Control Unit work
 void RTCameraBase::unitRun() throw(chaos::CException) {
   uchar *ptr;
-  const char *img = 0;
+  camera_buf_t *img = 0;
   *pacquire = (mode != CAMERA_DISABLE_ACQUIRE);
   *ptrigger =
       (mode != CAMERA_DISABLE_ACQUIRE) && (mode != CAMERA_TRIGGER_CONTINOUS);
@@ -1156,7 +1148,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
   } else {
     int ret;
     ret = driver->waitGrab(&img, trigger_timeout);
-    if ((img != 0) && (ret > 0)) {
+    if ((img != 0) && (ret > 0)&&img->buf) {
       // keep alarm high
       setStateVariableSeverity(
           StateVariableTypeAlarmDEV, "capture_error",
@@ -1164,7 +1156,10 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       setStateVariableSeverity(
           StateVariableTypeAlarmDEV, "capture_timeout",
           chaos::common::alarm::MultiSeverityAlarmLevelClear);
-      cv::Mat image(*sizey, *sizex, framebuf_encoding, (uint8_t *)img);
+      *sizey=img->height;
+      *sizex=img->width;
+
+      cv::Mat image(*sizey, *sizex, framebuf_encoding, (uint8_t *)img->buf);
       std::vector<unsigned char> *encbuf = NULL;
       try {
         // bool code = cv::imencode(encoding, image, buf );
@@ -1229,8 +1224,8 @@ void RTCameraBase::unitStop() throw(chaos::CException) {
 void RTCameraBase::unitDeinit() throw(chaos::CException) {
   stopGrabbing();
 
-  captureImg.consume_all([this](buf_t i) {
-    free(i.buf);
+  captureImg.consume_all([this](camera_buf_t* i) {
+    delete(i);
     captureQueue--;
   });
 

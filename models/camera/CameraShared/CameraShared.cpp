@@ -72,16 +72,6 @@ void CameraShared::driverInit(const chaos::common::data::CDataWrapper& json) thr
 
 void CameraShared::driverDeinit() throw(chaos::CException) {
     CameraSharedLAPP_ << "Deinit driver";
-    if(framebuf[0]){
-        free(framebuf[0]);
-        framebuf[0]=NULL;
-    }
-    framebuf_size[0]=0;
-if(framebuf[1]){
-        free(framebuf[1]);
-        framebuf[1]=NULL;
-    }
-    framebuf_size[1]=0;
 
 }
 
@@ -144,10 +134,6 @@ int CameraShared::initializeCamera(const chaos::common::data::CDataWrapper& json
 DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,CameraShared),shots(0),frames(0),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1.0),offsetx(0),offsety(0),original_width(0),original_height(0){
 
     CameraSharedLDBG_<<  "Created Driver";
-    framebuf[0]=NULL;
-    framebuf[1]=NULL;
-    framebuf_size[0]=0;
-    framebuf_size[1]=0;
     movex=movey=rot=0;
     channels=1;
     props=new chaos::common::data::CDataWrapper();
@@ -297,7 +283,7 @@ int CameraShared::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _f
     double err=dist_##var(gen);\
     tmp_##var+= err;}
 
-int CameraShared::waitGrab(const char**buf,uint32_t timeout_ms){
+int CameraShared::waitGrab(camera_buf_t**buf,uint32_t timeout_ms){
     int32_t ret=0;
     int size=0;
     if(shared_mem->wait(timeout_ms)==0){
@@ -330,20 +316,12 @@ int CameraShared::waitGrab(const char**buf,uint32_t timeout_ms){
                 size=img.total() * img.elemSize();
             }
             ret= size;
-            if(framebuf_size[frames&1]<size){
-                free(framebuf[frames&1]);
-                framebuf[frames&1]=malloc(size);
-                framebuf_size[frames&1]=size;
-            }
+           
             if(ds==NULL)
                 return 0;
-            std::memcpy(framebuf[frames&1],ds,size );
             if(buf){
-                if(frames>0){
-                    *buf=(char*)framebuf[!(frames&1)];
-            } else {
-                    *buf=(char*)framebuf[0];
-            }
+                *buf = new camera_buf_t(ds,size,img.cols,img.rows);
+                
             frames++;
         } else {
             CameraSharedLERR_<<"BAD BUFFER GIVEN "<<shape_type<<"("<<width<<"X"<<height<<")";

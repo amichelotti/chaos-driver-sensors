@@ -64,8 +64,6 @@ class CameraShared:public chaos::cu::driver_manager::driver::AbstractDriverPlugi
      uint32_t shots;
      uint64_t frames;
      int movex,movey,rot;
-     void*framebuf[2];
-     int framebuf_size[2];
      int32_t memID;
      cameraGrabCallBack fn;
      bool initialized;
@@ -104,7 +102,7 @@ public:
      int startGrab(uint32_t shots,void*framebuf=NULL,cameraGrabCallBack=NULL);
 
      int waitGrab(uint32_t timeout_ms);
-     int waitGrab(const char**buf,uint32_t timeout_ms);
+     int waitGrab(camera_buf_t**buf,uint32_t timeout_ms);
 
      int stopGrab();
 

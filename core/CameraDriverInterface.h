@@ -163,7 +163,7 @@ public:
      \param timeout[in] timeout in ms to wait (0 waits indefinitively)
      \return size of raw image if success
      */
-    virtual int waitGrab(const char**hostbuf,uint32_t timeout_ms);
+    virtual int waitGrab(camera_buf_t**hostbuf,uint32_t timeout_ms);
     /**
      \brief Stop Image Grabbing
 

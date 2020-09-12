@@ -228,7 +228,7 @@ int CameraDriverInterface::waitGrab(uint32_t timeout_ms){
     idata->arg0=timeout_ms;
     SEND_AND_RETURN;
 }
-int CameraDriverInterface::waitGrab(const char**hostbuf,uint32_t timeout_ms){
+int CameraDriverInterface::waitGrab(camera_buf_t**hostbuf,uint32_t timeout_ms){
 
     PREPARE_OP(CameraDriverInterfaceOpcode_WAIT_GRABBUF);
     idata->buffer=(void*)hostbuf;

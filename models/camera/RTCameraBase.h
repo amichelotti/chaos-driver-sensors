@@ -32,6 +32,7 @@ namespace driver{
     namespace sensor{
          namespace camera{
 	   class CameraDriverInterface;
+     class camera_buf_t;
 class RTCameraBase : public chaos::cu::control_manager::RTAbstractControlUnit {
 	PUBLISHABLE_CONTROL_UNIT_INTERFACE(RTCameraBase);
 
@@ -65,10 +66,7 @@ protected:
 
         //double ZOOMX,ZOOMY;
         chaos::common::data::CDataWrapper filters;
-        typedef struct {
-            uint8_t*buf;
-            int32_t size;
-        } buf_t;
+        
         typedef struct encoded {
             std::vector<unsigned char>* img;
             encoded():img(NULL){};
@@ -86,7 +84,7 @@ protected:
       //  std::vector<unsigned char> encbuf[CAMERA_FRAME_BUFFERING];//encode stage
         uint32_t captureQueue,encodeQueue;
         boost::condition_variable wait_capture,wait_encode,full_capture,full_encode;
-        boost::lockfree::queue<buf_t, boost::lockfree::fixed_sized<true> > captureImg;
+        boost::lockfree::queue<::driver::sensor::camera::camera_buf_t*, boost::lockfree::fixed_sized<true> > captureImg;
         boost::lockfree::queue<encoded_t, boost::lockfree::fixed_sized<true> > encodedImg;
         boost::mutex mutex_io,mutex_encode;
         uint32_t hw_trigger_timeout_us,sw_trigger_timeout_us,trigger_timeout; // 0 =wait indefinitively

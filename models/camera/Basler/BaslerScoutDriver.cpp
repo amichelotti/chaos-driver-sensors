@@ -790,14 +790,13 @@ BaslerScoutDriver::BaslerScoutDriver():camerap(NULL),shots(0),framebuf(NULL),fn(
 
 #define RESTORE_GRABBING(camera)                                               \
   if (restore_grab) {                                                          \
-    startGrab(shots, framebuf, fn);                                            \
+    startGrab(shots, NULL, fn);                                            \
   }
 
 DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,
                                              BaslerScoutDriver) {
   camerap = NULL;
   shots = 0;
-  framebuf = NULL;
   fn = NULL;
   tmode = CAMERA_TRIGGER_CONTINOUS;
   gstrategy = CAMERA_LATEST_ONLY;
@@ -1298,7 +1297,6 @@ int BaslerScoutDriver::startGrab(uint32_t _shots, void *_framebuf,
                                  cameraGrabCallBack _fn) {
   BaslerScoutDriverLDBG_ << "Start Grabbing";
   shots = _shots;
-  framebuf = _framebuf;
   fn = _fn;
   EGrabStrategy strategy;
   /*if (props->hasKey("GRAB_STRATEGY")) {
@@ -1330,7 +1328,7 @@ int BaslerScoutDriver::startGrab(uint32_t _shots, void *_framebuf,
   stopGrabbing = false;
   return 0;
 }
-int BaslerScoutDriver::waitGrab(const char **img, uint32_t timeout_ms) {
+int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
   if (camerap == NULL) {
     BaslerScoutDriverLERR_ << "Invalid Camera ";
 
@@ -1394,7 +1392,7 @@ int BaslerScoutDriver::waitGrab(const char **img, uint32_t timeout_ms) {
                              << ptrGrabResult->GetHeight()
                              << " Image Raw Size: " << size_ret;
       if (img) {
-        *img = (const char *)pImageBuffer;
+        *img = new camera_buf_t(pImageBuffer,size_ret,ptrGrabResult->GetWidth(),ptrGrabResult->GetHeight());
         // memcpy(hostbuf,pImageBuffer,size_ret);
       }
       if (fn) {
@@ -1480,7 +1478,7 @@ int BaslerScoutDriver::waitGrab(const char **img, uint32_t timeout_ms) {
 }
 
 int BaslerScoutDriver::waitGrab(uint32_t timeout_ms) {
-  return waitGrab((const char **)&framebuf, timeout_ms);
+  return waitGrab((camera_buf_t**)NULL, timeout_ms);
 }
 int BaslerScoutDriver::stopGrab() {
   BaslerScoutDriverLDBG_ << "Stop  Grabbing";
