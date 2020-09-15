@@ -349,6 +349,8 @@ int ShapeSim::cameraToProps(chaos::common::data::CDataWrapper*p){
     p->addInt32Value("OFFSETX",offsetx);
     p->addInt32Value("OFFSETY",offsety);
     */
+     syncRead();// synchronize with real values
+
     appendPubPropertiesTo(*p);
     ShapeSimLDBG_<<" Properties:"<<p->getJSONString();
 

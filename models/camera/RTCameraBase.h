@@ -76,6 +76,7 @@ protected:
      //   chaos::common::data::CDataWrapper camera_props;
        // uint8_t* camera_out;
       //  buf_t framebuf_out[CAMERA_FRAME_BUFFERING]; //capture stage
+        std::vector<int> encode_params;
 
         void captureThread();
         bool stopCapture,stopEncoding;

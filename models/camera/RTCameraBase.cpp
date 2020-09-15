@@ -160,6 +160,18 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
     }
   } catch (...) {
   }
+  createProperty("compression_factor", (int32_t)1,"",NULL,[](AbstractControlUnit*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        RTCameraBase *t=(RTCameraBase *)thi;
+        t->encode_params.clear();
+      t->encode_params.push_back(IMWRITE_PNG_COMPRESSION);
+      t->encode_params.push_back(p.getInt32Value("value"));
+      t->encode_params.push_back(IMWRITE_PNG_STRATEGY);
+      t->encode_params.push_back(IMWRITE_PNG_STRATEGY_DEFAULT);
+      LDBG_ << "using png compression factor:"<<p.getInt32Value("value");
+      return p.clone();
+      });
+
 }
 
 /*
@@ -387,7 +399,7 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
     }
   }
   if (driver->getCameraProperties(camera_props) != 0) {
-    throw chaos::CException(-1, "Error retrieving camera properties",
+    throw chaos::CException(-1, "Error retrieving camera properties:"+driver->getLastError(),
                             __PRETTY_FUNCTION__);
   }
   std::vector<std::string> props;
@@ -524,7 +536,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   // breanch number and soft reset
 
   if ((ret = driver->cameraInit(0, 0)) != 0) {
-    throw chaos::CException(ret, "cannot initialize camera",
+    throw chaos::CException(ret, "cannot initialize camera:"+driver->getLastError(),
                             __PRETTY_FUNCTION__);
   }
   // not needed any mode
@@ -956,8 +968,7 @@ void RTCameraBase::encodeThread() {
         encbuf = new std::vector<unsigned char>();
         // RTCameraBaseLDBG_ << "Encoding "<<encoding<<" , row:"<<image.rows<<"
         // col:"<<image.cols<<" channels:"<<image.channels();
-
-        bool code = cv::imencode(encoding, image, *encbuf);
+        bool code = cv::imencode(encoding, image, *encbuf,encode_params);
         delete(framebuf);
         // image.deallocate();
         if (code == false) {

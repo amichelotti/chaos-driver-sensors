@@ -54,16 +54,24 @@ class BaslerScoutDriver:public chaos::cu::driver_manager::driver::AbstractDriver
   int initializeCamera(const chaos::common::data::CDataWrapper& json) ;
   void driverDeinit() throw(chaos::CException) ;
     // This smart pointer will receive the grab result data.
-     Pylon::CInstantCamera* camerap;
           int propsToCamera(Pylon::CInstantCamera& camera,chaos::common::data::CDataWrapper*p);
      int cameraToProps(Pylon::CInstantCamera& camera,chaos::common::data::CDataWrapper*p);
      int changeTriggerMode(Pylon::CInstantCamera* camera,int trigger_mode);
-     int getNode(const std::string &node_name, Pylon::CInstantCamera *camera, int32_t &percent,const std::string pub="");
-     int getNode(const std::string &node_name, Pylon::CInstantCamera *camera, double &percent,const std::string pub="");
+     //int getNode(const std::string &node_name, Pylon::CInstantCamera *camera, int32_t &percent,const std::string pub="");
+     //int getNode(const std::string &node_name, Pylon::CInstantCamera *camera, double &percent,const std::string pub="");
 
-    int getNodeInPercentage(const std::string &node_name, Pylon::CInstantCamera*camera, float &percent,const std::string& pub="");
-
+    //int getNodeInPercentage(const std::string &node_name, Pylon::CInstantCamera*camera, float &percent,const std::string& pub="");
+    
 public:
+    int setNode(const std::string &node_name,bool val);
+    int setNode(const std::string &node_name, std::string val);
+    int setNode(const std::string &node_name,int32_t val);
+    int setNode(const std::string &node_name, double val);
+    int getNode(const std::string &node_name, double &val,double&max,double& min,double& inc);
+    int getNode(const std::string &node_name, int32_t &val,int32_t&max,int32_t& min,int32_t& inc);
+
+     Pylon::CInstantCamera* camerap;
+  
 	BaslerScoutDriver();
 	~BaslerScoutDriver();
     int setImageProperties(int32_t width,int32_t height,int32_t opencvImageType);
@@ -92,6 +100,8 @@ public:
     cu_driver::MsgManagmentResultType::MsgManagmentResult execOpcode(cu_driver::DrvMsgPtr cmd){return CameraDriverBridge::execOpcode(cmd);}
   
      friend class CConfigurationEvent;
+    chaos::common::data::CDWUniquePtr setDrvProperties(chaos::common::data::CDWUniquePtr);  
+
 };
         }}}
 #endif /* defined(__ControlUnitTest__DummyDriver__) */

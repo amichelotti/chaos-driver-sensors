@@ -121,7 +121,6 @@ protected:
      std::string serial;
      uint32_t shots;
      GrabStrategy gstrategy;
-     chaos::common::data::CDataWrapper camera_custom_props;
      cameraGrabCallBack fn;
      uint32_t hw_trigger_timeout_us,sw_trigger_timeout_us; // 0 =wait indefinitively
 

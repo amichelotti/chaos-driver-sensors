@@ -19,10 +19,12 @@
  */
 #ifndef __ASTRACTCAMERADRIVERINTERFACE_H__
 #define __ASTRACTCAMERADRIVERINTERFACE_H__
-#include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
+
 #include <driver/sensors/core/AbstractCameraDriver.h>
 #include <chaos/cu_toolkit/driver_manager/driver/DriverTypes.h>
 #include <chaos/cu_toolkit/driver_manager/driver/DriverAccessor.h>
+#include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverInterface.h>
+
 namespace chaos_driver=::chaos::cu::driver_manager::driver;
 namespace driver {
 
@@ -75,16 +77,12 @@ typedef struct {
     int strl; //len
 } camera_params_t;
 
-class CameraDriverInterface: public AbstractCameraDriver {
+class CameraDriverInterface: public AbstractCameraDriver,public chaos_driver::AbstractDriverInterface {
 
 
-protected:
-    chaos_driver::DrvMsg message;
-    chaos_driver::DriverAccessor* accessor;
-    boost::mutex io_mux;
 
 public:
-    CameraDriverInterface(chaos_driver::DriverAccessor*_accessor):accessor(_accessor){};
+    CameraDriverInterface(chaos_driver::DriverAccessor*_accessor):chaos_driver::AbstractDriverInterface(_accessor){};
 
     ~CameraDriverInterface();
 

@@ -104,8 +104,8 @@ CLOSE_REGISTER_PLUGIN
     }                                                                          \
   }
 
-#define SETINODE(name, cam, val, ret)                                          \
-  if (setNode(name, cam, (int64_t)val) == 0) {                                 \
+#define SETINODE(name, val, ret)                                          \
+  if (setNode(name, (int32_t)val) == 0) {                                 \
     LDBG_ << "setting \"" << name << "\" = " << val;           \
   } else {                                                                     \
     ret++;                                                                     \
@@ -174,12 +174,11 @@ namespace driver {
 namespace sensor {
 namespace camera {
 
-static int setNode(const std::string &node_name, CInstantCamera &camera,
-                   bool val) {
+int BaslerScoutDriver::setNode(const std::string &node_name,bool val) {
 
   try {
     BaslerScoutDriverLDBG << "setting bool node:" << node_name << " to " << val;
-    INodeMap &control = camera.GetNodeMap();
+    INodeMap &control = camerap->GetNodeMap();
     GenApi::CBooleanPtr node = control.GetNode(node_name.c_str());
     if (node.IsValid() == false) {
       BaslerScoutDriverLERR << "Boolean Node:" << node_name << " is invalid";
@@ -194,9 +193,11 @@ static int setNode(const std::string &node_name, CInstantCamera &camera,
     }
   } catch (const GenericException &e) {
     // Error handling.
-    BaslerScoutDriverLERR << "An exception occurred during set of Node:"
-                          << node_name;
-    BaslerScoutDriverLERR << e.GetDescription();
+    std::stringstream ss;
+    ss << "An exception occurred during SET of Node:"
+                           << node_name<<" msg:"<<e.GetDescription();
+    BaslerScoutDriverLERR_<< ss.str();
+    setLastError(ss.str());
     return -3;
   } catch (...) {
     BaslerScoutDriverLERR << "An Uknown exception occurre during set of Node:"
@@ -205,44 +206,44 @@ static int setNode(const std::string &node_name, CInstantCamera &camera,
   }
   return 0;
 }
-static int setNode(const std::string &node_name, CInstantCamera &camera,
-                   std::string val) {
+int BaslerScoutDriver::setNode(const std::string &node_name, std::string val) {
 
   try {
     BaslerScoutDriverLDBG << "setting enumeration node:" << node_name << " to " << val;
-    INodeMap &control = camera.GetNodeMap();
+    INodeMap &control = camerap->GetNodeMap();
     GenApi::CEnumerationPtr node = control.GetNode(node_name.c_str());
     if (node.IsValid() == false) {
-      BaslerScoutDriverLERR << "Enumeration Node:\"" << node_name << "\" is invalid";
+      BaslerScoutDriverLERR_ << "Enumeration Node:\"" << node_name << "\" is invalid";
       
       return -1;
     }
     if (IsWritable(node)) {
       node->FromString(val.c_str());
     } else {
-      BaslerScoutDriverLERR << "Node:\"" << node_name << "\" is not writable";
+      BaslerScoutDriverLERR_ << "Node:\"" << node_name << "\" is not writable";
       return -100;
     }
   } catch (const GenericException &e) {
     // Error handling.
-    BaslerScoutDriverLERR << "An exception occurred during set of Node:"
-                          << node_name;
-    BaslerScoutDriverLERR << e.GetDescription();
+   std::stringstream ss;
+    ss << "An exception occurred during SET of Node:"
+                           << node_name<<" msg:"<<e.GetDescription();
+    BaslerScoutDriverLERR_<< ss.str();
+    setLastError(ss.str());
     return -3;
   } catch (...) {
-    BaslerScoutDriverLERR << "An exception occurre during set of Node:"
+    BaslerScoutDriverLERR_ << "An exception occurre during set of Node:"
                           << node_name;
     return -2;
   }
   return 0;
 }
 
-static int setNode(const std::string &node_name, CInstantCamera &camera,
-                   int64_t val) {
+int BaslerScoutDriver::setNode(const std::string &node_name,int32_t val) {
 
   try {
-    BaslerScoutDriverLDBG << "setting int node:" << node_name << " to " << val;
-    INodeMap &control = camera.GetNodeMap();
+    BaslerScoutDriverLDBG_ << "setting int node:" << node_name << " to " << val;
+    INodeMap &control = camerap->GetNodeMap();
     GenApi::CIntegerPtr node = control.GetNode(node_name.c_str());
     if (node.IsValid() == false) {
       BaslerScoutDriverLERR << "Integer Node:" << node_name << " is invalid";
@@ -252,23 +253,25 @@ static int setNode(const std::string &node_name, CInstantCamera &camera,
       if(val<node->GetMin()){
 
         val=node->GetMin();
-        BaslerScoutDriverLDBG << "Min is "<<node->GetMin()<<" setting int node:" << node_name << " to " << val;
+        BaslerScoutDriverLDBG_ << "Min is "<<node->GetMin()<<" setting int node:" << node_name << " to " << val;
 
       }else if(val>node->GetMax()){
         val=node->GetMax();
-        BaslerScoutDriverLDBG << "Max is "<<node->GetMax()<<" setting int node:" << node_name << " to " << val;
+        BaslerScoutDriverLDBG_ << "Max is "<<node->GetMax()<<" setting int node:" << node_name << " to " << val;
 
       }
       node->SetValue(val);
     } else {
-      BaslerScoutDriverLERR << "Node:" << node_name << " is not writable";
+      BaslerScoutDriverLERR_ << "Node:" << node_name << " is not writable";
       return -100;
     }
   } catch (const GenericException &e) {
     // Error handling.
-    BaslerScoutDriverLERR << "An exception occurred during set of Node:"
-                          << node_name;
-    BaslerScoutDriverLERR << e.GetDescription();
+   std::stringstream ss;
+    ss << "An exception occurred during SET of Node:"
+                           << node_name<<" msg:"<<e.GetDescription();
+    BaslerScoutDriverLERR_<< ss.str();
+    setLastError(ss.str());
     return -3;
   } catch (...) {
     BaslerScoutDriverLERR << "An exception occurre during set of Node:"
@@ -278,27 +281,26 @@ static int setNode(const std::string &node_name, CInstantCamera &camera,
   return 0;
 }
 
-static int setNode(const std::string &node_name, CInstantCamera &camera,
-                   double val) {
+int BaslerScoutDriver::setNode(const std::string &node_name, double val) {
   try {
-    BaslerScoutDriverLDBG << "setting float node:" << node_name
+    BaslerScoutDriverLDBG_ << "setting float node:" << node_name
                           << " to:" << val;
 
-    INodeMap &control = camera.GetNodeMap();
+    INodeMap &control = camerap->GetNodeMap();
     GenApi::CFloatPtr node = control.GetNode(node_name.c_str());
     if (node.IsValid() == false) {
-      BaslerScoutDriverLERR << "Double Node:" << node_name << " is invalid";
+      BaslerScoutDriverLERR_ << "Double Node:" << node_name << " is invalid";
 
       return -1;
     }
     if(val<node->GetMin()){
 
         val=node->GetMin();
-        BaslerScoutDriverLDBG << "Min is "<<node->GetMin()<<" setting Double node:" << node_name << " to " << val;
+        BaslerScoutDriverLDBG_ << "Min is "<<node->GetMin()<<" setting Double node:" << node_name << " to " << val;
 
       }else if(val>node->GetMax()){
         val=node->GetMax();
-        BaslerScoutDriverLDBG << "Max is "<<node->GetMax()<<" setting Double node:" << node_name << " to " << val;
+        BaslerScoutDriverLDBG_ << "Max is "<<node->GetMax()<<" setting Double node:" << node_name << " to " << val;
 
       }
     node->SetValue(val);
@@ -311,9 +313,11 @@ static int setNode(const std::string &node_name, CInstantCamera &camera,
     }*/
   } catch (const GenericException &e) {
     // Error handling.
-    BaslerScoutDriverLERR << "An exception occurred during SET of Node:"
-                          << node_name;
-    BaslerScoutDriverLERR << e.GetDescription();
+    std::stringstream ss;
+    ss << "An exception occurred during SET of Node:"
+                           << node_name<<" msg:"<<e.GetDescription();
+    BaslerScoutDriverLERR_<< ss.str();
+    setLastError(ss.str());
     return -3;
   } catch (...) {
     BaslerScoutDriverLERR << "An exception occurre during SET of Node:"
@@ -361,50 +365,52 @@ static int setNodeInPercentage(const std::string &node_name,
   }
   return 0;
 }
-int BaslerScoutDriver::getNode(const std::string &node_name,
-                               CInstantCamera *camera, double &percent,
-                               const std::string pub) {
+ int BaslerScoutDriver::getNode(const std::string &node_name, double &percent,double&max,double& min,double& inc) {
   try {
-    BaslerScoutDriverLDBG_ << "getting node:" << node_name;
+    BaslerScoutDriverLDBG << "getting node:" << node_name;
 
-    INodeMap &control = camera->GetNodeMap();
+    INodeMap &control = camerap->GetNodeMap();
     GenApi::CFloatPtr node = control.GetNode(node_name.c_str());
     if (node.IsValid() == false) {
-      BaslerScoutDriverLERR_ << "Node:" << node_name << " is invalid";
+      BaslerScoutDriverLERR << "Node:" << node_name << " is invalid";
 
       return -1;
     }
     percent = -1;
     percent = node->GetValue();
+    min=node->GetMin();
+                               max=node->GetMax();
+                               inc=node->GetInc();
     /*  if(hasKey(node_name)){
             setProperty(node_name,node->GetValue());
         } else*/ {
-      createProperty(node_name, node->GetValue(), node->GetMin(),
-                               node->GetMax(), 0.0, pub);
+     // createProperty(node_name, node->GetValue(), node->GetMin(),
+     //                          node->GetMax(), 0.0, pub);
     }
-    BaslerScoutDriverLDBG_ << "DOUBLE VAL:" << percent;
+    BaslerScoutDriverLDBG << "DOUBLE VAL:" << percent;
   } catch (const GenericException &e) {
     // Error handling.
-    BaslerScoutDriverLERR_ << "An exception occurred during GET of Node:\""
-                           << node_name << "\":" << e.GetDescription();
+   std::stringstream ss;
+    ss << "An exception occurred during GET of Node:"
+                           << node_name<<" msg:"<<e.GetDescription();
+    BaslerScoutDriverLERR_<< ss.str();
+    setLastError(ss.str());
     return -3;
   } catch (...) {
-    BaslerScoutDriverLERR_ << "An exception occurre during GET of Node:"
+    BaslerScoutDriverLERR << "An exception occurre during GET of Node:"
                            << node_name;
     return -2;
   }
   return 0;
 }
-int BaslerScoutDriver::getNode(const std::string &node_name,
-                               CInstantCamera *camera, int32_t &percent,
-                               const std::string pub) {
+int BaslerScoutDriver::getNode(const std::string &node_name, int32_t &percent,int32_t&max,int32_t& min,int32_t& inc) {
   try {
     BaslerScoutDriverLDBG_ << "getting node:" << node_name;
 
-    INodeMap &control = camera->GetNodeMap();
+    INodeMap &control = camerap->GetNodeMap();
     GenApi::CIntegerPtr node = control.GetNode(node_name.c_str());
     if (node.IsValid() == false) {
-      BaslerScoutDriverLERR_ << " Integer Node:" << node_name << " is invalid";
+      BaslerScoutDriverLERR_<< " Integer Node:" << node_name << " is invalid";
 
       return -1;
     }
@@ -413,34 +419,40 @@ int BaslerScoutDriver::getNode(const std::string &node_name,
     /*  if(hasKey(node_name)){
             setProperty(node_name,node->GetValue());
         } else*/ {
-      createProperty(node_name, node->GetValue(), node->GetMin(),
-                               node->GetMax(), node->GetInc(), pub);
+    /*  createProperty(node_name, node->GetValue(), node->GetMin(),
+                               node->GetMax(), node->GetInc(), pub);*/
+                               min=node->GetMin();
+                               max=node->GetMax();
+                               inc=node->GetInc();
     }
-    BaslerScoutDriverLDBG_ << "VAL:" << percent;
+    BaslerScoutDriverLDBG << "VAL:" << percent;
   } catch (const GenericException &e) {
-    // Error handling.
-    BaslerScoutDriverLERR_ << "An exception occurred during GET of Node:\""
-                           << node_name << "\":" << e.GetDescription();
+    std::stringstream ss;
+    ss << "An exception occurred during GET of Node:"
+                           << node_name<<" msg:"<<e.GetDescription();
+    BaslerScoutDriverLERR_<< ss.str();
+    setLastError(ss.str());
+   
     return -3;
   } catch (...) {
-    BaslerScoutDriverLERR_ << "An exception occurre during GET of Node:"
+    BaslerScoutDriverLERR << "An exception occurre during GET of Node:"
                            << node_name;
     return -2;
   }
   return 0;
 }
-int BaslerScoutDriver::getNodeInPercentage(const std::string &node_name,
+static int getNodeInPercentage(const std::string &node_name,
                                            CInstantCamera *camera,
-                                           float &percent,
-                                           const std::string &pub) {
+                                           float &percent
+                                           ) {
   int64_t min, max, inc, val;
   try {
-    BaslerScoutDriverLDBG_ << "getting node:" << node_name;
+    BaslerScoutDriverLDBG << "getting node:" << node_name;
 
     INodeMap &control = camera->GetNodeMap();
     GenApi::CIntegerPtr node = control.GetNode(node_name.c_str());
     if (node.IsValid() == false) {
-      BaslerScoutDriverLERR_ << "Node:" << node_name << " is invalid";
+      BaslerScoutDriverLERR << "Node:" << node_name << " is invalid";
 
       return -1;
     }
@@ -452,22 +464,24 @@ int BaslerScoutDriver::getNodeInPercentage(const std::string &node_name,
     /*if(hasKey(node_name)){
             setProperty(node_name,node->GetValue());
         } else*/ {
-      createProperty(node_name, node->GetValue(), node->GetMin(),
-                               node->GetMax(), node->GetInc(), pub);
+     // createProperty(node_name, node->GetValue(), node->GetMin(),
+       //                        node->GetMax(), node->GetInc(), pub);
     }
     if ((max - min) > 0) {
       percent = (val * 1.0 - min) * 100.0 / (float)(max - min);
     }
-    BaslerScoutDriverLDBG_ << "VAL:" << val << "MIN:" << min << " MAX:" << max
+    BaslerScoutDriverLDBG << "VAL:" << val << "MIN:" << min << " MAX:" << max
                            << " PERCENT:" << percent;
   } catch (const GenericException &e) {
     // Error handling.
-    BaslerScoutDriverLERR_ << "An exception occurred during GET of Node:"
-                           << node_name;
-    BaslerScoutDriverLERR_ << e.GetDescription();
+    std::stringstream ss;
+    ss << "An exception occurred during GET of Node:"
+                           << node_name<<" msg:"<<e.GetDescription();
+    BaslerScoutDriverLERR<< ss.str();
+   // setLastError(ss.str());
     return -3;
   } catch (...) {
-    BaslerScoutDriverLERR_ << "An exception occurre during GET of Node:"
+    BaslerScoutDriverLERR << "An exception occurre during GET of Node:"
                            << node_name;
     return -2;
   }
@@ -592,6 +606,80 @@ public:
 } // namespace camera
 } // namespace sensor
 } // namespace driver
+
+
+
+
+#define CREATE_PROP(n,pub,type) \
+createProperty(n,[](AbstractDriver*thi,const std::string&name,\
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {\
+        type val,max,min,inc;\
+        if (((BaslerScoutDriver*)thi)->getNode(name, val,max,min,inc) == 0) {\
+          chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());\
+          ret->append("value",val);ret->append("min",min);ret->append("max",max);ret->append("inc",inc);return ret;}\
+        BaslerScoutDriverLERR<<" cannot get " #type <<" "<<name;\
+        return chaos::common::data::CDWUniquePtr();\
+      },[](AbstractDriver*thi,const std::string&name,\
+       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr { \
+        type val=p.getValue<type>("value");\
+         if(((BaslerScoutDriver*)thi)->setNode(name,val)!=0){\
+            BaslerScoutDriverLERR<<" cannot set " #type <<" "<< name<<" to:"<<val;\
+            return chaos::common::data::CDWUniquePtr();}\
+          return p.clone();},pub);
+/*
+#define CREATE_INT_PROP(n,pub) \
+createProperty(n,[](AbstractDriver*thi,const std::string&name,\
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {\
+        int32_t val;\
+        if (getNode(name, ((BaslerScoutDriver*)thi)->camerap, val) == 0) {\
+          chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());\
+          ret->addInt32Value("value",val);ret->addInt32Value("min",node->GetMin());ret->addInt32Value("max",node->GetMax());ret->addInt32Value("inc",node->GetInc());}\
+        BaslerScoutDriverLERR_<<" cannot get int32_t "<<name;\
+        return chaos::common::data::CDWUniquePtr();\
+      },[](AbstractDriver*thi,const std::string&name,\
+       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr { \
+        int32_t val=p.getInt32Value("value");\
+         if(setNode(name,((BaslerScoutDriver*)thi)->camerap,val)!=0){\
+            BaslerScoutDriverLERR_<<" cannot set int32_t "<<name<<" to:"<<val;\
+            return chaos::common::data::CDWUniquePtr();}\
+          return p.clone();},pub);
+
+
+#define CREATE_DOUBLE_PROP(n,pub) \
+createProperty(n,[](AbstractDriver*thi,const std::string&name,\
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {\
+        double val;\
+        if (getNode(name, ((BaslerScoutDriver*)thi)->camerap, val) == 0) {\
+  The         chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());\
+          ret->addDoubleValue("value",val);ret->addDoubleValue("min",node->GetMin());ret->addDoubleValue("max",node->GetMax());ret->addDoubleValue("inc",node->GetInc());}\
+        BaslerScoutDriverLERR_<<" cannot get double "<<name;\
+        return chaos::common::data::CDWUniquePtr();\
+      },[](AbstractDriver*thi,const std::string&name,\
+       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr { \
+        double val=p.getDoubleValue("value");\
+         if(setNode(name,((BaslerScoutDriver*)thi)->camerap,val)!=0){
+            BaslerScoutDriverLERR_<<" cannot set double "<<name<<" to:"<<val;\
+            return chaos::common::data::CDWUniquePtr();}\
+          return p.clone();}),pub);
+
+
+#define CREATE_STRING_PROP(n,pub,var,min,max,inc) \
+createProperty(n,[](AbstractDriver*thi,const std::string&name,\
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {\
+        std::string val;\
+        if (getNode(name, ((BaslerScoutDriver*)thi)->camerap, val) == 0) {\
+          chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());\
+          ret->addStringValue("value",val);}\
+        BaslerScoutDriverLERR_<<" cannot get string "<<name;\
+        return chaos::common::data::CDWUniquePtr();\
+      },[](AbstractDriver*thi,const std::string&name,\
+       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr { \
+        std::string val=p.getDoubleValue("value");\
+         if(setNode(name,((BaslerScoutDriver*)thi)->camerap,val)!=0){
+            BaslerScoutDriverLERR_<<" cannot set string "<<name<<" to:"<<val;\
+            return chaos::common::data::CDWUniquePtr();}\
+          return p.clone();},pub);
+*/
 // GET_PLUGIN_CLASS_DEFINITION
 // we need to define the driver with alias version and a class that implement it
 int BaslerScoutDriver::initializeCamera(
@@ -699,8 +787,8 @@ int BaslerScoutDriver::initializeCamera(
         createProperty("FullName", (const std::string &)fullname);
         createProperty("SerialNumber", (const std::string &)sn);
 
-
-          
+        
+   
 
 
       }
@@ -716,8 +804,17 @@ int BaslerScoutDriver::initializeCamera(
 
         camerap->Open();
       }
+      CREATE_PROP("Width","WIDTH",int32_t)
+      CREATE_PROP("Height","HEIGHT",int32_t)
+      CREATE_PROP("OffsetX","OFFSETX",int32_t);
+      CREATE_PROP("OffsetY","OFFSETY",int32_t);
+      CREATE_PROP("AcquisitionFrameRateAbs","FRAMERATE",double);
+      CREATE_PROP("GainRaw","GAIN",int32_t);
+      CREATE_PROP("ExposureTimeRaw","SHUTTER",int32_t);
+      CREATE_PROP("BslBrightnessRaw","BRIGHTNESS",int32_t);
+      CREATE_PROP("BslContrastRaw","CONTRAST",int32_t);
         /** initial settings */
-      ChaosStringVector contained_key;
+      /*ChaosStringVector contained_key;
       camera_custom_props.getAllKey(contained_key);
       int ret;
       for(ChaosStringVector::iterator i =contained_key.begin();i!=contained_key.end();i++ ){
@@ -737,8 +834,8 @@ int BaslerScoutDriver::initializeCamera(
             BaslerScoutDriverLERR_<<" cannot set Enumeration "<<*i<<" to:"<<camera_custom_props.getStringValue(*i);
           }
         } 
-      }
-     /***********/ 
+      }*/
+     /*
     GETINTNODE(Width,camerap,"WIDTH");
     GETINTNODE(Height,camerap,"HEIGHT");
     GETINTNODE(OffsetX,camerap,"OFFSETX");
@@ -748,6 +845,7 @@ int BaslerScoutDriver::initializeCamera(
     GETINTNODE(ExposureTimeRaw,camerap,"SHUTTER");
     GETINTNODE(BslBrightnessRaw,camerap,"BRIGHTNESS");
     GETINTNODE(BslContrastRaw,camerap,"CONTRAST");
+    */
      // propsToCamera(*camerap, (chaos::common::data::CDataWrapper *)&json);
      
      
@@ -763,7 +861,16 @@ int BaslerScoutDriver::initializeCamera(
                                 e.GetDescription(),
                             __PRETTY_FUNCTION__);
 
-  } catch (...) {
+  } catch (const chaos::CException &e) {
+    BaslerScoutDriverLERR_ << "CException Cannot attach camera "
+                           << json.getCompliantJSONString()
+                           << " error:" << e.what();
+    throw chaos::CException(-1,
+                            "Cannot attach camera " +
+                                json.getCompliantJSONString() + ":" +
+                                e.what(),
+                            __PRETTY_FUNCTION__);
+    } catch (...) {
     BaslerScoutDriverLERR_ << " exception attaching device:"
                            << json.getCompliantJSONString();
   }
@@ -970,12 +1077,12 @@ int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera &cam,
       BaslerScoutDriverLDBG_ << "Pixel format " << cv
                              << " Native:" << pixelFormat->ToString();
     }
-
-    if (getNode("TriggerMode", &cam, ivalue) == 0) {
+    int32_t max,min,inc;
+    if (getNode("TriggerMode", ivalue,max,min,inc) == 0) {
       BaslerScoutDriverLDBG_ << "GETTING PROP TRIGGER_MODE";
 
       if (ivalue == Basler_GigECamera::TriggerModeEnums::TriggerMode_On) {
-        if (getNode("TriggerSource", &cam, ivalue) == 0) {
+        if (getNode("TriggerSource", ivalue,max,min,inc) == 0) {
           switch (ivalue) {
           case Basler_GigECamera::TriggerSourceEnums::TriggerSource_Software:
             p->addInt32Value("TRIGGER_MODE", CAMERA_TRIGGER_SOFT);
@@ -983,7 +1090,7 @@ int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera &cam,
 
             break;
           default: {
-            if (getNode("TriggerActivation", &cam, ivalue) == 0) {
+            if (getNode("TriggerActivation", ivalue,max,min,inc) == 0) {
               if (ivalue == Basler_GigECamera::TriggerActivationEnums::
                                 TriggerActivation_RisingEdge) {
                 p->addInt32Value("TRIGGER_MODE", CAMERA_TRIGGER_HW_HI);
@@ -1013,6 +1120,7 @@ int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera &cam,
     BaslerScoutDriverLERR_ << "An Uknown exception occurred.";
     return -3;
   }
+  /*
   GETINTVALUE(Width, "WIDTH", BaslerScoutDriverLDBG_);
   GETINTVALUE(Height, "HEIGHT", BaslerScoutDriverLDBG_);
   GETINTVALUE(OffsetX, "OFFSETX", BaslerScoutDriverLDBG_);
@@ -1025,6 +1133,10 @@ int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera &cam,
   GETINTPERCVALUE(BslBrightnessRaw, "BRIGHTNESS", BaslerScoutDriverLDBG_);
   GETINTPERCVALUE(BslContrastRaw, "CONTRAST", BaslerScoutDriverLDBG_);
   appendPropertiesTo(*p);
+  */
+  syncRead();// synchronize with real values
+  appendPubPropertiesTo(*p);
+
   
   return 0;
 }
@@ -1047,49 +1159,19 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera &camera,
     int value = p->getInt32Value("TRIGGER_MODE");
     BaslerScoutDriverLDBG_ << "setting TRIGGER_MODE: " << value;
     changeTriggerMode(&camera, value);
-    /* switch (value)
-     {
-     case CAMERA_TRIGGER_HW_HI:
-         SETINODE("TriggerMode", camera,
-     Basler_GigECamera::TriggerModeEnums::TriggerMode_On, ret);
-         SETINODE("TriggerSource", camera,
-     Basler_GigECamera::TriggerSourceEnums::TriggerSource_VInput1, ret);
-         SETINODE("TriggerActivation", camera,
-     Basler_GigECamera::TriggerActivationEnums::TriggerActivation_RisingEdge,
-     ret);
-
-         break;
-     case CAMERA_TRIGGER_HW_LOW:
-         SETINODE("TriggerMode", camera,
-     Basler_GigECamera::TriggerModeEnums::TriggerMode_On, ret);
-         SETINODE("TriggerSource", camera,
-     Basler_GigECamera::TriggerSourceEnums::TriggerSource_VInput1, ret);
-         SETINODE("TriggerActivation", camera,
-     Basler_GigECamera::TriggerActivationEnums::TriggerActivation_FallingEdge,
-     ret); break; case CAMERA_TRIGGER_SOFT: SETINODE("TriggerMode", camera,
-     Basler_GigECamera::TriggerModeEnums::TriggerMode_On, ret);
-         SETINODE("TriggerSource", camera,
-     Basler_GigECamera::TriggerSourceEnums::TriggerSource_Software, ret); break;
-     case CAMERA_TRIGGER_CONTINOUS:
-         SETINODE("TriggerMode", camera,
-     Basler_GigECamera::TriggerModeEnums::TriggerMode_Off, ret);
-
-         break;
-     }
-     */
   }
  // STOP_GRABBING(&camera);
   if (p->hasKey("OFFSETX")) {
-    SETINODE("OffsetX", camera, p->getInt32Value("OFFSETX"), ret);
+    SETINODE("OffsetX", p->getInt32Value("OFFSETX"), ret);
   }
   if (p->hasKey("OFFSETY")) {
-    SETINODE("OffsetY", camera, p->getInt32Value("OFFSETY"), ret);
+    SETINODE("OffsetY", p->getInt32Value("OFFSETY"), ret);
   }
   if (p->hasKey("WIDTH")) {
-    SETINODE("Width", camera, p->getInt32Value("WIDTH"), ret);
+    SETINODE("Width", p->getInt32Value("WIDTH"), ret);
   }
   if (p->hasKey("HEIGHT")) {
-    SETINODE("Height", camera, p->getInt32Value("HEIGHT"), ret);
+    SETINODE("Height", p->getInt32Value("HEIGHT"), ret);
   }
   if (p->hasKey("PIXELFMT")) {
     // Set the pixel data format.
@@ -1105,8 +1187,8 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera &camera,
 
     if (gain < 0) {
       if (setNode(
-              "GainAuto", camera,
-              (int64_t)Basler_GigECamera::GainAutoEnums::GainAuto_Continuous) !=
+              "GainAuto",
+              (int32_t)Basler_GigECamera::GainAutoEnums::GainAuto_Continuous) !=
           0) {
         ret++;
       }
@@ -1126,12 +1208,12 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera &camera,
     double gain = p->getAsRealValue("SHUTTER") / 100.0;
 
     if ((gain < 0)) {
-      SETINODE("ExposureAuto", camera,
+      SETINODE("ExposureAuto",
                Basler_GigECamera::ExposureAutoEnums::ExposureAuto_Continuous,
                ret);
 
     } else {
-      SETINODE("ExposureAuto", camera,
+      SETINODE("ExposureAuto",
                Basler_GigECamera::ExposureAutoEnums::ExposureAuto_Off, ret);
 
       if (gain > 1.0) {
@@ -1148,7 +1230,7 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera &camera,
 
     if (gain < 0) {
       SETINODE(
-          "DemosaicingMode", camera,
+          "DemosaicingMode",
           Basler_GigECamera::DemosaicingModeEnums::DemosaicingMode_BaslerPGI,
           ret);
 
@@ -1163,7 +1245,7 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera &camera,
     }
   }
   if (p->hasKey("BRIGHTNESS")) {
-    SETINODE("DemosaicingMode", camera,
+    SETINODE("DemosaicingMode",
              Basler_GigECamera::DemosaicingModeEnums::DemosaicingMode_BaslerPGI,
              ret);
 
@@ -1181,9 +1263,9 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera &camera,
   }
    if(p->hasKey("FRAMERATE")){
         double value=p->getAsRealValue("FRAMERATE");
-         setNode("AcquisitionFrameRateEnable", camera,
+         setNode("AcquisitionFrameRateEnable",
                true) ;
-          setNode("AcquisitionFrameRateAbs", camera,
+          setNode("AcquisitionFrameRateAbs",
                value) ;
 
       BaslerScoutDriverLDBG_<< "SET FRAMERATE:"<<value;
@@ -1191,7 +1273,7 @@ int BaslerScoutDriver::propsToCamera(CInstantCamera &camera,
     }
 
   if (p->hasKey("CONTRAST")) {
-    SETINODE("DemosaicingMode", camera,
+    SETINODE("DemosaicingMode",
              Basler_GigECamera::DemosaicingModeEnums::DemosaicingMode_BaslerPGI,
              ret);
     double gain = p->getDoubleValue("CONTRAST") / 100.0;
@@ -1581,4 +1663,8 @@ int BaslerScoutDriver::getCameraProperties(
                          << " ret:" << ret;
 
   return ret;
+}
+chaos::common::data::CDWUniquePtr BaslerScoutDriver::setDrvProperties(chaos::common::data::CDWUniquePtr drv){
+    return setProperties(*drv.get(),true);
+
 }
