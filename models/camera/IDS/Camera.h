@@ -174,7 +174,9 @@ private:
           throw ueye::uEyeException(err, msg);
         }
       } else {
-        throw ueye::uEyeException(err, "Camera failed to initialize");
+        std::stringstream ss;
+        ss<<"Camera failed to initialize:"<<msg;
+        throw ueye::uEyeException(err, ss.str().c_str());
       }
     }
   }

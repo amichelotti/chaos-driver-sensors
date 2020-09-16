@@ -367,7 +367,7 @@ static int setNodeInPercentage(const std::string &node_name,
 }
  int BaslerScoutDriver::getNode(const std::string &node_name, double &percent,double&max,double& min,double& inc) {
   try {
-    BaslerScoutDriverLDBG << "getting node:" << node_name;
+    BaslerScoutDriverLDBG << "getting double node:" << node_name;
 
     INodeMap &control = camerap->GetNodeMap();
     GenApi::CFloatPtr node = control.GetNode(node_name.c_str());
@@ -379,8 +379,8 @@ static int setNodeInPercentage(const std::string &node_name,
     percent = -1;
     percent = node->GetValue();
     min=node->GetMin();
-                               max=node->GetMax();
-                               inc=node->GetInc();
+    max=node->GetMax();
+    inc=0;
     /*  if(hasKey(node_name)){
             setProperty(node_name,node->GetValue());
         } else*/ {
@@ -804,6 +804,7 @@ int BaslerScoutDriver::initializeCamera(
 
         camerap->Open();
       }
+      setNode("AcquisitionFrameRateEnable",true) ;
       CREATE_PROP("Width","WIDTH",int32_t)
       CREATE_PROP("Height","HEIGHT",int32_t)
       CREATE_PROP("OffsetX","OFFSETX",int32_t);
@@ -1484,8 +1485,10 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
 
       return size_ret;
     } else {
-      BaslerScoutDriverLERR_ << "Error: " << ptrGrabResult->GetErrorCode()
+      std::stringstream ss;
+      ss<<"Error: " << ptrGrabResult->GetErrorCode()
                              << " " << ptrGrabResult->GetErrorDescription();
+      setLastError(ss.str());                      
       return CAMERA_GRAB_ERROR;
     }
   }

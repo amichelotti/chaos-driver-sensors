@@ -99,7 +99,7 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
     const char *version;
     int major, minor, build;
     
-    
+    try{
    /* if (camera.checkVersion(major, minor, build, version)) {
         IDSGEXXDriverLDBG_<<"Loaded uEye SDK:"<<version;
     } else {
@@ -212,7 +212,22 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
 
 
 */
+    
+    } catch (std::exception &e) {
+      std::stringstream ss;
+      ss << "Unexpected exception: \"" << e.what();
+      IDSGEXXDriverLERR_ << ss.str();
+      return -110;
+      } catch (...) {
+      //unkonwn exception
+      IDSGEXXDriverLERR_ << "an unknown exception ";
+      return -120;
+
+    }
     initialized=true;
+    createProperty("SerialNumber", (int32_t)camera.getCameraSerialNo());
+    createProperty("FullName", camera.getCameraName());
+
 
     return 0;
 }

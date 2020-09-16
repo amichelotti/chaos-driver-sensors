@@ -282,7 +282,7 @@ bool RTCameraBase::setProp(const std::string &name, int32_t value,
        ((name == HEIGHT_KEY) ) ||
        ((name == OFFSETX_KEY) ) ||
        ((name == OFFSETY_KEY) ) ||
-       ((name == TRIGGER_MODE_KEY) && (value == CAMERA_DISABLE_ACQUIRE)));
+       ((name == TRIGGER_MODE_KEY) ));
   
   //bool stopgrab = ((name == TRIGGER_MODE_KEY) && (value == CAMERA_DISABLE_ACQUIRE));
 
@@ -713,9 +713,12 @@ void RTCameraBase::stopGrabbing() {
     wait_encode.notify_all();
     full_encode.notify_all();
     full_capture.notify_all();
+    encode_th.interrupt();
+
     if (boost::this_thread::get_id() != encode_th.get_id()) {
       encode_th.join();
     }
+    capture_th.interrupt();
     if (boost::this_thread::get_id() != capture_th.get_id()) {
       capture_th.join();
     }
@@ -804,7 +807,7 @@ void RTCameraBase::captureThread() {
                StateVariableTypeAlarmDEV, "captureQueueFull",
                chaos::common::alarm::MultiSeverityAlarmLevelClear);*/
           }
-          RTCameraBaseLDBG_ << "Capture Queue:" << captureQueue;
+         // RTCameraBaseLDBG_ << "Capture Queue:" << captureQueue;
           captureQueue++;
           wait_capture.notify_one();
         }
@@ -827,6 +830,11 @@ void RTCameraBase::captureThread() {
               chaos::common::alarm::MultiSeverityAlarmLevelHigh);
         } else if (ret < 0) {
           RTCameraBaseLERR_ << " Error wait returned:" << ret;
+          std::string error=driver->getLastError();
+          if(error.size()){
+              metadataLogging(chaos::common::metadata_logging::StandardLoggingChannel::LogLevelError,error);
+
+          }
           setStateVariableSeverity(
               StateVariableTypeAlarmDEV, "capture_error",
               chaos::common::alarm::MultiSeverityAlarmLevelHigh);
@@ -1051,7 +1059,7 @@ void RTCameraBase::encodeThread() {
       image.release();
 
     } else {
-      RTCameraBaseLDBG_ << "Encode EMPTY";
+     // RTCameraBaseLDBG_ << "Encode EMPTY";
 
       boost::mutex::scoped_lock lock(mutex_encode);
       boost::system_time const timeout =

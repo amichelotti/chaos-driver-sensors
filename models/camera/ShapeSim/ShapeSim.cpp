@@ -647,7 +647,7 @@ int ShapeSim::waitGrab(camera_buf_t**buf,uint32_t timeout_ms){
             cropped=img;
         }
 
-      //  applyCameraParams(cropped);
+        applyCameraParams(cropped);
          size = cropped.total() * cropped.elemSize();
 
 #ifdef CVDEBUG
