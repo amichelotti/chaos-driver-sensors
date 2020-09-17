@@ -305,6 +305,7 @@ DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,ShapeSim),
           ((ShapeSim*)thi)->brightness_raw=p.getInt32Value("value");
           return p.clone();
       });*/
+    
     createProperty("shape_type","ellipse","","","","",[](AbstractDriver*thi,const std::string&name,
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
           // get value
@@ -375,7 +376,7 @@ int ShapeSim::propsToCamera(chaos::common::data::CDataWrapper*p){
 
     // Maximize the Image AOI.
     //   chaos::common::data::CDataWrapper*p=driver->props;
-    importKeysAsProperties(*p);
+    setProperties(*p,true);
     /*
     if (p->hasKey("OFFSETX")){
         offsetx=p->getInt32Value("OFFSETX");

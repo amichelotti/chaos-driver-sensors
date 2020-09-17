@@ -1667,7 +1667,9 @@ int BaslerScoutDriver::getCameraProperties(
 
   return ret;
 }
+/*
 chaos::common::data::CDWUniquePtr BaslerScoutDriver::setDrvProperties(chaos::common::data::CDWUniquePtr drv){
     return setProperties(*drv.get(),true);
 
 }
+I*/

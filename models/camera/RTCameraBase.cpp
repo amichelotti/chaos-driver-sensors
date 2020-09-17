@@ -589,12 +589,13 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
         }
       }
     }
-  */
+  
   if (driver->getImageProperties(width, height, itype) == 0) {
     RTCameraBaseLDBG_ << "CAMERA IMAGE:" << width << "x" << height;
     *sizex = width;
     *sizey = height;
-  }
+  }*/
+
   chaos::common::data::CDataWrapper cam_prop;
   if (driver->getCameraProperties(cam_prop) == 0) {
     if (cam_prop.hasKey(FRAMEBUFFER_ENCODING_KEY) &&
@@ -609,6 +610,12 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     }
     if (cam_prop.hasKey(OFFSETY_KEY) && cam_prop.isInt32Value(OFFSETY_KEY)) {
       *offsety = cam_prop.getInt32Value(OFFSETY_KEY);
+    }
+    if (cam_prop.hasKey(WIDTH_KEY) && cam_prop.isInt32Value(WIDTH_KEY)) {
+      *sizex = cam_prop.getInt32Value(WIDTH_KEY);
+    }
+    if (cam_prop.hasKey(HEIGHT_KEY) && cam_prop.isInt32Value(HEIGHT_KEY)) {
+      *sizey = cam_prop.getInt32Value(HEIGHT_KEY);
     }
   }
   if ((*sizex == 0) || (*sizey == 0)) {
