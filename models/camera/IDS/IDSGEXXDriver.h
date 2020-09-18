@@ -60,6 +60,9 @@ class IDSGEXXDriver:public chaos::cu::driver_manager::driver::AbstractDriverPlug
      int cameraToProps(chaos::common::data::CDataWrapper*p);
     bool deinitialized;
 public:
+    double framerate,exposure;
+    int32_t width,height,offsetx,offsety,gain;
+
 	IDSGEXXDriver();
 	~IDSGEXXDriver();
     int setImageProperties(int32_t width,int32_t height,int32_t opencvImageType);

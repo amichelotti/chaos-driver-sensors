@@ -117,6 +117,11 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
 
   framebuf = NULL;
   try {
+    std::stringstream ss;
+      std::string fname = _control_unit_id;
+      replace(fname.begin(), fname.end(), '/', '_');
+      ss << "/tmp/"<<fname << "_calib.png";
+    calibimage=ss.str();
     chaos::common::data::CDataWrapper p;
     p.setSerializedJsonData(_control_unit_param.c_str());
     if (p.hasKey(FRAMEBUFFER_ENCODING_KEY) &&
@@ -139,13 +144,12 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
       imagesizey = p.getInt32Value("IMAGESIZEY");
     }
     if (p.hasKey("APPLY_CALIB")) {
-      std::stringstream ss;
-      std::string fname = getDeviceID();
-      replace(fname.begin(), fname.end(), '/', '_');
-      ss << fname << "_calib.png";
-
-      cv::Mat sub = imread(ss.str());
+     
+      cv::Mat sub = imread(calibimage);
       if (sub.data) {
+         if (subImage) {
+            delete subImage;
+        }
         subImage = new cv::Mat(sub);
         RTCameraBaseLDBG_ << " Loading CALIB DATA:" << ss.str();
         applyCalib = true;
@@ -160,6 +164,8 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
     }
   } catch (...) {
   }
+
+  
   createProperty("compression_factor", (int32_t)1,"",NULL,[](AbstractControlUnit*thi,const std::string&name,
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
         RTCameraBase *t=(RTCameraBase *)thi;
@@ -171,6 +177,33 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
       LDBG_ << "using png compression factor:"<<p.getInt32Value("value");
       return p.clone();
       });
+
+  
+
+ 
+  CREATE_CU_BOOL_PROP("apply_calib","apply_calib",applyCalib,RTCameraBase);
+  CREATE_CU_BOOL_PROP("performCalib","performCalib",performCalib,RTCameraBase);
+  CREATE_CU_STRING_PROP("calibimage","calibimage",calibimage,RTCameraBase);
+
+createProperty("apply_calib",applyCalib,"apply_calib",[](AbstractControlUnit*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
+        ret->addBoolValue("value",((RTCameraBase*)thi)->applyCalib);
+        return ret;
+      },[](AbstractControlUnit*thi,const std::string&name,
+       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr { 
+          ((RTCameraBase*)thi)->applyCalib=p.getBoolValue("value");
+          if(((RTCameraBase*)thi)->applyCalib){
+             cv::Mat sub = imread(((RTCameraBase*)thi)->calibimage);
+            if (sub.data) {
+              ((RTCameraBase*)thi)->subImage = new cv::Mat(sub);
+              LDBG_ << " Loading CALIB DATA:" << ((RTCameraBase*)thi)->calibimage;
+            } else {
+              LERR_ << " CALIB DATA does not exists:" << ((RTCameraBase*)thi)->calibimage;
+            }
+
+          }
+          return p.clone();});
 
 }
 
@@ -278,10 +311,11 @@ bool RTCameraBase::setProp(const std::string &name, int32_t value,
 
   RTCameraBaseLDBG_ << "SETTING IPROP:" << name << " VALUE:" << value;
   bool stopgrab =
-      (((name == WIDTH_KEY) ) ||
+      (
+       /*((name == WIDTH_KEY) ) ||
        ((name == HEIGHT_KEY) ) ||
        ((name == OFFSETX_KEY) ) ||
-       ((name == OFFSETY_KEY) ) ||
+       ((name == OFFSETY_KEY) ) ||*/
        ((name == TRIGGER_MODE_KEY) ));
   
   //bool stopgrab = ((name == TRIGGER_MODE_KEY) && (value == CAMERA_DISABLE_ACQUIRE));
@@ -938,30 +972,38 @@ void RTCameraBase::encodeThread() {
             delete subImage;
           }
           subImage = new cv::Mat(image);
-          std::stringstream ss;
-          std::string fname = getDeviceID();
-          replace(fname.begin(), fname.end(), '/', '_');
-          ss << fname << "_calib.png";
-            imwrite(ss.str(), image);
-            metadataLogging(chaos::common::metadata_logging::
-                                StandardLoggingChannel::LogLevelInfo,
-                            ss.str());
-          
+            if(imwrite(calibimage, image)){
+              metadataLogging(chaos::common::metadata_logging::
+                                  StandardLoggingChannel::LogLevelInfo,
+                              "Calibrarion file:"+calibimage);
+            } else {
+
+              metadataLogging(chaos::common::metadata_logging::
+                                  StandardLoggingChannel::LogLevelError,
+                              "Cannot write Calibration file:"+calibimage);
+            }
+            
         }
         performCalib = false;
       }
       } catch (cv::Exception& ex){
           std::stringstream ss;
-
+          
             ss << "OpenCV Exception converting image:" << ex.what();
-            goInFatalError(ss.str(), -1000, __PRETTY_FUNCTION__);
+            if(applyCalib==false){
+              if(!stopCapture)
+                goInFatalError(ss.str(), -1000, __PRETTY_FUNCTION__);
+
+            }
+          applyCalib=false;
 
         
       } catch (runtime_error &ex) {
                 std::stringstream ss;
 
             ss << "Exception converting image:" << ex.what();
-            goInFatalError(ss.str(), -1000, __PRETTY_FUNCTION__);
+            if(!stopCapture)
+                goInFatalError(ss.str(), -1000, __PRETTY_FUNCTION__);
 
             //  metadataLogging(chaos::common::metadata_logging::StandardLoggingChannel::LogLevelError,ss.str());
       }
@@ -1035,9 +1077,11 @@ void RTCameraBase::encodeThread() {
         }
       } catch (cv::Exception& ex){
           std::stringstream ss;
+            if(!stopCapture){
 
-            ss << "OpenCV Exception Encoding format:" << ex.what();
-            goInFatalError(ss.str(), -1000, __PRETTY_FUNCTION__);
+              ss << "OpenCV Exception Encoding format:" << ex.what();
+              goInFatalError(ss.str(), -1000, __PRETTY_FUNCTION__);
+            }
 
         if (encbuf) {
           delete encbuf;
@@ -1049,8 +1093,10 @@ void RTCameraBase::encodeThread() {
         if (encbuf) {
           delete encbuf;
         }
+        if(!stopCapture){
 
-        goInFatalError(ss.str(), -1001, __PRETTY_FUNCTION__);
+          goInFatalError(ss.str(), -1001, __PRETTY_FUNCTION__);
+        }
 
         usleep(100000);
       } catch (...) {
@@ -1060,8 +1106,12 @@ void RTCameraBase::encodeThread() {
         if (encbuf) {
           delete encbuf;
         }
-        usleep(100000);
-        goInFatalError(ss.str(), -1002, __PRETTY_FUNCTION__);
+        if(!stopCapture){
+
+          usleep(100000);
+
+          goInFatalError(ss.str(), -1002, __PRETTY_FUNCTION__);
+        }
       }
       image.release();
 
@@ -1071,8 +1121,11 @@ void RTCameraBase::encodeThread() {
       boost::mutex::scoped_lock lock(mutex_encode);
       boost::system_time const timeout =
           boost::get_system_time() + boost::posix_time::milliseconds(5000);
-
-      wait_capture.timed_wait(lock, timeout);
+        
+        
+        if(!stopCapture){
+          wait_capture.timed_wait(lock, timeout);
+        }
     }
   }
   boost::mutex::scoped_lock lock(mutex_encode);

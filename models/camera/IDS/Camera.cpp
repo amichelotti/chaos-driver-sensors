@@ -737,7 +737,48 @@ int Camera::getImageRawSize(){
     return getWidth() * getHeight() *depth;
 
 }
+int Camera::setWidth(int w){
+  IS_SIZE_2D sz;
+  INT nRet;
+  sz.s32Width=w;
+  sz.s32Height=getHeight();
+    nRet= is_AOI(cam_, IS_AOI_IMAGE_SET_SIZE, (void*)&sz, sizeof(sz));
+  
+    return nRet;
 
+}
+
+int Camera::setHeight(int w){
+  IS_SIZE_2D sz;
+  INT nRet;
+  sz.s32Width=getWidth();
+  sz.s32Height=w;
+  nRet= is_AOI(cam_, IS_AOI_IMAGE_SET_SIZE, (void*)&sz, sizeof(sz));
+  
+  return nRet;
+}
+int Camera::setOffsetX(int w){
+  int posx,posy,width,height;
+  INT nRet;
+
+  if((nRet=getAOI(posx,posy,width,height))==IS_SUCCESS){
+    return setAOI(w,posy,width,height);
+  }
+  
+  return nRet;
+}
+int Camera::setOffsetY(int w){
+  int posx,posy,width,height;
+  INT nRet;
+
+  if((nRet=getAOI(posx,posy,width,height))==IS_SUCCESS){
+    return setAOI(posx,w,width,height);
+  }
+  
+  return nRet;
+
+}
+  
 void Camera::captureThread(CamCaptureCB callback)
 {
   streaming_ = true;

@@ -135,6 +135,12 @@ public:
   int setFrameRate(double *rate);
   int setAOI(int posx,int posy,int width,int height);
   int getAOI(int& posx,int& posy,int& width,int& height);
+  int setWidth(int w);
+  int setHeight(int w);
+  int setOffsetX(int w);
+  int setOffsetY(int w);
+  
+
   /*
    * Return FPS of the camera
    * \param rate output FPS(if -1 autoframerate)
