@@ -61,7 +61,7 @@ class IDSGEXXDriver:public chaos::cu::driver_manager::driver::AbstractDriverPlug
     bool deinitialized;
 public:
     double framerate,exposure;
-    int32_t width,height,offsetx,offsety,gain;
+    int32_t width,height,offsetx,offsety,gain,zoom,pixelclk;
 
 	IDSGEXXDriver();
 	~IDSGEXXDriver();
