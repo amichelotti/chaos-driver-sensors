@@ -110,6 +110,13 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
     int num_cameras = camera.getNumberOfCameras();
     if (num_cameras > 0) {
         IDSGEXXDriverLDBG_<<"Found "<<num_cameras<<" cameras";
+        std::vector<unsigned int> serialid,dev_id;
+        
+        int ret=camera.getSerialNumberList(serialid,dev_id);
+        for(int cnt=0;cnt<ret;cnt++){
+            IDSGEXXDriverLDBG_<<cnt<<"] Found serid:"<<serialid[cnt]<<" devid:"<<dev_id[cnt]<<" looking:"<<serial;
+ 
+        }
 
     } else {
         IDSGEXXDriverLERR_<<" NO CAMERA FOUND";
@@ -257,7 +264,9 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
     gain=camera.getHardwareGain();
     exposure=camera.getExposure();
     zoom=camera.getZoom();
-createProperty("width", width,"WIDTH",[](AbstractDriver*thi,const std::string&name,
+    trgmode=IDStrgmode2trgmode(camera.getTriggerMode());
+
+createProperty("width", width,0,camera.getWidthMax(),1,"WIDTH",[](AbstractDriver*thi,const std::string&name,
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
         IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
             t->width=t->camera.getWidth();
@@ -280,7 +289,7 @@ createProperty("width", width,"WIDTH",[](AbstractDriver*thi,const std::string&na
         
       });
 
-      createProperty("height", height,"HEIGHT",[](AbstractDriver*thi,const std::string&name,
+      createProperty("height", height,0,camera.getHeightMax(),1,"HEIGHT",[](AbstractDriver*thi,const std::string&name,
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
         IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
             t->height=t->camera.getHeight();
@@ -442,8 +451,81 @@ createProperty("pixelCLK", pixelclk,"PIXELCLK",[](AbstractDriver*thi,const std::
             return chaos::common::data::CDWUniquePtr();
         
       });
+     createProperty("trgmode", trgmode,"TRIGGER_MODE",[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            t->trgmode=t->IDStrgmode2trgmode(t->camera.getTriggerMode());
+            chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
+            ret->addInt32Value("value",t->trgmode);
+            return ret;
+        
+      },[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            if(p.hasKey("value")){
+                TriggerMode val=t->trgmode2IDStrgmode(p.getInt32Value("value"));
+                t->camera.setTriggerMode(val);
+                return p.clone();
+            }
+        
+            return chaos::common::data::CDWUniquePtr();
+        
+      });  
     return 0;
 }
+
+int32_t IDSGEXXDriver::IDStrgmode2trgmode(TriggerMode ids){
+    switch(ids){
+    case TRIGGER_HI_LO:
+        IDSGEXXDriverLDBG_<< "TRIGGER HI->LOW";
+        return CAMERA_TRIGGER_HW_LOW;
+    case TRIGGER_LO_HI:
+        IDSGEXXDriverLDBG_<< "TRIGGER LOW->HI";
+        return CAMERA_TRIGGER_HW_HI;
+    case TRIGGER_OFF:
+    
+    default:
+        IDSGEXXDriverLDBG_<< "TRIGGER CONTINOUS";
+        return CAMERA_TRIGGER_CONTINOUS;
+        
+    }
+
+}
+TriggerMode IDSGEXXDriver::trgmode2IDStrgmode(int32_t tmode){
+      switch(tmode){
+        case (CAMERA_TRIGGER_CONTINOUS):{
+            IDSGEXXDriverLDBG_<< "TRIGGER OFF";
+
+            return TRIGGER_OFF;
+
+        }
+        case CAMERA_TRIGGER_SINGLE:{
+            IDSGEXXDriverLDBG_<< "TRIGGER SINGLE (NA)";
+            return TRIGGER_LO_HI;
+        }
+        case CAMERA_TRIGGER_SOFT:{
+            IDSGEXXDriverLDBG_<< "TRIGGER SOFT (NA)";
+            return TRIGGER_LO_HI;
+
+        }
+       
+        case CAMERA_TRIGGER_HW_LOW:
+            IDSGEXXDriverLDBG_<< "TRIGGER HI->LOW";
+
+            return TRIGGER_HI_LO;
+
+        case CAMERA_TRIGGER_HW_HI:
+            IDSGEXXDriverLDBG_<< "TRIGGER LOW->HI";
+            return TRIGGER_LO_HI;
+        default:
+                IDSGEXXDriverLDBG_<< "DISABLE ACQUIRE";
+            return TRIGGER_OFF;
+
+
+        }
+
+}
+    
 /*
 IDSGEXXDriver::IDSGEXXDriver():shots(0),framebuf(NULL),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false){
 
@@ -513,7 +595,7 @@ int IDSGEXXDriver::cameraToProps(chaos::common::data::CDataWrapper*p){
 
         return 0;
     }
-
+    IDSGEXXDriverLDBG_<<" synchronize all properties..";
     syncRead();// synchronize with real values
 
     appendPubPropertiesTo(*p);
@@ -553,21 +635,8 @@ int IDSGEXXDriver::cameraToProps(chaos::common::data::CDataWrapper*p){
     p->addInt32Value("OFFSETY",offsety);
 
     */
-    switch(camera.getTriggerMode()){
-    case TRIGGER_HI_LO:
-        IDSGEXXDriverLDBG_<< "TRIGGER HI->LOW";
+    
 
-        p->addInt32Value("TRIGGER_MODE",CAMERA_TRIGGER_HW_LOW);
-        break;
-    case TRIGGER_LO_HI:
-        IDSGEXXDriverLDBG_<< "TRIGGER LOW->HI";
-        p->addInt32Value("TRIGGER_MODE",CAMERA_TRIGGER_HW_HI);
-        break;
-    default:
-        IDSGEXXDriverLDBG_<< "TRIGGER CONTINOUS";
-        p->addInt32Value("TRIGGER_MODE",CAMERA_TRIGGER_CONTINOUS);
-        break;
-    }
    
     p->addStringValue(FRAMEBUFFER_ENCODING_KEY,ids2cv(camera.getColorMode()));
 
@@ -590,63 +659,13 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
         IDSGEXXDriverLERR_ << "Camera is deinitialized";
         return -2;
     }
+    IDSGEXXDriverLDBG_<<"setting props: " << p->getCompliantJSONString() ;
+
     setProperties(*p,true);
     
 
     
-    if(p->hasKey(TRIGGER_MODE_KEY)){
-        tmode=(TriggerModes)p->getInt32Value(TRIGGER_MODE_KEY);
-
-
-        // Register the standard configuration event handler for enabling software triggering.
-        // The software trigger configuration handler replaces the default configuration
-        // as all currently registered configuration handlers are removed by setting the registration mode to RegistrationMode_ReplaceAll.
-        switch(tmode){
-        case (CAMERA_TRIGGER_CONTINOUS):{
-            camera.setTriggerMode(TRIGGER_OFF);
-            IDSGEXXDriverLDBG_<< "TRIGGER OFF";
-
-            break;
-        }
-        case CAMERA_TRIGGER_SINGLE:{
-            IDSGEXXDriverLDBG_<< "TRIGGER SINGLE (NA)";
-
-            break;
-        }
-        case CAMERA_TRIGGER_SOFT:{
-            IDSGEXXDriverLDBG_<< "TRIGGER SOFT (NA)";
-
-            break;
-        }
-       
-        case CAMERA_TRIGGER_HW_LOW:
-
-            if(camera.setTriggerMode(TRIGGER_HI_LO)){
-                IDSGEXXDriverLDBG_<< "TRIGGER HI->LOW";
-
-            } else {
-                IDSGEXXDriverLERR_<< "TRIGGER HI->LOW set failed";
-
-            }
-            break;
-        case CAMERA_TRIGGER_HW_HI:
-            IDSGEXXDriverLDBG_<< "TRIGGER LOW->HI";
-
-            if(camera.setTriggerMode(TRIGGER_LO_HI)){
-                IDSGEXXDriverLDBG_<< "TRIGGER LOW->HI";
-
-            } else {
-                IDSGEXXDriverLERR_<< "TRIGGER LOW->HI set failed";
-
-            }
-            break;
-        case CAMERA_DISABLE_ACQUIRE:
-                IDSGEXXDriverLDBG_<< "DISABLE ACQUIRE";
-                break;
-
-        }
-    }
-    IDSGEXXDriverLDBG_<<"setting props: " << p->getCompliantJSONString() ;
+   
 
     // Get the parameters for setting the image area of interest (Image AOI).
 
@@ -805,7 +824,58 @@ if(p->hasKey("ZOOM")){
 
         camera.setPixelClock(&ivalue);
     }
+ if(p->hasKey(TRIGGER_MODE_KEY)){
+        tmode=(TriggerModes)p->getInt32Value(TRIGGER_MODE_KEY);
 
+
+        // Register the standard configuration event handler for enabling software triggering.
+        // The software trigger configuration handler replaces the default configuration
+        // as all currently registered configuration handlers are removed by setting the registration mode to RegistrationMode_ReplaceAll.
+        switch(tmode){
+        case (CAMERA_TRIGGER_CONTINOUS):{
+            camera.setTriggerMode(TRIGGER_OFF);
+            IDSGEXXDriverLDBG_<< "TRIGGER OFF";
+
+            break;
+        }
+        case CAMERA_TRIGGER_SINGLE:{
+            IDSGEXXDriverLDBG_<< "TRIGGER SINGLE (NA)";
+
+            break;
+        }
+        case CAMERA_TRIGGER_SOFT:{
+            IDSGEXXDriverLDBG_<< "TRIGGER SOFT (NA)";
+
+            break;
+        }
+       
+        case CAMERA_TRIGGER_HW_LOW:
+
+            if(camera.setTriggerMode(TRIGGER_HI_LO)){
+                IDSGEXXDriverLDBG_<< "TRIGGER HI->LOW";
+
+            } else {
+                IDSGEXXDriverLERR_<< "TRIGGER HI->LOW set failed";
+
+            }
+            break;
+        case CAMERA_TRIGGER_HW_HI:
+            IDSGEXXDriverLDBG_<< "TRIGGER LOW->HI";
+
+            if(camera.setTriggerMode(TRIGGER_LO_HI)){
+                IDSGEXXDriverLDBG_<< "TRIGGER LOW->HI";
+
+            } else {
+                IDSGEXXDriverLERR_<< "TRIGGER LOW->HI set failed";
+
+            }
+            break;
+        case CAMERA_DISABLE_ACQUIRE:
+                IDSGEXXDriverLDBG_<< "DISABLE ACQUIRE";
+                break;
+
+        }
+    }
   */
 
     if (p->hasKey(FRAMEBUFFER_ENCODING_KEY)){
@@ -994,4 +1064,26 @@ int  IDSGEXXDriver::getCameraProperties(chaos::common::data::CDataWrapper& propl
 
 
 }
+chaos::common::data::CDWUniquePtr IDSGEXXDriver::setDrvProperties(chaos::common::data::CDWUniquePtr prop){
+    if(prop.get()){
+        if(prop->hasKey("WIDTH")&&prop->hasKey("HEIGHT")&&prop->hasKey("OFFSETX")&&prop->hasKey("OFFSETY")){
+            int32_t w,h,x,y;
+            w=prop->getInt32Value("WIDTH");
+            h=prop->getInt32Value("HEIGHT");
+            x=prop->getInt32Value("OFFSETX");
+            y=prop->getInt32Value("OFFSETY");
+            IDSGEXXDriverLDBG_<<"Perform AOI "<<w<<"x"<<h<<"("<<x<<","<<y<<")";
+
+            camera.setAOI(x| IS_AOI_IMAGE_POS_ABSOLUTE,y| IS_AOI_IMAGE_POS_ABSOLUTE,w,h);
+            prop->removeKey("OFFSETX");
+            prop->removeKey("OFFSETY");
+            prop->removeKey("WIDTH");
+            prop->removeKey("HEIGHT");
+
+    }
+    setProperties(*prop.get(),true);
+    }
+    return prop;
+}  
+
 }}}

@@ -61,8 +61,11 @@ class IDSGEXXDriver:public chaos::cu::driver_manager::driver::AbstractDriverPlug
     bool deinitialized;
 public:
     double framerate,exposure;
-    int32_t width,height,offsetx,offsety,gain,zoom,pixelclk;
+    int32_t width,height,offsetx,offsety,gain,zoom,pixelclk,trgmode;
 
+    int32_t IDStrgmode2trgmode(ueye::TriggerMode ids);
+    ueye::TriggerMode trgmode2IDStrgmode(int32_t cam);
+    
 	IDSGEXXDriver();
 	~IDSGEXXDriver();
     int setImageProperties(int32_t width,int32_t height,int32_t opencvImageType);
@@ -89,6 +92,8 @@ public:
 
      int cameraDeinit();
             cu_driver::MsgManagmentResultType::MsgManagmentResult execOpcode(cu_driver::DrvMsgPtr cmd){return CameraDriverBridge::execOpcode(cmd);}
+    chaos::common::data::CDWUniquePtr setDrvProperties(chaos::common::data::CDWUniquePtr);  
+
 
 };
         }}}

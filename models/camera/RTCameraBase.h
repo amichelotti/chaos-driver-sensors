@@ -54,7 +54,7 @@ protected:
         bool applyCalib,performCalib;
         std::string calibimage;
         ChaosUniquePtr<::common::misc::data::SharedMem> shared_mem;
-        int32_t *sizex,*sizey,*offsetx,*offsety;
+        int32_t *sizex,*sizey,*offsetx,*offsety,*osizex,*osizey;
         // if >0 then this is the camera window created, each grab should fit this size.
         int32_t imagesizex,imagesizey;
         int bpp;
@@ -70,6 +70,7 @@ protected:
         
         typedef struct encoded {
             std::vector<unsigned char>* img;
+            int sizex,sizey;
             encoded():img(NULL){};
         } encoded_t;
 
@@ -159,6 +160,7 @@ protected:
     
     chaos::common::data::CDWUniquePtr getAction(chaos::common::data::CDWUniquePtr );
     chaos::common::data::CDWUniquePtr setAction(chaos::common::data::CDWUniquePtr );
+    bool unitRestoreToSnapshot(chaos::cu::control_manager::AbstractSharedDomainCache * const snapshot_cache) throw(chaos::CException);
 
 };
     }}}

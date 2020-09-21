@@ -546,6 +546,9 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   //
   sizex = cc->getRWPtr<int32_t>(DOMAIN_INPUT, WIDTH_KEY);
   sizey = cc->getRWPtr<int32_t>(DOMAIN_INPUT, HEIGHT_KEY);
+  osizex = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, WIDTH_KEY);
+  osizey = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, HEIGHT_KEY);
+  
   offsetx = cc->getRWPtr<int32_t>(DOMAIN_INPUT, OFFSETX_KEY);
   offsety = cc->getRWPtr<int32_t>(DOMAIN_INPUT, OFFSETY_KEY);
   //
@@ -1025,6 +1028,9 @@ void RTCameraBase::encodeThread() {
         encbuf = new std::vector<unsigned char>();
         // RTCameraBaseLDBG_ << "Encoding "<<encoding<<" , row:"<<image.rows<<"
         // col:"<<image.cols<<" channels:"<<image.channels();
+         ele.sizex=image.cols;
+         ele.sizey=image.rows;
+           
         bool code = cv::imencode(encoding, image, *encbuf,encode_params);
         delete(framebuf);
         // image.deallocate();
@@ -1202,6 +1208,8 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
                           << " Capture Queue:" << captureQueue;
         */
       ptr = reinterpret_cast<uchar *>(&((*a)[0]));
+      *osizex=ele.sizex;
+      *osizey=ele.sizey;
       getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ptr,
                                                    a->size());
       if (shared_mem.get()) {
@@ -1237,7 +1245,9 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
           chaos::common::alarm::MultiSeverityAlarmLevelClear);
       *sizey=img->height;
       *sizex=img->width;
-
+      *osizex=*sizex;
+      *osizey=*sizey;
+      
       cv::Mat image(*sizey, *sizex, framebuf_encoding, (uint8_t *)img->buf);
       std::vector<unsigned char> *encbuf = NULL;
       try {
@@ -1330,7 +1340,24 @@ chaos::common::data::CDWUniquePtr RTCameraBase::setAction(chaos::common::data::C
 void RTCameraBase::fatalErrorHandler(const chaos::CException &r) {
   stopGrabbing();
 }
+bool RTCameraBase::unitRestoreToSnapshot(chaos::cu::control_manager::AbstractSharedDomainCache * const snapshot_cache) throw(chaos::CException){
+	//check if in the restore cache we have all information we need
+  /*  if (!snapshot_cache->getSharedDomain(DOMAIN_OUTPUT).hasAttribute("local")) {
+        RESTORE_LERR << " missing 'local' to restore";
+        return false;
+    }*/
 
+    chaos::common::data::CDataWrapper cd;
+    snapshot_cache->getSharedDomain(DOMAIN_INPUT).exportToCDataWrapper(cd);
+  
+	  INFO << "Restoring:"<<cd.getJSONString();
+    chaos::common::data::CDWUniquePtr p=cd.clone();
+    driver->setDrvProperties(p);
+    
+
+    return true;
+	}
+	
 //! pre imput attribute change
 void RTCameraBase::unitInputAttributePreChangeHandler() throw(
     chaos::CException) {}

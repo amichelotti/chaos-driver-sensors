@@ -334,12 +334,16 @@ INT nRet;
     rect.s32Width = width;
     rect.s32Height = height;
     nRet= is_AOI(cam_, IS_AOI_IMAGE_SET_AOI, (void*)&rect, sizeof(rect));
-    if(is_GetSensorInfo(cam_, &cam_info_)!=IS_SUCCESS){
-      LERR_<<" error readinf sensors";
-    } else {
-      LDBG_<<"SET AOI size:"<<cam_info_.nMaxWidth / zoom_<<"x"<<cam_info_.nMaxHeight / zoom_;
-    }
 
+    if(nRet==IS_SUCCESS){
+      LDBG_<<"SET AOI :"<<width<<"x"<<height<<" ("<<posx<<","<<posy<<")";
+
+      if(is_GetSensorInfo(cam_, &cam_info_)!=IS_SUCCESS){
+        LERR_<<" error readinf sensors";
+      } else {
+        LDBG_<<"SET AOI max size:"<<cam_info_.nMaxWidth / zoom_<<"x"<<cam_info_.nMaxHeight / zoom_;
+      }
+    }
     return nRet;
 
 }
