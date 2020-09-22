@@ -1074,7 +1074,7 @@ chaos::common::data::CDWUniquePtr IDSGEXXDriver::setDrvProperties(chaos::common:
             y=prop->getInt32Value("OFFSETY");
             IDSGEXXDriverLDBG_<<"Perform AOI "<<w<<"x"<<h<<"("<<x<<","<<y<<")";
 
-            camera.setAOI(x| IS_AOI_IMAGE_POS_ABSOLUTE,y| IS_AOI_IMAGE_POS_ABSOLUTE,w,h);
+            camera.setAOI(x,y,w,h);
             prop->removeKey("OFFSETX");
             prop->removeKey("OFFSETY");
             prop->removeKey("WIDTH");
