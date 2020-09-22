@@ -98,7 +98,7 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
     int ret;
     const char *version;
     int major, minor, build;
-    
+    grabbing=false;
     try{
    /* if (camera.checkVersion(major, minor, build, version)) {
         IDSGEXXDriverLDBG_<<"Loaded uEye SDK:"<<version;
@@ -252,6 +252,7 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
             if(p.hasKey("value")){
                 double val=p.getDoubleValue("value");
                 t->camera.setFrameRate(&val);
+                t->framerate=val;
                 return p.clone();
             }
             return chaos::common::data::CDWUniquePtr();
@@ -266,7 +267,7 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
     zoom=camera.getZoom();
     trgmode=IDStrgmode2trgmode(camera.getTriggerMode());
 
-createProperty("width", width,0,camera.getWidthMax(),1,"WIDTH",[](AbstractDriver*thi,const std::string&name,
+createProperty("width", width,0,camera.getWidthMax(),2,"WIDTH",[](AbstractDriver*thi,const std::string&name,
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
         IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
             t->width=t->camera.getWidth();
@@ -274,6 +275,9 @@ createProperty("width", width,0,camera.getWidthMax(),1,"WIDTH",[](AbstractDriver
             IDSGEXXDriverLDBG_<< "WIDTH:"<<t->width;
             chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
             ret->addInt32Value("value",t->width);
+            ret->addInt32Value("max",t->camera.getWidthMax());
+            ret->addInt32Value("min",0);
+
             return ret;
         
       },[](AbstractDriver*thi,const std::string&name,
@@ -282,6 +286,7 @@ createProperty("width", width,0,camera.getWidthMax(),1,"WIDTH",[](AbstractDriver
             if(p.hasKey("value")){
                 int32_t val=p.getInt32Value("value");
                 if(t->camera.setWidth(val)==0){
+                    t->width=val;
                     return p.clone();
                 }
             }
@@ -289,7 +294,7 @@ createProperty("width", width,0,camera.getWidthMax(),1,"WIDTH",[](AbstractDriver
         
       });
 
-      createProperty("height", height,0,camera.getHeightMax(),1,"HEIGHT",[](AbstractDriver*thi,const std::string&name,
+      createProperty("height", height,0,camera.getHeightMax(),2,"HEIGHT",[](AbstractDriver*thi,const std::string&name,
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
         IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
             t->height=t->camera.getHeight();
@@ -297,6 +302,9 @@ createProperty("width", width,0,camera.getWidthMax(),1,"WIDTH",[](AbstractDriver
                 IDSGEXXDriverLDBG_<< "HEIGHT:"<<t->height;
                 chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
                 ret->addInt32Value("value",t->height);
+                ret->addInt32Value("max",t->camera.getHeightMax());
+                ret->addInt32Value("min",0);
+
                 return ret;
             
       },[](AbstractDriver*thi,const std::string&name,
@@ -305,6 +313,7 @@ createProperty("width", width,0,camera.getWidthMax(),1,"WIDTH",[](AbstractDriver
             if(p.hasKey("value")){
                 int32_t val=p.getInt32Value("value");
                 if(t->camera.setHeight(val)==0){
+                    t->height=val;
                     return p.clone();
                 }
             }
@@ -313,7 +322,7 @@ createProperty("width", width,0,camera.getWidthMax(),1,"WIDTH",[](AbstractDriver
         
       });
 
-    createProperty("offsetx", offsetx,"OFFSETX",[](AbstractDriver*thi,const std::string&name,
+    createProperty("offsetx", offsetx,0,camera.getWidthMax(),2,"OFFSETX",[](AbstractDriver*thi,const std::string&name,
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
         IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
             
@@ -322,6 +331,9 @@ createProperty("width", width,0,camera.getWidthMax(),1,"WIDTH",[](AbstractDriver
                 IDSGEXXDriverLDBG_<< "OFFSETX:"<<t->offsetx;
                 chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
                 ret->addInt32Value("value",t->offsetx);
+                ret->addInt32Value("max",t->camera.getWidthMax()-t->offsetx);
+                ret->addInt32Value("min",0);
+
                 return ret;
             } 
             return chaos::common::data::CDWUniquePtr();
@@ -332,6 +344,8 @@ createProperty("width", width,0,camera.getWidthMax(),1,"WIDTH",[](AbstractDriver
             if(p.hasKey("value")){
                 int32_t val=p.getInt32Value("value");
                 if(t->camera.setOffsetX(val)==0){
+                    t->offsetx=val;
+
                     return p.clone();
                 }
             }
@@ -339,7 +353,7 @@ createProperty("width", width,0,camera.getWidthMax(),1,"WIDTH",[](AbstractDriver
         
       });
 
-createProperty("offsety", offsetx,"OFFSETY",[](AbstractDriver*thi,const std::string&name,
+createProperty("offsety", offsety,0,camera.getHeightMax(),2,"OFFSETY",[](AbstractDriver*thi,const std::string&name,
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
         IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
             
@@ -348,6 +362,9 @@ createProperty("offsety", offsetx,"OFFSETY",[](AbstractDriver*thi,const std::str
                 IDSGEXXDriverLDBG_<< "OFFSETY:"<<t->offsety;
                 chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
                 ret->addInt32Value("value",t->offsety);
+                 ret->addInt32Value("max",t->camera.getHeightMax()-t->offsety);
+                ret->addInt32Value("min",0);
+
                 return ret;
             } 
             return chaos::common::data::CDWUniquePtr();
@@ -358,6 +375,7 @@ createProperty("offsety", offsetx,"OFFSETY",[](AbstractDriver*thi,const std::str
             if(p.hasKey("value")){
                 int32_t val=p.getInt32Value("value");
                 if(t->camera.setOffsetY(val)==0){
+                    t->offsety=val;
                     return p.clone();
                 }
             }
@@ -380,6 +398,8 @@ createProperty("zoom", zoom,"ZOOM",[](AbstractDriver*thi,const std::string&name,
             if(p.hasKey("value")){
                 int32_t val=p.getInt32Value("value");
                 t->camera.setZoom(&val);
+                t->zoom=val;
+
                 return p.clone();
                 
             }
@@ -402,6 +422,7 @@ createProperty("pixelCLK", pixelclk,"PIXELCLK",[](AbstractDriver*thi,const std::
             if(p.hasKey("value")){
                 int32_t val=p.getInt32Value("value");
                 t->camera.setPixelClock(&val);
+                t->pixelclk=val;
                 return p.clone();
                 
             }
@@ -424,6 +445,7 @@ createProperty("pixelCLK", pixelclk,"PIXELCLK",[](AbstractDriver*thi,const std::
             if(p.hasKey("value")){
                 int32_t val=p.getInt32Value("value");
                 t->camera.setHardwareGain(&val);
+                t->gain=val;
                 return p.clone();
             }
         
@@ -445,6 +467,7 @@ createProperty("pixelCLK", pixelclk,"PIXELCLK",[](AbstractDriver*thi,const std::
             if(p.hasKey("value")){
                 double val=p.getDoubleValue("value");
                 t->camera.setExposure(&val);
+                t->exposure=val;
                 return p.clone();
             }
         
@@ -464,7 +487,9 @@ createProperty("pixelCLK", pixelclk,"PIXELCLK",[](AbstractDriver*thi,const std::
         IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
             if(p.hasKey("value")){
                 TriggerMode val=t->trgmode2IDStrgmode(p.getInt32Value("value"));
-                t->camera.setTriggerMode(val);
+                if(t->camera.setTriggerMode(val)){
+                    t->trgmode=val;
+                }
                 return p.clone();
             }
         
@@ -941,8 +966,12 @@ int IDSGEXXDriver::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _
     IDSGEXXDriverLDBG_<<"Start Grabbing";
     shots=_shots;
     fn=_fn;
-    
-    camera.initMemoryPool(4);
+    boost::mutex::scoped_lock ll(lock);
+
+    if(grabbing == false){
+        camera.initMemoryPool(4);
+    }
+    grabbing =true;
     switch(gstrategy){
     case CAMERA_ONE_BY_ONE:
         break;
@@ -963,12 +992,17 @@ int IDSGEXXDriver::waitGrab(camera_buf_t **hostbuf,uint32_t timeout_ms){
   int32_t ret=0;
     size_t size_ret=0;
     const char *buf=0;
+    boost::mutex::scoped_lock ll(lock);
+
+    if(grabbing==false){
+        return -10;
+    }
      if((ret=camera.captureImage(timeout_ms,&buf,&size_ret))==0){
             IDSGEXXDriverLDBG_<<"Retrieved Image "<<camera.getWidth()<<"x"<<camera.getHeight()<<" raw size:"<<size_ret;
             ret= size_ret;
             if(hostbuf&&buf){
        // memcpy(hostbuf,buf,size_ret);
-                *hostbuf=new camera_buf_t((uint8_t*)buf,size_ret,camera.getWidth(),camera.getHeight()) ;
+                *hostbuf=new camera_buf_t((uint8_t*)buf,size_ret,width,height,offsetx,offsety) ;
         }
     } else{
       //      IDSGEXXDriverLERR_<<"No Image..";
@@ -984,6 +1018,10 @@ int IDSGEXXDriver::waitGrab(uint32_t timeout_ms){
     return waitGrab(NULL,timeout_ms);
 }
 int IDSGEXXDriver::stopGrab(){
+    boost::mutex::scoped_lock ll(lock);
+    grabbing = false;    
+    camera.destroyMemoryPool();
+    
     //camera->StopGrabbing();
     return 0;
 }
@@ -1072,9 +1110,35 @@ chaos::common::data::CDWUniquePtr IDSGEXXDriver::setDrvProperties(chaos::common:
             h=prop->getInt32Value("HEIGHT");
             x=prop->getInt32Value("OFFSETX");
             y=prop->getInt32Value("OFFSETY");
-            IDSGEXXDriverLDBG_<<"Perform AOI "<<w<<"x"<<h<<"("<<x<<","<<y<<")";
+            if(w>camera.getWidthMax()){
+                w=camera.getWidthMax();
+                x=0;
+            } else {
+                w=w -(w%2);
 
-            camera.setAOI(x,y,w,h);
+            }
+            if(h>camera.getHeightMax()){
+                h=camera.getHeightMax();
+                y=0;
+            } else {
+                 h=h -(h%2);
+
+            }
+            // multiple of 4
+            x=x - (x%2);
+            y=y - (y%2);
+             IDSGEXXDriverLDBG_<<"Perform AOI (rounded )"<<w<<"x"<<h<<"("<<x<<","<<y<<")";
+            stopGrab();
+             setPropertyValue("WIDTH",w,true);
+                setPropertyValue("HEIGHT",h,true);
+                setPropertyValue("OFFSETX",x,true);
+                setPropertyValue("OFFSETY",y,true);
+            /*if(camera.setAOI(x,y,w,h)==0){
+               
+
+            }*/
+            //camera.setAOI(x,y,w,h);
+            startGrab(0,0,NULL);
             prop->removeKey("OFFSETX");
             prop->removeKey("OFFSETY");
             prop->removeKey("WIDTH");

@@ -90,13 +90,17 @@ struct camera_buf_t {
             int32_t size;
             int32_t width;
             int32_t height;
-            camera_buf_t(int32_t _size,int32_t _width,int32_t _height):width(_width),height(_height){
+            int32_t offsetx;
+            int32_t offsety;
+
+            camera_buf_t(int32_t _size,int32_t _width,int32_t _height,int32_t _offsetx=0,int32_t _offsety=0):width(_width),height(_height),offsetx(_offsetx),offsety(_offsety){
                 buf=(uint8_t*)malloc(_size);
+                
                 if(buf){
                     size=_size;
                 }
             }
-            camera_buf_t(const uint8_t*ptr, int32_t _size,int32_t _width,int32_t _height):width(_width),height(_height){
+            camera_buf_t(const uint8_t*ptr, int32_t _size,int32_t _width,int32_t _height,int32_t _offsetx=0,int32_t _offsety=0):width(_width),height(_height),offsetx(_offsetx),offsety(_offsety){
                 buf=(uint8_t*)malloc(_size);
                 if(buf){
                     size=_size;

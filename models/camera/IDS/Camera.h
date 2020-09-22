@@ -168,6 +168,7 @@ public:
   int captureImage(int timeo_ms,const char**getbuf,size_t *size);
 
   void initMemoryPool(int size);
+  void destroyMemoryPool();
 
 private:
   inline void checkError(INT err) const {
@@ -194,7 +195,6 @@ private:
   std::vector<char*> img_mem_;
   std::vector<int> img_mem_id_;
   int getImageRawSize();
-  void destroyMemoryPool();
   void captureThread(CamCaptureCB callback);
   void restartVideoCapture();
 

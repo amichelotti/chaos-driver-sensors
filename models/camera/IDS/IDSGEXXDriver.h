@@ -56,9 +56,11 @@ class IDSGEXXDriver:public chaos::cu::driver_manager::driver::AbstractDriverPlug
      ueye::Camera camera;
      int32_t memID;
      bool initialized;
+     bool grabbing;
      int propsToCamera(chaos::common::data::CDataWrapper*p);
      int cameraToProps(chaos::common::data::CDataWrapper*p);
     bool deinitialized;
+    boost::mutex lock;
 public:
     double framerate,exposure;
     int32_t width,height,offsetx,offsety,gain,zoom,pixelclk,trgmode;

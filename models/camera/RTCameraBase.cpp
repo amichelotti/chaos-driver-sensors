@@ -551,6 +551,9 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   
   offsetx = cc->getRWPtr<int32_t>(DOMAIN_INPUT, OFFSETX_KEY);
   offsety = cc->getRWPtr<int32_t>(DOMAIN_INPUT, OFFSETY_KEY);
+  ooffsetx = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, OFFSETX_KEY);
+  ooffsety = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, OFFSETY_KEY);
+  
   //
   mode = *cc->getROPtr<int32_t>(DOMAIN_INPUT, TRIGGER_MODE_KEY);
   omode = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, TRIGGER_MODE_KEY);
@@ -924,7 +927,9 @@ void RTCameraBase::encodeThread() {
       }*/
       *sizey=framebuf->height;
       *sizex=framebuf->width;
-
+      *ooffsetx=framebuf->offsetx;
+      *ooffsety=framebuf->offsety;
+      
       cv::Mat image;
       try {
 
@@ -1247,6 +1252,9 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       *sizex=img->width;
       *osizex=*sizex;
       *osizey=*sizey;
+      *ooffsetx=img->offsetx;
+      *ooffsety=img->offsety;
+      
       
       cv::Mat image(*sizey, *sizex, framebuf_encoding, (uint8_t *)img->buf);
       std::vector<unsigned char> *encbuf = NULL;
