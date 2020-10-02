@@ -3,7 +3,7 @@
  *	!CHAOS
  *	Created by Andrea Michelotti.
  *
- *    	Copyright 2013 INFN, National Institute of Nuclear Physics
+ *    	Copyright 2020 INFN, National Institute of Nuclear Physics
  *
  *    	Licensed under the Apache License, Version 2.0 (the "License");
  *    	you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@
  *    	See the License for the specific language governing permissions and
  *    	limitations under the License.
  */
-#include <driver/sensors/models/Simulator/LeyboldCenterOne.h>
+#include "LeyboldCenterOne.h"
 #include <stdlib.h>
 #include <string>
-
+#include <driver/sensors/core/AbstractSensorDriver.h>
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <math.h>
 #include <boost/lexical_cast.hpp>
@@ -32,6 +32,12 @@ using namespace driver::sensor::model;
 #define LeyboldCenterOneLDBG_		LDBG_ << "[LeyboldCenterOne] "
 #define LeyboldCenterOneLERR_		LERR_ << "[LeyboldCenterOne] "
 
+#define ETX "\x3"
+#define CR "\xD"
+#define LF "\xA"
+#define ENQ "\x5"
+#define ACK "\x6"
+#define NACK "\x15"
 
 //GET_PLUGIN_CLASS_DEFINITION
 //we need only to define the driver because we don't are makeing a plugin
@@ -39,107 +45,205 @@ OPEN_CU_DRIVER_PLUGIN_CLASS_DEFINITION(LeyboldCenterOne, 1.0.0,::driver::sensor:
 REGISTER_CU_DRIVER_PLUGIN_CLASS_INIT_ATTRIBUTE(::driver::sensor::model::LeyboldCenterOne, http_address/dnsname:port)
 CLOSE_CU_DRIVER_PLUGIN_CLASS_DEFINITION
 
-
-DEF_SENSOR_DATASET
-DEF_SENSOR_CHANNEL("TEMP","temperature",chaos::DataType::Output,chaos::DataType::TYPE_DOUBLE,sizeof(double))
-ENDDEF_SENSOR_DATASET
-
 //GET_PLUGIN_CLASS_DEFINITION
 //we need to define the driver with alias version and a class that implement it
-LeyboldCenterOne::LeyboldCenterOne():setPoint(25),err(1),tempType(0){
-  INIT_SENSOR_DATASET;
-    counter=0;
-    freq = 1.0;
-    sinpoint=0;
-    points=100.0;
+DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR(LeyboldCenterOne) {
+
+  timeout=5000;
+ 
 }
 //default descrutcor
 LeyboldCenterOne::~LeyboldCenterOne() {
 
 }
+int LeyboldCenterOne::sendCommand(const std::string& cmd,std::string&out, bool sendenq){
+    char buf[256];
+    int ta,ret;
+    snprintf(buf,sizeof(buf),"%s\r\n",cmd.c_str());
+    if(channel->write(buf,strlen(buf)+1,timeout)<=0){
+        LeyboldCenterOneLERR_<<"Cannot send command:"<<cmd;
 
-int LeyboldCenterOne::readChannel(void *buffer,int addr,int bcount){
-    counter++;
-    counter=counter%static_cast<int>(setPoint);
-    
-    switch(tempType){
-        case 0:{
-            double*pnt=(double*)buffer;
-
-            srand(time(NULL));
-            int rnd=rand();
-            pnt[0] = (rnd*1.0/RAND_MAX)*err +setPoint;
-            LeyboldCenterOneLDBG_<<"reading channel :"<<addr<<" Virtual Random Temp:"<<pnt[0];
-
-            return 1;
+        return -1;
+    }
+    ret=channel->read(buf,sizeof(buf),"\n",timeout,&ta);
+    if(ta){
+        LeyboldCenterOneLERR_<<"Timeout sending command";
+        return -2;
+    }
+    const char* check_ans=ACK CR LF;
+    if(strstr(buf,check_ans)){
+        if(sendenq){
+            const char * buf=ENQ;
+            if(channel->write((void*)buf,1,timeout)<=0){
+                LeyboldCenterOneLERR_<<"Cannot send <ENC>:"<<cmd;
+                return -22;
+            } else {
+                char buffer[256];
+                int timeout_arised=0;
+                int ret=channel->read(&buf,sizeof(buffer),"\n",timeout,&timeout_arised);
+                if(ret>0){
+                    out=buffer;
+                } else {
+                    out="";
+                }
+            }
         }
-        case 1:{
-        int rnd=rand();
+        return 0;
+    }
+    check_ans=NACK CR LF;
+    if(strstr(buf,check_ans)){
+        LeyboldCenterOneLERR_<<"Replies BAD";
 
-            double* pnt=(double*)buffer;
-            pnt[0] = counter +(rnd*1.0/RAND_MAX)*err;
-            LeyboldCenterOneLDBG_<<"reading channel :"<<addr<<" Virtual Ramp Temp:"<<pnt[0];
+        return 10;
+    }
 
-            return 1;
+    LeyboldCenterOneLERR_<<"bad answer:"<<buf;
+    return -3;
+}
+
+int LeyboldCenterOne::updateValue(){
+    char buffer[256];
+    int ret;
+    int timeout_arised=0;
+    if(continuos_mode>=0){
+        ret=channel->read(buffer,sizeof(buffer),"\n",timeout,&timeout_arised);
+        if(ret>0){
+            hw_string=buffer;
+        if(sscanf(buffer,"%d,%f",&state,&pressure)==2){
+            return 0;
         }
-        case 2:{
-            double*pnt=(double*)buffer;
-            sinpoint++;
-	    if(points>0){
-          pnt[0] = setPoint+err*sin((6.28*freq)*sinpoint/points);
-	    } else {
-	      LeyboldCenterOneLERR_<<"reading channel :"<<addr<<" Virtual Periodic Temp, invalid number of points:"<<points;
-	    }
-            sinpoint=sinpoint%points;
-            LeyboldCenterOneLDBG_<<"reading channel :"<<addr<<" Virtual Periodic Temp:"<<pnt[0];
-
-            return 1;
+        }
+    } else {
+        std::string ans;
+        ret=sendCommand("PR1",ans,true);
+        if(ret==0){
+            hw_string=ans;
+             if(sscanf(ans.c_str(),"%d,%f",&state,&pressure)==2){
+                 return 0;
+            }
         }
     }
     
-    return 1;
+    return ret;
+
+}
+
+int LeyboldCenterOne::sendCommand(const std::string& cmd,bool sendenq){
+    std::string tmp;
+    return sendCommand(cmd,tmp,sendenq);
+}
+
+int LeyboldCenterOne::setContinousMode(int op){
+    std::stringstream ss;
+    ss<<"COM,"<<op;
+    return sendCommand(ss.str(),false);
+
+}
+void LeyboldCenterOne::driverInit(const char *initParameter) {
+
+    throw chaos::CException(-11,"Should provide JSON params",__PRETTY_FUNCTION__);
     
-}
-int LeyboldCenterOne::writeChannel(void *buffer,int addr,int bcount){
-    LeyboldCenterOneLDBG_<<"writing channel :"<<addr<<" bcount:"<<bcount;
-    if(addr==0){
-        freq=*(double*)buffer;
-        return 1;
-    }
-    if(addr==1){
-        points=*(int32_t*)buffer;
-        return 1;
-    }
-    return 0;
-}
-
-int LeyboldCenterOne::sensorInit(void *buffer,int sizeb){
-    LeyboldCenterOneLDBG_<<"Initialization string: \""<<buffer<<"\"";
-
-    return 0;
-}
-
-int LeyboldCenterOne::sensorDeinit(){
-    LeyboldCenterOneLDBG_<<"deinit";
-    return 1;
 }
 
 void LeyboldCenterOne::driverInit(const chaos::common::data::CDataWrapper& s) throw (chaos::CException){
     LeyboldCenterOneLDBG_<<"JSON PARAMS:"<<s.getJSONString();
 
-    if(s.hasKey("type")){
-        tempType=s.getInt32Value("type");
-    }
-    if(s.hasKey("temp")){
-        setPoint=s.getDoubleValue("temp");
-        LeyboldCenterOneLDBG_<<"SET POINT:"<<setPoint;
 
-    }
-    if(s.hasKey("err")){
-        err=s.getDoubleValue("err");
-        LeyboldCenterOneLDBG_<<"ERROR:"<<err;
+   channel=::common::serial::SerialChannelFactory::getChannel(s);
 
+    if(channel.get()==NULL){
+        throw chaos::CException(-10,"Cannot open serial channel",__PRETTY_FUNCTION__);
     }
+    state=0;
+    continuos_mode=-1;
+    std::string ret;
+    if(sendCommand("RES,1",ret,true)){
+        LeyboldCenterOneLERR_<<"Resetting "<<ret;
+    } else {
+        LeyboldCenterOneLDBG_<<"Reset OK: "<<ret;
+    }
+    //firmaware
+    if(sendCommand("PNR",fwv,true)){
+        LeyboldCenterOneLERR_<<"Getting FW version "<<fwv;
+    } else {
+        LeyboldCenterOneLDBG_<<"Firmware: "<<fwv;
+    }
+    //gauge identification
+    if(sendCommand("TID",gid,true)){
+        LeyboldCenterOneLERR_<<"Getting Gauge "<<gid;
+    } else {
+        LeyboldCenterOneLDBG_<<"Gauge: "<<gid;
+    }
+    // set continuos mode
+    if(setContinousMode(0)){
+        LeyboldCenterOneLERR_<<"continuos mode "<<continuos_mode;
+    } else {
+        continuos_mode=0;
+    }
+     createProperty("COM", continuos_mode,0,2,1,"",NULL,[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        LeyboldCenterOne *t=(LeyboldCenterOne *)thi;
+            int32_t val=p.getInt32Value("value");
+            if(t->setContinousMode(val)==0){
+                LeyboldCenterOneLDBG_<<"continuos mode "<<val;
+                t->continuos_mode=val;
+                return p.clone();
+            }       
+            return chaos::common::data::CDWUniquePtr();
+        
+      });
+
+    createProperty("State", state,0,0x20,1,SENSOR_STATE_KEY,[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        LeyboldCenterOne *t=(LeyboldCenterOne *)thi;
+            int32_t value=SENSOR_STATE_OK;
+            LeyboldCenterOneLDBG_<< "HW STATE:"<<t->state;
+            t->updateValue();
+            chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
+            switch(t->state){
+                case 1:
+                    value|=SENSOR_STATE_UNDERFLOW;
+                    break;
+                case 2:
+                    value|=SENSOR_STATE_OVERFLOW;
+                    break;
+                case 3:
+                    value|=SENSOR_STATE_ERROR;
+                    break;
+                case 4:
+                    value|=SENSOR_STATE_OFF;
+                    break;
+                case 5:
+                    value|=SENSOR_STATE_NOSENSOR;
+                    break;
+                case 6:
+                case 7:
+                    value|=SENSOR_STATE_IDERROR;
+                    break;
+                default:
+                    value=SENSOR_STATE_OK;
+            }
+
+            ret->addInt32Value("value",value);
+
+            return ret;
+        
+      });
+
+
+  createProperty("Pressure", pressure,0.0,10000.0,0.0,"PRESSURE",[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        LeyboldCenterOne *t=(LeyboldCenterOne *)thi;
+            chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
+
+            ret->addDoubleValue("value",t->pressure);
+
+            return ret;
+        
+      });
+
+
+
 }
 
 

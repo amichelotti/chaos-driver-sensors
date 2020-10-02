@@ -38,6 +38,18 @@ typedef enum AbstractSensorDriverOpcode{
 
 } AbstractSensorDriverOpcode;
 
+// STATE
+#define SENSOR_STATE_KEY "STATE"
+#define SENSOR_STATE_OK 0
+#define SENSOR_STATE_UNDERFLOW 0x1
+#define SENSOR_STATE_OVERFLOW 0x2
+#define SENSOR_STATE_ERROR 0x4
+#define SENSOR_STATE_OFF 0x8
+#define SENSOR_STATE_NOSENSOR 0x10
+#define SENSOR_STATE_IDERROR 0x20
+
+
+
 
 typedef struct ddDataSet {
     const char* name;
@@ -80,8 +92,10 @@ public:
          \return the number of succesful read items, negative error
 
          */
-    virtual int readChannel(void *buffer,int addr,int bcount)=0;
+        virtual    int readChannel(void *buffer,int addr,int bcount)=0;
+
     /**
+     * 
      \brief Write a channel from the physical sensor
      \param buffer[out] destination buffer
      \param addr[in] channel address or identification

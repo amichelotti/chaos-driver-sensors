@@ -982,7 +982,9 @@ int BaslerScoutDriver::initializeCamera(
             }
             return p.clone();
             }
-        
+        LERR_ << " not value in property: "<<name;
+
+        return chaos::common::data::CDWUniquePtr();
       });
         /** initial settings */
       /*ChaosStringVector contained_key;
