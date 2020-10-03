@@ -29,8 +29,8 @@ namespace cu_driver = chaos::cu::driver_manager::driver;
 using namespace driver::sensor::model;
 
 #define LeyboldCenterOneLAPP_		LAPP_ << "[LeyboldCenterOne] "
-#define LeyboldCenterOneLDBG_		LDBG_ << "[LeyboldCenterOne] "
-#define LeyboldCenterOneLERR_		LERR_ << "[LeyboldCenterOne] "
+#define LeyboldCenterOneLDBG_		LDBG_ << "[LeyboldCenterOne] - "<<__FUNCTION__
+#define LeyboldCenterOneLERR_		LERR_ << "[LeyboldCenterOne] - "<<__PRETTY_FUNCTION__
 
 #define ETX "\x3"
 #define CR "\xD"
@@ -59,16 +59,21 @@ LeyboldCenterOne::~LeyboldCenterOne() {
 int LeyboldCenterOne::sendCommand(const std::string& cmd,std::string&out, bool sendenq){
     char buf[256];
     int ta,ret;
+    
     snprintf(buf,sizeof(buf),"%s\r\n",cmd.c_str());
     if(channel->write(buf,strlen(buf)+1,timeout)<=0){
         LeyboldCenterOneLERR_<<"Cannot send command:"<<cmd;
 
         return -1;
     }
+    *buf=0;
     ret=channel->read(buf,sizeof(buf),"\n",timeout,&ta);
+    LeyboldCenterOneLDBG_<<ret<<" answ ->"<<buf;
+
     if(ta){
+
         LeyboldCenterOneLERR_<<"Timeout sending command";
-        return -2;
+        return ret;
     }
     const char* check_ans=ACK CR LF;
     if(strstr(buf,check_ans)){
@@ -83,6 +88,8 @@ int LeyboldCenterOne::sendCommand(const std::string& cmd,std::string&out, bool s
                 int ret=channel->read(&buf,sizeof(buffer),"\n",timeout,&timeout_arised);
                 if(ret>0){
                     out=buffer;
+                    LeyboldCenterOneLDBG_<<"ANSW:"<<buffer;
+
                 } else {
                     out="";
                 }
@@ -108,16 +115,19 @@ int LeyboldCenterOne::updateValue(){
     if(continuos_mode>=0){
         ret=channel->read(buffer,sizeof(buffer),"\n",timeout,&timeout_arised);
         if(ret>0){
+            LeyboldCenterOneLDBG_<<":"<<buffer;
             hw_string=buffer;
-        if(sscanf(buffer,"%d,%f",&state,&pressure)==2){
-            return 0;
-        }
+            if(sscanf(buffer,"%d,%lf",&state,&pressure)==2){
+                return 0;
+            }
         }
     } else {
         std::string ans;
         ret=sendCommand("PR1",ans,true);
         if(ret==0){
             hw_string=ans;
+            LeyboldCenterOneLDBG_<<"PR1:"<<ans;
+
              if(sscanf(ans.c_str(),"%d,%f",&state,&pressure)==2){
                  return 0;
             }
@@ -157,6 +167,7 @@ void LeyboldCenterOne::driverInit(const chaos::common::data::CDataWrapper& s) th
     state=0;
     continuos_mode=-1;
     std::string ret;
+    channel->init();
     if(sendCommand("RES,1",ret,true)){
         LeyboldCenterOneLERR_<<"Resetting "<<ret;
     } else {
@@ -197,8 +208,9 @@ void LeyboldCenterOne::driverInit(const chaos::common::data::CDataWrapper& s) th
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
         LeyboldCenterOne *t=(LeyboldCenterOne *)thi;
             int32_t value=SENSOR_STATE_OK;
-            LeyboldCenterOneLDBG_<< "HW STATE:"<<t->state;
             t->updateValue();
+
+            LeyboldCenterOneLDBG_<< "HW STATE:"<<t->state;
             chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
             switch(t->state){
                 case 1:
