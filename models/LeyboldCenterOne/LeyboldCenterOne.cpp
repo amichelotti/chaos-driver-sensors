@@ -47,7 +47,7 @@ CLOSE_CU_DRIVER_PLUGIN_CLASS_DEFINITION
 
 //GET_PLUGIN_CLASS_DEFINITION
 //we need to define the driver with alias version and a class that implement it
-DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR(LeyboldCenterOne) {
+DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::model, LeyboldCenterOne) {
 
   timeout=5000;
  
