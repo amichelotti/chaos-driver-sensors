@@ -52,7 +52,6 @@ public:
     std::string hw_string;
     std::string gid,fwv;
     int updateValue();
-	LeyboldCenterOne();
 	~LeyboldCenterOne();      
     void driverInit(const char *initParameter) ;
 
