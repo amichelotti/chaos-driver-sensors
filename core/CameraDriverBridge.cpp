@@ -56,9 +56,10 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
    boost::mutex::scoped_lock lock(io_mux);
 
     cu_driver::MsgManagmentResultType::MsgManagmentResult result = cu_driver::MsgManagmentResultType::MMR_EXECUTED;
+    CHAOS_ASSERT(cmd);
     camera_params_t *in = (camera_params_t *)cmd->inputData;
     camera_params_t *out = (camera_params_t *)cmd->resultData;
-    memset(out,0,sizeof(camera_params_t));
+    //memset(out,0,sizeof(camera_params_t));
  //   CameraDriverBridgeLDBG_ <<" SKELETON Opcode:"<<cmd->opcode;
     switch(cmd->opcode) {
     case CameraDriverInterfaceOpcode_SET_IMAGE_PROP:{
@@ -111,15 +112,16 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
     case CameraDriverInterfaceOpcode_GET_PROPERTIES:{
         chaos::common::data::CDataWrapper props;
         int sizeb;
-        out->result=getCameraProperties(props);
-        const char*ptr=props.getBSONRawData(sizeb);
-     
-        if((sizeb>0)&& ptr){
-            out->str=(char*)malloc(sizeb);
-            out->strl=sizeb;
-            memcpy(out->str,ptr,sizeb);
+        if(cmd->inputData && cmd->inputDataLength){
+            chaos::common::data::CDataWrapper props((const char*)cmd->inputData); 
+            out->result=getCameraProperties(props);
+            const char*ptr=props.getBSONRawData(sizeb);
+            if((sizeb>0)&& ptr){
+                out->str=(char*)malloc(sizeb);
+                out->strl=sizeb;
+                memcpy(out->str,ptr,sizeb);
+            }
         }
-
         break;
     }
     case CameraDriverInterfaceOpcode_INIT:{
@@ -140,7 +142,7 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
         break;
     }
     case CameraDriverInterfaceOpcode_WAIT_GRABBUF:{
-        out->result=waitGrab((const char**)in->buffer,in->arg0);
+        out->result=waitGrab((camera_buf_t**)in->buffer,in->arg0);
         break;
     }
     case CameraDriverInterfaceOpcode_STOP_GRAB:{
@@ -151,9 +153,7 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
     return result;
 }
 
-chaos::common::data::CDWUniquePtr CameraDriverBridge::getDrvProperties(){
-    chaos::common::data::CDataWrapper *pnt=new chaos::common::data::CDataWrapper();
-    getCameraProperties(*pnt);
-    chaos::common::data::CDWUniquePtr ret(pnt);
-    return ret;
-}
+
+/*chaos::common::data::CDWUniquePtr CameraDriverBridge::setDrvProperties(chaos::common::data::CDWUniquePtr s){
+
+}*/

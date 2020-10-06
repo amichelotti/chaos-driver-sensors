@@ -135,6 +135,12 @@ public:
   int setFrameRate(double *rate);
   int setAOI(int posx,int posy,int width,int height);
   int getAOI(int& posx,int& posy,int& width,int& height);
+  int setWidth(int w);
+  int setHeight(int w);
+  int setOffsetX(int w);
+  int setOffsetY(int w);
+  
+
   /*
    * Return FPS of the camera
    * \param rate output FPS(if -1 autoframerate)
@@ -162,6 +168,7 @@ public:
   int captureImage(int timeo_ms,const char**getbuf,size_t *size);
 
   void initMemoryPool(int size);
+  void destroyMemoryPool();
 
 private:
   inline void checkError(INT err) const {
@@ -174,7 +181,9 @@ private:
           throw ueye::uEyeException(err, msg);
         }
       } else {
-        throw ueye::uEyeException(err, "Camera failed to initialize");
+        std::stringstream ss;
+        ss<<"Camera failed to initialize:"<<msg;
+        throw ueye::uEyeException(err, ss.str().c_str());
       }
     }
   }
@@ -186,7 +195,6 @@ private:
   std::vector<char*> img_mem_;
   std::vector<int> img_mem_id_;
   int getImageRawSize();
-  void destroyMemoryPool();
   void captureThread(CamCaptureCB callback);
   void restartVideoCapture();
 

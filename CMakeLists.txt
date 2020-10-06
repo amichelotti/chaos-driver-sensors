@@ -25,7 +25,7 @@ SET(BasicSensorClient_src test/sensorsClient.cpp)
 
 
 IF(BUILD_FORCE_STATIC)
-  SET(CMAKE_EXE_LINKER_FLAGS "-static -Wl,--whole-archive -lchaos_common -Wl,--no-whole-archive")
+  SET(CMAKE_EXE_LINKER_FLAGS "-static -Wl,--whole-archive -lchaos_common -lpthread -Wl,--no-whole-archive")
    ADD_LIBRARY(${PROJECT_NAME} STATIC ${sensors_src} ${camera_src})		 
 
 ELSE()
@@ -46,7 +46,7 @@ ADD_EXECUTABLE(sensorsServer test/sensorsServer)
 ADD_EXECUTABLE(sensorsClient test/sensorsClient)
 
  TARGET_LINK_LIBRARIES(sensorsServer ${PROJECT_NAME} ${DRIVERS_LIB} chaos_cutoolkit chaos_common common_serial pthread)
- TARGET_LINK_LIBRARIES(sensorsClient ${PROJECT_NAME} chaos_common ${DRIVERS_LIB} )
+ TARGET_LINK_LIBRARIES(sensorsClient ${PROJECT_NAME} chaos_common pthread ${DRIVERS_LIB} )
 
  FILE(GLOB files "core/*.h")
 INSTALL(FILES ${files} DESTINATION include/driver/sensors/core)

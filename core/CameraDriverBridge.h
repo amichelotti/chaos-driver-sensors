@@ -31,7 +31,7 @@ namespace driver {
 namespace sensor {
 namespace camera{
 
-  class CameraDriverBridge:public AbstractCameraDriver {
+  class CameraDriverBridge:public chaos::cu::driver_manager::driver::AbstractDriver,public AbstractCameraDriver {
 
 
 protected:
@@ -43,8 +43,8 @@ public:
     ~CameraDriverBridge();
     //! Execute a command
     cu_driver::MsgManagmentResultType::MsgManagmentResult execOpcode(cu_driver::DrvMsgPtr cmd);
+  //   chaos::common::data::CDWUniquePtr setDrvProperties(chaos::common::data::CDWUniquePtr);
 
-    chaos::common::data::CDWUniquePtr getDrvProperties();
 
 };
 }

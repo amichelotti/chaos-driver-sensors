@@ -44,7 +44,7 @@ namespace driver {
 #define CAM_DEFAULT_WIDTH 659
 #define CAM_DEFAULT_HEIGTH 494
 
-class CameraShared:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::CameraDriverBridge {
+class CameraShared:public chaos::cu::driver_manager::driver::AbstractDriverPlugin, public ::driver::sensor::camera::CameraDriverBridge {
 
 
    chaos::common::data::CDataWrapper* props;
@@ -64,8 +64,6 @@ class CameraShared:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::Ca
      uint32_t shots;
      uint64_t frames;
      int movex,movey,rot;
-     void*framebuf[2];
-     int framebuf_size[2];
      int32_t memID;
      cameraGrabCallBack fn;
      bool initialized;
@@ -78,7 +76,7 @@ class CameraShared:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::Ca
      chaos::common::data::CDataWrapper driver_params;
      std::string shape_type;
      int centerx,centery;
-     int sizex,sizey;
+     int sizex,sizey,channels;
      double rotangle,extangle;
      int colr,colg,colb,tickness,linetype;
     
@@ -104,7 +102,7 @@ public:
      int startGrab(uint32_t shots,void*framebuf=NULL,cameraGrabCallBack=NULL);
 
      int waitGrab(uint32_t timeout_ms);
-     int waitGrab(const char**buf,uint32_t timeout_ms);
+     int waitGrab(camera_buf_t**buf,uint32_t timeout_ms);
 
      int stopGrab();
 

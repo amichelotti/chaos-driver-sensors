@@ -40,7 +40,7 @@ namespace driver {
 #define CAM_DEFAULT_WIDTH 659
 #define CAM_DEFAULT_HEIGTH 494
 
-class IDSGEXXDriver:ADD_CU_DRIVER_PLUGIN_SUPERCLASS,  ::driver::sensor::camera::CameraDriverBridge {
+class IDSGEXXDriver:public chaos::cu::driver_manager::driver::AbstractDriverPlugin, public ::driver::sensor::camera::CameraDriverBridge {
 
 
  protected:
@@ -56,10 +56,18 @@ class IDSGEXXDriver:ADD_CU_DRIVER_PLUGIN_SUPERCLASS,  ::driver::sensor::camera::
      ueye::Camera camera;
      int32_t memID;
      bool initialized;
+     bool grabbing;
      int propsToCamera(chaos::common::data::CDataWrapper*p);
      int cameraToProps(chaos::common::data::CDataWrapper*p);
     bool deinitialized;
+    boost::mutex lock;
 public:
+    double framerate,exposure;
+    int32_t width,height,offsetx,offsety,gain,zoom,pixelclk,trgmode;
+
+    int32_t IDStrgmode2trgmode(ueye::TriggerMode ids);
+    ueye::TriggerMode trgmode2IDStrgmode(int32_t cam);
+    
 	IDSGEXXDriver();
 	~IDSGEXXDriver();
     int setImageProperties(int32_t width,int32_t height,int32_t opencvImageType);
@@ -79,13 +87,15 @@ public:
      int startGrab(uint32_t shots,void*framebuf=NULL,cameraGrabCallBack=NULL);
 
      int waitGrab(uint32_t timeout_ms);
-      int waitGrab(const char**imgbuf,uint32_t timeout_ms);
+      int waitGrab(camera_buf_t **imgbuf,uint32_t timeout_ms);
      int stopGrab();
 
      int cameraInit(void *buffer,uint32_t sizeb);
 
      int cameraDeinit();
             cu_driver::MsgManagmentResultType::MsgManagmentResult execOpcode(cu_driver::DrvMsgPtr cmd){return CameraDriverBridge::execOpcode(cmd);}
+    chaos::common::data::CDWUniquePtr setDrvProperties(chaos::common::data::CDWUniquePtr);  
+
 
 };
         }}}

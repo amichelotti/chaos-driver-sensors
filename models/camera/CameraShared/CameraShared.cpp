@@ -72,16 +72,6 @@ void CameraShared::driverInit(const chaos::common::data::CDataWrapper& json) thr
 
 void CameraShared::driverDeinit() throw(chaos::CException) {
     CameraSharedLAPP_ << "Deinit driver";
-    if(framebuf[0]){
-        free(framebuf[0]);
-        framebuf[0]=NULL;
-    }
-    framebuf_size[0]=0;
-if(framebuf[1]){
-        free(framebuf[1]);
-        framebuf[1]=NULL;
-    }
-    framebuf_size[1]=0;
 
 }
 
@@ -111,10 +101,12 @@ int CameraShared::initializeCamera(const chaos::common::data::CDataWrapper& json
             if(siz && buf){
                 try{
                     std::vector<uchar> data = std::vector<uchar>(buf, buf + siz);
-                    cv::Mat m=cv::imdecode(data,cv::IMREAD_UNCHANGED);
+                    cv::Mat m=cv::imdecode(data,IMREAD_ANYCOLOR | IMREAD_ANYDEPTH);
                     original_width=width=m.cols;
                     original_height=height=m.rows;
-                    CameraSharedLDBG_ << "Found image of "<<original_width<<"x"<<original_height<< " data size:"<<data.size();
+                    channels=m.channels();
+                    CameraSharedLDBG_ << "Found image of "<<original_width<<"x"<<original_height<< " data size:"<<data.size()<<" channels:"<<channels;
+                    
                     
                 } catch(...){
                     std::stringstream ss;
@@ -142,11 +134,8 @@ int CameraShared::initializeCamera(const chaos::common::data::CDataWrapper& json
 DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,CameraShared),shots(0),frames(0),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1.0),offsetx(0),offsety(0),original_width(0),original_height(0){
 
     CameraSharedLDBG_<<  "Created Driver";
-    framebuf[0]=NULL;
-    framebuf[1]=NULL;
-    framebuf_size[0]=0;
-    framebuf_size[1]=0;
     movex=movey=rot=0;
+    channels=1;
     props=new chaos::common::data::CDataWrapper();
 #ifdef CVDEBUG
 
@@ -169,7 +158,12 @@ int CameraShared::cameraToProps(chaos::common::data::CDataWrapper*p){
     p->addInt32Value("WIDTH",width);
     p->addInt32Value("HEIGHT",height);
     p->addInt32Value("TRIGGER_MODE",0);
+    if(channels==1){
+        p->addStringValue(FRAMEBUFFER_ENCODING_KEY,"CV_8UC1");
+    } else {
+        p->addStringValue(FRAMEBUFFER_ENCODING_KEY,"CV_8UC3");
 
+    }
     p->addInt32Value("OFFSETX",offsetx);
     p->addInt32Value("OFFSETY",offsety);
     return 0;
@@ -289,17 +283,22 @@ int CameraShared::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _f
     double err=dist_##var(gen);\
     tmp_##var+= err;}
 
-int CameraShared::waitGrab(const char**buf,uint32_t timeout_ms){
-    int32_t ret=-1;
+int CameraShared::waitGrab(camera_buf_t**buf,uint32_t timeout_ms){
+    int32_t ret=0;
+    int size=0;
     if(shared_mem->wait(timeout_ms)==0){
-        uint8_t* bufs;
-        size_t siz=shared_mem->readMsg(&bufs);
+        std::vector<uchar> data = shared_mem->read();
+
         uchar*ds=NULL;
-        int size=0;
-        if(siz&&bufs){
-            std::vector<uchar> data = std::vector<uchar>(bufs, bufs + siz);
+        if(data.size()){
             cv::Mat cropped;
-            cv::Mat img=cv::imdecode(data,cv::IMREAD_UNCHANGED);
+
+            cv::Mat img=cv::imdecode(data, IMREAD_ANYCOLOR | IMREAD_ANYDEPTH);
+            if(img.data==NULL){
+                CameraSharedLERR_<<"Bad Image";
+                return ret;
+            }
+            channels=img.channels();
             original_width=img.cols;
             original_height=img.rows;
             if((((width>0) && (original_width!=width))|| (((height>0) && 
@@ -317,20 +316,12 @@ int CameraShared::waitGrab(const char**buf,uint32_t timeout_ms){
                 size=img.total() * img.elemSize();
             }
             ret= size;
-            if(framebuf_size[frames&1]<size){
-                free(framebuf[frames&1]);
-                framebuf[frames&1]=malloc(size);
-                framebuf_size[frames&1]=size;
-            }
+           
             if(ds==NULL)
                 return 0;
-            std::memcpy(framebuf[frames&1],ds,size );
             if(buf){
-                if(frames>0){
-                    *buf=(char*)framebuf[!(frames&1)];
-            } else {
-                    *buf=(char*)framebuf[0];
-            }
+                *buf = new camera_buf_t(ds,size,img.cols,img.rows);
+                
             frames++;
         } else {
             CameraSharedLERR_<<"BAD BUFFER GIVEN "<<shape_type<<"("<<width<<"X"<<height<<")";
@@ -342,6 +333,7 @@ int CameraShared::waitGrab(const char**buf,uint32_t timeout_ms){
     }
      
 
+    //CameraSharedLDBG_<<"channels:"<<channels<<" size:"<<ret<<" off ("<<offsetx<<","<<offsety<<") "<<width<<"x"<<height <<" orig image:"<<original_width<<"x"<<original_height;
 
     return ret;
 

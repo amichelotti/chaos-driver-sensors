@@ -24,7 +24,7 @@
 #include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
 
 #define DEFAULT_RESOLUTION 640*480*3
-#define CAMERA_FRAME_BUFFERING 16
+#define CAMERA_FRAME_BUFFERING 2
 
 namespace cv {class Mat;}
 namespace driver{
@@ -32,6 +32,7 @@ namespace driver{
     namespace sensor{
          namespace camera{
 	   class CameraDriverInterface;
+     class camera_buf_t;
 class RTCameraBase : public chaos::cu::control_manager::RTAbstractControlUnit {
 	PUBLISHABLE_CONTROL_UNIT_INTERFACE(RTCameraBase);
 
@@ -49,8 +50,11 @@ public:
 
 protected:
         const int buffering;
+        cv::Mat* subImage;
+        bool applyCalib,performCalib;
+        std::string calibimage;
         ChaosUniquePtr<::common::misc::data::SharedMem> shared_mem;
-        int32_t *sizex,*sizey,*offsetx,*offsety;
+        int32_t *sizex,*sizey,*offsetx,*offsety,*osizex,*osizey,*ooffsetx,*ooffsety;
         // if >0 then this is the camera window created, each grab should fit this size.
         int32_t imagesizex,imagesizey;
         int bpp;
@@ -58,16 +62,15 @@ protected:
         int32_t mode,*omode;
         uint8_t* framebuf;
         uint32_t framebuf_encoding;
+        std::string framebuf_encoding_s;
           bool*pacquire,*ptrigger,*ppulse;
 
         //double ZOOMX,ZOOMY;
         chaos::common::data::CDataWrapper filters;
-        typedef struct {
-            uint8_t*buf;
-            int32_t size;
-        } buf_t;
+        
         typedef struct encoded {
             std::vector<unsigned char>* img;
+            int sizex,sizey;
             encoded():img(NULL){};
         } encoded_t;
 
@@ -75,6 +78,7 @@ protected:
      //   chaos::common::data::CDataWrapper camera_props;
        // uint8_t* camera_out;
       //  buf_t framebuf_out[CAMERA_FRAME_BUFFERING]; //capture stage
+        std::vector<int> encode_params;
 
         void captureThread();
         bool stopCapture,stopEncoding;
@@ -83,7 +87,7 @@ protected:
       //  std::vector<unsigned char> encbuf[CAMERA_FRAME_BUFFERING];//encode stage
         uint32_t captureQueue,encodeQueue;
         boost::condition_variable wait_capture,wait_encode,full_capture,full_encode;
-        boost::lockfree::queue<buf_t, boost::lockfree::fixed_sized<true> > captureImg;
+        boost::lockfree::queue<::driver::sensor::camera::camera_buf_t*, boost::lockfree::fixed_sized<true> > captureImg;
         boost::lockfree::queue<encoded_t, boost::lockfree::fixed_sized<true> > encodedImg;
         boost::mutex mutex_io,mutex_encode;
         uint32_t hw_trigger_timeout_us,sw_trigger_timeout_us,trigger_timeout; // 0 =wait indefinitively
@@ -103,6 +107,8 @@ protected:
         bool setProp(const std::string &name, const std::string& value, uint32_t size);
 
         void startGrabbing();
+        void haltThreads();
+        void fatalErrorHandler(const chaos::CException & r);
         void stopGrabbing();
 		/*!
 		Define the Control Unit Dataset and Actions
@@ -148,8 +154,13 @@ protected:
 		is called
 		*/
 		void unitInputAttributeChangedHandler() throw(chaos::CException);
+    chaos::common::data::CDWUniquePtr unitPerformCalibration(chaos::common::data::CDWUniquePtr data);
 
     virtual int filtering(cv::Mat&image);
+    
+    chaos::common::data::CDWUniquePtr getAction(chaos::common::data::CDWUniquePtr );
+    chaos::common::data::CDWUniquePtr setAction(chaos::common::data::CDWUniquePtr );
+    bool unitRestoreToSnapshot(chaos::cu::control_manager::AbstractSharedDomainCache * const snapshot_cache) throw(chaos::CException);
 
 };
     }}}

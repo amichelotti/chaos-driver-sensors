@@ -45,10 +45,9 @@ namespace driver {
 #define CAM_MAX_SHUTTER 1000
 #define CAM_MAX_GAIN 1000
 #define CAM_MAX_BRIGHTNESS 1500
-class ShapeSim:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::CameraDriverBridge {
+class ShapeSim:public chaos::cu::driver_manager::driver::AbstractDriverPlugin,public ::driver::sensor::camera::CameraDriverBridge {
 
 
-   chaos::common::data::CDataWrapper* props;
  protected:
 
  void driverInit(const char *initParameter) throw(chaos::CException);
@@ -63,8 +62,6 @@ class ShapeSim:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::Camera
      uint64_t frames;
      double movex,movey,rot;
      double max_movex,max_movey,min_movex,min_movey;
-     void*framebuf[2];
-     int framebuf_size[2];
      int32_t memID;
      cameraGrabCallBack fn;
      bool initialized;
@@ -81,7 +78,6 @@ class ShapeSim:ADD_CU_DRIVER_PLUGIN_SUPERCLASS, ::driver::sensor::camera::Camera
      ///
      double framerate,gain,brightness,shutter;
      int32_t gain_raw,brightness_raw,shutter_raw;
-      cv::Mat img;
      // shape parameters
      ChaosUniquePtr<chaos::common::data::CDataWrapper> shape_params;
      std::string shape_type;
@@ -116,7 +112,7 @@ public:
      int startGrab(uint32_t shots,void*framebuf=NULL,cameraGrabCallBack=NULL);
 
      int waitGrab(uint32_t timeout_ms);
-     int waitGrab(const char**buf,uint32_t timeout_ms);
+     int waitGrab(camera_buf_t**buf,uint32_t timeout_ms);
 
      int stopGrab();
 
@@ -125,7 +121,7 @@ public:
      int cameraDeinit();
       cu_driver::MsgManagmentResultType::MsgManagmentResult execOpcode(cu_driver::DrvMsgPtr cmd){return CameraDriverBridge::execOpcode(cmd);}
 
-        
+      chaos::common::data::CDWUniquePtr setDrvProperties(chaos::common::data::CDWUniquePtr);  
 };
         }}}
 #endif /* defined(__ControlUnitTest__DummyDriver__) */

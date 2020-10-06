@@ -165,7 +165,7 @@ bool Camera::openCameraCamId(unsigned int id)
   CAMINFO info;
   checkError(is_GetCameraInfo(cam_, &info));
   serial_number_ = atoll(info.SerNo);
-  cam_info_.nColorMode;
+  //cam_info_.nColorMode;
   getColorMode();
 /*  setColorMode(color_mode_);
   setAutoExposure(&auto_exposure_);
@@ -334,12 +334,16 @@ INT nRet;
     rect.s32Width = width;
     rect.s32Height = height;
     nRet= is_AOI(cam_, IS_AOI_IMAGE_SET_AOI, (void*)&rect, sizeof(rect));
-    if(is_GetSensorInfo(cam_, &cam_info_)!=IS_SUCCESS){
-      LERR_<<" error readinf sensors";
-    } else {
-      LDBG_<<"SET AOI size:"<<cam_info_.nMaxWidth / zoom_<<"x"<<cam_info_.nMaxHeight / zoom_;
-    }
 
+    if(nRet==IS_SUCCESS){
+      LDBG_<<"SET AOI :"<<width<<"x"<<height<<" ("<<posx<<","<<posy<<")";
+
+      if(is_GetSensorInfo(cam_, &cam_info_)!=IS_SUCCESS){
+        LERR_<<" error readinf sensors";
+      } else {
+        LDBG_<<"SET AOI max size:"<<cam_info_.nMaxWidth / zoom_<<"x"<<cam_info_.nMaxHeight / zoom_;
+      }
+    }
     return nRet;
 
 }
@@ -737,7 +741,48 @@ int Camera::getImageRawSize(){
     return getWidth() * getHeight() *depth;
 
 }
+int Camera::setWidth(int w){
+  IS_SIZE_2D sz;
+  INT nRet;
+  sz.s32Width=w;
+  sz.s32Height=getHeight();
+    nRet= is_AOI(cam_, IS_AOI_IMAGE_SET_SIZE, (void*)&sz, sizeof(sz));
+  
+    return nRet;
 
+}
+
+int Camera::setHeight(int w){
+  IS_SIZE_2D sz;
+  INT nRet;
+  sz.s32Width=getWidth();
+  sz.s32Height=w;
+  nRet= is_AOI(cam_, IS_AOI_IMAGE_SET_SIZE, (void*)&sz, sizeof(sz));
+  
+  return nRet;
+}
+int Camera::setOffsetX(int w){
+  int posx,posy,width,height;
+  INT nRet;
+
+  if((nRet=getAOI(posx,posy,width,height))==IS_SUCCESS){
+    return setAOI(w,posy,width,height);
+  }
+  
+  return nRet;
+}
+int Camera::setOffsetY(int w){
+  int posx,posy,width,height;
+  INT nRet;
+
+  if((nRet=getAOI(posx,posy,width,height))==IS_SUCCESS){
+    return setAOI(posx,w,width,height);
+  }
+  
+  return nRet;
+
+}
+  
 void Camera::captureThread(CamCaptureCB callback)
 {
   streaming_ = true;

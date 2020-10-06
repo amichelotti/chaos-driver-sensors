@@ -3,6 +3,7 @@ project(sensor_models)
 add_subdirectory(LucidControl)
 add_subdirectory(Simulator)
 add_subdirectory(ZBSensor)
+add_subdirectory(LeyboldCenterOne)
 
 IF(OPENCV)
 FILE(REMOVE camera/ShapeSim/UnitServerIgnore)
