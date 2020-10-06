@@ -23,7 +23,6 @@
 #include <driver/sensors/core/AbstractSensorDriver.h>
 #include <driver/sensors/core/CameraDriverInterface.h>
 #include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #ifdef CERN_ROOT
 #include <TH2F.h>
@@ -98,6 +97,7 @@ RTCameraFilter::RTCameraFilter(
   catch (...)
   {
   }
+  CREATE_CU_INT_PROP(FILTER_MOMENT_KEY,"",moment_circle,0,1024,1,RTCameraFilter);
 }
 
 /*
@@ -248,17 +248,29 @@ void RTCameraFilter::unitDefineActionAndDataset() throw(chaos::CException)
     addAttributeToDataSet("Y_m", "Fit Y average", chaos::DataType::TYPE_DOUBLE,
                           chaos::DataType::Output);
   }
+  
   RTCameraBase::unitDefineActionAndDataset();
 }
 
 int RTCameraFilter::filtering(cv::Mat &image)
 {
   Mat thr, gray;
-  if (apply_moment || apply_gauss_fit)
-  {
-    // convert image to grayscale
-    cvtColor(image, gray, COLOR_BGR2GRAY);
+  if(image.data==NULL){
+    RTCameraFilterLERR_<<" BAD IMAGE";
+    return -1;
   }
+  RTCameraFilterLDBG_<<" NCHANNELS:"<<image.channels()<<" size:"<<image.rows<<"x"<<image.cols;
+  if ((apply_moment || apply_gauss_fit))
+  {
+    if(image.channels()>1){
+    // convert image to grayscale
+      cvtColor(image, gray, cv::COLOR_BGR2GRAY);
+    //gray=image;
+
+    } else {
+      gray=image;
+    }
+  } 
   if(apply_moment && !apply_gauss_fit){
     // convert grayscale to binary image
     threshold(gray, thr, 100, 255, THRESH_BINARY);
@@ -342,8 +354,10 @@ int RTCameraFilter::filtering(cv::Mat &image)
     }
     getAttributeCache()->setOutputAttributeValue("MOMENTX", p.x);
     getAttributeCache()->setOutputAttributeValue("MOMENTY", p.y);
-
-    if((S_x>0) && (S_y>0)){
+    if (moment_circle > 0)
+    {
+      circle(image, p, moment_circle, Scalar(128, 0, 0), -1);
+    } else if((S_x>0) && (S_y>0)){
       ellipse( image,
                  Point( X_m, Y_m),
                  Size( S_x, S_y ),
@@ -354,10 +368,7 @@ int RTCameraFilter::filtering(cv::Mat &image)
                  1,
                  8 );
 
-    } else if (moment_circle > 0)
-    {
-      circle(image, p, moment_circle, Scalar(128, 0, 0), -1);
-    }
+    }  
     if ((REFSIZEX > 0) && (REFSIZEY > 0))
     {
       double refx = REFOFFSETX + REFSIZEX * 1.0 / 2.0;

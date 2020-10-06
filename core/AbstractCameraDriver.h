@@ -20,7 +20,6 @@
 #ifndef __ASTRACTCAMERADRIVER_H__
 #define __ASTRACTCAMERADRIVER_H__
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
-#include <common/misc/data/core/Property.h>
 
 namespace cu_driver = chaos::cu::driver_manager::driver;
 #include <string>
@@ -47,7 +46,10 @@ enum TriggerModes {
     CAMERA_TRIGGER_SOFT,
     CAMERA_TRIGGER_HW_HI,
     CAMERA_TRIGGER_HW_LOW,
-    CAMERA_DISABLE_ACQUIRE
+    CAMERA_DISABLE_ACQUIRE,
+    CAMERA_TRIGGER_COUNTER,
+    CAMERA_TRIGGER_TIMER,
+    CAMERA_UNDEFINED
 
 } ;
 enum GrabStrategy {
@@ -58,11 +60,10 @@ enum GrabStrategy {
 } ;
 #define TRIGGER_TIMEOUT_ERROR -100
 #define CAMERA_GRAB_ERROR -200
-
+#define CAMERA_GRAB_STOP -20
 #define LOG_FREQUENCY 10000
 #define TRIGGER_MODE_KEY "TRIGGER_MODE"
 #define SERIAL_KEY "serial"
-
 #define FRAMEBUFFER_ENCODING_KEY "FRAMEBUFFER_ENCODING"
 #define TRIGGER_HW_SOURCE_KEY "TRIGGER_HW_SOURCE"
 #define TRIGGER_DELAY_KEY "TRIGGER_DELAY"
@@ -86,12 +87,40 @@ enum GrabStrategy {
 int fmt2cv(const std::string&);
 int cv2fmt(int fmt,  std::string& enc);
 
- class AbstractCameraDriver{
+
+struct camera_buf_t {
+            uint8_t*buf;
+            int32_t size;
+            int32_t width;
+            int32_t height;
+            int32_t offsetx;
+            int32_t offsety;
+
+            camera_buf_t(int32_t _size,int32_t _width,int32_t _height,int32_t _offsetx=0,int32_t _offsety=0):width(_width),height(_height),offsetx(_offsetx),offsety(_offsety){
+                buf=(uint8_t*)malloc(_size);
+                
+                if(buf){
+                    size=_size;
+                }
+            }
+            camera_buf_t(const uint8_t*ptr, int32_t _size,int32_t _width,int32_t _height,int32_t _offsetx=0,int32_t _offsety=0):width(_width),height(_height),offsetx(_offsetx),offsety(_offsety){
+                buf=(uint8_t*)malloc(_size);
+                if(buf){
+                    size=_size;
+                    memcpy(buf,ptr,size);
+                }
+            }
+            camera_buf_t():size(0),buf(NULL),width(0),height(0){}
+            ~camera_buf_t(){free(buf);}
+            
+} ;
+
+ class AbstractCameraDriver/*:public ::common::misc::data::Property<AbstractCameraDriver>*/ {
 
 protected:
-    ChaosUniquePtr< ::common::misc::data::Property > ownprops; //camera own props,
+    //ChaosUniquePtr< ::common::misc::data::Property<AbstractCameraDriver> > ownprops; //camera own props,
 
-    ChaosUniquePtr<chaos::common::data::CDataWrapper> props; //camera generic props
+    //ChaosUniquePtr<chaos::common::data::CDataWrapper> props; //camera generic props
     TriggerModes tmode; //0 continous, 1 software,2 hw,3 singleshot
      bool stopGrabbing;
      bool restore_grab;
@@ -99,14 +128,13 @@ protected:
      std::string serial;
      uint32_t shots;
      GrabStrategy gstrategy;
-
-     void*framebuf;
      cameraGrabCallBack fn;
      uint32_t hw_trigger_timeout_us,sw_trigger_timeout_us; // 0 =wait indefinitively
 
     void parseInitCommonParams(const chaos::common::data::CDataWrapper& params);
 public:
-   AbstractCameraDriver():stopGrabbing(true),restore_grab(false),shots(1),framebuf(NULL),fn(NULL),hw_trigger_timeout_us(5000000),sw_trigger_timeout_us(0),ownprops(new ::common::misc::data::Property),props(new chaos::common::data::CDataWrapper){}
+
+   AbstractCameraDriver():stopGrabbing(true),restore_grab(false),shots(1),fn(NULL),hw_trigger_timeout_us(5000000),sw_trigger_timeout_us(0)/*,ownprops(new ::common::misc::data::Property<AbstractCameraDriver>),props(new chaos::common::data::CDataWrapper)*/{}
 
     //! Execute a command
     /**
@@ -180,8 +208,14 @@ public:
      */
     virtual int waitGrab(uint32_t timeout_ms)=0;
 
-
-    virtual int waitGrab(const char**buf,uint32_t timeout_ms)=0;
+    /**
+     * @brief return an allocated camera buf that must released by caller
+     * 
+     * @param buf 
+     * @param timeout_ms 
+     * @return int 
+     */
+    virtual int waitGrab(camera_buf_t**buf,uint32_t timeout_ms)=0;
 
 
     /**

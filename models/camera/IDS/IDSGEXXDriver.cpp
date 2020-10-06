@@ -74,9 +74,7 @@ int IDSGEXXDriver::get_next_image(char **mem, INT *image_id,int32_t timeout) {
 void IDSGEXXDriver::driverInit(const chaos::common::data::CDataWrapper& json) {
     IDSGEXXDriverLAPP_ << "Initializing  json driver:"<<json.getCompliantJSONString();
     parseInitCommonParams(json);
-    ownprops->reset();
     
-    props->reset();
     if(initializeCamera(json)!=0){
         throw chaos::CException(-1,"cannot initialize camera "+json.getCompliantJSONString(),__PRETTY_FUNCTION__);
     }
@@ -100,8 +98,8 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
     int ret;
     const char *version;
     int major, minor, build;
-    
-    
+    grabbing=false;
+    try{
    /* if (camera.checkVersion(major, minor, build, version)) {
         IDSGEXXDriverLDBG_<<"Loaded uEye SDK:"<<version;
     } else {
@@ -112,6 +110,13 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
     int num_cameras = camera.getNumberOfCameras();
     if (num_cameras > 0) {
         IDSGEXXDriverLDBG_<<"Found "<<num_cameras<<" cameras";
+        std::vector<unsigned int> serialid,dev_id;
+        
+        int ret=camera.getSerialNumberList(serialid,dev_id);
+        for(int cnt=0;cnt<ret;cnt++){
+            IDSGEXXDriverLDBG_<<cnt<<"] Found serid:"<<serialid[cnt]<<" devid:"<<dev_id[cnt]<<" looking:"<<serial;
+ 
+        }
 
     } else {
         IDSGEXXDriverLERR_<<" NO CAMERA FOUND";
@@ -214,10 +219,325 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
 
 
 */
-    initialized=true;
+    
+    } catch (std::exception &e) {
+      std::stringstream ss;
+      ss << "Unexpected exception: \"" << e.what();
+      IDSGEXXDriverLERR_ << ss.str();
+      return -110;
+      } catch (...) {
+      //unkonwn exception
+      IDSGEXXDriverLERR_ << "an unknown exception ";
+      return -120;
 
+    }
+    initialized=true;
+    createProperty("SerialNumber", (int64_t)camera.getCameraSerialNo());
+    createProperty("Serial", serial);
+
+    createProperty("FullName", camera.getCameraName());
+    createProperty("framerate", framerate,"FRAMERATE",[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            if(t->camera.getFrameRate(&t->framerate)==0){
+                IDSGEXXDriverLDBG_<< "FRAMERATE:"<<t->framerate;
+                chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
+                ret->addDoubleValue("value",t->framerate);
+                return ret;
+            }
+            return chaos::common::data::CDWUniquePtr();
+      },[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            if(p.hasKey("value")){
+                double val=p.getDoubleValue("value");
+                t->camera.setFrameRate(&val);
+                return p.clone();
+            }
+            return chaos::common::data::CDWUniquePtr();
+        
+      });
+      if((ret=camera.getAOI(offsetx,offsety,width,height))==IS_SUCCESS){
+        IDSGEXXDriverLDBG_<< "CURRENT OFFSET (" << offsetx<<","<<offsety<<") img size:"<<width<<"x"<<height;
+
+    }
+    gain=camera.getHardwareGain();
+    exposure=camera.getExposure();
+    zoom=camera.getZoom();
+    trgmode=IDStrgmode2trgmode(camera.getTriggerMode());
+
+createProperty("width", width,0,camera.getWidthMax(),2,"WIDTH",[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            t->width=t->camera.getWidth();
+        
+            IDSGEXXDriverLDBG_<< "WIDTH:"<<t->width;
+            chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
+            ret->addInt32Value("value",t->width);
+            ret->addInt32Value("max",t->camera.getWidthMax());
+            ret->addInt32Value("min",0);
+
+            return ret;
+        
+      },[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            if(p.hasKey("value")){
+                int32_t val=p.getInt32Value("value");
+                if(t->camera.setWidth(val)==0){
+                    return p.clone();
+                }
+            }
+            return chaos::common::data::CDWUniquePtr();
+        
+      });
+
+      createProperty("height", height,0,camera.getHeightMax(),2,"HEIGHT",[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            t->height=t->camera.getHeight();
+            
+                IDSGEXXDriverLDBG_<< "HEIGHT:"<<t->height;
+                chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
+                ret->addInt32Value("value",t->height);
+                ret->addInt32Value("max",t->camera.getHeightMax());
+                ret->addInt32Value("min",0);
+
+                return ret;
+            
+      },[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            if(p.hasKey("value")){
+                int32_t val=p.getInt32Value("value");
+                if(t->camera.setHeight(val)==0){
+                    return p.clone();
+                }
+            }
+        
+            return chaos::common::data::CDWUniquePtr();
+        
+      });
+
+    createProperty("offsetx", offsetx,0,camera.getWidthMax(),2,"OFFSETX",[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            
+            if(t->camera.getAOI(t->offsetx,t->offsety,t->width,t->height)==0){
+        
+                IDSGEXXDriverLDBG_<< "OFFSETX:"<<t->offsetx;
+                chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
+                ret->addInt32Value("value",t->offsetx);
+                ret->addInt32Value("max",t->camera.getWidthMax()-t->offsetx);
+                ret->addInt32Value("min",0);
+
+                return ret;
+            } 
+            return chaos::common::data::CDWUniquePtr();
+        
+      },[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            if(p.hasKey("value")){
+                int32_t val=p.getInt32Value("value");
+                if(t->camera.setOffsetX(val)==0){
+                    return p.clone();
+                }
+            }
+            return chaos::common::data::CDWUniquePtr();
+        
+      });
+
+createProperty("offsety", offsety,0,camera.getHeightMax(),2,"OFFSETY",[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            
+            if(t->camera.getAOI(t->offsetx,t->offsety,t->width,t->height)==0){
+        
+                IDSGEXXDriverLDBG_<< "OFFSETY:"<<t->offsety;
+                chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
+                ret->addInt32Value("value",t->offsety);
+                 ret->addInt32Value("max",t->camera.getHeightMax()-t->offsety);
+                ret->addInt32Value("min",0);
+
+                return ret;
+            } 
+            return chaos::common::data::CDWUniquePtr();
+        
+      },[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            if(p.hasKey("value")){
+                int32_t val=p.getInt32Value("value");
+                if(t->camera.setOffsetY(val)==0){
+                    return p.clone();
+                }
+            }
+            return chaos::common::data::CDWUniquePtr();
+        
+      });
+createProperty("zoom", zoom,"ZOOM",[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            t->zoom=t->camera.getZoom();    
+            IDSGEXXDriverLDBG_<< "ZOOM:"<<t->zoom;
+            chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
+            ret->addInt32Value("value",t->zoom);
+            return ret;
+        
+        
+      },[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            if(p.hasKey("value")){
+                int32_t val=p.getInt32Value("value");
+                t->camera.setZoom(&val);
+                return p.clone();
+                
+            }
+            return chaos::common::data::CDWUniquePtr();
+        
+      });
+createProperty("pixelCLK", pixelclk,"PIXELCLK",[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            t->pixelclk=t->camera.getPixelClock();    
+            IDSGEXXDriverLDBG_<< "PIXEL CLOCK:"<<t->pixelclk;
+            chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
+            ret->addInt32Value("value",t->pixelclk);
+            return ret;
+        
+        
+      },[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            if(p.hasKey("value")){
+                int32_t val=p.getInt32Value("value");
+                t->camera.setPixelClock(&val);
+                return p.clone();
+                
+            }
+            return chaos::common::data::CDWUniquePtr();
+        
+      });
+
+      createProperty("gain", gain,"GAIN",[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            t->gain=t->camera.getHardwareGain();
+            IDSGEXXDriverLDBG_<< "GAIN:"<<t->gain;
+            chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
+            ret->addInt32Value("value",t->gain);
+            return ret;
+        
+      },[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            if(p.hasKey("value")){
+                int32_t val=p.getInt32Value("value");
+                t->camera.setHardwareGain(&val);
+                return p.clone();
+            }
+        
+            return chaos::common::data::CDWUniquePtr();
+        
+      });
+ createProperty("exposure", exposure,"SHUTTER",[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            t->exposure=t->camera.getExposure();
+            IDSGEXXDriverLDBG_<< "SHUTTER:"<<t->exposure;
+            chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
+            ret->addDoubleValue("value",t->exposure);
+            return ret;
+            
+      },[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            if(p.hasKey("value")){
+                double val=p.getDoubleValue("value");
+                t->camera.setExposure(&val);
+                return p.clone();
+            }
+        
+            return chaos::common::data::CDWUniquePtr();
+        
+      });
+     createProperty("trgmode", trgmode,"TRIGGER_MODE",[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            t->trgmode=t->IDStrgmode2trgmode(t->camera.getTriggerMode());
+            chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
+            ret->addInt32Value("value",t->trgmode);
+            return ret;
+        
+      },[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
+            if(p.hasKey("value")){
+                TriggerMode val=t->trgmode2IDStrgmode(p.getInt32Value("value"));
+                t->camera.setTriggerMode(val);
+                return p.clone();
+            }
+        
+            return chaos::common::data::CDWUniquePtr();
+        
+      });  
     return 0;
 }
+
+int32_t IDSGEXXDriver::IDStrgmode2trgmode(TriggerMode ids){
+    switch(ids){
+    case TRIGGER_HI_LO:
+        IDSGEXXDriverLDBG_<< "TRIGGER HI->LOW";
+        return CAMERA_TRIGGER_HW_LOW;
+    case TRIGGER_LO_HI:
+        IDSGEXXDriverLDBG_<< "TRIGGER LOW->HI";
+        return CAMERA_TRIGGER_HW_HI;
+    case TRIGGER_OFF:
+    
+    default:
+        IDSGEXXDriverLDBG_<< "TRIGGER CONTINOUS";
+        return CAMERA_TRIGGER_CONTINOUS;
+        
+    }
+
+}
+TriggerMode IDSGEXXDriver::trgmode2IDStrgmode(int32_t tmode){
+      switch(tmode){
+        case (CAMERA_TRIGGER_CONTINOUS):{
+            IDSGEXXDriverLDBG_<< "TRIGGER OFF";
+
+            return TRIGGER_OFF;
+
+        }
+        case CAMERA_TRIGGER_SINGLE:{
+            IDSGEXXDriverLDBG_<< "TRIGGER SINGLE (NA)";
+            return TRIGGER_LO_HI;
+        }
+        case CAMERA_TRIGGER_SOFT:{
+            IDSGEXXDriverLDBG_<< "TRIGGER SOFT (NA)";
+            return TRIGGER_LO_HI;
+
+        }
+       
+        case CAMERA_TRIGGER_HW_LOW:
+            IDSGEXXDriverLDBG_<< "TRIGGER HI->LOW";
+
+            return TRIGGER_HI_LO;
+
+        case CAMERA_TRIGGER_HW_HI:
+            IDSGEXXDriverLDBG_<< "TRIGGER LOW->HI";
+            return TRIGGER_LO_HI;
+        default:
+                IDSGEXXDriverLDBG_<< "DISABLE ACQUIRE";
+            return TRIGGER_OFF;
+
+
+        }
+
+}
+    
 /*
 IDSGEXXDriver::IDSGEXXDriver():shots(0),framebuf(NULL),fn(NULL),props(NULL),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false){
 
@@ -287,9 +607,12 @@ int IDSGEXXDriver::cameraToProps(chaos::common::data::CDataWrapper*p){
 
         return 0;
     }
-    int width = camera.getWidth();
-    int height = camera.getHeight();
-    int gain=camera.getHardwareGain();
+    IDSGEXXDriverLDBG_<<" synchronize all properties..";
+    syncRead();// synchronize with real values
+
+    appendPubPropertiesTo(*p);
+    /*camera.getAOI(offsetx,offsety,width,height);
+     gain=camera.getHardwareGain();
     IDSGEXXDriverLDBG_<< "WIDTH:"<<width<<" HEIGHT:"<<height<<" GAIN:"<<gain;
 
     if(camera.getAutoGain()){
@@ -297,7 +620,6 @@ int IDSGEXXDriver::cameraToProps(chaos::common::data::CDataWrapper*p){
     } else {
         p->addDoubleValue("GAIN",gain);
     }
-    double framerate;
     if(camera.getFrameRate(&framerate)==0){
         IDSGEXXDriverLDBG_<< "FRAMERATE:"<<framerate;
 
@@ -313,32 +635,21 @@ int IDSGEXXDriver::cameraToProps(chaos::common::data::CDataWrapper*p){
     } else {
         double exp=camera.getExposure();
         p->addDoubleValue("SHUTTER",exp);
-        IDSGEXXDriverLDBG_<< "GAIN:"<<exp;
+        IDSGEXXDriverLDBG_<< "SHUTTER:"<<exp;
 
     }
     int pixel_clock=camera.getPixelClock();
     p->addInt32Value("PIXELCLOCK",pixel_clock);
-    switch(camera.getTriggerMode()){
-    case TRIGGER_HI_LO:
-        IDSGEXXDriverLDBG_<< "TRIGGER HI->LOW";
-
-        p->addInt32Value("TRIGGER_MODE",CAMERA_TRIGGER_HW_LOW);
-        break;
-    case TRIGGER_LO_HI:
-        IDSGEXXDriverLDBG_<< "TRIGGER LOW->HI";
-        p->addInt32Value("TRIGGER_MODE",CAMERA_TRIGGER_HW_HI);
-        break;
-    default:
-        IDSGEXXDriverLDBG_<< "TRIGGER CONTINOUS";
-        p->addInt32Value("TRIGGER_MODE",CAMERA_TRIGGER_CONTINOUS);
-        break;
-    }
-    p->addInt32Value("WIDTH",width);
+     p->addInt32Value("WIDTH",width);
     p->addInt32Value("HEIGHT",height);
 
-    p->addInt32Value("OFFSETX",0);
-    p->addInt32Value("OFFSETY",0);
+    p->addInt32Value("OFFSETX",offsetx);
+    p->addInt32Value("OFFSETY",offsety);
 
+    */
+    
+
+   
     p->addStringValue(FRAMEBUFFER_ENCODING_KEY,ids2cv(camera.getColorMode()));
 
     return 0;
@@ -351,7 +662,6 @@ int IDSGEXXDriver::cameraToProps(chaos::common::data::CDataWrapper*p){
 int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
     // Get the camera control object.
     int32_t ret=0;
-    int posy=0,width=0,height=0,posx=0;
     if(p==NULL){
         IDSGEXXDriverLERR_ << "Invalid Parameter";
         return -1;
@@ -361,13 +671,172 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
         IDSGEXXDriverLERR_ << "Camera is deinitialized";
         return -2;
     }
-    if((ret=camera.getAOI(posx,posy,width,height))==IS_SUCCESS){
-        IDSGEXXDriverLDBG_<< "CURRENT OFFSET (" << posx<<","<<posy<<") img size:"<<width<<"x"<<height;
+    IDSGEXXDriverLDBG_<<"setting props: " << p->getCompliantJSONString() ;
 
-    }
+    setProperties(*p,true);
+    
 
     
-    if(p->hasKey(TRIGGER_MODE_KEY)){
+   
+
+    // Get the parameters for setting the image area of interest (Image AOI).
+
+    // Maximize the Image AOI.
+    //   chaos::common::data::CDataWrapper*p=driver->props;
+/*
+    if (p->hasKey("OFFSETX")){
+         int32_t val=p->getInt32Value("OFFSETX");
+         ret=camera.setOffsetX(val);
+    
+        if(ret==IS_SUCCESS){
+            IDSGEXXDriverLDBG_<< "setting OFFSETX:" << offsetx;
+            offsetx=val;
+
+        }else {
+            ret++;
+            IDSGEXXDriverLERR_<<"Setting OFFSETX FAILED";
+
+        }
+    }
+    if (p->hasKey("OFFSETY")){
+        int32_t val=p->getInt32Value("OFFSETY");
+
+         ret=camera.setOffsetY(val);
+        if(ret==IS_SUCCESS){
+            IDSGEXXDriverLDBG_<< "setting OFFSETY " << offsety;
+            offsety=val;
+
+        }else {
+            ret++;
+            IDSGEXXDriverLERR_<<"Setting OFFSETY FAILED";
+
+        }
+
+
+    }
+    if ( p->hasKey("WIDTH")){
+        int32_t val=p->getInt32Value("WIDTH");
+
+         ret=camera.setWidth(val);
+        if(ret==IS_SUCCESS){
+            IDSGEXXDriverLDBG_<< "setting WIDTH " << width;
+            width=val;
+
+        } else {
+            ret++;
+            IDSGEXXDriverLERR_<<"Setting WIDTH FAILED";
+
+        }
+    }
+    if ( p->hasKey("HEIGHT")){
+        int32_t val=p->getInt32Value("HEIGHT");
+
+         ret=camera.setHeight(val);
+        if(ret==IS_SUCCESS){
+            IDSGEXXDriverLDBG_<< "setting HEIGHT " << height;
+            height=val;
+
+        }else {
+            ret++;
+            IDSGEXXDriverLERR_<<"Setting HEIGHT FAILED";
+
+        }
+
+    }
+     if(p->hasKey("GAIN")){
+        double gain=p->getAsRealValue("GAIN");
+        if(gain<0){
+            bool auto_gain=true;
+            camera.setAutoGain(&auto_gain);
+            IDSGEXXDriverLDBG_<< "AUTOGAIN";
+
+        } else {
+            int igain=(400*gain)/100.0;
+            IDSGEXXDriverLDBG_<< "GAIN:"<<igain;
+
+            camera.setHardwareGain(&igain);
+        }
+
+    }
+     if(p->hasKey("SHUTTER")){
+        double value=p->getAsRealValue("SHUTTER");
+        if((value<0)){
+            bool auto_exp=true;
+            camera.setAutoExposure(&auto_exp);
+            IDSGEXXDriverLDBG_<< "AUTO EXPOSURE";
+
+        } else {
+            IDSGEXXDriverLDBG_<< "EXPOSURE:"<<value;
+            
+            camera.setExposure(&value);
+        }
+    }
+     if(p->hasKey("FRAMERATE")){
+        double value=p->getAsRealValue("FRAMERATE");
+        IDSGEXXDriverLDBG_<< "SET FRAMERATE:"<<value;
+
+        camera.setFrameRate(&value);
+    }
+      if(p->hasKey("SHARPNESS")){
+
+        if(p->getAsRealValue("SHARPNESS")<0){
+
+
+        } else {
+
+
+        }
+    }
+    if(p->hasKey("BRIGHTNESS")){
+
+        if(p->getAsRealValue("BRIGHTNESS")<0){
+
+        } else {
+
+
+            double gain=p->getAsRealValue("BRIGHTNESS")/100.0;
+            if(gain>1.0){
+                gain=1.0;
+            }
+
+
+        }
+    }
+    if(p->hasKey("CONTRAST")){
+
+        if(p->getAsRealValue("CONTRAST")<0){
+
+        } else {
+
+
+            double gain=p->getAsRealValue("CONTRAST")/100.0;
+            if(gain>1.0){
+                gain=1.0;
+            }
+            if(ret==IS_SUCCESS){
+                ret++;
+                IDSGEXXDriverLERR_<<"Setting CONTRAST FAILED";
+            }
+
+
+        }
+    }
+if(p->hasKey("ZOOM")){
+        int zoom=p->getAsRealValue("ZOOM");
+        if(zoom>0){
+
+            camera.setZoom(&zoom);
+        }
+    }
+     // Pixel Clock
+    if(p->hasKey("PIXELCLOCK")){
+        double value=p->getAsRealValue("PIXELCLOCK");
+        int ivalue=value;
+        IDSGEXXDriverLDBG_<< "PIXEL CLOCK:"<<value;
+
+        camera.setPixelClock(&ivalue);
+    }
+ if(p->hasKey(TRIGGER_MODE_KEY)){
         tmode=(TriggerModes)p->getInt32Value(TRIGGER_MODE_KEY);
 
 
@@ -419,63 +888,8 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
 
         }
     }
-    IDSGEXXDriverLDBG_<<"setting props: " << p->getCompliantJSONString() ;
+  */
 
-    // Get the parameters for setting the image area of interest (Image AOI).
-
-    // Maximize the Image AOI.
-    //   chaos::common::data::CDataWrapper*p=driver->props;
-
-    if (p->hasKey("OFFSETX")){
-         posx=p->getInt32Value("OFFSETX");
-         ret=camera.setAOI(posx,posy,width,height);
-    
-        if(ret==IS_SUCCESS){
-            IDSGEXXDriverLDBG_<< "setting OFFSETX:" << posx;
-        }else {
-            ret++;
-            IDSGEXXDriverLERR_<<"Setting OFFSETX FAILED";
-
-        }
-    }
-    if (p->hasKey("OFFSETY")){
-        posy=p->getInt32Value("OFFSETY");
-         ret=camera.setAOI(posx,posy,width,height);
-        if(ret==IS_SUCCESS){
-            IDSGEXXDriverLDBG_<< "setting OFFSETY " << posy;
-
-        }else {
-            ret++;
-            IDSGEXXDriverLERR_<<"Setting OFFSETY FAILED";
-
-        }
-
-
-    }
-    if ( p->hasKey("WIDTH")){
-         width=p->getInt32Value("WIDTH");
-         ret=camera.setAOI(posx,posy,width,height);
-        if(ret==IS_SUCCESS){
-            IDSGEXXDriverLDBG_<< "setting WIDTH " << width;
-        } else {
-            ret++;
-            IDSGEXXDriverLERR_<<"Setting WIDTH FAILED";
-
-        }
-    }
-    if ( p->hasKey("HEIGHT")){
-         height=p->getInt32Value("HEIGHT");
-         ret=camera.setAOI(posx,posy,width,height);
-        if(ret==IS_SUCCESS){
-            IDSGEXXDriverLDBG_<< "setting HEIGHT " << height;
-
-        }else {
-            ret++;
-            IDSGEXXDriverLERR_<<"Setting HEIGHT FAILED";
-
-        }
-
-    }
     if (p->hasKey(FRAMEBUFFER_ENCODING_KEY)){
         uEyeColor  color = (uEyeColor)0;
 
@@ -501,103 +915,14 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
     }
 
 
-    if(p->hasKey("GAIN")){
-        double gain=p->getAsRealValue("GAIN");
-        if(gain<0){
-            bool auto_gain=true;
-            camera.setAutoGain(&auto_gain);
-            IDSGEXXDriverLDBG_<< "AUTOGAIN";
+   
 
-        } else {
-            int igain=(400*gain)/100.0;
-            IDSGEXXDriverLDBG_<< "GAIN:"<<igain;
+   
+    
+   
+   
 
-            camera.setHardwareGain(&igain);
-        }
-
-    }
-
-    if(p->hasKey("SHUTTER")){
-        double value=p->getAsRealValue("SHUTTER");
-        if((value<0)){
-            bool auto_exp=true;
-            camera.setAutoExposure(&auto_exp);
-            IDSGEXXDriverLDBG_<< "AUTO EXPOSURE";
-
-        } else {
-            IDSGEXXDriverLDBG_<< "EXPOSURE:"<<value;
-            
-            camera.setExposure(&value);
-        }
-    }
-    if(p->hasKey("ZOOM")){
-        int zoom=p->getAsRealValue("ZOOM");
-        if(zoom>0){
-
-            camera.setZoom(&zoom);
-        }
-    }
-    // Pixel Clock
-    if(p->hasKey("PIXELCLOCK")){
-        double value=p->getAsRealValue("PIXELCLOCK");
-        int ivalue=value;
-        IDSGEXXDriverLDBG_<< "PIXEL CLOCK:"<<value;
-
-        camera.setPixelClock(&ivalue);
-    }
-    if(p->hasKey("FRAMERATE")){
-        double value=p->getAsRealValue("FRAMERATE");
-        IDSGEXXDriverLDBG_<< "SET FRAMERATE:"<<value;
-
-        camera.setFrameRate(&value);
-    }
-
-
-    if(p->hasKey("SHARPNESS")){
-
-        if(p->getAsRealValue("SHARPNESS")<0){
-
-
-        } else {
-
-
-        }
-    }
-    if(p->hasKey("BRIGHTNESS")){
-
-        if(p->getAsRealValue("BRIGHTNESS")<0){
-
-        } else {
-
-
-            double gain=p->getAsRealValue("BRIGHTNESS")/100.0;
-            if(gain>1.0){
-                gain=1.0;
-            }
-
-
-        }
-    }
-    if(p->hasKey("CONTRAST")){
-
-        if(p->getAsRealValue("CONTRAST")<0){
-
-        } else {
-
-
-            double gain=p->getAsRealValue("CONTRAST")/100.0;
-            if(gain>1.0){
-                gain=1.0;
-            }
-            if(ret==IS_SUCCESS){
-                ret++;
-                IDSGEXXDriverLERR_<<"Setting CONTRAST FAILED";
-            }
-
-
-        }
-    }
-
+  
 
     return ret;
 }
@@ -627,10 +952,13 @@ int IDSGEXXDriver::cameraDeinit(){
 int IDSGEXXDriver::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _fn){
     IDSGEXXDriverLDBG_<<"Start Grabbing";
     shots=_shots;
-    framebuf=_framebuf;
     fn=_fn;
-    
-    camera.initMemoryPool(4);
+    boost::mutex::scoped_lock ll(lock);
+
+    if(grabbing == false){
+        camera.initMemoryPool(4);
+    }
+    grabbing =true;
     switch(gstrategy){
     case CAMERA_ONE_BY_ONE:
         break;
@@ -647,16 +975,21 @@ int IDSGEXXDriver::startGrab(uint32_t _shots,void*_framebuf,cameraGrabCallBack _
     }
     return 0;
 }
-int IDSGEXXDriver::waitGrab(const char**hostbuf,uint32_t timeout_ms){
+int IDSGEXXDriver::waitGrab(camera_buf_t **hostbuf,uint32_t timeout_ms){
   int32_t ret=0;
     size_t size_ret=0;
     const char *buf=0;
+    boost::mutex::scoped_lock ll(lock);
+
+    if(grabbing==false){
+        return -10;
+    }
      if((ret=camera.captureImage(timeout_ms,&buf,&size_ret))==0){
-            IDSGEXXDriverLDBG_<<"Retrieved Image "<<camera.getWidth()<<"x"<<camera.getHeight()<<" raw size:"<<size_ret;
+            IDSGEXXDriverLDBG_<<"Retrieved Image "<<camera.getWidth()<<"x"<<camera.getHeight()<<" ("<<offsetx<<","<<offsety<<") raw size:"<<size_ret;
             ret= size_ret;
             if(hostbuf&&buf){
        // memcpy(hostbuf,buf,size_ret);
-                *hostbuf=buf;
+                *hostbuf=new camera_buf_t((uint8_t*)buf,size_ret,width,height,offsetx,offsety) ;
         }
     } else{
       //      IDSGEXXDriverLERR_<<"No Image..";
@@ -669,9 +1002,13 @@ int IDSGEXXDriver::waitGrab(const char**hostbuf,uint32_t timeout_ms){
 }
 int IDSGEXXDriver::waitGrab(uint32_t timeout_ms){
   
-    return waitGrab((const char**)&framebuf,timeout_ms);
+    return waitGrab(NULL,timeout_ms);
 }
 int IDSGEXXDriver::stopGrab(){
+    boost::mutex::scoped_lock ll(lock);
+    grabbing = false;    
+    camera.destroyMemoryPool();
+    
     //camera->StopGrabbing();
     return 0;
 }
@@ -752,4 +1089,45 @@ int  IDSGEXXDriver::getCameraProperties(chaos::common::data::CDataWrapper& propl
 
 
 }
+chaos::common::data::CDWUniquePtr IDSGEXXDriver::setDrvProperties(chaos::common::data::CDWUniquePtr prop){
+    if(prop.get()){
+        if(prop->hasKey("WIDTH")&&prop->hasKey("HEIGHT")&&prop->hasKey("OFFSETX")&&prop->hasKey("OFFSETY")){
+            int32_t w,h,x,y;
+            w=prop->getInt32Value("WIDTH");
+            h=prop->getInt32Value("HEIGHT");
+            x=prop->getInt32Value("OFFSETX");
+            y=prop->getInt32Value("OFFSETY");
+            if(w>camera.getWidthMax()){
+                w=camera.getWidthMax();
+                x=0;
+            } else {
+                w=w -(w%2);
+
+            }
+            if(h>camera.getHeightMax()){
+                h=camera.getHeightMax();
+                y=0;
+            } else {
+                 h=h -(h%2);
+
+            }
+            // multiple of 4
+            x=x - (x%2);
+            y=y - (y%2);
+             IDSGEXXDriverLDBG_<<"Perform AOI (rounded )"<<w<<"x"<<h<<"("<<x<<","<<y<<")";
+           // stopGrab();
+            camera.setAOI(x,y,w,h);
+            //camera.setAOI(x,y,w,h);
+      //      startGrab(0,0,NULL);
+            //prop->removeKey("OFFSETX");
+            //prop->removeKey("OFFSETY");
+            //prop->removeKey("WIDTH");
+            //prop->removeKey("HEIGHT");
+
+    }
+    setProperties(*prop.get(),true);
+    }
+    return prop;
+}  
+
 }}}

@@ -81,8 +81,14 @@ int fmt2cv(const std::string& enc){
       CVENCODING(enc, CV_32SC3);
       CVENCODING(enc, CV_32SC4);
 #ifdef CAMERA
-      if(enc=="BayerBG16"|| enc=="BAYERBG16"){
+      if(enc=="BAYERBG8"){
           return cv::COLOR_BayerBG2RGB ;
+      } else if(enc== "BayerBG16"){
+          return cv::COLOR_BayerBG2RGB|0x1000 ;
+
+      } 
+      if(enc=="YUV422packed"){
+          return cv::COLOR_YUV2RGB_NV21;
       }
 #endif
       return CV_8UC1;
@@ -91,7 +97,13 @@ int cv2fmt(int cvenc, std::string& enc){
     int bpp=1;
 #ifdef CAMERA    
     switch(cvenc){
+        case cv::COLOR_YUV2RGB_NV21:
+            bpp=2;enc="YUV422packed";
+            break;
         case cv::COLOR_BayerBG2RGB:
+        bpp=1;enc="BAYERBG8";
+        break;
+        case (0x1000|cv::COLOR_BayerBG2RGB):
         bpp=2;enc="BAYERBG16";
         break;
         case CV_8UC4:
@@ -110,26 +122,26 @@ int cv2fmt(int cvenc, std::string& enc){
 
     break;
     case CV_8UC2:
-        bpp=2;enc="CV_8UC4";
+        bpp=2;enc="CV_8UC2";
         break;
     case CV_8SC2:
-        bpp=2;enc="CV_8UC4";
+        bpp=2;enc="CV_8USC2";
         break;
     case CV_8UC1:
-        bpp=1;enc="CV_8UC4";
+        bpp=1;enc="CV_8UC1";
         break;
     case CV_8SC1:
-        bpp=1;enc="CV_8UC4";
+        bpp=1;enc="CV_8USC1";
         break;
     case CV_16UC1:
-        bpp=2;enc="CV_8UC4";
+        bpp=2;enc="CV_16UC1";
         break;
     case CV_16SC1:
-        bpp=2;enc="CV_8UC4";
+        bpp=2;enc="CV_16SC1";
         break;
     case CV_16UC2:
         bpp=4;        
-        enc="CV_8UC4";
+        enc="CV_16UC2";
         break;
     case CV_16SC2:
         bpp=4;
@@ -191,6 +203,8 @@ void AbstractCameraDriver::parseInitCommonParams(const chaos::common::data::CDat
     if(config.hasKey(GRAB_STRATEGY_KEY)){
         gstrategy=(GrabStrategy)config.getInt32Value("GRAB_STRATEGY");
     }
+
+   
 }
 
 }
