@@ -59,7 +59,8 @@ BasicSensorProperty::~BasicSensorProperty() {}
 using namespace chaos::cu::control_manager;
 void BasicSensorProperty::unitDefineActionAndDataset() {
   DriverPropertyCU::unitDefineActionAndDataset();
-
+  addStateVariable( chaos::cu::control_manager::StateVariableTypeAlarmDEV, "commerror",
+                   "Comunication Error");
   addStateVariable( chaos::cu::control_manager::StateVariableTypeAlarmDEV, "underflow",
                    "the sensor is detecting an underflow");
 
@@ -115,6 +116,9 @@ void BasicSensorProperty::unitRun() {
     setStateVariableSeverity(
          chaos::cu::control_manager::StateVariableTypeAlarmDEV, "iderror",
         chaos::common::alarm::MultiSeverityAlarmLevelClear);
+     setStateVariableSeverity(
+         chaos::cu::control_manager::StateVariableTypeAlarmDEV, "commerror",
+        chaos::common::alarm::MultiSeverityAlarmLevelClear);
   }
   if (state & SENSOR_STATE_UNDERFLOW) {
     setStateVariableSeverity(
@@ -145,7 +149,10 @@ void BasicSensorProperty::unitRun() {
     setStateVariableSeverity( chaos::cu::control_manager::StateVariableTypeAlarmDEV, "iderror",
                              chaos::common::alarm::MultiSeverityAlarmLevelHigh);
   }
-
+ if (state & SENSOR_STATE_COMUNICATION_ERROR) {
+    setStateVariableSeverity( chaos::cu::control_manager::StateVariableTypeAlarmDEV, "commerror",
+                             chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+  }
   // getAttributeCache()->setOutputDomainAsChanged();
 }
 

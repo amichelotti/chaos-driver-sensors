@@ -46,6 +46,7 @@ class LeyboldCenterOne:ADD_CU_DRIVER_PLUGIN_SUPERCLASS{
 
        int sendCommand(const std::string& cmd,std::string& out,bool sendenq=true);
 public:
+    bool commError;
     double pressure;
     int32_t state,continuos_mode;
     int timeout;

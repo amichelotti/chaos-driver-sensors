@@ -50,7 +50,7 @@ CLOSE_CU_DRIVER_PLUGIN_CLASS_DEFINITION
 DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::model, LeyboldCenterOne) {
 
   timeout=5000;
- 
+ commError=false;
 }
 //default descrutcor
 LeyboldCenterOne::~LeyboldCenterOne() {
@@ -62,13 +62,14 @@ int LeyboldCenterOne::sendCommand(const std::string& cmd,std::string&out, bool s
     
     snprintf(buf,sizeof(buf),"%s\r\n",cmd.c_str());
     if(channel->write(buf,strlen(buf)+1,timeout)<=0){
-        LeyboldCenterOneLERR_<<"Cannot send command:"<<cmd;
-
+        LeyboldCenterOneLERR_<<"Cannot send command:"<<cmd << " ret:"<<ret;
+        commError=true;
         return -1;
     }
     *buf=0;
     ret=channel->read(buf,sizeof(buf),"\n",timeout,&ta);
     LeyboldCenterOneLDBG_<<ret<<" answ ->"<<buf;
+    commError=false;
 
     if(ta){
 
@@ -167,7 +168,10 @@ void LeyboldCenterOne::driverInit(const chaos::common::data::CDataWrapper& s) th
     state=0;
     continuos_mode=-1;
     std::string ret;
-    channel->init();
+    if(channel->init()!=0){
+        throw chaos::CException(-4,"Cannot connect to driver, check connection parameters:"+s.getJSONString(),__PRETTY_FUNCTION__);
+        
+    }
     if(sendCommand("RES,1",ret,true)){
         LeyboldCenterOneLERR_<<"Resetting "<<ret;
     } else {
@@ -235,7 +239,9 @@ void LeyboldCenterOne::driverInit(const chaos::common::data::CDataWrapper& s) th
                 default:
                     value=SENSOR_STATE_OK;
             }
-
+            if(t->commError){
+                value|=SENSOR_STATE_COMUNICATION_ERROR;
+            }
             ret->addInt32Value("value",value);
 
             return ret;
