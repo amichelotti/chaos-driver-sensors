@@ -368,14 +368,22 @@ static int setNodeInPercentage(const std::string &node_name,
 
 
 int BaslerScoutDriver::getNode(const std::string &node_name, std::string &val) {
+     std::stringstream ss;
+
   try {
     BaslerScoutDriverLDBG << "getting string node:" << node_name;
-    val= CEnumerationPtr(camerap->GetNodeMap().GetNode(node_name.c_str()))->ToString();
+    CEnumerationPtr eptr=camerap->GetNodeMap().GetNode(node_name.c_str());
+    if(eptr==NULL){
+        ss<< "cannot retrive:"<<node_name;
+        setLastError(ss.str());
+
+        return -10;
+    }
+    val= CEnumerationPtr()->ToString();
     BaslerScoutDriverLDBG << "String val:" << val;
     return 0;
   } catch (const GenericException &e) {
     // Error handling.
-   std::stringstream ss;
     ss << "An exception occurred during GET of string Node:"
                            << node_name<<" msg:"<<e.GetDescription();
     BaslerScoutDriverLERR_<< ss.str();

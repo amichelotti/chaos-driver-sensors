@@ -697,9 +697,6 @@ void RTCameraBase::cameraGrabCallBack(const void *buf, uint32_t blen,
                                       uint32_t width, uint32_t heigth,
                                       uint32_t error) {}
 void RTCameraBase::startGrabbing() {
-  if (isRunning == false) {
-    return;
-  }
 
   RTCameraBaseLDBG_ << "Start Grabbing";
   metadataLogging(
