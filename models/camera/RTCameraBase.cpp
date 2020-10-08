@@ -711,7 +711,7 @@ void RTCameraBase::startGrabbing() {
     }*/
 
   updateProperty();
-  RTCameraBaseLDBG_ << "Allocated " << buffering << " buffers of "
+  RTCameraBaseLDBG_ << "Buffering:"<< buffering << " buffers of "
                     << (*sizex * *sizey * bpp) << " bytes";
 
   try {
@@ -739,9 +739,15 @@ void RTCameraBase::startGrabbing() {
   pushCustomDataset();
 }
 void RTCameraBase::haltThreads() {
-  RTCameraBaseLDBG_ << "Stop Grab low level" << stopCapture;
+  int ret;
+  RTCameraBaseLDBG_ << "Stop Grab low level:" << stopCapture;
   stopCapture = true;
-  driver->stopGrab();
+  ret= driver->stopGrab();
+
+
+  RTCameraBaseLDBG_ << "Stopped Grab driver:" << ret;
+
+  
 }
 
 void RTCameraBase::stopGrabbing() {
@@ -758,13 +764,17 @@ void RTCameraBase::stopGrabbing() {
     full_encode.notify_all();
     full_capture.notify_all();
     encode_th.interrupt();
+    if(encode_th.joinable()){
 
-    if (boost::this_thread::get_id() != encode_th.get_id()) {
-      encode_th.join();
+      if (boost::this_thread::get_id() != encode_th.get_id()) {
+        encode_th.join();
+      }
     }
-    capture_th.interrupt();
-    if (boost::this_thread::get_id() != capture_th.get_id()) {
-      capture_th.join();
+    if(capture_th.joinable()){
+      capture_th.interrupt();
+      if (boost::this_thread::get_id() != capture_th.get_id()) {
+        capture_th.join();
+      }
     }
   }
   RTCameraBaseLDBG_ << "Stop Grabbing done:" << stopCapture;
@@ -781,6 +791,10 @@ void RTCameraBase::stopGrabbing() {
                            chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmDEV, "capture_timeout",
                            chaos::common::alarm::MultiSeverityAlarmLevelClear);
+
+  setStateVariableSeverity(StateVariableTypeAlarmCU, "framebuf_encode_error",
+                           chaos::common::alarm::MultiSeverityAlarmLevelClear);
+
   setStateVariableSeverity(StateVariableTypeAlarmCU, "encode_error",
                            chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmCU, "encodeQueueFull",
@@ -894,6 +908,8 @@ void RTCameraBase::encodeThread() {
   uint64_t start;
   counter_encode = 0;
   // bpp = cv2fmt(framebuf_encoding, framebuf_encoding_s);
+  setStateVariableSeverity(StateVariableTypeAlarmCU, "framebuf_encode_error",
+                           chaos::common::alarm::MultiSeverityAlarmLevelClear);
 
   RTCameraBaseLDBG_ << "Encode " << encoding
                     << " , assuming framebuf:" << framebuf_encoding_s << "("
@@ -926,7 +942,13 @@ void RTCameraBase::encodeThread() {
       *sizex=framebuf->width;
       *ooffsetx=framebuf->offsetx;
       *ooffsety=framebuf->offsety;
-      
+      if(*sizey * *sizex * bpp > framebuf->size){
+        setStateVariableSeverity(StateVariableTypeAlarmCU, "framebuf_encode_error",
+                           chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+        continue;
+
+      }
+
       cv::Mat image;
       try {
 

@@ -34,12 +34,20 @@ message.inputDataLength=sizeof(camera_params_t);\
 message.resultDataLength=sizeof(camera_params_t);\
 message.resultData = (void*)ret;\
 
+#define PREPARE_RET_OP(op) \
+camera_params_t* ret=(camera_params_t*)calloc(1,sizeof(camera_params_t));\
+message.opcode = op; \
+message.inputData=(void*)NULL;\
+message.inputDataLength=0;\
+message.resultDataLength=sizeof(camera_params_t);\
+message.resultData = (void*)ret;\
+
 
 #define SEND \
     accessor->send(&message);
 
 #define RETURN \
-    {int tmp=ret->result;free(ret);free(idata);return tmp;}
+    {int tmp=ret->result;free(message.inputData);free(message.resultData);return tmp;}
 
 #define SEND_AND_RETURN \
  accessor->send(&message);			\
@@ -196,12 +204,14 @@ int CameraDriverInterface::getCameraProperty(const std::string& propname,double&
 
 int CameraDriverInterface::getCameraProperties(chaos::common::data::CDataWrapper& proplist){
     boost::mutex::scoped_lock lock(io_mux);
-    
-    PREPARE_OP(CameraDriverInterfaceOpcode_GET_PROPERTIES);
+    PREPARE_RET_OP(CameraDriverInterfaceOpcode_GET_PROPERTIES);
     int sizeb=0;
     void *ptr=(void*)proplist.getBSONRawData(sizeb);
-    message.inputData=ptr;
-    message.inputDataLength=sizeb;
+    if(ptr){
+        message.inputData=malloc(sizeb);
+        message.inputDataLength=sizeb;
+        memcpy(message.inputData,ptr,sizeb);    
+    }
     ret->str=0;
     ret->strl=0;
 
@@ -210,6 +220,7 @@ int CameraDriverInterface::getCameraProperties(chaos::common::data::CDataWrapper
         proplist.setSerializedData(ret->str);
         free(ret->str);
     }
+   
     RETURN;
 }
 
@@ -229,6 +240,7 @@ int CameraDriverInterface::waitGrab(uint32_t timeout_ms){
     SEND_AND_RETURN;
 }
 int CameraDriverInterface::waitGrab(camera_buf_t**hostbuf,uint32_t timeout_ms){
+    boost::mutex::scoped_lock lock(io_mux);
 
     PREPARE_OP(CameraDriverInterfaceOpcode_WAIT_GRABBUF);
     idata->buffer=(void*)hostbuf;

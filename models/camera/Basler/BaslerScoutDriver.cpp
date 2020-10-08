@@ -819,6 +819,51 @@ chaos::common::data::CDWUniquePtr { \
 */
 // GET_PLUGIN_CLASS_DEFINITION
 // we need to define the driver with alias version and a class that implement it
+
+static Pylon::EPixelType cv2basler(const std::string &fmt) {
+  if (fmt == "CV_8UC1")
+    return Pylon::EPixelType::PixelType_Mono8;
+  if (fmt == "CV_8SC1")
+    return Pylon::EPixelType::PixelType_Mono8signed;
+  if (fmt == "CV_16UC1")
+    return Pylon::EPixelType::PixelType_Mono16;
+  if (fmt == "CV_8UC3")
+    return Pylon::EPixelType::PixelType_RGB8packed;
+  return Pylon::EPixelType::PixelType_Mono8;
+}
+static std::string basler2cv(Pylon::EPixelType fmt) {
+  switch (fmt) {
+  case Pylon::EPixelType::PixelType_BayerBG16: {
+    return "BAYERBG16";
+  }
+  case Pylon::EPixelType::PixelType_BayerGB16: {
+    return "BAYERGB16";
+  }
+  case Pylon::EPixelType::PixelType_YUV422packed: {
+    return "YUV422packed";
+  }
+  case Pylon::EPixelType::PixelType_BayerBG8: {
+    return "BAYERBG8";
+  }
+  case Pylon::EPixelType::PixelType_BayerGR16: {
+    return "BAYERGR16";
+  }
+  case Pylon::EPixelType::PixelType_BayerRG16: {
+    return "BAYERRG16";
+  }
+  case Pylon::EPixelType::PixelType_Mono8:
+    return "CV_8UC1";
+  case Pylon::EPixelType::PixelType_Mono8signed:
+    return "CV_8SC1";
+  case Pylon::EPixelType::PixelType_Mono16:
+    return "CV_16UC1";
+  case Pylon::EPixelType::PixelType_RGB8packed:
+    return "CV_8UC3";
+  default: { return "NOT SUPPORTED"; }
+  }
+}
+
+
 int BaslerScoutDriver::initializeCamera(
     const chaos::common::data::CDataWrapper &json) {
   IPylonDevice *pdev = NULL;
@@ -963,7 +1008,49 @@ int BaslerScoutDriver::initializeCamera(
       CREATE_PROP("TriggerSource", "", std::string);
       CREATE_PROP("TriggerActivation", "", std::string);
       CREATE_VALUE_PROP("TriggerDelayAbs", "", double);
-      CREATE_PROP("PixelFormat", "PIXELFMT", std::string);
+      createProperty("PixelFormat", "",  FRAMEBUFFER_ENCODING_KEY,                                                         
+                 [](AbstractDriver *thi, const std::string &name,              
+                    const chaos::common::data::CDataWrapper &p)                
+                     -> chaos::common::data::CDWUniquePtr {                    
+                   std::string val;
+                   BaslerScoutDriver *t=(BaslerScoutDriver *)thi;
+                   INodeMap &nodemap = t->camerap->GetNodeMap();
+                   CEnumerationPtr pixelFormat(nodemap.GetNode("PixelFormat"));
+                  if (pixelFormat.IsValid()) {
+                    chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
+                    std::string cv = basler2cv((Pylon::EPixelType)pixelFormat->GetIntValue());
+                    ret->append("value",cv);
+                    ret->append("raw",pixelFormat->ToString());
+                    return ret;                                               
+                  }                                                           
+                   BaslerScoutDriverLERR << " cannot get "<< name;                              
+                   return chaos::common::data::CDWUniquePtr();                 
+                 },                                                            
+                 [](AbstractDriver *thi, const std::string &name,              
+                    const chaos::common::data::CDataWrapper &p)                
+                     -> chaos::common::data::CDWUniquePtr {                    
+                    BaslerScoutDriver *t=(BaslerScoutDriver *)thi;
+                   INodeMap &nodemap = t->camerap->GetNodeMap();
+                   CEnumerationPtr pixelFormat(nodemap.GetNode("PixelFormat"));
+                  if (pixelFormat.IsValid()) {
+                    try {
+
+                    std::string cv =p.getStringValue("value");
+                    pixelFormat->SetIntValue(cv2basler(cv));
+                    return p.clone();   
+                    }  catch (const GenericException &e) {
+    // Error handling.
+                      std::stringstream ss;
+                      ss << "An exception occurred during SET of Node:" << name
+                        << " msg:" << e.GetDescription();
+                      BaslerScoutDriverLERR << ss.str();
+                      t->setLastError(ss.str());
+                    }                                            
+                  }                                                           
+                                                         
+                   return chaos::common::data::CDWUniquePtr();                                           
+                 }
+    );
 
       CREATE_PROP("TestImageSelector", "", std::string);
       CREATE_PROP("GainAuto", "", std::string);
@@ -1248,48 +1335,6 @@ int BaslerScoutDriver::changeTriggerMode(Pylon::CInstantCamera *camera,
     return -2;
   }
   return 0;
-}
-static Pylon::EPixelType cv2basler(const std::string &fmt) {
-  if (fmt == "CV_8UC1")
-    return Pylon::EPixelType::PixelType_Mono8;
-  if (fmt == "CV_8SC1")
-    return Pylon::EPixelType::PixelType_Mono8signed;
-  if (fmt == "CV_16UC1")
-    return Pylon::EPixelType::PixelType_Mono16;
-  if (fmt == "CV_8UC3")
-    return Pylon::EPixelType::PixelType_RGB8packed;
-  return Pylon::EPixelType::PixelType_Mono8;
-}
-static std::string basler2cv(Pylon::EPixelType fmt) {
-  switch (fmt) {
-  case Pylon::EPixelType::PixelType_BayerBG16: {
-    return "BAYERBG16";
-  }
-  case Pylon::EPixelType::PixelType_BayerGB16: {
-    return "BAYERGB16";
-  }
-  case Pylon::EPixelType::PixelType_YUV422packed: {
-    return "YUV422packed";
-  }
-  case Pylon::EPixelType::PixelType_BayerBG8: {
-    return "BAYERBG8";
-  }
-  case Pylon::EPixelType::PixelType_BayerGR16: {
-    return "BAYERGR16";
-  }
-  case Pylon::EPixelType::PixelType_BayerRG16: {
-    return "BAYERRG16";
-  }
-  case Pylon::EPixelType::PixelType_Mono8:
-    return "CV_8UC1";
-  case Pylon::EPixelType::PixelType_Mono8signed:
-    return "CV_8SC1";
-  case Pylon::EPixelType::PixelType_Mono16:
-    return "CV_16UC1";
-  case Pylon::EPixelType::PixelType_RGB8packed:
-    return "CV_8UC3";
-  default: { return "NOT SUPPORTED"; }
-  }
 }
 
 int BaslerScoutDriver::cameraToProps(Pylon::CInstantCamera &cam,
@@ -1821,7 +1866,9 @@ int BaslerScoutDriver::stopGrab() {
   BaslerScoutDriverLDBG_ << "Stop  Grabbing";
 
   stopGrabbing = true;
-  camerap->StopGrabbing();
+  if(camerap->IsGrabbing()){
+    camerap->StopGrabbing();
+  }
   return 0;
 }
 

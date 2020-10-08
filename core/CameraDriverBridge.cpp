@@ -113,7 +113,8 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
         chaos::common::data::CDataWrapper props;
         int sizeb;
         if(cmd->inputData && cmd->inputDataLength){
-            chaos::common::data::CDataWrapper props((const char*)cmd->inputData); 
+            chaos::common::data::CDataWrapper props;
+            props.setSerializedData((const char*)cmd->inputData); 
             out->result=getCameraProperties(props);
             const char*ptr=props.getBSONRawData(sizeb);
             if((sizeb>0)&& ptr){
