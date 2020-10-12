@@ -466,6 +466,7 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
   addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase, bool>(
       this, &::driver::sensor::camera::RTCameraBase::setCamera, "PULSE");
 
+/*
   for (std::vector<std::string>::iterator i = props.begin(); i != props.end();
        i++) {
     if (!camera_props.isCDataWrapperValue(*i)) {
@@ -491,9 +492,12 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
       }
     }
   }
-
+*/
   addBinaryAttributeAsMIMETypeToDataSet("FRAMEBUFFER", "output image",
                                         "image/png", chaos::DataType::Output);
+
+  addPublicDriverPropertyToDataset();
+
 
   /*addBinaryAttributeAsSubtypeToDataSet(
       "FRAMEBUFFER", "image", chaos::DataType::SUB_TYPE_CHAR,
@@ -1146,7 +1150,7 @@ void RTCameraBase::encodeThread() {
       image.release();
 
     } else {
-     // RTCameraBaseLDBG_ << "Encode EMPTY";
+      RTCameraBaseLDBG_ << "Capture EMPTY";
 
       boost::mutex::scoped_lock lock(mutex_encode);
       boost::system_time const timeout =
@@ -1158,7 +1162,6 @@ void RTCameraBase::encodeThread() {
         }
     }
   }
-  boost::mutex::scoped_lock lock(mutex_encode);
 
   RTCameraBaseLDBG_ << "Encode thread exiting Queue: " << encodeQueue;
 
@@ -1246,8 +1249,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       full_encode.notify_one();
 
     } else {
-      // RTCameraBaseLDBG_<<"Encode EMPTY :"<<encodeWritePointer<<"
-      // CaptureWrite:"<<captureWritePointer;
+       RTCameraBaseLDBG_<<"Encode EMPTY : enc# "<<counter_encode<<" enc queue#:"<<encodeQueue<<" cap# "<<counter_capture<<" cap queue#:"<<captureQueue;
       full_encode.notify_one();
 
       boost::mutex::scoped_lock lock(mutex_encode);

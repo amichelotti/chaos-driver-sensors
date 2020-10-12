@@ -639,7 +639,16 @@ Camera::~Camera()
 }
 int Camera::getWidth() const { 
   //return cam_info_.nMaxWidth / zoom_; 
+  IS_SIZE_2D imageSize;
+		INT nRet = is_AOI(cam_, IS_AOI_IMAGE_GET_SIZE, (void*)&imageSize, sizeof(imageSize) );
+    if (nRet == IS_SUCCESS)
+      return imageSize.s32Width;
+    return -1;
+
+	/*
   IS_RECT rectAOI;
+
+
   INT nRet = is_AOI(cam_, IS_AOI_IMAGE_GET_AOI, (void*)&rectAOI, sizeof(rectAOI));
 
     if (nRet == IS_SUCCESS)
@@ -647,16 +656,41 @@ int Camera::getWidth() const {
       return rectAOI.s32Width;
     }
   return 0;
+  */
 }
+
+int Camera::getOffsetX() const{
+ IS_POINT_2D imageSize;
+		INT nRet = is_AOI(cam_, IS_AOI_IMAGE_GET_POS, (void*)&imageSize, sizeof(imageSize) );
+    if (nRet == IS_SUCCESS)
+      return imageSize.s32X;
+    return -1;
+ 
+}
+int Camera::getOffsetY() const{
+IS_POINT_2D imageSize;
+		INT nRet = is_AOI(cam_, IS_AOI_IMAGE_GET_POS, (void*)&imageSize, sizeof(imageSize) );
+    if (nRet == IS_SUCCESS)
+      return imageSize.s32Y;
+    return -1;
+ 
+}
+  
 int Camera::getHeight() const { 
-   IS_RECT rectAOI;
+  IS_SIZE_2D imageSize;
+		INT nRet = is_AOI(cam_, IS_AOI_IMAGE_GET_SIZE, (void*)&imageSize, sizeof(imageSize) );
+    if (nRet == IS_SUCCESS)
+      return imageSize.s32Height;
+    return -1;
+  /* IS_RECT rectAOI;
   INT nRet = is_AOI(cam_, IS_AOI_IMAGE_GET_AOI, (void*)&rectAOI, sizeof(rectAOI));
 
     if (nRet == IS_SUCCESS)
     {
       return rectAOI.s32Height;
     }
-  return 0;
+  return 0;*/
+
 
  // return cam_info_.nMaxHeight / zoom_;
 }
@@ -744,18 +778,24 @@ int Camera::getImageRawSize(){
 int Camera::setWidth(int w){
   IS_SIZE_2D sz;
   INT nRet;
+  int ret=getHeight();
+  if(ret<0)
+    return ret;
   sz.s32Width=w;
-  sz.s32Height=getHeight();
-    nRet= is_AOI(cam_, IS_AOI_IMAGE_SET_SIZE, (void*)&sz, sizeof(sz));
+  sz.s32Height=ret;
+  nRet= is_AOI(cam_, IS_AOI_IMAGE_SET_SIZE, (void*)&sz, sizeof(sz));
   
-    return nRet;
+  return nRet;
 
 }
 
 int Camera::setHeight(int w){
   IS_SIZE_2D sz;
   INT nRet;
-  sz.s32Width=getWidth();
+  int ret=getWidth();
+  if(ret<0)
+    return ret;
+  sz.s32Width=ret;
   sz.s32Height=w;
   nRet= is_AOI(cam_, IS_AOI_IMAGE_SET_SIZE, (void*)&sz, sizeof(sz));
   

@@ -64,6 +64,7 @@ class IDSGEXXDriver:public chaos::cu::driver_manager::driver::AbstractDriverPlug
 public:
     double framerate,exposure;
     int32_t width,height,offsetx,offsety,gain,zoom,pixelclk,trgmode;
+    std::string framebuf_enc;
 
     int32_t IDStrgmode2trgmode(ueye::TriggerMode ids);
     ueye::TriggerMode trgmode2IDStrgmode(int32_t cam);
