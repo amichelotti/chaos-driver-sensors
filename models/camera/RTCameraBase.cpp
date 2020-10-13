@@ -282,28 +282,25 @@ void RTCameraBase::updateProperty() {
     n = value;                                                                 \
     return true;                                                               \
   }
-bool RTCameraBase::setProp(const std::string &name, const std::string &value,
-                           uint32_t size) {
-  return false;
-}
+
 bool RTCameraBase::setCamera(const std::string &name, bool value,
                              uint32_t size) {
   if (name == "ACQUIRE") {
-    return setProp(TRIGGER_MODE_KEY, (value == false)
+    return setDrvProp(TRIGGER_MODE_KEY, (value == false)
                                          ? CAMERA_DISABLE_ACQUIRE
                                          : CAMERA_TRIGGER_CONTINOUS);
   } else if (name == "TRIGGER") {
-    return setProp(TRIGGER_MODE_KEY, (value == false) ? CAMERA_TRIGGER_CONTINOUS
+    return setDrvProp(TRIGGER_MODE_KEY, (value == false) ? CAMERA_TRIGGER_CONTINOUS
                                                       : CAMERA_TRIGGER_HW_HI);
 
   } else if (name == "PULSE") {
-    return setProp(TRIGGER_MODE_KEY, (value == false) ? CAMERA_TRIGGER_CONTINOUS
+    return setDrvProp(TRIGGER_MODE_KEY, (value == false) ? CAMERA_TRIGGER_CONTINOUS
                                                       : CAMERA_TRIGGER_SINGLE);
   }
   return false;
 }
 
-bool RTCameraBase::setProp(const std::string &name, int32_t value,
+bool RTCameraBase::setDrvProp(const std::string &name, int32_t value,
                            uint32_t size) {
   int ret;
   int32_t valuer;
@@ -383,7 +380,7 @@ bool RTCameraBase::setProp(const std::string &name, int32_t value,
   return (ret == 0);
 }
 
-bool RTCameraBase::setProp(const std::string &name, double value,
+bool RTCameraBase::setDrvProp(const std::string &name, double value,
                            uint32_t size) {
   int ret;
   double valuer;
@@ -432,13 +429,7 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
                               __PRETTY_FUNCTION__);
     }
   }
-  if (driver->getCameraProperties(camera_props) != 0) {
-    throw chaos::CException(-1, "Error retrieving camera properties:"+driver->getLastError(),
-                            __PRETTY_FUNCTION__);
-  }
-  std::vector<std::string> props;
-  camera_props.getAllKey(props);
-
+ 
   /****
    *
    */
@@ -465,8 +456,16 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
       this, &::driver::sensor::camera::RTCameraBase::setCamera, "TRIGGER");
   addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase, bool>(
       this, &::driver::sensor::camera::RTCameraBase::setCamera, "PULSE");
-
+addBinaryAttributeAsMIMETypeToDataSet("FRAMEBUFFER", "output image",
+                                        "image/png", chaos::DataType::Output);
 /*
+ if (driver->getCameraProperties(camera_props) != 0) {
+    throw chaos::CException(-1, "Error retrieving camera properties:"+driver->getLastError(),
+                            __PRETTY_FUNCTION__);
+  }
+  std::vector<std::string> props;
+  camera_props.getAllKey(props);
+
   for (std::vector<std::string>::iterator i = props.begin(); i != props.end();
        i++) {
     if (!camera_props.isCDataWrapperValue(*i)) {
@@ -483,18 +482,17 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
       if (camera_props.getValueType(*i) == chaos::DataType::TYPE_DOUBLE) {
         addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase,
                                        double>(
-            this, &::driver::sensor::camera::RTCameraBase::setProp, *i);
+            this, &::driver::sensor::camera::RTCameraBase::setDrvProp, *i);
       }
       if (camera_props.getValueType(*i) == chaos::DataType::TYPE_INT32) {
         addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase,
                                        int32_t>(
-            this, &::driver::sensor::camera::RTCameraBase::setProp, *i);
+            this, &::driver::sensor::camera::RTCameraBase::setDrvProp, *i);
       }
     }
   }
 */
-  addBinaryAttributeAsMIMETypeToDataSet("FRAMEBUFFER", "output image",
-                                        "image/png", chaos::DataType::Output);
+  
 
   addPublicDriverPropertyToDataset();
 
@@ -536,6 +534,8 @@ void RTCameraBase::unitDefineCustomAttribute() {
   //    config.size()+1);
   // getAttributeCache()->setCustomDomainAsChanged();
   // pushCustomDataset();
+  getAttributeCache()->addCustomAttribute("FRAMEBUFFER",8,chaos::DataType::TYPE_BYTEARRAY);
+
 }
 
 //! Initialize the Custom Control Unit
@@ -599,7 +599,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
             RTCameraBaseLDBG_ << "Init Double \"" << *i
                               << "\" from input:" << tmp;
 
-            setProp(*i, tmp, 0);
+            setDrvProp(*i, tmp, 0);
           }
         }
         if (camera_props.getValueType(*i) == chaos::DataType::TYPE_INT32) {
@@ -608,7 +608,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
             RTCameraBaseLDBG_ << "Init Integer \"" << *i
                               << "\" from input:" << tmp;
 
-            setProp(*i, tmp, 0);
+            setDrvProp(*i, tmp, 0);
           }
         }
       }
@@ -1004,6 +1004,16 @@ void RTCameraBase::encodeThread() {
           }
           subImage = new cv::Mat(image);
             if(imwrite(calibimage, image)){
+              std::vector<unsigned char> encbuf ;
+              bool code = cv::imencode(encoding, image, encbuf,encode_params);
+              if(code){
+                  uchar * ptr = reinterpret_cast<uchar *>(&(encbuf[0]));
+                getAttributeCache()->setCustomAttributeValue("FRAMEBUFFER",ptr,encbuf.size() );
+                  getAttributeCache()->setCustomDomainAsChanged();
+
+              pushCustomDataset();
+
+              }
               metadataLogging(chaos::common::metadata_logging::
                                   StandardLoggingChannel::LogLevelInfo,
                               "Calibrarion file:"+calibimage);
@@ -1015,6 +1025,7 @@ void RTCameraBase::encodeThread() {
             }
             
         }
+
         performCalib = false;
       }
       } catch (cv::Exception& ex){
@@ -1182,13 +1193,14 @@ RTCameraBase::unitPerformCalibration(chaos::common::data::CDWUniquePtr data) {
   applyCalib = false;
   performCalib = true;
   RTCameraBaseLDBG_ << "Perform calibration";
-
+  addTag("CALIBRATION");
   while (performCalib) {
     usleep(100000);
   }
   if (!(data.get() && data->hasKey("disable"))) {
     applyCalib = true;
   }
+  removeTag("CALIBRATION");
   RTCameraBaseLDBG_ << "END calibration";
   return chaos::common::data::CDWUniquePtr();
 }
@@ -1196,7 +1208,6 @@ RTCameraBase::unitPerformCalibration(chaos::common::data::CDWUniquePtr data) {
 //! Execute the Control Unit work
 void RTCameraBase::unitRun() throw(chaos::CException) {
   uchar *ptr;
-  camera_buf_t *img = 0;
   *pacquire = (mode != CAMERA_DISABLE_ACQUIRE);
   *ptrigger =
       (mode != CAMERA_DISABLE_ACQUIRE) && (mode != CAMERA_TRIGGER_CONTINOUS);
@@ -1260,6 +1271,8 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
     }
   } else {
     int ret;
+    camera_buf_t *img = 0;
+
     ret = driver->waitGrab(&img, trigger_timeout);
     if ((img != 0) && (ret > 0)&&img->buf) {
       // keep alarm high

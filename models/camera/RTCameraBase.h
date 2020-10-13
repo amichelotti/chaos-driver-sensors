@@ -102,9 +102,8 @@ protected:
         void updateProperty();
         bool setCamera(const std::string &name, bool value, uint32_t size=sizeof(bool));
 
-        bool setProp(const std::string &name, int32_t value, uint32_t size=sizeof(int32_t));
-        bool setProp(const std::string &name, double value, uint32_t size=sizeof(double));
-        bool setProp(const std::string &name, const std::string& value, uint32_t size);
+        bool setDrvProp(const std::string &name, const int32_t value, uint32_t size=sizeof(int32_t));
+        bool setDrvProp(const std::string &name, const double value, uint32_t size=sizeof(double));
 
         void startGrabbing();
         void haltThreads();

@@ -802,24 +802,27 @@ int Camera::setHeight(int w){
   return nRet;
 }
 int Camera::setOffsetX(int w){
-  int posx,posy,width,height;
-  INT nRet;
+    IS_POINT_2D imageSize;
+    imageSize.s32X=w;
+    imageSize.s32Y=getOffsetY();
 
-  if((nRet=getAOI(posx,posy,width,height))==IS_SUCCESS){
-    return setAOI(w,posy,width,height);
-  }
+		INT nRet = is_AOI(cam_, IS_AOI_IMAGE_SET_POS, (void*)&imageSize, sizeof(imageSize) );
+    if (nRet == IS_SUCCESS)
+      return 0;
+    return -1;
+
   
-  return nRet;
 }
 int Camera::setOffsetY(int w){
-  int posx,posy,width,height;
-  INT nRet;
+    IS_POINT_2D imageSize;
+    imageSize.s32X=getOffsetX();
+    imageSize.s32Y=w;
 
-  if((nRet=getAOI(posx,posy,width,height))==IS_SUCCESS){
-    return setAOI(posx,w,width,height);
-  }
-  
-  return nRet;
+		INT nRet = is_AOI(cam_, IS_AOI_IMAGE_SET_POS, (void*)&imageSize, sizeof(imageSize) );
+    if (nRet == IS_SUCCESS)
+      return 0;
+    return -1;
+
 
 }
   

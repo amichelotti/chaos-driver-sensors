@@ -63,7 +63,7 @@ class IDSGEXXDriver:public chaos::cu::driver_manager::driver::AbstractDriverPlug
     boost::mutex lock;
 public:
     double framerate,exposure;
-    int32_t width,height,offsetx,offsety,gain,zoom,pixelclk,trgmode;
+    int32_t width,height,offsetx,offsety,gain,zoom,pixelclk,trgmode,old_size;
     std::string framebuf_enc;
 
     int32_t IDStrgmode2trgmode(ueye::TriggerMode ids);

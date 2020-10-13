@@ -355,7 +355,12 @@ createProperty("width", width,0,camera.getWidthMax(),2,"WIDTH",[](AbstractDriver
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
         IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
             if(p.hasKey("value")){
+                boost::mutex::scoped_lock ll(t->lock);
+
                 int32_t val=p.getInt32Value("value");
+                if(val>t->camera.getWidthMax()){
+                    val=t->camera.getWidthMax();
+                }
                 if(t->camera.setWidth(val)==0){
                     IDSGEXXDriverLDBG(t)<< "write WIDTH:"<<t->width;
 
@@ -364,7 +369,7 @@ createProperty("width", width,0,camera.getWidthMax(),2,"WIDTH",[](AbstractDriver
                 if(val>=0){
                     t->width=val;
                 }
-
+                t->camera.initMemoryPool(4);
                 return p.clone();
                 
             }
@@ -394,14 +399,19 @@ createProperty("width", width,0,camera.getWidthMax(),2,"WIDTH",[](AbstractDriver
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
         IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
             if(p.hasKey("value")){
-                int32_t val=p.getInt32Value("value");
+                boost::mutex::scoped_lock ll(t->lock);
 
+                int32_t val=p.getInt32Value("value");
+                if(val>t->camera.getHeightMax()){
+                    val=t->camera.getHeightMax();
+                }
                 if(t->camera.setHeight(val)==0){
                     IDSGEXXDriverLDBG(t)<< "write HEIGHT:"<<t->height;
                 }
                 if((val=t->camera.getHeight())>=0){
                     t->height=val;
                 }
+                t->camera.initMemoryPool(4);
 
                 return p.clone();
 
@@ -1049,6 +1059,7 @@ int IDSGEXXDriver::waitGrab(camera_buf_t **hostbuf,uint32_t timeout_ms){
     if(grabbing==false){
         return -10;
     }
+     
      if((ret=camera.captureImage(timeout_ms,&buf,&size_ret))==0){
             IDSGEXXDriverLDBG_<<"Retrieved Image "<<camera.getWidth()<<"x"<<camera.getHeight()<<" ("<<offsetx<<","<<offsety<<") raw size:"<<size_ret;
             ret= size_ret;
@@ -1181,6 +1192,7 @@ chaos::common::data::CDWUniquePtr IDSGEXXDriver::setDrvProperties(chaos::common:
             y=y - (y%2);
            // stopGrab();
             IDSGEXXDriverLDBG_<<"Performing AOI (rounded )"<<w<<"x"<<h<<"("<<x<<","<<y<<")";
+            boost::mutex::scoped_lock ll(lock);
 
             if(camera.setAOI(x,y,w,h)==0){
                 prop->removeKey("OFFSETX");
@@ -1189,6 +1201,7 @@ chaos::common::data::CDWUniquePtr IDSGEXXDriver::setDrvProperties(chaos::common:
                 prop->removeKey("HEIGHT");
                 syncRead();
                 IDSGEXXDriverLDBG_<<" AOI OK"<<width<<"x"<<height<<"("<<offsetx<<","<<offsety<<")";
+                camera.initMemoryPool(4);
 
             }
             //camera.setAOI(x,y,w,h);

@@ -56,9 +56,9 @@ protected:
         int32_t ROIX,ROIY,ROIXSIZE,ROIYSIZE,REFOFFSETX,REFOFFSETY,REFSIZEX,REFSIZEY;
         int32_t moment_circle;
         bool remove_src;
-        bool setProp(const std::string &name, int32_t value, uint32_t size);
-        bool setProp(const std::string &name, double value, uint32_t size);
-        bool setProp(const std::string &name, chaos::common::data::CDataWrapper value, uint32_t size);
+        bool setDrvProp(const std::string &name, int32_t value, uint32_t size);
+        bool setDrvProp(const std::string &name, double value, uint32_t size);
+        bool setDrvProp(const std::string &name, chaos::common::data::CDataWrapper value, uint32_t size);
         double Amplitude,X_m,S_x,Y_m,S_y,rho; 
 #ifdef CERN_ROOT
 

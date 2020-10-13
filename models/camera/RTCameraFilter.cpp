@@ -126,7 +126,7 @@ RTCameraFilter::~RTCameraFilter()
     n = value;                     \
     return true;                   \
   }
-bool RTCameraFilter::setProp(const std::string &name, chaos::common::data::CDataWrapper p,
+bool RTCameraFilter::setDrvProp(const std::string &name, chaos::common::data::CDataWrapper p,
                              uint32_t size)
 {
 
@@ -152,7 +152,7 @@ bool RTCameraFilter::setProp(const std::string &name, chaos::common::data::CData
   return true;
 }
 
-bool RTCameraFilter::setProp(const std::string &name, int32_t value,
+bool RTCameraFilter::setDrvProp(const std::string &name, int32_t value,
                              uint32_t size)
 {
   int ret;
@@ -163,13 +163,13 @@ bool RTCameraFilter::setProp(const std::string &name, int32_t value,
   SETINTPROP(name, REFSIZEX, value);
   SETINTPROP(name, REFSIZEY, value);
 
-  return RTCameraBase::setProp(name, value, size);
+  return RTCameraBase::setDrvProp(name, value, size);
 }
 
-bool RTCameraFilter::setProp(const std::string &name, double value,
+bool RTCameraFilter::setDrvProp(const std::string &name, double value,
                              uint32_t size)
 {
-  return RTCameraBase::setProp(name, value, size);
+  return RTCameraBase::setDrvProp(name, value, size);
 }
 //! Return the definition of the control unit
 /*!
@@ -185,7 +185,7 @@ void RTCameraFilter::unitDefineActionAndDataset() throw(chaos::CException)
 
   addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraFilter,
                                  chaos::common::data::CDataWrapper>(
-      this, &::driver::sensor::camera::RTCameraFilter::setProp, std::string("FILTER"));
+      this, &::driver::sensor::camera::RTCameraFilter::setDrvProp, std::string("FILTER"));
 
   if (apply_moment)
   {
@@ -211,17 +211,17 @@ void RTCameraFilter::unitDefineActionAndDataset() throw(chaos::CException)
 
     addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraFilter,
                                    int32_t>(
-        this, &::driver::sensor::camera::RTCameraFilter::setProp, "REFOFFSETX");
+        this, &::driver::sensor::camera::RTCameraFilter::setDrvProp, "REFOFFSETX");
     addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraFilter,
                                    int32_t>(
-        this, &::driver::sensor::camera::RTCameraFilter::setProp, "REFOFFSETY");
+        this, &::driver::sensor::camera::RTCameraFilter::setDrvProp, "REFOFFSETY");
 
     addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraFilter,
                                    int32_t>(
-        this, &::driver::sensor::camera::RTCameraFilter::setProp, "REFSIZEX");
+        this, &::driver::sensor::camera::RTCameraFilter::setDrvProp, "REFSIZEX");
     addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraFilter,
                                    int32_t>(
-        this, &::driver::sensor::camera::RTCameraFilter::setProp, "REFSIZEY");
+        this, &::driver::sensor::camera::RTCameraFilter::setDrvProp, "REFSIZEY");
 
     addStateVariable(StateVariableTypeAlarmCU, "momentx_out_of_set",
                      "moment X out of reference moment radius");
