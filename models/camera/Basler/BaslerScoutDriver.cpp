@@ -115,6 +115,21 @@ CLOSE_REGISTER_PLUGIN
     BaslerScoutDriverLERR << "ERROR setting \"" << name << "\" = " << val;     \
   }
 
+#define STOP_GRABBING(camera)                                                  \
+  if (camera == NULL) {                                                        \
+    BaslerScoutDriverLERR_ << "Invalid Camera";                                \
+    return -1;                                                                 \
+  }                                                                            \
+  if (!stopGrabbing) {                                                         \
+    stopGrab();                                                                \
+    restore_grab = true;                                                       \
+  }
+
+#define RESTORE_GRABBING(camera)                                               \
+  if (restore_grab) {                                                          \
+    startGrab(shots, NULL, fn);                                                \
+  }
+
 template <typename T> static T Adjust(T val, T minimum, T maximum, T inc) {
   // Check the input parameters.
   if (inc <= 0) {
@@ -180,7 +195,7 @@ namespace camera {
 int BaslerScoutDriver::setNode(const std::string &node_name, bool val) {
 
   try {
-    BaslerScoutDriverLDBG << "setting bool node:" << node_name << " to " << val;
+    BaslerScoutDriverLDBG_ << "setting bool node:" << node_name << " to " << val;
     INodeMap &control = camerap->GetNodeMap();
     GenApi::CBooleanPtr node = control.GetNode(node_name.c_str());
     if (node.IsValid() == false) {
@@ -212,7 +227,7 @@ int BaslerScoutDriver::setNode(const std::string &node_name, bool val) {
 int BaslerScoutDriver::setNode(const std::string &node_name, std::string val) {
 
   try {
-    BaslerScoutDriverLDBG << "setting enumeration node:" << node_name << " to "
+    BaslerScoutDriverLDBG_ << "setting enumeration node:" << node_name << " to "
                           << val;
     INodeMap &control = camerap->GetNodeMap();
     GenApi::CEnumerationPtr node = control.GetNode(node_name.c_str());
@@ -247,6 +262,7 @@ int BaslerScoutDriver::setNode(const std::string &node_name, std::string val) {
 int BaslerScoutDriver::setNode(const std::string &node_name, int32_t val) {
 
   try {
+    bool stopped=false;
     BaslerScoutDriverLDBG_ << "setting int node:" << node_name << " to " << val;
     INodeMap &control = camerap->GetNodeMap();
     GenApi::CIntegerPtr node = control.GetNode(node_name.c_str());
@@ -254,7 +270,17 @@ int BaslerScoutDriver::setNode(const std::string &node_name, int32_t val) {
       BaslerScoutDriverLERR << "Integer Node:" << node_name << " is invalid";
       return -1;
     }
-    if (IsWritable(node)) {
+    if (!IsWritable(node)) {
+      STOP_GRABBING(camerap);
+
+    }
+  //  if (IsWritable(node)) {
+      // no min/max
+      if(node->GetMin()==node->GetMax()){
+          node->SetValue(val);
+        RESTORE_GRABBING(camerap);
+          return 0;
+      }
       if (val < node->GetMin()) {
 
         val = node->GetMin();
@@ -269,10 +295,12 @@ int BaslerScoutDriver::setNode(const std::string &node_name, int32_t val) {
                                << val;
       }
       node->SetValue(val);
-    } else {
+      RESTORE_GRABBING(camerap);
+
+/*    } else {
       BaslerScoutDriverLERR_ << "Node:" << node_name << " is not writable";
       return -100;
-    }
+    }*/
   } catch (const GenericException &e) {
     // Error handling.
     std::stringstream ss;
@@ -381,7 +409,7 @@ int BaslerScoutDriver::getNode(const std::string &node_name, std::string &val) {
   std::stringstream ss;
 
   try {
-    BaslerScoutDriverLDBG << "getting string node:" << node_name;
+    BaslerScoutDriverLDBG_ << "getting string node:" << node_name;
     CEnumerationPtr eptr = camerap->GetNodeMap().GetNode(node_name.c_str());
     if (!eptr.IsValid()) {
       ss << "cannot retrive:" << node_name;
@@ -390,7 +418,7 @@ int BaslerScoutDriver::getNode(const std::string &node_name, std::string &val) {
       return -10;
     }
     val = eptr->ToString();
-    BaslerScoutDriverLDBG << "String val:" << val;
+    BaslerScoutDriverLDBG_ << "String val:" << val;
     return 0;
   } catch (const GenericException &e) {
     // Error handling.
@@ -410,7 +438,7 @@ int BaslerScoutDriver::getNode(const std::string &node_name, std::string &val) {
 int BaslerScoutDriver::getNode(const std::string &node_name, bool &val) {
   try {
     std::stringstream ss;
-    BaslerScoutDriverLDBG << "getting bool node:" << node_name;
+    BaslerScoutDriverLDBG_ << "getting bool node:" << node_name;
     GenApi::CBooleanPtr node = camerap->GetNodeMap().GetNode(node_name.c_str());
     if (!node.IsValid()) {
       ss << "cannot access node Node:" << node_name;
@@ -419,7 +447,7 @@ int BaslerScoutDriver::getNode(const std::string &node_name, bool &val) {
       return -10;
     }
     val = node->GetValue();
-    BaslerScoutDriverLDBG << "bool val:" << val;
+    BaslerScoutDriverLDBG_ << "bool val:" << val;
     return 0;
   } catch (const GenericException &e) {
     // Error handling.
@@ -441,7 +469,7 @@ int BaslerScoutDriver::getNode(const std::string &node_name, bool &val) {
 int BaslerScoutDriver::getNode(const std::string &node_name, double &percent,
                                double &max, double &min, double &inc) {
   try {
-    BaslerScoutDriverLDBG << "getting double node:" << node_name;
+    BaslerScoutDriverLDBG_ << "getting double node:" << node_name;
     std::stringstream ss;
 
     INodeMap &control = camerap->GetNodeMap();
@@ -464,7 +492,7 @@ int BaslerScoutDriver::getNode(const std::string &node_name, double &percent,
       // createProperty(node_name, node->GetValue(), node->GetMin(),
       //                          node->GetMax(), 0.0, pub);
     }
-    BaslerScoutDriverLDBG << "DOUBLE VAL:" << percent;
+    BaslerScoutDriverLDBG_ << "DOUBLE VAL:" << percent;
   } catch (const GenericException &e) {
     // Error handling.
     std::stringstream ss;
@@ -508,7 +536,7 @@ int BaslerScoutDriver::getNode(const std::string &node_name, int32_t &percent,
       max = node->GetMax();
       inc = node->GetInc();
     }
-    BaslerScoutDriverLDBG << "VAL:" << percent;
+    BaslerScoutDriverLDBG_ << "VAL:" << percent;
   } catch (const GenericException &e) {
     std::stringstream ss;
     ss << "An exception occurred during GET of Node:" << node_name
@@ -1218,20 +1246,6 @@ BaslerScoutDriver::BaslerScoutDriver():camerap(NULL),shots(0),framebuf(NULL),fn(
 
 }
 */
-#define STOP_GRABBING(camera)                                                  \
-  if (camera == NULL) {                                                        \
-    BaslerScoutDriverLERR_ << "Invalid Camera";                                \
-    return -1;                                                                 \
-  }                                                                            \
-  if (!stopGrabbing) {                                                         \
-    stopGrab();                                                                \
-    restore_grab = true;                                                       \
-  }
-
-#define RESTORE_GRABBING(camera)                                               \
-  if (restore_grab) {                                                          \
-    startGrab(shots, NULL, fn);                                                \
-  }
 
 DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,
                                              BaslerScoutDriver) {
