@@ -19,9 +19,9 @@
  */
 #ifndef ChaosRTControlUnit_RTCameraFilter_h
 #define ChaosRTControlUnit_RTCameraFilter_h
-#include  <boost/lockfree/queue.hpp> 
-#include <common/misc/data/core/SharedMem.h>
+#include <boost/lockfree/queue.hpp>
 #include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
+#include <common/misc/data/core/SharedMem.h>
 #ifdef CERN_ROOT
 
 class TH2F;
@@ -29,51 +29,57 @@ class TF2;
 
 #endif
 
-#define DEFAULT_RESOLUTION 640*480*3
+#define DEFAULT_RESOLUTION 640 * 480 * 3
 
 #include "RTCameraBase.h"
-namespace driver{
-    
-    namespace sensor{
-         namespace camera{
-	   class CameraDriverInterface;
-class RTCameraFilter : public  RTCameraBase{
-	PUBLISHABLE_CONTROL_UNIT_INTERFACE(RTCameraFilter);
+namespace driver {
 
+namespace sensor {
+namespace camera {
+class CameraDriverInterface;
+class RTCameraFilter : public RTCameraBase {
+  PUBLISHABLE_CONTROL_UNIT_INTERFACE(RTCameraFilter);
 
 public:
-    /*!
-     Construct a new CU with full constructor
-     */
-    RTCameraFilter(const std::string& _control_unit_id, const std::string& _control_unit_param, const ControlUnitDriverList& _control_unit_drivers);
-    /*!
-     Destructor a new CU
-     */
-    ~RTCameraFilter();
+  /*!
+   Construct a new CU with full constructor
+   */
+  RTCameraFilter(const std::string &_control_unit_id,
+                 const std::string &_control_unit_param,
+                 const ControlUnitDriverList &_control_unit_drivers);
+  /*!
+   Destructor a new CU
+   */
+  ~RTCameraFilter();
 
 protected:
-        bool apply_roi,apply_moment,apply_gauss_fit;
-        int32_t ROIX,ROIY,ROIXSIZE,ROIYSIZE,REFOFFSETX,REFOFFSETY,REFSIZEX,REFSIZEY;
-        int32_t moment_circle;
-        bool remove_src;
-        bool setDrvProp(const std::string &name, int32_t value, uint32_t size);
-        bool setDrvProp(const std::string &name, double value, uint32_t size);
-        bool setDrvProp(const std::string &name, chaos::common::data::CDataWrapper value, uint32_t size);
-        double Amplitude,X_m,S_x,Y_m,S_y,rho; 
+  bool apply_roi, apply_gauss_fit;
+  int32_t ROIX, ROIY, ROIXSIZE, ROIYSIZE;
+  double *REFX, *REFY, *REFSX, *REFSY, *REFRHO;
+  int32_t moment_circle;
+  bool remove_src;
+  /*
+      bool setDrvProp(const std::string &name, int32_t value, uint32_t size);
+      bool setDrvProp(const std::string &name, double value, uint32_t size);
+      bool setDrvProp(const std::string &name, chaos::common::data::CDataWrapper
+     value, uint32_t size);
+  */
+  double Amplitude, X_m, S_x, Y_m, S_y, rho;
 #ifdef CERN_ROOT
 
-        TH2F* h;
-        TF2* g2d;
-        int gauss_fit_level;
+  TH2F *h;
+  TF2 *g2d;
+  int gauss_fit_level;
 #endif
-		/*!
-		Define the Control Unit Dataset and Actions
-		*/
-		void unitDefineActionAndDataset() throw(chaos::CException);
-	
-    int filtering(cv::Mat&image);
+  /*!
+  Define the Control Unit Dataset and Actions
+  */
+  void unitDefineActionAndDataset() throw(chaos::CException);
 
-
+  int filtering(cv::Mat &image);
+  void unitInit() throw(chaos::CException);
 };
-    }}}
+} // namespace camera
+} // namespace sensor
+} // namespace driver
 #endif
