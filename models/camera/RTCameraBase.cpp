@@ -837,12 +837,12 @@ void RTCameraBase::captureThread() {
       counter_capture++;
       bool pushret;
       int retry = 3;
-      RTCameraBaseLDBG_ << "push image:"<<img->size<<" queue:"<<captureImg.length();
+     // RTCameraBaseLDBG_ << "push image:"<<img->size<<" queue:"<<captureImg.length();
 
       pushret=captureImg.push(img);
       if (pushret <0) {
 
-        RTCameraBaseLDBG_ << "Error on Queue:" << pushret<<" queue:"<<captureImg.length();
+        RTCameraBaseLERR_ << "Error on Queue:" << pushret<<" queue:"<<captureImg.length();
       }
 
     } else {
@@ -892,11 +892,11 @@ void RTCameraBase::encodeThread() {
   while (!stopCapture) {
 
     camera_buf_t* framebuf;
-    RTCameraBaseLDBG_ << "popping image queue:"<<captureImg.length();
+   // RTCameraBaseLDBG_ << "popping image queue:"<<captureImg.length();
     int ret=captureImg.wait_and_pop(framebuf);
     if ((ret>=0) && framebuf && framebuf->buf) {
       start = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
-      RTCameraBaseLDBG_ << "size "<<framebuf->size<<" image queue:"<<ret;
+     // RTCameraBaseLDBG_ << "size "<<framebuf->size<<" image queue:"<<ret;
 
       
       /*if (*sizey * *sizex * bpp > a.size) {
@@ -1062,7 +1062,7 @@ void RTCameraBase::encodeThread() {
           bool encoderet;
           
           ele.img = encbuf;
-          RTCameraBaseLDBG_ << "pushing encode queue:"<<encodedImg.length();
+        //  RTCameraBaseLDBG_ << "pushing encode queue:"<<encodedImg.length();
 
           encoderet = encodedImg.push(ele);
           if (encoderet <0) {
@@ -1183,12 +1183,12 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
     }
     encoded_t ele;
     std::vector<unsigned char> *a;
-    RTCameraBaseLDBG_ << "popping encode queue:"<<encodedImg.length();
+   // RTCameraBaseLDBG_ << "popping encode queue:"<<encodedImg.length();
 
     int ret=encodedImg.wait_and_pop(ele);
     if ((ret>=0)&& ele.img) {
       a = ele.img;
-        RTCameraBaseLDBG_ << " Encode Queue:" << encodedImg.length()<< " Capture Queue:" << captureImg.length();
+      //  RTCameraBaseLDBG_ << " Encode Queue:" << encodedImg.length()<< " Capture Queue:" << captureImg.length();
         
       ptr = reinterpret_cast<uchar *>(&((*a)[0]));
       *osizex=ele.sizex;
