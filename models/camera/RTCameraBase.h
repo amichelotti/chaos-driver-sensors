@@ -19,7 +19,7 @@
  */
 #ifndef ChaosRTControlUnit_RTCameraBase_h
 #define ChaosRTControlUnit_RTCameraBase_h
-#include  <boost/lockfree/queue.hpp> 
+#include  <chaos/common/thread/TLockFreeQueue.h> 
 #include <common/misc/data/core/SharedMem.h>
 #include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
 
@@ -85,11 +85,15 @@ protected:
         bool isRunning;
         boost::thread capture_th,encode_th;
       //  std::vector<unsigned char> encbuf[CAMERA_FRAME_BUFFERING];//encode stage
-        uint32_t captureQueue,encodeQueue;
-        boost::condition_variable wait_capture,wait_encode,full_capture,full_encode;
-        boost::lockfree::queue<::driver::sensor::camera::camera_buf_t*, boost::lockfree::fixed_sized<true> > captureImg;
-        boost::lockfree::queue<encoded_t, boost::lockfree::fixed_sized<true> > encodedImg;
-        boost::mutex mutex_io,mutex_encode;
+        chaos::common::thread::TLockFreeQueue<::driver::sensor::camera::camera_buf_t*,CAMERA_FRAME_BUFFERING> captureImg;
+        chaos::common::thread::TLockFreeQueue<encoded_t,CAMERA_FRAME_BUFFERING> encodedImg;
+
+        //boost::condition_variable wait_capture,wait_encode,full_capture,full_encode;
+
+        //boost::lockfree::queue<::driver::sensor::camera::camera_buf_t*, boost::lockfree::fixed_sized<true> > captureImg;
+        //boost::lockfree::queue<encoded_t, boost::lockfree::fixed_sized<true> > encodedImg;
+        //boost::mutex mutex_io,mutex_encode;
+
         uint32_t hw_trigger_timeout_us,sw_trigger_timeout_us,trigger_timeout; // 0 =wait indefinitively
         
         uint64_t encode_time,capture_time,network_time,counter_capture,counter_encode;
