@@ -746,7 +746,8 @@ void RTCameraBase::haltThreads() {
   RTCameraBaseLDBG_ << "Stop Grab low level:" << stopCapture;
   stopCapture = true;
   ret= driver->stopGrab();
-
+  captureImg.unblock();
+  encodedImg.unblock();
 
   RTCameraBaseLDBG_ << "Stopped Grab driver:" << ret;
 
@@ -1289,8 +1290,7 @@ void RTCameraBase::unitStop() throw(chaos::CException) {
 //! Deinit the Control Unit
 void RTCameraBase::unitDeinit() throw(chaos::CException) {
   stopGrabbing();
-  captureImg.unblock();
-  captureImg.unblock();
+  
 
   captureImg.get().consume_all([this](camera_buf_t* i) {
     delete(i);
