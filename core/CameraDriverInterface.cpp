@@ -53,68 +53,69 @@ message.resultData = (void*)ret;\
  accessor->send(&message);			\
 RETURN
 
+#define SEND_AND_RETURN_TIM(tim) \
+ accessor->send(&message,tim);			\
+RETURN
+
 #define WRITE_OP_64INT_TIM(op,ival,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
 idata->alarm_mask=ival;\
-SEND_AND_RETURN
+SEND_AND_RETURN_TIM(timeout)
+
 
 #define WRITE_OP_FLOAT_TIM(op,fval,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
 idata->fvalue0=fval;\
-SEND_AND_RETURN
+SEND_AND_RETURN_TIM(timeout)
+
 
 #define WRITE_OP_2FLOAT_TIM(op,fval0,fval1,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
 idata->fvalue0=fval0;\
 idata->fvalue1=fval1;\
-SEND_AND_RETURN
+SEND_AND_RETURN_TIM(timeout)
 
 #define READ_OP_FLOAT_TIM(op,pfval,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
-accessor->send(&message);\
+accessor->send(&message,timeout);\
 *pfval = ret->fvalue0;\
 int tmp=ret->result;free(ret);free(idata);return tmp;
 
 #define READ_OP_INT_TIM(op,pival,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
-accessor->send(&message);\
+accessor->send(&message,timeout);\
 *pival = ret->ivalue;\
 int tmp=ret->result;free(ret);free(idata);return tmp;
 
 #define READ_OP_INT_STRING_TIM(op,pival,pstring,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
-accessor->send(&message);\
+accessor->send(&message,timeout);\
 *pival = ret->ivalue;\
 pstring = ret->str;\
 int tmp=ret->result;free(ret);free(idata);return tmp;
 
-#define READ_OP_INT_TIM(op,pival,timeout) \
-PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
-accessor->send(&message);\
-*pival = ret->ivalue;\
-int tmp=ret->result;free(ret);free(idata);return tmp;
 
 #define READ_OP_64INT_TIM(op,pival,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
-accessor->send(&message);\
+accessor->send(&message,timeout);\
 *pival = ret->alarm_mask;\
 int tmp=ret->result;free(ret);free(idata);return tmp;
 
 #define READ_OP_64INT_TIM_NORET(op,pival,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
-accessor->send(&message);\
+accessor->send(&message,timeout);\
 *pival = ret->alarm_mask;free(ret);free(idata);
 
 #define READ_OP_2FLOAT_TIM(op,pfval0,pfval1,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
-accessor->send(&message);\
+accessor->send(&message,timeout);\
 *pfval0 = ret->fvalue0;\
 *pfval1 = ret->fvalue1;\
 int tmp=ret->result;free(ret);free(idata);return tmp;
 
 #define WRITE_OP_TIM(op,timeout) \
 PREPARE_OP_RET_INT_TIMEOUT(op,timeout); \
-SEND_AND_RETURN
+SEND_AND_RETURN_TIM(timeout)
 
 
 #define CameraDriverInterfaceLAPP_		LAPP_ << "[CameraDriverInterface] "
@@ -237,7 +238,7 @@ int CameraDriverInterface::waitGrab(uint32_t timeout_ms){
 
     PREPARE_OP(CameraDriverInterfaceOpcode_WAIT_GRAB);
     idata->arg0=timeout_ms;
-    SEND_AND_RETURN;
+    SEND_AND_RETURN_TIM(timeout_ms);
 }
 int CameraDriverInterface::waitGrab(camera_buf_t**hostbuf,uint32_t timeout_ms){
     boost::mutex::scoped_lock lock(io_mux);
@@ -245,7 +246,7 @@ int CameraDriverInterface::waitGrab(camera_buf_t**hostbuf,uint32_t timeout_ms){
     PREPARE_OP(CameraDriverInterfaceOpcode_WAIT_GRABBUF);
     idata->buffer=(void*)hostbuf;
     idata->arg0=timeout_ms;
-    SEND_AND_RETURN;
+    SEND_AND_RETURN_TIM(timeout_ms);
 }
 int CameraDriverInterface::stopGrab(){
     boost::mutex::scoped_lock lock(io_mux);

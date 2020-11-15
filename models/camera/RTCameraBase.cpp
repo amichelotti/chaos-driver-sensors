@@ -108,7 +108,7 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
       driver(NULL), framebuf_encoding(CV_8UC3), buffering(_buffering), encode_time(0),
       capture_time(0), network_time(0),
       hw_trigger_timeout_us(5000000), sw_trigger_timeout_us(0), imagesizex(0),
-      imagesizey(0), apply_resize(false), trigger_timeout(0), bpp(3),
+      imagesizey(0), apply_resize(false), trigger_timeout(5000), bpp(3),
       stopCapture(true), stopEncoding(true), isRunning(false), subImage(NULL),performCalib(false),
       applyCalib(false) {
   RTCameraBaseLDBG_ << "Creating " << _control_unit_id
