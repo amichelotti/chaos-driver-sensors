@@ -109,7 +109,7 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
       capture_time(0), network_time(0),
       hw_trigger_timeout_us(5000000), sw_trigger_timeout_us(0), imagesizex(0),
       imagesizey(0), apply_resize(false), trigger_timeout(5000), bpp(3),
-      stopCapture(true), stopEncoding(true), isRunning(false), subImage(NULL),performCalib(false),
+      stopCapture(true), stopEncoding(true), subImage(NULL),performCalib(false),
       applyCalib(false) {
   RTCameraBaseLDBG_ << "Creating " << _control_unit_id
                     << " params:" << _control_unit_param;
@@ -316,7 +316,7 @@ bool RTCameraBase::setDrvProp(const std::string &name, int32_t value,
   
   //bool stopgrab = ((name == TRIGGER_MODE_KEY) && (value == CAMERA_DISABLE_ACQUIRE));
 
-  if (stopgrab) {
+  if (stopgrab&&(hasStopped()==false)) {
     stopGrabbing();
   }
   ret = driver->setCameraProperty(name, value);
@@ -367,12 +367,14 @@ bool RTCameraBase::setDrvProp(const std::string &name, int32_t value,
   }
   RTCameraBaseLDBG_ << "SET IPROP:" << name << " SET VALUE:" << value
                     << " READ VALUE:" << valuer << " ret:" << ret;
-  if (stopgrab &&
-      !((name == TRIGGER_MODE_KEY) && (value == CAMERA_DISABLE_ACQUIRE))) {
-    startGrabbing();
-  } else if (stopCapture && ((name == TRIGGER_MODE_KEY) &&
-                             (value != CAMERA_DISABLE_ACQUIRE))) {
-    startGrabbing();
+  if(hasStopped()==false){
+    if (stopgrab && 
+        !((name == TRIGGER_MODE_KEY) && (value == CAMERA_DISABLE_ACQUIRE))) {
+      startGrabbing();
+    } else if (stopCapture && ((name == TRIGGER_MODE_KEY) &&
+                              (value != CAMERA_DISABLE_ACQUIRE))) {
+      startGrabbing();
+    }
   }
   getAttributeCache()->setInputDomainAsChanged();
   getAttributeCache()->setOutputDomainAsChanged();
@@ -805,7 +807,8 @@ void RTCameraBase::stopGrabbing() {
 //! Execute the work, this is called with a determinated delay, it must be as
 //! fast as possible
 void RTCameraBase::unitStart() throw(chaos::CException) {
-  isRunning = true;
+  RTCameraBaseLDBG_ << "Start has stopped:"<<hasStopped();
+
   startGrabbing();
 }
 
@@ -817,7 +820,7 @@ void RTCameraBase::captureThread() {
   RTCameraBaseLDBG_ << "Capture thread STARTED";
   encode_th = boost::thread(&RTCameraBase::encodeThread, this);
 
-  while (!stopCapture) {
+  while ((!stopCapture)&&(hasStopped()==false)) {
     img = 0;
     start = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
 
@@ -877,7 +880,7 @@ void RTCameraBase::captureThread() {
     }
   }
 
-  RTCameraBaseLDBG_ << "Capture thread ENDED Queue:" << captureImg.length();
+  RTCameraBaseLDBG_ << "Capture thread ENDED Queue:" << captureImg.length()<<" has Stopped:"<<hasStopped();
 }
 void RTCameraBase::encodeThread() {
   uint64_t start;
@@ -890,7 +893,7 @@ void RTCameraBase::encodeThread() {
                     << " , assuming framebuf:" << framebuf_encoding_s << "("
                     << framebuf_encoding << ") bpp:" << bpp
                     << " thread STARTED";
-  while (!stopCapture) {
+  while ((!stopCapture)&&(hasStopped()==false)) {
 
     camera_buf_t* framebuf;
    // RTCameraBaseLDBG_ << "popping image queue:"<<captureImg.length();
@@ -1119,7 +1122,7 @@ void RTCameraBase::encodeThread() {
     } 
   }
 
-  RTCameraBaseLDBG_ << "Encode thread exiting Queue: " << encodedImg.length();
+  RTCameraBaseLDBG_ << "Encode thread exiting Queue: " << encodedImg.length()<<" has Stopped:"<<hasStopped();
 
   /*
   encodedImg.consume_all([this](encoded_t i) {
@@ -1283,7 +1286,8 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
 
 //! Execute the Control Unit work
 void RTCameraBase::unitStop() throw(chaos::CException) {
-  isRunning = false;
+    RTCameraBaseLDBG_ << "Stop:"<<hasStopped();
+
   stopGrabbing();
 }
 
