@@ -376,6 +376,8 @@ bool RTCameraBase::setDrvProp(const std::string &name, int32_t value,
       startGrabbing();
     }
   }
+  updateDatasetFromDriverProperty();
+
   getAttributeCache()->setInputDomainAsChanged();
   getAttributeCache()->setOutputDomainAsChanged();
   return (ret == 0);
