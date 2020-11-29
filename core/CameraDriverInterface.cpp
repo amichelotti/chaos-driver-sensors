@@ -50,7 +50,7 @@ message.resultData = (void*)ret;\
     {int tmp=ret->result;free(message.inputData);free(message.resultData);return tmp;}
 
 #define SEND_AND_RETURN \
- accessor->send(&message);			\
+ accessor->send(&message,chaos::common::constants::CUTimersTimeoutinMSec);			\
 RETURN
 
 #define SEND_AND_RETURN_TIM(tim) \
@@ -130,7 +130,7 @@ CameraDriverInterface::~CameraDriverInterface() {
 
 
 int CameraDriverInterface::setImageProperties(int32_t width,int32_t height,int32_t opencvImageType){
-    //boost::mutex::scoped_lock lock(io_mux);
+    boost::mutex::scoped_lock lock(io_mux);
 
 
     PREPARE_OP(CameraDriverInterfaceOpcode_SET_IMAGE_PROP);
@@ -141,7 +141,7 @@ int CameraDriverInterface::setImageProperties(int32_t width,int32_t height,int32
 }
 
 int CameraDriverInterface::getImageProperties(int32_t& width,int32_t& height,int32_t& opencvImageType){
-    //boost::mutex::scoped_lock lock(io_mux);
+    boost::mutex::scoped_lock lock(io_mux);
 
 
     PREPARE_OP(CameraDriverInterfaceOpcode_GET_IMAGE_PROP);
@@ -154,7 +154,7 @@ int CameraDriverInterface::getImageProperties(int32_t& width,int32_t& height,int
 
 
 int CameraDriverInterface::setCameraProperty(const std::string& propname,int32_t val){
-    //boost::mutex::scoped_lock lock(io_mux);
+    boost::mutex::scoped_lock lock(io_mux);
 
     PREPARE_OP(CameraDriverInterfaceOpcode_SET_PROP);
     memset(idata->property,0,MAX_PROP_STRING);
@@ -166,7 +166,7 @@ int CameraDriverInterface::setCameraProperty(const std::string& propname,int32_t
 }
 
 int CameraDriverInterface::setCameraProperty(const std::string& propname,double val){
-    //boost::mutex::scoped_lock lock(io_mux);
+    boost::mutex::scoped_lock lock(io_mux);
 
 
     PREPARE_OP(CameraDriverInterfaceOpcode_SET_FPROP);
@@ -179,7 +179,7 @@ int CameraDriverInterface::setCameraProperty(const std::string& propname,double 
 }
 
 int CameraDriverInterface::getCameraProperty(const std::string& propname,int32_t& val){
-    //boost::mutex::scoped_lock lock(io_mux);
+    boost::mutex::scoped_lock lock(io_mux);
 
 
     PREPARE_OP(CameraDriverInterfaceOpcode_GET_PROP);
@@ -195,7 +195,7 @@ int CameraDriverInterface::getCameraProperty(const std::string& propname,int32_t
 }
 
 int CameraDriverInterface::getCameraProperty(const std::string& propname,double& val){
-    //boost::mutex::scoped_lock lock(io_mux);
+    boost::mutex::scoped_lock lock(io_mux);
 
 
     PREPARE_OP(CameraDriverInterfaceOpcode_GET_FPROP);
@@ -210,7 +210,7 @@ int CameraDriverInterface::getCameraProperty(const std::string& propname,double&
 
 
 int CameraDriverInterface::getCameraProperties(chaos::common::data::CDataWrapper& proplist){
-    //boost::mutex::scoped_lock lock(io_mux);
+    boost::mutex::scoped_lock lock(io_mux);
 
     PREPARE_RET_OP(CameraDriverInterfaceOpcode_GET_PROPERTIES);
     int sizeb=0;
@@ -233,7 +233,7 @@ int CameraDriverInterface::getCameraProperties(chaos::common::data::CDataWrapper
 }
 
 int CameraDriverInterface::startGrab(uint32_t shots,void*framebuf,cameraGrabCallBack c){
-    //boost::mutex::scoped_lock lock(io_mux);
+    boost::mutex::scoped_lock lock(io_mux);
 
 
     PREPARE_OP(CameraDriverInterfaceOpcode_START_GRAB);
@@ -249,7 +249,7 @@ int CameraDriverInterface::waitGrab(uint32_t timeout_ms){
     SEND_AND_RETURN_TIM(timeout_ms);
 }
 int CameraDriverInterface::waitGrab(camera_buf_t**hostbuf,uint32_t timeout_ms){
-    //boost::mutex::scoped_lock lock(io_mux);
+    boost::mutex::scoped_lock lock(io_mux);
 
 
     PREPARE_OP(CameraDriverInterfaceOpcode_WAIT_GRABBUF);
@@ -258,14 +258,14 @@ int CameraDriverInterface::waitGrab(camera_buf_t**hostbuf,uint32_t timeout_ms){
     SEND_AND_RETURN_TIM(timeout_ms);
 }
 int CameraDriverInterface::stopGrab(){
-    //boost::mutex::scoped_lock lock(io_mux);
+    boost::mutex::scoped_lock lock(io_mux);
 
 
     PREPARE_OP(CameraDriverInterfaceOpcode_STOP_GRAB);
     SEND_AND_RETURN;
 }
 int CameraDriverInterface::cameraInit(void *buffer,uint32_t sizeb){
-        //boost::mutex::scoped_lock lock(io_mux);
+        boost::mutex::scoped_lock lock(io_mux);
 
 
     PREPARE_OP(CameraDriverInterfaceOpcode_INIT);
