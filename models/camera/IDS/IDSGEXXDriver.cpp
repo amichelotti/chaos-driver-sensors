@@ -267,11 +267,12 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
     createProperty("Serial", serial);
 
     createProperty("FullName", camera.getCameraName());
+    camera.getFrameRate(&framerate);
     createProperty("framerate", framerate,"FRAMERATE",[](AbstractDriver*thi,const std::string&name,
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
         IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
             if(t->camera.getFrameRate(&t->framerate)==0){
-                IDSGEXXDriverLDBG(t)<< "FRAMERATE:"<<t->framerate;
+                IDSGEXXDriverLDBG(t)<< "READ FRAMERATE:"<<t->framerate;
                 chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
                 ret->addDoubleValue("value",t->framerate);
                 return ret;
@@ -282,8 +283,12 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
         IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
             if(p.hasKey("value")){
                 double val=p.getDoubleValue("value");
+                IDSGEXXDriverLDBG(t)<< "WRITING FRAMERATE:"<<val;
+
                 if(t->camera.setFrameRate(&val)==0){
                     t->framerate=val;
+                    IDSGEXXDriverLDBG(t)<< "WROTE FRAMERATE:"<<val;
+
                 }
                 return p.clone();
             }
@@ -511,11 +516,12 @@ createProperty("zoom", zoom,"ZOOM",[](AbstractDriver*thi,const std::string&name,
             return chaos::common::data::CDWUniquePtr();
         
       });
+      pixelclk=camera.getPixelClock(); 
 createProperty("pixelCLK", pixelclk,"PIXELCLK",[](AbstractDriver*thi,const std::string&name,
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
         IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
             t->pixelclk=t->camera.getPixelClock();    
-            IDSGEXXDriverLDBG(t)<< "PIXEL CLOCK:"<<t->pixelclk;
+            IDSGEXXDriverLDBG(t)<< "READ PIXEL CLOCK:"<<t->pixelclk;
             chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
             ret->addInt32Value("value",t->pixelclk);
             return ret;
@@ -526,7 +532,9 @@ createProperty("pixelCLK", pixelclk,"PIXELCLK",[](AbstractDriver*thi,const std::
         IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
             if(p.hasKey("value")){
                 int32_t val=p.getInt32Value("value");
+                IDSGEXXDriverLDBG(t)<< "WRITE PIXEL CLOCK:"<<val;
                 t->camera.setPixelClock(&val);
+                t->pixelclk=val;
                 return p.clone();
                 
             }
@@ -538,7 +546,7 @@ createProperty("pixelCLK", pixelclk,"PIXELCLK",[](AbstractDriver*thi,const std::
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
         IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
             t->gain=t->camera.getHardwareGain();
-            IDSGEXXDriverLDBG(t)<< "GAIN:"<<t->gain;
+            IDSGEXXDriverLDBG(t)<< "READ GAIN:"<<t->gain;
             chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
             ret->addInt32Value("value",t->gain);
             return ret;
@@ -548,7 +556,10 @@ createProperty("pixelCLK", pixelclk,"PIXELCLK",[](AbstractDriver*thi,const std::
         IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
             if(p.hasKey("value")){
                 int32_t val=p.getInt32Value("value");
+                IDSGEXXDriverLDBG(t)<< "WRITE GAIN:"<<val;
+
                 t->camera.setHardwareGain(&val);
+                t->gain=val;
                 return p.clone();
             }
         
@@ -559,7 +570,7 @@ createProperty("pixelCLK", pixelclk,"PIXELCLK",[](AbstractDriver*thi,const std::
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
         IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
             t->exposure=t->camera.getExposure();
-            IDSGEXXDriverLDBG(t)<< "SHUTTER:"<<t->exposure;
+            IDSGEXXDriverLDBG(t)<< "READ SHUTTER:"<<t->exposure;
             chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
             ret->addDoubleValue("value",t->exposure);
             return ret;
@@ -569,7 +580,10 @@ createProperty("pixelCLK", pixelclk,"PIXELCLK",[](AbstractDriver*thi,const std::
         IDSGEXXDriver *t=(IDSGEXXDriver *)thi;
             if(p.hasKey("value")){
                 double val=p.getDoubleValue("value");
+
                 t->camera.setExposure(&val);
+                    IDSGEXXDriverLDBG(t)<< "WROTE SHUTTER:"<<val;
+
                 t->exposure=val;
                 return p.clone();
             }

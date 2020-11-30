@@ -681,7 +681,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   // framebuf = (uint8_t*)malloc(size);
   bpp = cv2fmt(framebuf_encoding, framebuf_encoding_s);
 
-  RTCameraBaseLDBG_ << "Starting acquiring imagex " << *sizex << "x" << *sizey
+  RTCameraBaseLDBG_ << "Going to acquire images " << *sizex << "x" << *sizey
                     << " bpp:" << bpp
                     << " framebuf_encoding:" << framebuf_encoding_s << " ("
                     << framebuf_encoding << ")";
@@ -694,11 +694,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   strncpy(ofmt, encoding, sizeof(encoding));
   updateProperty();
 
-  getAttributeCache()->setInputDomainAsChanged();
-  getAttributeCache()->setOutputDomainAsChanged();
-  getAttributeCache()->setCustomDomainAsChanged();
-
-   pushCustomDataset();
+ 
 }
 void RTCameraBase::cameraGrabCallBack(const void *buf, uint32_t blen,
                                       uint32_t width, uint32_t heigth,
@@ -720,7 +716,7 @@ void RTCameraBase::startGrabbing() {
   updateProperty();
   RTCameraBaseLDBG_ << "Buffering:"<< buffering << " buffers of "
                     << (*sizex * *sizey * bpp) << " bytes";
-
+#ifdef CAMERA_ENABLE_SHARED
   try {
     if (shared_mem.get() == NULL) {
       shared_mem.reset(new ::common::misc::data::SharedMem(
@@ -734,7 +730,9 @@ void RTCameraBase::startGrabbing() {
   } catch (boost::interprocess::interprocess_exception &ex) {
     RTCameraBaseLERR_ << "##cannot open shared memory :" << ex.what();
   }
-
+#endif
+  getAttributeCache()->setCustomDomainAsChanged();
+  pushCustomDataset();
   driver->startGrab(0);
   if (stopCapture == true) {
     stopCapture = false;
@@ -742,8 +740,7 @@ void RTCameraBase::startGrabbing() {
       capture_th = boost::thread(&RTCameraBase::captureThread, this);
     }
   }
-  getAttributeCache()->setCustomDomainAsChanged();
-  pushCustomDataset();
+  
 }
 void RTCameraBase::haltThreads() {
   int ret;
@@ -809,8 +806,12 @@ void RTCameraBase::stopGrabbing() {
 //! Execute the work, this is called with a determinated delay, it must be as
 //! fast as possible
 void RTCameraBase::unitStart() throw(chaos::CException) {
-  RTCameraBaseLDBG_ << "Start has stopped:"<<hasStopped();
+  RTCameraBaseLDBG_ << "Start - stopped flag:"<<hasStopped();
+  getAttributeCache()->setInputDomainAsChanged();
+  getAttributeCache()->setOutputDomainAsChanged();
+  getAttributeCache()->setCustomDomainAsChanged();
 
+  pushCustomDataset();
   startGrabbing();
 }
 
@@ -1201,10 +1202,13 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       *osizey=ele.sizey;
       getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ptr,
                                                    a->size());
+#ifdef CAMERA_ENABLE_SHARED
+
       if (shared_mem.get()) {
         shared_mem->writeMsg((void *)ptr, a->size());
         shared_mem->notify_all();
       }
+#endif
       delete (a);
 
       getAttributeCache()->setOutputDomainAsChanged();
@@ -1259,11 +1263,13 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
           ptr = reinterpret_cast<uchar *>(&(encbuf[0]));
           getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ptr,
                                                        encbuf.size());
+#ifdef CAMERA_ENABLE_SHARED
+
           if (shared_mem.get()) {
             shared_mem->writeMsg((void *)ptr, encbuf.size());
             shared_mem->notify_all();
           }
-
+#endif
           getAttributeCache()->setOutputDomainAsChanged();
         }
       } catch (...) {
