@@ -325,7 +325,7 @@ bool RTCameraBase::setDrvProp(const std::string &name, int32_t value,
 
   if (ret != 0) {
     std::stringstream ss;
-    ss << "error setting \"" << name << "\" to " << value;
+    ss << "error setting \"" << name << "\" to " << value<<" ret:"<<ret;
     setStateVariableSeverity(
         StateVariableTypeAlarmDEV, "error_setting_property",
         chaos::common::alarm::MultiSeverityAlarmLevelWarning);
@@ -505,7 +505,7 @@ addBinaryAttributeAsMIMETypeToDataSet("FRAMEBUFFER", "output image",
       DEFAULT_RESOLUTION, chaos::DataType::Output);*/
   addStateVariable(
       StateVariableTypeAlarmDEV, "error_setting_property",
-      "the operation in not supported i.e property not present or accesible");
+      "the operation in not supported i.e property not present or accessible");
   addStateVariable(StateVariableTypeAlarmCU, "encode_error",
                    "an error occurred during encode", LOG_FREQUENCY);
   addStateVariable(StateVariableTypeAlarmDEV, "capture_error",

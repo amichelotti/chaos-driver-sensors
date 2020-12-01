@@ -113,7 +113,11 @@ void IDSGEXXDriver::driverInit(const chaos::common::data::CDataWrapper& json) {
 }
 
 void IDSGEXXDriver::driverDeinit()  {
+
+
     IDSGEXXDriverLAPP_ << "Deinit driver";
+    camera.closeCamera();
+
 
 }
 
@@ -253,12 +257,12 @@ int IDSGEXXDriver::initializeCamera(const chaos::common::data::CDataWrapper& jso
     
     } catch (std::exception &e) {
       std::stringstream ss;
-      ss << "Unexpected exception: \"" << e.what();
+      ss << "Unexpected exception: \"" << e.what()<<"\" initialitialization JSON:"<<json.getJSONString();
       IDSGEXXDriverLERR_ << ss.str();
       return -110;
       } catch (...) {
       //unkonwn exception
-      IDSGEXXDriverLERR_ << "an unknown exception ";
+      IDSGEXXDriverLERR_ << "an unknown exception, intialization string:"<<json.getJSONString();
       return -120;
 
     }
@@ -704,11 +708,11 @@ int IDSGEXXDriver::cameraToProps(chaos::common::data::CDataWrapper*p){
         return -1;
 
     }
-    if(deinitialized){
+   /* if(deinitialized){
         IDSGEXXDriverLERR_ << "Camera is deinitialized";
 
         return 0;
-    }
+    }*/
     IDSGEXXDriverLDBG_<<" synchronize all properties..";
     syncRead();// synchronize with real values
 
@@ -769,10 +773,10 @@ int IDSGEXXDriver::propsToCamera(chaos::common::data::CDataWrapper*p){
         return -1;
 
     }
-    if(deinitialized){
+  /*  if(deinitialized){
         IDSGEXXDriverLERR_ << "Camera is deinitialized";
         return -2;
-    }
+    }*/
     IDSGEXXDriverLDBG_<<"setting props: " << p->getCompliantJSONString() ;
 
     setProperties(*p,true);
@@ -1031,7 +1035,6 @@ int IDSGEXXDriver::cameraInit(void *buffer,uint32_t sizeb){
 int IDSGEXXDriver::cameraDeinit(){
     IDSGEXXDriverLDBG_<<"deinit";
     deinitialized=true;
-    camera.closeCamera();
 
 
     return 0;
