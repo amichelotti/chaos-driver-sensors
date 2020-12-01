@@ -148,14 +148,8 @@ protected:
 		This handler is called befor the update of the
 		cached input attribute with the requested valure
 		*/
-		void unitInputAttributePreChangeHandler() throw(chaos::CException);
+		bool unitInputAttributePreChangeHandler(chaos::common::data::CDWUniquePtr& data);
 
-		//! Handler called on the update of one or more input attribute
-		/*!(Optional)
-		After an input attribute has been chacnged this handler
-		is called
-		*/
-		void unitInputAttributeChangedHandler() throw(chaos::CException);
     chaos::common::data::CDWUniquePtr unitPerformCalibration(chaos::common::data::CDWUniquePtr data);
 
     virtual int filtering(cv::Mat&image);

@@ -746,10 +746,23 @@ void RTCameraBase::haltThreads() {
   int ret;
   RTCameraBaseLDBG_ << "Stop Grab low level:" << stopCapture;
   stopCapture = true;
-  ret= driver->stopGrab();
-  captureImg.unblock();
+  if (buffering > 1) {
+captureImg.unblock();
   encodedImg.unblock();
 
+  if(encode_th.joinable()){
+
+      if (boost::this_thread::get_id() != encode_th.get_id()) {
+        encode_th.join();
+      }
+    }
+    if(capture_th.joinable()){
+      if (boost::this_thread::get_id() != capture_th.get_id()) {
+        capture_th.join();
+      }
+    }
+  }
+  
   RTCameraBaseLDBG_ << "Stopped Grab driver:" << ret;
 
   
@@ -758,26 +771,13 @@ void RTCameraBase::haltThreads() {
 void RTCameraBase::stopGrabbing() {
   RTCameraBaseLDBG_ << "Stop Grabbing..." << stopCapture;
   haltThreads();
-  if (buffering > 1) {
 
    /* metadataLogging(
         chaos::common::metadata_logging::StandardLoggingChannel::LogLevelInfo,
         "Stop grabbing");
 */
-    encode_th.interrupt();
-    if(encode_th.joinable()){
+  driver->stopGrab();
 
-      if (boost::this_thread::get_id() != encode_th.get_id()) {
-        encode_th.join();
-      }
-    }
-    if(capture_th.joinable()){
-      capture_th.interrupt();
-      if (boost::this_thread::get_id() != capture_th.get_id()) {
-        capture_th.join();
-      }
-    }
-  }
   RTCameraBaseLDBG_ << "Stop Grabbing done:" << stopCapture;
 
   /*    for(int cnt=0;cnt<CAMERA_FRAME_BUFFERING;cnt++){
@@ -1356,27 +1356,26 @@ bool RTCameraBase::unitRestoreToSnapshot(chaos::cu::control_manager::AbstractSha
     return true;
 	}
 	
-//! pre imput attribute change
-void RTCameraBase::unitInputAttributePreChangeHandler() throw(
-    chaos::CException) {}
-
 //! attribute changed handler
-void RTCameraBase::unitInputAttributeChangedHandler() throw(chaos::CException) {
-  //    std::vector<VariableIndexType> changed;
-  //    std::vector<VariableIndexType>::iterator j;
-  //    getAttributeCache()->getChangedInputAttributeIndex(changed);
-  //    //RTCameraBaseLAPP_<<"UnitRun";
+	bool RTCameraBase::unitInputAttributePreChangeHandler(chaos::common::data::CDWUniquePtr& prop){
+  // in case of roi we must be assure that before the resize and then the offset.
+  if(prop->hasKey("WIDTH")&&prop->hasKey("HEIGHT")&&prop->hasKey("OFFSETX")&&prop->hasKey("OFFSETY")){
+    int ret = driver->setCameraProperty("WIDTH", prop->getInt32Value("WIDTH"));
+     ret |= driver->setCameraProperty("HEIGHT", prop->getInt32Value("HEIGHT"));
+     ret |= driver->setCameraProperty("OFFSETX", prop->getInt32Value("OFFSETX"));
+     ret |= driver->setCameraProperty("OFFSETY", prop->getInt32Value("OFFSETY"));
+    RTCameraBaseLDBG_ << "ROI " << ret;
 
-  //    for(j=changed.begin();j!=changed.end();j++){
-  //        const char** buffer;
+    prop->removeKey("HEIGHT");
+        prop->removeKey("WIDTH");
+    prop->removeKey("OFFSETX");
+    prop->removeKey("OFFSETY");
 
-  //        getAttributeCache()->getReadonlyCachedAttributeValue<char>(DOMAIN_INPUT,
-  //        *j, &buffer); if(driver->writeChannel(buffer,*j,input_size[*j])){
-  //            RTCameraBaseLDBG_<<"writing output channel "<<*j<<", size
-  //            :"<<input_size[*j];
-  //        }
-  //    }
-  //    getAttributeCache()->resetChangedInputIndex();
+
+  }
+
+
+  return true;
 }
 
 /*

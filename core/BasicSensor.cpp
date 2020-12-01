@@ -168,13 +168,8 @@ void BasicSensor::unitDeinit() throw(chaos::CException) {
 
 }
 
-//! pre imput attribute change
-void BasicSensor::unitInputAttributePreChangeHandler() throw(chaos::CException) {
-
-}
-
 //! attribute changed handler
-void BasicSensor::unitInputAttributeChangedHandler() throw(chaos::CException) {
+bool BasicSensor::unitInputAttributePreChangeHandler(chaos::common::data::CDWUniquePtr& data){
     std::vector<VariableIndexType> changed;
     std::vector<VariableIndexType>::iterator j;
     getAttributeCache()->getChangedInputAttributeIndex(changed);
@@ -190,7 +185,7 @@ void BasicSensor::unitInputAttributeChangedHandler() throw(chaos::CException) {
     }
     getAttributeCache()->resetChangedInputIndex();
 
-
+return true;
 }
 
 /*
