@@ -1137,10 +1137,11 @@ int BaslerScoutDriver::initializeCamera(
 
                 break;
               }
+              /*
               case CAMERA_TRIGGER_SINGLE: {
                 t->setPropertyValue("TriggerMode", "On", true);
                 break;
-              }
+              }*/
               case CAMERA_TRIGGER_HW_LOW: {
                 LDBG_ << " TRIGGER HW HILO";
 
@@ -1150,6 +1151,7 @@ int BaslerScoutDriver::initializeCamera(
                 t->setPropertyValue("TriggerSource", "Line1", true);
                 break;
               }
+              case CAMERA_TRIGGER_SINGLE:
               case CAMERA_TRIGGER_HW_HI: {
                 LDBG_ << " TRIGGER HW HILO";
                 t->setPropertyValue("TriggerMode", "On", true);

@@ -114,7 +114,6 @@ public:
   int getOffsetX() const;
   int getOffsetY() const;
   
-  
   int getZoom() const { return zoom_; }
   uEyeColor getColorMode();
   bool getAutoExposure() const { return auto_exposure_; }

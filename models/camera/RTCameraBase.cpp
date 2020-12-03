@@ -293,8 +293,11 @@ bool RTCameraBase::setCamera(const std::string &name, bool value,
                                                       : CAMERA_TRIGGER_HW_HI);
 
   } else if (name == "PULSE") {
+    /*return setDrvProp(TRIGGER_MODE_KEY, (value == false) ? CAMERA_TRIGGER_CONTINOUS
+                                                      : CAMERA_TRIGGER_SINGLE);*/
     return setDrvProp(TRIGGER_MODE_KEY, (value == false) ? CAMERA_TRIGGER_CONTINOUS
-                                                      : CAMERA_TRIGGER_SINGLE);
+                                                      : CAMERA_TRIGGER_HW_HI);
+                                                  
   }
   return false;
 }
@@ -318,6 +321,12 @@ bool RTCameraBase::setDrvProp(const std::string &name, int32_t value,
 
   if (stopgrab&&(hasStopped()==false)) {
     stopGrabbing();
+  }
+  if((name == TRIGGER_MODE_KEY)&& (value == CAMERA_TRIGGER_SINGLE) ||(value==CAMERA_TRIGGER_SOFT) ){
+    value =CAMERA_TRIGGER_HW_LOW;
+    *ppulse = true;
+
+    //is equal to an HW trigger.
   }
   ret = driver->setCameraProperty(name, value);
   setStateVariableSeverity(StateVariableTypeAlarmDEV, "error_setting_property",
@@ -827,7 +836,7 @@ void RTCameraBase::captureThread() {
     img = 0;
     start = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
 
-    ret = driver->waitGrab(&img, trigger_timeout);
+    ret = driver->waitGrab(&img, ((*ppulse)?0:trigger_timeout));
 
     if ((img != 0) && (ret > 0)) {
       // keep alarm high
@@ -1162,7 +1171,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
   *pacquire = (mode != CAMERA_DISABLE_ACQUIRE);
   *ptrigger =
       (mode != CAMERA_DISABLE_ACQUIRE) && (mode != CAMERA_TRIGGER_CONTINOUS);
-  *ppulse = ((mode == CAMERA_TRIGGER_SINGLE) || (mode == CAMERA_TRIGGER_SOFT));
+ // *ppulse = ((mode == CAMERA_TRIGGER_SINGLE) || (mode == CAMERA_TRIGGER_SOFT));
   *omode = mode;
   if (mode == CAMERA_DISABLE_ACQUIRE) {
 

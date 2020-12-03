@@ -302,6 +302,7 @@ void Camera::setHardwareGamma(bool *enable)
   }
   hardware_gamma_ = *enable;
 }
+
 void Camera::setZoom(int *zoom)
 {
   if (zoom_ != *zoom) {
