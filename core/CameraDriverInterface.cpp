@@ -246,7 +246,7 @@ int CameraDriverInterface::waitGrab(uint32_t timeout_ms){
 
     PREPARE_OP(CameraDriverInterfaceOpcode_WAIT_GRAB);
     idata->arg0=timeout_ms;
-    SEND_AND_RETURN_TIM(timeout_ms);
+    SEND_AND_RETURN_TIM(timeout_ms*2);
 }
 int CameraDriverInterface::waitGrab(camera_buf_t**hostbuf,uint32_t timeout_ms){
     boost::mutex::scoped_lock lock(io_mux);
@@ -255,7 +255,8 @@ int CameraDriverInterface::waitGrab(camera_buf_t**hostbuf,uint32_t timeout_ms){
     PREPARE_OP(CameraDriverInterfaceOpcode_WAIT_GRABBUF);
     idata->buffer=(void*)hostbuf;
     idata->arg0=timeout_ms;
-    SEND_AND_RETURN_TIM(timeout_ms);
+    // the wait has already a timeout
+    SEND_AND_RETURN_TIM(timeout_ms*2);
 }
 int CameraDriverInterface::stopGrab(){
     boost::mutex::scoped_lock lock(io_mux);
