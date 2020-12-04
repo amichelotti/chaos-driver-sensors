@@ -47,7 +47,7 @@ message.resultData = (void*)ret;\
     accessor->send(&message);
 
 #define RETURN \
-    {int tmp=(message.ret==0)?ret->result:message.ret;free(message.inputData);free(message.resultData);return tmp;}
+    {int tmp=(message.ret==0)?ret->result:message.ret;if(message.inputData){free(message.inputData);}if(message.resultData){free(message.resultData);}return tmp;}
 
 #define SEND_AND_RETURN \
 accessor->send(&message,chaos::common::constants::CUTimersTimeoutinMSec);			\

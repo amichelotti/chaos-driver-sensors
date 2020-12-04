@@ -1286,14 +1286,14 @@ int BaslerScoutDriver::changeTriggerMode(Pylon::CInstantCamera *camera,
                                      Cleanup_Delete);
       break;
     }
-    case CAMERA_TRIGGER_SINGLE: {
+    /*case CAMERA_TRIGGER_SINGLE: {
       BaslerScoutDriverLDBG_ << " TRIGGER SINGLE";
 
       camerap->RegisterConfiguration(new CAcquireSingleFrameConfiguration,
                                      RegistrationMode_ReplaceAll,
                                      Cleanup_Delete);
       break;
-    }
+    }*/
     case CAMERA_TRIGGER_SOFT: {
       BaslerScoutDriverLDBG_ << " TRIGGER SOFT";
 
@@ -1314,6 +1314,7 @@ int BaslerScoutDriver::changeTriggerMode(Pylon::CInstantCamera *camera,
                                      Cleanup_Delete);
       break;
     }
+    case CAMERA_TRIGGER_SINGLE:
     case CAMERA_TRIGGER_HW_HI:
 
     {
@@ -1731,9 +1732,12 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
   }
   try {
     Pylon::CGrabResultPtr ptrGrabResult;
+    if(timeout_ms==0){
+      timeout_ms = 1000*60*3600; // 0 means for ever, map to an 1h 
+    }
     if (tmode > CAMERA_TRIGGER_SINGLE) {
-      if (camerap->WaitForFrameTriggerReady(timeout_ms,
-                                            TimeoutHandling_ThrowException)) {
+      if (camerap->WaitForFrameTriggerReady(timeout_ms,TimeoutHandling_Return
+                                            /*TimeoutHandling_ThrowException*/)) {
         if (tmode == CAMERA_TRIGGER_SOFT) {
           camerap->ExecuteSoftwareTrigger();
         }

@@ -323,7 +323,6 @@ bool RTCameraBase::setDrvProp(const std::string &name, int32_t value,
     stopGrabbing();
   }
   if((name == TRIGGER_MODE_KEY)&& (value == CAMERA_TRIGGER_SINGLE) ||(value==CAMERA_TRIGGER_SOFT) ){
-    value =CAMERA_TRIGGER_HW_LOW;
     *ppulse = true;
 
     //is equal to an HW trigger.
