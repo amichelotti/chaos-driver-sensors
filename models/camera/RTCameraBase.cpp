@@ -759,7 +759,7 @@ captureImg.unblock();
   if(encode_th.joinable()){
 
       if (boost::this_thread::get_id() != encode_th.get_id()) {
-        if (encode_th.try_join_for(boost::chrono::milliseconds(chaos::common::constants::CUTimersTimeoutinMSec))){
+        if (encode_th.try_join_for(boost::chrono::milliseconds(2*chaos::common::constants::CUTimersTimeoutinMSec))){
                         RTCameraBaseLDBG_ << "encodeThread joined!";
 
                     } else {
@@ -770,7 +770,7 @@ captureImg.unblock();
     }
     if(capture_th.joinable()){
       if (boost::this_thread::get_id() != capture_th.get_id()) {
-         if (capture_th.try_join_for(boost::chrono::milliseconds(chaos::common::constants::CUTimersTimeoutinMSec))){
+         if (capture_th.try_join_for(boost::chrono::milliseconds(2*chaos::common::constants::CUTimersTimeoutinMSec))){
                         RTCameraBaseLDBG_ << "captureThread joined!";
 
                     } else {

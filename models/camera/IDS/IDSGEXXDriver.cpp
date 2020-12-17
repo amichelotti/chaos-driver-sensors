@@ -1085,7 +1085,7 @@ int IDSGEXXDriver::waitGrab(camera_buf_t **hostbuf,uint32_t timeout_ms){
                 *hostbuf=new camera_buf_t((uint8_t*)buf,size_ret,width,height,offsetx,offsety) ;
         }
     } else{
-      //      IDSGEXXDriverLERR_<<"No Image..";
+            IDSGEXXDriverLERR_<<"No Image.. Timeout? ret:"<<ret;
     }
     
    
