@@ -1249,8 +1249,7 @@ BaslerScoutDriver::BaslerScoutDriver():camerap(NULL),shots(0),framebuf(NULL),fn(
 }
 */
 
-DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,
-                                             BaslerScoutDriver) {
+BaslerScoutDriver::BaslerScoutDriver() {
   camerap = NULL;
   shots = 0;
   fn = NULL;

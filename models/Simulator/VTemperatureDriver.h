@@ -22,7 +22,7 @@
 #define VTEMPERATUREDRIVER_h
 
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
-#include <driver/sensors/core/AbstractSensorDriver.h>
+#include <chaos/cu_toolkit/driver_manager/driver/BasicIODriver.h>
 #include <chaos/common/data/DatasetDB.h>
 #include <stdint.h>
 namespace cu_driver = chaos::cu::driver_manager::driver;
@@ -37,10 +37,10 @@ namespace driver {
         namespace model {
     
 
-class VTemperatureDriver:public ::driver::sensor::AbstractSensorDriver{
+class VTemperatureDriver:public chaos::cu::driver_manager::driver::BasicIODriver {
 
 	int counter;
-    double freq;
+    double freq,temp;
     int32_t points;
     int32_t sinpoint;
     double setPoint,err;
@@ -57,7 +57,7 @@ public:
          \return the number of succesful read items, negative error
 
          */
-    int readChannel(void *buffer,int addr,int bcount);
+    int read(void *buffer,int addr,int bcount);
     /**
      \brief Write a channel from the physical sensor
      \param buffer[out] destination buffer
@@ -65,7 +65,7 @@ public:
      \param bcout[in] buffer count
      \return the number of succesful written items, negative error
      */
-    int writeChannel(void *buffer,int addr,int bcount);
+    int write(void *buffer,int addr,int bcount);
     
     /**
      \brief init the sensor
@@ -73,7 +73,7 @@ public:
      \return 0 if success, error otherwise
      
      */
-    int sensorInit(void *buffer,int sizeb);
+    int initIO(void *buffer,int sizeb);
 
     void driverInit(const chaos::common::data::CDataWrapper&) throw(chaos::CException) ;
     /**
@@ -81,7 +81,7 @@ public:
      \param buffer[in] initialisation opaque parameter
      \return 0 if success, error otherwise
      */
-    int sensorDeinit();
+    int deinitIO();
         
 };
         }}}

@@ -45,7 +45,7 @@ namespace driver {
 #define CAM_MAX_SHUTTER 1000
 #define CAM_MAX_GAIN 1000
 #define CAM_MAX_BRIGHTNESS 1500
-class ShapeSim:public chaos::cu::driver_manager::driver::AbstractDriverPlugin,public ::driver::sensor::camera::CameraDriverBridge {
+class ShapeSim:public ::driver::sensor::camera::CameraDriverBridge {
 
 
  protected:

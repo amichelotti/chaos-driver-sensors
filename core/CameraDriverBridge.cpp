@@ -38,12 +38,11 @@ using namespace ::driver::sensor::camera;
 
 }
 */
-
-CameraDriverBridge::CameraDriverBridge(){
+DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera, CameraDriverBridge) {
         CameraDriverBridgeLDBG_ <<" CAMERA DRIVER BRIDGE Created";
-
-
+	
 }
+
 //default destructor
 CameraDriverBridge::~CameraDriverBridge() {
 

@@ -678,7 +678,7 @@ IDSGEXXDriver::IDSGEXXDriver():shots(0),framebuf(NULL),fn(NULL),props(NULL),tmod
 
 
 }*/
-DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera, IDSGEXXDriver),initialized(false) {
+IDSGEXXDriver::IDSGEXXDriver():initialized(false) {
     IDSGEXXDriverLDBG_<<  "Created Driver";
 }
 //default descrutcor

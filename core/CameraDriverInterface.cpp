@@ -18,7 +18,7 @@
  *    	limitations under the License.
  */
 #include "CameraDriverInterface.h"
-
+#include "CameraDriverBridge.h"
 
 
 using namespace ::driver::sensor::camera;
@@ -128,6 +128,7 @@ CameraDriverInterface::~CameraDriverInterface() {
 
 }
 
+#ifdef DETACHED_DRIVER
 
 int CameraDriverInterface::setImageProperties(int32_t width,int32_t height,int32_t opencvImageType){
     boost::mutex::scoped_lock lock(io_mux);
@@ -283,4 +284,60 @@ int CameraDriverInterface::cameraDeinit(){
 
 }
 
+#else
 
+int CameraDriverInterface::setImageProperties(int32_t width,int32_t height,int32_t opencvImageType){
+    return impl->setImageProperties(width,height,opencvImageType);
+   
+}
+
+int CameraDriverInterface::getImageProperties(int32_t& width,int32_t& height,int32_t& opencvImageType){
+    return impl->getImageProperties(width,height,opencvImageType);
+    
+}
+
+
+int CameraDriverInterface::setCameraProperty(const std::string& propname,int32_t val){
+   return impl->setCameraProperty( propname,val);
+}
+
+int CameraDriverInterface::setCameraProperty(const std::string& propname,double val){
+    return impl->setCameraProperty(propname,val);
+}
+
+int CameraDriverInterface::getCameraProperty(const std::string& propname,int32_t& val){
+    return impl->getCameraProperty(propname,val);
+}
+
+int CameraDriverInterface::getCameraProperty(const std::string& propname,double& val){
+    return impl->getCameraProperty(propname,val);
+}
+
+
+int CameraDriverInterface::getCameraProperties(chaos::common::data::CDataWrapper& proplist){
+    return impl->getCameraProperties(proplist);
+}
+
+int CameraDriverInterface::startGrab(uint32_t shots,void*framebuf,cameraGrabCallBack c){
+    return impl->startGrab(shots,framebuf,c);
+}
+int CameraDriverInterface::waitGrab(uint32_t timeout_ms){
+
+   return impl->waitGrab(timeout_ms);
+}
+int CameraDriverInterface::waitGrab(camera_buf_t**hostbuf,uint32_t timeout_ms){
+   return impl->waitGrab(hostbuf,timeout_ms);
+}
+int CameraDriverInterface::stopGrab(){
+    return impl->stopGrab();
+}
+int CameraDriverInterface::cameraInit(void *buffer,uint32_t sizeb){
+       return impl->cameraInit(buffer,sizeb);
+}
+
+int CameraDriverInterface::cameraDeinit(){
+    return impl->cameraDeinit();
+
+}
+
+#endif
