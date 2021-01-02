@@ -62,10 +62,10 @@ BasicSensor::~BasicSensor() {
         delete driver;
         driver = NULL;
     }
-    if(driver_dataset){
+   /* if(driver_dataset){
         free(driver_dataset);
         driver_dataset=0;
-    }
+    }*/
 
 }
 
@@ -107,7 +107,8 @@ void BasicSensor::unitDefineActionAndDataset() throw(chaos::CException) {
 
     }
 */
-    
+      addPublicDriverPropertyToDataset();
+
   }
 
 
@@ -135,6 +136,8 @@ void BasicSensor::unitRun() throw(chaos::CException) {
     std::vector<int>::iterator i;
     int cnt,ret,changed=0;
     //BasicSensorLAPP_<<"UnitRun";
+    updateDatasetFromDriverProperty();
+/*
     for(i=output_size.begin(),cnt=0;i!=output_size.end();i++,cnt++){
         char buffer[*i];
         if((ret=driver->read(buffer,cnt,*i))){
@@ -156,6 +159,7 @@ void BasicSensor::unitRun() throw(chaos::CException) {
         setStateVariableSeverity(StateVariableTypeAlarmCU,"timeout_sensor_readout", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
 
     }
+    */
 }
 
 //!Execute the Control Unit work
