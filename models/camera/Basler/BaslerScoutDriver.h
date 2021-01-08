@@ -43,7 +43,7 @@ namespace driver {
 #define CAM_DEFAULT_WIDTH 659
 #define CAM_DEFAULT_HEIGTH 494
 
-class BaslerScoutDriver:public chaos::cu::driver_manager::driver::AbstractDriverPlugin, public ::driver::sensor::camera::CameraDriverBridge {
+class BaslerScoutDriver:public ::driver::sensor::camera::CameraDriverBridge {
 
 
  protected:

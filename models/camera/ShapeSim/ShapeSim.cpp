@@ -222,7 +222,7 @@ createProperty(n,var,min,max,inc,pub,[](AbstractDriver*thi,const std::string&nam
           ((ShapeSim*)thi)->var=p.getDoubleValue("value");\
           return p.clone();});
 
-DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera,ShapeSim),shots(0),frames(0),fn(NULL),pixelEncoding(CV_8UC3),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1.0),offsetx(0),offsety(0),rot(0){
+ShapeSim::ShapeSim():shots(0),frames(0),fn(NULL),pixelEncoding(CV_8UC3),tmode(CAMERA_TRIGGER_CONTINOUS),gstrategy(CAMERA_LATEST_ONLY),initialized(false),height(CAM_DEFAULT_HEIGTH),width(CAM_DEFAULT_WIDTH),framerate(1.0),offsetx(0),offsety(0),rot(0){
 
     ShapeSimLDBG_<<  "Created Driver";
     movex=movey=rot=0;
