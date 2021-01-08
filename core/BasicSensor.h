@@ -22,6 +22,7 @@
 
 #include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
 #include <driver/sensors/core/SensorDriverInterface.h>
+#include <chaos/cu_toolkit/driver_manager/driver/BasicIODriverInterface.h>
 #define MAX_DATASET_SIZE 256
 namespace driver{
     
@@ -30,9 +31,9 @@ namespace driver{
 class BasicSensor : public chaos::cu::control_manager::RTAbstractControlUnit {
 	PUBLISHABLE_CONTROL_UNIT_INTERFACE(BasicSensor);
     
-    SensorDriverInterface*driver;
-    ddDataSet_t*driver_dataset;
-    int driver_dataset_size;
+    chaos::cu::driver_manager::driver::BasicIODriverInterface*driver;
+    //ddDataSet_t*driver_dataset;
+    //int driver_dataset_size;
     std::vector<int> output_size;
     std::vector<int> input_size;
     uint64_t last_update;
@@ -79,19 +80,12 @@ protected:
      */
     void unitDeinit() throw(chaos::CException);
 
-		//! Pre input attribute change
-		/*!(Optional)
-		This handler is called befor the update of the
-		cached input attribute with the requested valure
-		*/
-		void unitInputAttributePreChangeHandler() throw(chaos::CException);
-
 		//! Handler called on the update of one or more input attribute
 		/*!(Optional)
 		After an input attribute has been chacnged this handler
 		is called
 		*/
-		void unitInputAttributeChangedHandler() throw(chaos::CException);
+bool unitInputAttributePreChangeHandler(chaos::common::data::CDWUniquePtr& data);
 };
     }}
 #endif

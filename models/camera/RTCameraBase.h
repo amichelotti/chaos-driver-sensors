@@ -19,7 +19,7 @@
  */
 #ifndef ChaosRTControlUnit_RTCameraBase_h
 #define ChaosRTControlUnit_RTCameraBase_h
-#include  <boost/lockfree/queue.hpp> 
+#include  <chaos/common/thread/TLockFreeQueue.h> 
 #include <common/misc/data/core/SharedMem.h>
 #include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
 
@@ -82,14 +82,17 @@ protected:
 
         void captureThread();
         bool stopCapture,stopEncoding;
-        bool isRunning;
         boost::thread capture_th,encode_th;
       //  std::vector<unsigned char> encbuf[CAMERA_FRAME_BUFFERING];//encode stage
-        uint32_t captureQueue,encodeQueue;
-        boost::condition_variable wait_capture,wait_encode,full_capture,full_encode;
-        boost::lockfree::queue<::driver::sensor::camera::camera_buf_t*, boost::lockfree::fixed_sized<true> > captureImg;
-        boost::lockfree::queue<encoded_t, boost::lockfree::fixed_sized<true> > encodedImg;
-        boost::mutex mutex_io,mutex_encode;
+        chaos::common::thread::TLockFreeQueue<::driver::sensor::camera::camera_buf_t*,CAMERA_FRAME_BUFFERING> captureImg;
+        chaos::common::thread::TLockFreeQueue<encoded_t,CAMERA_FRAME_BUFFERING> encodedImg;
+
+        //boost::condition_variable wait_capture,wait_encode,full_capture,full_encode;
+
+        //boost::lockfree::queue<::driver::sensor::camera::camera_buf_t*, boost::lockfree::fixed_sized<true> > captureImg;
+        //boost::lockfree::queue<encoded_t, boost::lockfree::fixed_sized<true> > encodedImg;
+        //boost::mutex mutex_io,mutex_encode;
+
         uint32_t hw_trigger_timeout_us,sw_trigger_timeout_us,trigger_timeout; // 0 =wait indefinitively
         
         uint64_t encode_time,capture_time,network_time,counter_capture,counter_encode;
@@ -102,9 +105,8 @@ protected:
         void updateProperty();
         bool setCamera(const std::string &name, bool value, uint32_t size=sizeof(bool));
 
-        bool setProp(const std::string &name, int32_t value, uint32_t size=sizeof(int32_t));
-        bool setProp(const std::string &name, double value, uint32_t size=sizeof(double));
-        bool setProp(const std::string &name, const std::string& value, uint32_t size);
+        bool setDrvProp(const std::string &name, const int32_t value, uint32_t size=sizeof(int32_t));
+        bool setDrvProp(const std::string &name, const double value, uint32_t size=sizeof(double));
 
         void startGrabbing();
         void haltThreads();
@@ -146,14 +148,8 @@ protected:
 		This handler is called befor the update of the
 		cached input attribute with the requested valure
 		*/
-		void unitInputAttributePreChangeHandler() throw(chaos::CException);
+		bool unitInputAttributePreChangeHandler(chaos::common::data::CDWUniquePtr& data);
 
-		//! Handler called on the update of one or more input attribute
-		/*!(Optional)
-		After an input attribute has been chacnged this handler
-		is called
-		*/
-		void unitInputAttributeChangedHandler() throw(chaos::CException);
     chaos::common::data::CDWUniquePtr unitPerformCalibration(chaos::common::data::CDWUniquePtr data);
 
     virtual int filtering(cv::Mat&image);

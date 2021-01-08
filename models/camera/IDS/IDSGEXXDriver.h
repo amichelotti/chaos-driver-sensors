@@ -40,7 +40,7 @@ namespace driver {
 #define CAM_DEFAULT_WIDTH 659
 #define CAM_DEFAULT_HEIGTH 494
 
-class IDSGEXXDriver:public chaos::cu::driver_manager::driver::AbstractDriverPlugin, public ::driver::sensor::camera::CameraDriverBridge {
+class IDSGEXXDriver: public ::driver::sensor::camera::CameraDriverBridge {
 
 
  protected:
@@ -63,7 +63,8 @@ class IDSGEXXDriver:public chaos::cu::driver_manager::driver::AbstractDriverPlug
     boost::mutex lock;
 public:
     double framerate,exposure;
-    int32_t width,height,offsetx,offsety,gain,zoom,pixelclk,trgmode;
+    int32_t width,height,offsetx,offsety,gain,zoom,pixelclk,trgmode,old_size;
+    std::string framebuf_enc;
 
     int32_t IDStrgmode2trgmode(ueye::TriggerMode ids);
     ueye::TriggerMode trgmode2IDStrgmode(int32_t cam);

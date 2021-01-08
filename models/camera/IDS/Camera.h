@@ -111,7 +111,8 @@ public:
   int getHeightMax() const { return cam_info_.nMaxHeight; }
   int getWidth() const;
   int getHeight() const;
-  
+  int getOffsetX() const;
+  int getOffsetY() const;
   
   int getZoom() const { return zoom_; }
   uEyeColor getColorMode();

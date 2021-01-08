@@ -58,14 +58,14 @@ RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drive
  */
 BasicSensor::~BasicSensor() {
     if(driver){
-        driver->sensorDeinit();
+        driver->deinitIO();
         delete driver;
         driver = NULL;
     }
-    if(driver_dataset){
+   /* if(driver_dataset){
         free(driver_dataset);
         driver_dataset=0;
-    }
+    }*/
 
 }
 
@@ -78,10 +78,10 @@ The api that can be called withi this method are listed into
 void BasicSensor::unitDefineActionAndDataset() throw(chaos::CException) {
     int ret;
     BasicSensorLAPP_ << "UnitDefine";
-    driver=new SensorDriverInterface(getAccessoInstanceByIndex(0));
+    driver=new chaos::cu::driver_manager::driver::BasicIODriverInterface(getAccessoInstanceByIndex(0));
 
   assert(driver);
-  driver_dataset_size=driver->getDatasetSize();
+  /*driver_dataset_size=driver->getDatasetSize();
   driver_dataset=0;
   if(driver_dataset_size>0){
     driver_dataset = (ddDataSet_t *)malloc( driver_dataset_size);
@@ -106,8 +106,9 @@ void BasicSensor::unitDefineActionAndDataset() throw(chaos::CException) {
                               );
 
     }
+*/
+      addPublicDriverPropertyToDataset();
 
-    
   }
 
 
@@ -124,7 +125,7 @@ getAttributeCache()->resetChangedInputIndex();
 
 //!Execute the work, this is called with a determinated delay, it must be as fast as possible
 void BasicSensor::unitStart() throw(chaos::CException) {
-    setDefaultScheduleDelay(1000000);
+    //setDefaultScheduleDelay(1000000);
     setStateVariableSeverity(StateVariableTypeAlarmCU,"timeout_sensor_readout", chaos::common::alarm::MultiSeverityAlarmLevelClear);
 
 }
@@ -135,9 +136,11 @@ void BasicSensor::unitRun() throw(chaos::CException) {
     std::vector<int>::iterator i;
     int cnt,ret,changed=0;
     //BasicSensorLAPP_<<"UnitRun";
+    updateDatasetFromDriverProperty();
+/*
     for(i=output_size.begin(),cnt=0;i!=output_size.end();i++,cnt++){
         char buffer[*i];
-        if((ret=driver->readChannel(buffer,cnt,*i))){
+        if((ret=driver->read(buffer,cnt,*i))){
 	        changed++;
           //  BasicSensorLDBG_<<"Reading output channel "<<cnt<<", size :"<<*i <<" ret:"<<ret;
             getAttributeCache()->setOutputAttributeValue(cnt, (void*)buffer, *i);
@@ -156,6 +159,7 @@ void BasicSensor::unitRun() throw(chaos::CException) {
         setStateVariableSeverity(StateVariableTypeAlarmCU,"timeout_sensor_readout", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
 
     }
+    */
 }
 
 //!Execute the Control Unit work
@@ -168,13 +172,8 @@ void BasicSensor::unitDeinit() throw(chaos::CException) {
 
 }
 
-//! pre imput attribute change
-void BasicSensor::unitInputAttributePreChangeHandler() throw(chaos::CException) {
-
-}
-
 //! attribute changed handler
-void BasicSensor::unitInputAttributeChangedHandler() throw(chaos::CException) {
+bool BasicSensor::unitInputAttributePreChangeHandler(chaos::common::data::CDWUniquePtr& data){
     std::vector<VariableIndexType> changed;
     std::vector<VariableIndexType>::iterator j;
     getAttributeCache()->getChangedInputAttributeIndex(changed);
@@ -184,13 +183,13 @@ void BasicSensor::unitInputAttributeChangedHandler() throw(chaos::CException) {
         const char** buffer;
         
         getAttributeCache()->getReadonlyCachedAttributeValue<char>(DOMAIN_INPUT, *j, &buffer);
-        if(driver->writeChannel(buffer,*j,input_size[*j])){
+        if(driver->write(buffer,*j,input_size[*j])){
             BasicSensorLDBG_<<"writing output channel "<<*j<<", size :"<<input_size[*j];
         }
     }
     getAttributeCache()->resetChangedInputIndex();
 
-
+return true;
 }
 
 /*

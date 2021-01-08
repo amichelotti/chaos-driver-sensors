@@ -40,14 +40,11 @@ REGISTER_CU_DRIVER_PLUGIN_CLASS_INIT_ATTRIBUTE(::driver::sensor::model::VTempera
 CLOSE_CU_DRIVER_PLUGIN_CLASS_DEFINITION
 
 
-DEF_SENSOR_DATASET
-DEF_SENSOR_CHANNEL("TEMP","temperature",chaos::DataType::Output,chaos::DataType::TYPE_DOUBLE,sizeof(double))
-ENDDEF_SENSOR_DATASET
 
 //GET_PLUGIN_CLASS_DEFINITION
 //we need to define the driver with alias version and a class that implement it
 VTemperatureDriver::VTemperatureDriver():setPoint(25),err(1),tempType(0){
-  INIT_SENSOR_DATASET;
+  
     counter=0;
     freq = 1.0;
     sinpoint=0;
@@ -58,7 +55,7 @@ VTemperatureDriver::~VTemperatureDriver() {
 
 }
 
-int VTemperatureDriver::readChannel(void *buffer,int addr,int bcount){
+int VTemperatureDriver::read(void *buffer,int addr,int bcount){
     counter++;
     counter=counter%static_cast<int>(setPoint);
     
@@ -70,7 +67,7 @@ int VTemperatureDriver::readChannel(void *buffer,int addr,int bcount){
             int rnd=rand();
             pnt[0] = (rnd*1.0/RAND_MAX)*err +setPoint;
             VTemperatureDriverLDBG_<<"reading channel :"<<addr<<" Virtual Random Temp:"<<pnt[0];
-
+            temp=pnt[0];
             return 1;
         }
         case 1:{
@@ -79,6 +76,7 @@ int VTemperatureDriver::readChannel(void *buffer,int addr,int bcount){
             double* pnt=(double*)buffer;
             pnt[0] = counter +(rnd*1.0/RAND_MAX)*err;
             VTemperatureDriverLDBG_<<"reading channel :"<<addr<<" Virtual Ramp Temp:"<<pnt[0];
+            temp=pnt[0];
 
             return 1;
         }
@@ -87,6 +85,8 @@ int VTemperatureDriver::readChannel(void *buffer,int addr,int bcount){
             sinpoint++;
 	    if(points>0){
           pnt[0] = setPoint+err*sin((6.28*freq)*sinpoint/points);
+        temp=pnt[0];
+
 	    } else {
 	      VTemperatureDriverLERR_<<"reading channel :"<<addr<<" Virtual Periodic Temp, invalid number of points:"<<points;
 	    }
@@ -100,7 +100,7 @@ int VTemperatureDriver::readChannel(void *buffer,int addr,int bcount){
     return 1;
     
 }
-int VTemperatureDriver::writeChannel(void *buffer,int addr,int bcount){
+int VTemperatureDriver::write(void *buffer,int addr,int bcount){
     VTemperatureDriverLDBG_<<"writing channel :"<<addr<<" bcount:"<<bcount;
     if(addr==0){
         freq=*(double*)buffer;
@@ -113,26 +113,27 @@ int VTemperatureDriver::writeChannel(void *buffer,int addr,int bcount){
     return 0;
 }
 
-int VTemperatureDriver::sensorInit(void *buffer,int sizeb){
+int VTemperatureDriver::initIO(void *buffer,int sizeb){
     VTemperatureDriverLDBG_<<"Initialization string: \""<<buffer<<"\"";
 
     return 0;
 }
 
-int VTemperatureDriver::sensorDeinit(){
+int VTemperatureDriver::deinitIO(){
     VTemperatureDriverLDBG_<<"deinit";
     return 1;
 }
 
 void VTemperatureDriver::driverInit(const chaos::common::data::CDataWrapper& s) throw (chaos::CException){
     VTemperatureDriverLDBG_<<"JSON PARAMS:"<<s.getJSONString();
-
+    temp=0;
     if(s.hasKey("type")){
         tempType=s.getInt32Value("type");
     }
     if(s.hasKey("temp")){
         setPoint=s.getDoubleValue("temp");
         VTemperatureDriverLDBG_<<"SET POINT:"<<setPoint;
+        temp=setPoint;
 
     }
     if(s.hasKey("err")){
@@ -140,6 +141,16 @@ void VTemperatureDriver::driverInit(const chaos::common::data::CDataWrapper& s) 
         VTemperatureDriverLDBG_<<"ERROR:"<<err;
 
     }
+    createProperty("TEMP", temp,-100.0,200.0,0.0,"TEMP",[](AbstractDriver*thi,const std::string&name,
+      const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        VTemperatureDriver *t=(VTemperatureDriver *)thi;
+            chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
+
+            ret->addDoubleValue("value",t->temp);
+
+            return ret;
+        
+      });
 }
 
 

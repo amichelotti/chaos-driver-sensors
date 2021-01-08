@@ -30,6 +30,7 @@ namespace driver {
 
 namespace sensor {
 namespace camera{
+    class CameraDriverBridge;
 typedef enum CameraDriverInterfaceOpcode{
     // x,y,opencv encoding
     CameraDriverInterfaceOpcode_SET_IMAGE_PROP = chaos_driver::OpcodeType::OP_USER,
@@ -80,9 +81,9 @@ typedef struct {
 class CameraDriverInterface: public AbstractCameraDriver,public chaos_driver::AbstractDriverInterface {
 
 
-
+CameraDriverBridge*impl;
 public:
-    CameraDriverInterface(chaos_driver::DriverAccessor*_accessor):chaos_driver::AbstractDriverInterface(_accessor){};
+    CameraDriverInterface(chaos_driver::DriverAccessor*_accessor):chaos_driver::AbstractDriverInterface(_accessor){impl=(CameraDriverBridge*)_accessor->getImpl();};
 
     ~CameraDriverInterface();
 

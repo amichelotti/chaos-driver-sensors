@@ -38,12 +38,11 @@ using namespace ::driver::sensor::camera;
 
 }
 */
-
-CameraDriverBridge::CameraDriverBridge(){
+DEFAULT_CU_DRIVER_PLUGIN_CONSTRUCTOR_WITH_NS(::driver::sensor::camera, CameraDriverBridge) {
         CameraDriverBridgeLDBG_ <<" CAMERA DRIVER BRIDGE Created";
-
-
+	
 }
+
 //default destructor
 CameraDriverBridge::~CameraDriverBridge() {
 
@@ -53,7 +52,7 @@ CameraDriverBridge::~CameraDriverBridge() {
 
 //! Execute a command
 cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOpcode(cu_driver::DrvMsgPtr cmd) {
-   boost::mutex::scoped_lock lock(io_mux);
+  // boost::mutex::scoped_lock lock(io_mux);
 
     cu_driver::MsgManagmentResultType::MsgManagmentResult result = cu_driver::MsgManagmentResultType::MMR_EXECUTED;
     CHAOS_ASSERT(cmd);
@@ -113,7 +112,8 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
         chaos::common::data::CDataWrapper props;
         int sizeb;
         if(cmd->inputData && cmd->inputDataLength){
-            chaos::common::data::CDataWrapper props((const char*)cmd->inputData); 
+            chaos::common::data::CDataWrapper props;
+            props.setSerializedData((const char*)cmd->inputData); 
             out->result=getCameraProperties(props);
             const char*ptr=props.getBSONRawData(sizeb);
             if((sizeb>0)&& ptr){
@@ -153,7 +153,3 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
     return result;
 }
 
-
-/*chaos::common::data::CDWUniquePtr CameraDriverBridge::setDrvProperties(chaos::common::data::CDWUniquePtr s){
-
-}*/

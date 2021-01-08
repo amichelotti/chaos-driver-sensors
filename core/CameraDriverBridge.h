@@ -31,7 +31,7 @@ namespace driver {
 namespace sensor {
 namespace camera{
 
-  class CameraDriverBridge:public chaos::cu::driver_manager::driver::AbstractDriver,public AbstractCameraDriver {
+  class CameraDriverBridge:ADD_CU_DRIVER_PLUGIN_SUPERCLASS,public AbstractCameraDriver {
 
 
 protected:

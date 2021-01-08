@@ -44,7 +44,7 @@ namespace driver {
 #define CAM_DEFAULT_WIDTH 659
 #define CAM_DEFAULT_HEIGTH 494
 
-class CameraShared:public chaos::cu::driver_manager::driver::AbstractDriverPlugin, public ::driver::sensor::camera::CameraDriverBridge {
+class CameraShared: public ::driver::sensor::camera::CameraDriverBridge {
 
 
    chaos::common::data::CDataWrapper* props;
