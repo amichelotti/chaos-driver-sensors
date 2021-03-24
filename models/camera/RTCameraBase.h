@@ -51,7 +51,7 @@ public:
 protected:
         const int buffering;
         cv::Mat* subImage;
-        bool applyCalib,performCalib;
+        bool applyCalib,performCalib,applyReference;
         std::string calibimage;
         ChaosUniquePtr<::common::misc::data::SharedMem> shared_mem;
         int32_t *sizex,*sizey,*offsetx,*offsety,*osizex,*osizey,*ooffsetx,*ooffsety;
@@ -63,8 +63,8 @@ protected:
         uint8_t* framebuf;
         uint32_t framebuf_encoding;
         std::string framebuf_encoding_s;
-          bool*pacquire,*ptrigger,*ppulse;
-
+        bool*pacquire,*ptrigger,*ppulse;
+        const int32_t*refx,*refy,*refsx,*refsy,*refrho;
         //double ZOOMX,ZOOMY;
         chaos::common::data::CDataWrapper filters;
         
