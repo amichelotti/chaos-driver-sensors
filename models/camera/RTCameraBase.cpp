@@ -1190,7 +1190,7 @@ void plotEllipse(Mat color,int32_t X_m,int32_t Y_m,int32_t S_x,int32_t S_y,int32
 }
 int RTCameraBase::filtering(cv::Mat &image) { 
   if(applyReference && (*refsx)&&(*refsy)){
-           plotEllipse(image,*refx, *refy,*refsx, *refsy,*refrho,Scalar(0,255, 0));
+           plotEllipse(image,*refx, *refy,*refsx, *refsy,*refrho,Scalar(255,255, 255));
 
   }
   return 0; 
