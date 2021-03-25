@@ -449,7 +449,7 @@ addAttributeToDataSet("REFSX", "Reference centerSX",
                           chaos::DataType::TYPE_INT32, chaos::DataType::Input);
 addAttributeToDataSet("REFSY", "Reference centerSY",
                           chaos::DataType::TYPE_INT32, chaos::DataType::Input);
- addAttributeToDataSet("REFHO", "Reference centerRho",
+ addAttributeToDataSet("REFRHO", "Reference centerRho",
                           chaos::DataType::TYPE_INT32, chaos::DataType::Input);                   
  
   /****
