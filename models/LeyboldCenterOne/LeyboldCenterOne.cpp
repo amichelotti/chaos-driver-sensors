@@ -128,7 +128,7 @@ int LeyboldCenterOne::updateValue(){
             hw_string=ans;
             LeyboldCenterOneLDBG_<<"PR1:"<<ans;
 
-             if(sscanf(ans.c_str(),"%d,%f",&state,&pressure)==2){
+             if(sscanf(ans.c_str(),"%d,%lf",&state,&pressure)==2){
                  return 0;
             }
         }
