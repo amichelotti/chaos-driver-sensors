@@ -286,12 +286,12 @@ void RTCameraBase::updateProperty() {
 
 bool RTCameraBase::setCamera(const std::string &name, int32_t value,
                              uint32_t size) {
-  if (name == "REFX") {
+  /*if (name == "REFX") {
     *refx= value;
     
   } else if (name == "REFY") {
     *refy=value;
-  } 
+  } */
   return false;
 }
 
@@ -452,6 +452,10 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
                               __PRETTY_FUNCTION__);
     }
   }
+ addAttributeToDataSet("REFX", "Reference centerX",
+                          chaos::DataType::TYPE_INT32, chaos::DataType::Input);
+addAttributeToDataSet("REFY", "Reference centerY",
+                          chaos::DataType::TYPE_INT32, chaos::DataType::Input);
  
  addAttributeToDataSet("REFSX", "Reference centerSX",
                           chaos::DataType::TYPE_INT32, chaos::DataType::Input);
@@ -595,8 +599,8 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   fmt = cc->getRWPtr<char>(DOMAIN_INPUT, "FMT");
   ofmt = cc->getRWPtr<char>(DOMAIN_OUTPUT, "FMT");
   
-  refx=cc->getRWPtr<int32_t>(DOMAIN_INPUT, "REFX");
-  refy=cc->getRWPtr<int32_t>(DOMAIN_INPUT, "REFY");
+  refx=cc->getROPtr<int32_t>(DOMAIN_INPUT, "REFX");
+  refy=cc->getROPtr<int32_t>(DOMAIN_INPUT, "REFY");
   refsx=cc->getROPtr<int32_t>(DOMAIN_INPUT, "REFSX");
   refsy=cc->getROPtr<int32_t>(DOMAIN_INPUT, "REFSY");
 
@@ -1439,13 +1443,13 @@ bool RTCameraBase::unitRestoreToSnapshot(chaos::cu::control_manager::AbstractSha
 
     RTCameraBaseLDBG_ << "ROI " << ret;
     
-    if(prop->hasKey("OFFSETY")){
+  /*  if(prop->hasKey("OFFSETY")){
       *refy=*refy+(prop->getInt32Value("OFFSETY")-*ooffsety);
     }
     if(prop->hasKey("OFFSETX")){
       *refx=*refx+(prop->getInt32Value("OFFSETX")-*ooffsetx);
     }
-    
+    */
     prop->removeKey("HEIGHT");
     prop->removeKey("WIDTH");
     prop->removeKey("OFFSETX");

@@ -65,7 +65,7 @@ protected:
         std::string framebuf_encoding_s;
         bool*pacquire,*ptrigger,*ppulse;
         const int32_t *refsx,*refsy,*refrho;
-        int32_t *refx,*refy;
+        const int32_t *refx,*refy;
         //double ZOOMX,ZOOMY;
         chaos::common::data::CDataWrapper filters;
         
