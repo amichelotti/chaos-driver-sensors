@@ -110,7 +110,7 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
       hw_trigger_timeout_us(5000000), sw_trigger_timeout_us(0), imagesizex(0),
       imagesizey(0), apply_resize(false), trigger_timeout(5000), bpp(3),
       stopCapture(true), stopEncoding(true), subImage(NULL),performCalib(false),
-      applyCalib(false) {
+      applyCalib(false),applyReference(true) {
   RTCameraBaseLDBG_ << "Creating " << _control_unit_id
                     << " params:" << _control_unit_param;
 
@@ -179,8 +179,10 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
 
   
 
- 
+  CREATE_CU_BOOL_PROP("referenceON","referenceOn",applyReference,RTCameraBase);
+
   CREATE_CU_BOOL_PROP("apply_calib","apply_calib",applyCalib,RTCameraBase);
+
   CREATE_CU_BOOL_PROP("performCalib","performCalib",performCalib,RTCameraBase);
   CREATE_CU_STRING_PROP("calibimage","calibimage",calibimage,RTCameraBase);
 
@@ -281,6 +283,18 @@ void RTCameraBase::updateProperty() {
     n = value;                                                                 \
     return true;                                                               \
   }
+
+bool RTCameraBase::setCamera(const std::string &name, int32_t value,
+                             uint32_t size) {
+  /*if (name == "REFX") {
+    *refx= value;
+    
+  } else if (name == "REFY") {
+    *refy=value;
+  } */
+  return false;
+}
+
 
 bool RTCameraBase::setCamera(const std::string &name, bool value,
                              uint32_t size) {
@@ -438,6 +452,17 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
                               __PRETTY_FUNCTION__);
     }
   }
+ addAttributeToDataSet("REFX", "Reference centerX",
+                          chaos::DataType::TYPE_INT32, chaos::DataType::Input);
+addAttributeToDataSet("REFY", "Reference centerY",
+                          chaos::DataType::TYPE_INT32, chaos::DataType::Input);
+ 
+ addAttributeToDataSet("REFSX", "Reference centerSX",
+                          chaos::DataType::TYPE_INT32, chaos::DataType::Input);
+addAttributeToDataSet("REFSY", "Reference centerSY",
+                          chaos::DataType::TYPE_INT32, chaos::DataType::Input);
+ addAttributeToDataSet("REFRHO", "Reference centerRho",
+                          chaos::DataType::TYPE_INT32, chaos::DataType::Input);                   
  
   /****
    *
@@ -573,6 +598,14 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   //   camera_out=cc->getRWPtr<uint8_t>(DOMAIN_OUTPUT, "FRAMEBUFFER");
   fmt = cc->getRWPtr<char>(DOMAIN_INPUT, "FMT");
   ofmt = cc->getRWPtr<char>(DOMAIN_OUTPUT, "FMT");
+  
+  refx=cc->getROPtr<int32_t>(DOMAIN_INPUT, "REFX");
+  refy=cc->getROPtr<int32_t>(DOMAIN_INPUT, "REFY");
+  refsx=cc->getROPtr<int32_t>(DOMAIN_INPUT, "REFSX");
+  refsy=cc->getROPtr<int32_t>(DOMAIN_INPUT, "REFSY");
+
+  refrho=cc->getROPtr<int32_t>(DOMAIN_INPUT, "REFRHO");
+
   pacquire = cc->getRWPtr<bool>(DOMAIN_OUTPUT, "ACQUIRE");
   ptrigger = cc->getRWPtr<bool>(DOMAIN_OUTPUT, "TRIGGER");
   ppulse = cc->getRWPtr<bool>(DOMAIN_OUTPUT, "PULSE");
@@ -1154,8 +1187,27 @@ void RTCameraBase::encodeThread() {
    RTCameraBaseLDBG_ << "Encode thread ENDED Queue: " << encodeQueue;
    */
 }
+void calcXYFromAngle(double sx,double sy,double angle,double&x,double &y){
+  x=sqrt(pow(sx*cos(angle),2)+pow(sy*sin(angle),2));
+  y=sqrt(pow(sx*sin(angle),2)+pow(sy*cos(angle),2));
+}
+void plotEllipse(Mat color,int32_t X_m,int32_t Y_m,int32_t S_x,int32_t S_y,int32_t rho,const Scalar& col  ){
+  double lx,ly;
+  calcXYFromAngle(S_x,S_y,rho,lx,ly);
+            line(color,Point(X_m-lx,Y_m-ly),Point(X_m+lx,Y_m+ly),col,1);
+            line(color,Point(X_m-lx,Y_m+ly),Point(X_m+lx,Y_m-ly),col,1);
 
-int RTCameraBase::filtering(cv::Mat &image) { return 0; }
+            ellipse(color, Point(X_m, Y_m), Size(S_x, S_y), rho, 0, 360,
+                    col, 1, 8);
+
+}
+int RTCameraBase::filtering(cv::Mat &image) { 
+  if(applyReference && (*refsx)&&(*refsy)){
+           plotEllipse(image,*refx, *refy,*refsx, *refsy,*refrho,Scalar(255,255, 255));
+
+  }
+  return 0; 
+  }
 
 chaos::common::data::CDWUniquePtr
 RTCameraBase::unitPerformCalibration(chaos::common::data::CDWUniquePtr data) {
@@ -1379,13 +1431,27 @@ bool RTCameraBase::unitRestoreToSnapshot(chaos::cu::control_manager::AbstractSha
   // in case of roi we must be assure that before the resize and then the offset.
   if(prop->hasKey("WIDTH")&&prop->hasKey("HEIGHT")&&prop->hasKey("OFFSETX")&&prop->hasKey("OFFSETY")){
     int ret = driver->setCameraProperty("WIDTH", prop->getInt32Value("WIDTH"));
+      usleep(200000);
      ret |= driver->setCameraProperty("HEIGHT", prop->getInt32Value("HEIGHT"));
-     ret |= driver->setCameraProperty("OFFSETX", prop->getInt32Value("OFFSETX"));
-     ret |= driver->setCameraProperty("OFFSETY", prop->getInt32Value("OFFSETY"));
-    RTCameraBaseLDBG_ << "ROI " << ret;
+      usleep(200000);
 
+     ret |= driver->setCameraProperty("OFFSETX", prop->getInt32Value("OFFSETX"));
+     usleep(200000);
+
+     ret |= driver->setCameraProperty("OFFSETY", prop->getInt32Value("OFFSETY"));
+      usleep(200000);
+
+    RTCameraBaseLDBG_ << "ROI " << ret;
+    
+  /*  if(prop->hasKey("OFFSETY")){
+      *refy=*refy+(prop->getInt32Value("OFFSETY")-*ooffsety);
+    }
+    if(prop->hasKey("OFFSETX")){
+      *refx=*refx+(prop->getInt32Value("OFFSETX")-*ooffsetx);
+    }
+    */
     prop->removeKey("HEIGHT");
-        prop->removeKey("WIDTH");
+    prop->removeKey("WIDTH");
     prop->removeKey("OFFSETX");
     prop->removeKey("OFFSETY");
 
