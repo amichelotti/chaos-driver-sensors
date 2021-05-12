@@ -1209,7 +1209,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
 
   } else if(*offsetx!=*ooffsetx){
       RTCameraBaseLERR_ << "SETPOINT OFFSETX "<<*offsetx<<" OUTPUT OFFSETX:"<<*ooffsetx;
-      driver->setCameraProperty(OFFSETX_KEY, *sizex);
+      driver->setCameraProperty(OFFSETX_KEY, *offsetx);
 
   }
   if((*sizey !=*osizey)){
@@ -1221,8 +1221,8 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       }
 
   } else if(*offsety!=*ooffsety){
-      RTCameraBaseLERR_ << "SETPOINT OFFSETY "<<*offsety<<" OUTPUT OFFSETY:"<<*offsety;
-      driver->setCameraProperty(OFFSETY_KEY, *sizey);
+      RTCameraBaseLERR_ << "SETPOINT OFFSETY "<<*offsety<<" OUTPUT OFFSETY:"<<*ooffsety;
+      driver->setCameraProperty(OFFSETY_KEY, *offsety);
 
   }
 
