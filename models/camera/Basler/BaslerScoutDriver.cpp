@@ -269,15 +269,15 @@ int BaslerScoutDriver::setNode(const std::string &node_name, int32_t val) {
     }
     if (!IsWritable(node)) {
       STOP_GRABBING(camerap);
-
+      stopped=true;
     }
   //  if (IsWritable(node)) {
       // no min/max
-      if(node->GetMin()==node->GetMax()){
+      /*if(node->GetMin()==node->GetMax()){
           node->SetValue(val);
         RESTORE_GRABBING(camerap);
           return 0;
-      }
+      }*/
       if (val < node->GetMin()) {
 
         val = node->GetMin();
@@ -292,7 +292,9 @@ int BaslerScoutDriver::setNode(const std::string &node_name, int32_t val) {
                                << val;
       }
       node->SetValue(val);
+      if(stopped){
       RESTORE_GRABBING(camerap);
+      }
 
 /*    } else {
       BaslerScoutDriverLERR_ << "Node:" << node_name << " is not writable";
@@ -326,6 +328,11 @@ int BaslerScoutDriver::setNode(const std::string &node_name, double val) {
 
       return -1;
     }
+    bool stopped=false;
+    if (!IsWritable(node)) {
+      STOP_GRABBING(camerap);
+      stopped=true;
+    }
     if (val < node->GetMin()) {
 
       val = node->GetMin();
@@ -340,6 +347,9 @@ int BaslerScoutDriver::setNode(const std::string &node_name, double val) {
                              << val;
     }
     node->SetValue(val);
+     if(stopped){
+      RESTORE_GRABBING(camerap);
+      }
     /*  if(IsWritable(node)){
         node->SetValue(val);
     } else {
@@ -1722,10 +1732,10 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
 
     return -1;
   }
-  if (stopGrabbing) {
+  /*if (stopGrabbing) {
     BaslerScoutDriverLERR_ << "Grabbing is stopped ";
     return CAMERA_GRAB_STOP;
-  }
+  }*/
   try {
     Pylon::CGrabResultPtr ptrGrabResult;
     if(timeout_ms==0){
@@ -1785,7 +1795,9 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
         if (img) {
           *img = new camera_buf_t(pImageBuffer, size_ret,
                                   ptrGrabResult->GetWidth(),
-                                  ptrGrabResult->GetHeight());
+                                  ptrGrabResult->GetHeight(),
+                                  ptrGrabResult->GetOffsetX(),
+                                  ptrGrabResult->GetOffsetY());
           // memcpy(hostbuf,pImageBuffer,size_ret);
         }
         if (fn) {

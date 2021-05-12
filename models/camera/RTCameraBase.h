@@ -71,7 +71,7 @@ protected:
         
         typedef struct encoded {
             std::vector<unsigned char>* img;
-            int sizex,sizey;
+            int sizex,sizey,offsetx,offsety;
             encoded():img(NULL){};
         } encoded_t;
 

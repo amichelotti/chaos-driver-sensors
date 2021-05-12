@@ -255,15 +255,15 @@ void RTCameraBase::updateProperty() {
 #define OFFSETY_KEY "OFFSETY"
 
         if(*i == WIDTH_KEY){
-          *sizex=tmp;
+          *osizex=tmp;
         }
         if(*i == HEIGHT_KEY){
-          *sizey=tmp;
+          *osizey=tmp;
         }
         if(*i == OFFSETX_KEY){
-          *offsetx=tmp;
+          *ooffsetx=tmp;
         }if(*i == OFFSETY_KEY){
-          *offsety=tmp;
+          *ooffsety=tmp;
         }
         cc->setOutputAttributeValue(*i, tmp);
       }
@@ -539,6 +539,7 @@ addBinaryAttributeAsMIMETypeToDataSet("FRAMEBUFFER", "output image",
       "the operation in not supported i.e property not present or accessible");
   addStateVariable(StateVariableTypeAlarmCU, "encode_error",
                    "an error occurred during encode", LOG_FREQUENCY);
+  
   addStateVariable(StateVariableTypeAlarmDEV, "capture_error",
                    "an error occurred during capture", LOG_FREQUENCY);
   addStateVariable(StateVariableTypeAlarmDEV, "capture_timeout",
@@ -625,63 +626,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     throw chaos::CException(ret, "cannot initialize camera:"+driver->getLastError(),
                             __PRETTY_FUNCTION__);
   }
-  // not needed any mode
-  /*
-  std::vector<std::string> props;
-    camera_props.getAllKey(props);
-    for (std::vector<std::string>::iterator i = props.begin(); i != props.end();
-         i++) {
-      if (!camera_props.isCDataWrapperValue(*i)) {
-
-        if (camera_props.getValueType(*i) == chaos::DataType::TYPE_DOUBLE) {
-
-          double tmp = cc->getValue<double>(DOMAIN_INPUT, *i);
-          if (tmp != 0) {
-            /// to check!!!
-            RTCameraBaseLDBG_ << "Init Double \"" << *i
-                              << "\" from input:" << tmp;
-
-            setDrvProp(*i, tmp, 0);
-          }
-        }
-        if (camera_props.getValueType(*i) == chaos::DataType::TYPE_INT32) {
-          int32_t tmp = cc->getValue<int32_t>(DOMAIN_INPUT, *i);
-          if (tmp != 0) {
-            RTCameraBaseLDBG_ << "Init Integer \"" << *i
-                              << "\" from input:" << tmp;
-
-            setDrvProp(*i, tmp, 0);
-          }
-        }
-      }
-    }
-
-    for (std::vector<std::string>::iterator i = props.begin(); i != props.end();
-         i++) {
-      if (!camera_props.isCDataWrapperValue(*i)) {
-
-        if (camera_props.getValueType(*i) == chaos::DataType::TYPE_DOUBLE) {
-          double tmp, *p;
-
-          driver->getCameraProperty(*i, tmp);
-          p = cc->getRWPtr<double>(DOMAIN_INPUT, *i);
-          *p = tmp;
-        }
-        if (camera_props.getValueType(*i) == chaos::DataType::TYPE_INT32) {
-          int32_t tmp, *p;
-          driver->getCameraProperty(*i, tmp);
-          p = cc->getRWPtr<int32_t>(DOMAIN_INPUT, *i);
-          *p = tmp;
-        }
-      }
-    }
-  
-  if (driver->getImageProperties(width, height, itype) == 0) {
-    RTCameraBaseLDBG_ << "CAMERA IMAGE:" << width << "x" << height;
-    *sizex = width;
-    *sizey = height;
-  }*/
-
+ 
   chaos::common::data::CDataWrapper cam_prop;
   if (driver->getCameraProperties(cam_prop) == 0) {
     if (cam_prop.hasKey(FRAMEBUFFER_ENCODING_KEY) &&
@@ -692,24 +637,33 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
       bpp = cv2fmt(framebuf_encoding, enc);
     }
     if (cam_prop.hasKey(OFFSETX_KEY) && cam_prop.isInt32Value(OFFSETX_KEY)) {
-      *offsetx = cam_prop.getInt32Value(OFFSETX_KEY);
+      *ooffsetx = cam_prop.getInt32Value(OFFSETX_KEY);
     }
     if (cam_prop.hasKey(OFFSETY_KEY) && cam_prop.isInt32Value(OFFSETY_KEY)) {
-      *offsety = cam_prop.getInt32Value(OFFSETY_KEY);
+      *ooffsety = cam_prop.getInt32Value(OFFSETY_KEY);
     }
     if (cam_prop.hasKey(WIDTH_KEY) && cam_prop.isInt32Value(WIDTH_KEY)) {
-      *sizex = cam_prop.getInt32Value(WIDTH_KEY);
+      *osizex = cam_prop.getInt32Value(WIDTH_KEY);
     }
     if (cam_prop.hasKey(HEIGHT_KEY) && cam_prop.isInt32Value(HEIGHT_KEY)) {
-      *sizey = cam_prop.getInt32Value(HEIGHT_KEY);
+      *osizey = cam_prop.getInt32Value(HEIGHT_KEY);
     }
   }
-  if ((*sizex == 0) || (*sizey == 0)) {
+  if(*sizex==0){
+    *sizex=*osizex;
+    RTCameraBaseLERR_ << "INVALID SET SIZEX 0 force to:"<<*osizex;
+  }
+  if(*sizey==0){
+    *sizey=*osizey;
+    RTCameraBaseLDBG_ << "INVALID SET SIZEY 0 force to:"<<*osizey;
+  }
+
+  /*if ((*sizex == 0) || (*sizey == 0)) {
     std::stringstream ss;
     ss << "Invalid image sizes:" << *sizex << "x" << *sizey;
 
     throw chaos::CException(-3, ss.str(), __PRETTY_FUNCTION__);
-  }
+  }*/
   if (!apply_resize) {
     imagesizex = *sizex;
     imagesizey = *sizey;
@@ -970,11 +924,14 @@ void RTCameraBase::encodeThread() {
         continue;
         //  throw chaos::CException(-3, ss.str(), __PRETTY_FUNCTION__);
       }*/
-      *sizey=framebuf->height;
-      *sizex=framebuf->width;
-      *ooffsetx=framebuf->offsetx;
-      *ooffsety=framebuf->offsety;
-      if(*sizey * *sizex * bpp > framebuf->size){
+      //*osizey=framebuf->height;
+     // *osizex=framebuf->width;
+     // *ooffsetx=framebuf->offsetx;
+     // *ooffsety=framebuf->offsety;
+      int isizex=framebuf->width;
+      int isizey=framebuf->height;
+
+      if(isizey * isizex * bpp > framebuf->size){
         setStateVariableSeverity(StateVariableTypeAlarmCU, "framebuf_encode_error",
                            chaos::common::alarm::MultiSeverityAlarmLevelHigh);
         continue;
@@ -987,10 +944,10 @@ void RTCameraBase::encodeThread() {
       if (framebuf_encoding == cv::COLOR_BayerBG2RGB) {
 
         //   cv::Mat mat16uc1(*sizey, *sizex, CV_16UC1, a.buf);
-        cv::Mat mat8uc1(*sizey, *sizex, CV_8UC1, framebuf->buf);
+        cv::Mat mat8uc1(isizey, isizex, CV_8UC1, framebuf->buf);
         // cv::Mat mat16uc3_rgb(*sizey, *sizex, CV_16UC3);
         // cv::cvtColor(mat16uc1, mat16uc3_rgb, cv::COLOR_BayerBG2RGB);
-        cv::Mat mat8uc3_rgb(*sizey, *sizex, CV_8UC3);
+        cv::Mat mat8uc3_rgb(isizey, isizex, CV_8UC3);
         cv::cvtColor(mat8uc1, mat8uc3_rgb, cv::COLOR_BayerBG2RGB);
 
         // mat16uc3_rgb.convertTo(mat8uc3_rgb, CV_8UC3);
@@ -1002,10 +959,10 @@ void RTCameraBase::encodeThread() {
         }
 
       } else if (framebuf_encoding == cv::COLOR_YUV2RGB_NV21) {
-        cv::Mat mat16uc1 = cv::Mat(*sizey, *sizex, CV_8UC2, framebuf->buf);
+        cv::Mat mat16uc1 = cv::Mat(isizey, isizex, CV_8UC2, framebuf->buf);
         //cv::Mat mat16uc3_rgb(*sizey, *sizex, CV_16UC3);
 
-        cv::Mat mat8uc3_rgb(*sizey, *sizex, CV_8UC3);
+        cv::Mat mat8uc3_rgb(isizey, isizex, CV_8UC3);
        // cv::cvtColor(mat16uc1, mat8uc3_rgb, cv::COLOR_YUV2RGB );//
         cv::cvtColor(mat16uc1, mat8uc3_rgb, cv::COLOR_YUV2RGB_UYVY);//
 
@@ -1016,7 +973,7 @@ void RTCameraBase::encodeThread() {
           image = mat8uc3_rgb;
         }
       } else {
-        cv::Mat img(*sizey, *sizex, framebuf_encoding, framebuf->buf);
+        cv::Mat img(isizey, isizex, framebuf_encoding, framebuf->buf);
         if (applyCalib && subImage) {
           image = (img - *subImage);
 
@@ -1084,7 +1041,7 @@ void RTCameraBase::encodeThread() {
         // bool code = cv::imencode(encoding, image, buf );
         // apply_zoom=(ZOOMX!=0.0) ||(ZOOMY!=0.0);
         if (apply_resize) {
-          if ((*sizex != imagesizex) || (*sizey != imagesizey)) {
+          if ((isizex != imagesizex) || (isizey != imagesizey)) {
             cv::Mat res;
             cv::resize(image, res, Size(imagesizex, imagesizey), 0, 0);
             image = res;
@@ -1097,7 +1054,9 @@ void RTCameraBase::encodeThread() {
         // col:"<<image.cols<<" channels:"<<image.channels();
          ele.sizex=image.cols;
          ele.sizey=image.rows;
-           
+         ele.offsetx=framebuf->offsetx;
+         ele.offsety=  framebuf->offsety;
+
         bool code = cv::imencode(encoding, image, *encbuf,encode_params);
         delete(framebuf);
         // image.deallocate();
@@ -1240,6 +1199,33 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
     getAttributeCache()->setOutputDomainAsChanged();
     sleep(1);
   }
+  if((*sizex !=*osizex)){
+      if(*sizex>0){
+        RTCameraBaseLERR_ << "SETPOINT WIDTH "<<*sizex<<" OUTPUT WIDTH:"<<*osizex;
+        driver->setCameraProperty(WIDTH_KEY, *sizex);
+      } else {
+        *sizex=*osizex;
+      }
+
+  } else if(*offsetx!=*ooffsetx){
+      RTCameraBaseLERR_ << "SETPOINT OFFSETX "<<*offsetx<<" OUTPUT OFFSETX:"<<*ooffsetx;
+      driver->setCameraProperty(OFFSETX_KEY, *sizex);
+
+  }
+  if((*sizey !=*osizey)){
+    if(*sizey>0){
+      RTCameraBaseLERR_ << "SETPOINT HEIGHT "<<*sizey<<" OUTPUT HEIGHT:"<<*osizey;
+      driver->setCameraProperty(HEIGHT_KEY, *sizey);
+    }else {
+        *sizey=*osizey;
+      }
+
+  } else if(*offsety!=*ooffsety){
+      RTCameraBaseLERR_ << "SETPOINT OFFSETY "<<*offsety<<" OUTPUT OFFSETY:"<<*offsety;
+      driver->setCameraProperty(OFFSETY_KEY, *sizey);
+
+  }
+
   if (buffering > 1) {
     // get the output attribute pointer form the internal cache
     if ((encode_time > 0) && (capture_time > 0)) {
@@ -1270,6 +1256,8 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       ptr = reinterpret_cast<uchar *>(&((*a)[0]));
       *osizex=ele.sizex;
       *osizey=ele.sizey;
+      *ooffsetx=ele.offsetx;
+      *ooffsety=ele.offsety;
       getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ptr,
                                                    a->size());
 #ifdef CAMERA_ENABLE_SHARED
@@ -1297,15 +1285,14 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       setStateVariableSeverity(
           StateVariableTypeAlarmDEV, "capture_timeout",
           chaos::common::alarm::MultiSeverityAlarmLevelClear);
-      *sizey=img->height;
-      *sizex=img->width;
-      *osizex=*sizex;
-      *osizey=*sizey;
+    
+      *osizex=img->width;
+      *osizey=img->height;;
       *ooffsetx=img->offsetx;
       *ooffsety=img->offsety;
       
       
-      cv::Mat image(*sizey, *sizex, framebuf_encoding, (uint8_t *)img->buf);
+      cv::Mat image(*osizey, *osizex, framebuf_encoding, (uint8_t *)img->buf);
       std::vector<unsigned char> *encbuf = NULL;
       try {
         // bool code = cv::imencode(encoding, image, buf );
