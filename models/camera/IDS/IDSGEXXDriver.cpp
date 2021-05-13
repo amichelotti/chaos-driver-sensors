@@ -371,8 +371,18 @@ int IDSGEXXDriver::initializeCamera(
                          new chaos::common::data::CDataWrapper());
                      ret->addInt32Value("value", t->width);
                      ret->addInt32Value("max", t->camera.getWidthMax());
-                     ret->addInt32Value("min", 0);
 
+                     int w,h;
+                      if(t->camera.getMinAoiSize(&w,&h)==0){
+                            ret->addInt32Value("min", w);
+
+                     } else {
+                            ret->addInt32Value("min", 0);
+
+                     }
+                      if(t->camera.getMinAoiInc(&w,&h)==0){
+                        ret->addInt32Value("inc", w);
+                      }
                      return ret;
                    }
                    return chaos::common::data::CDWUniquePtr();
@@ -389,8 +399,17 @@ int IDSGEXXDriver::initializeCamera(
                      if (val > t->camera.getWidthMax()) {
                        val = t->camera.getWidthMax();
                      }
+                     int w,h;
+                      if(t->camera.getMinAoiInc(&w,&h)==0){
+                        if(w>1){
+                          int r=val%w;
+                          if(val>w){
+                            val=val-r;
+                          }
+                        }
+                      }
                      if (t->camera.setWidth(val) == 0) {
-                       IDSGEXXDriverLDBG(t) << "write WIDTH:" << t->width;
+                       IDSGEXXDriverLDBG(t) << "write WIDTH:" << val;
                        val = t->camera.getWidth();
                        if (val >= 0) {
                          t->width = val;
@@ -398,7 +417,8 @@ int IDSGEXXDriver::initializeCamera(
                        t->camera.initMemoryPool(4);
                      } else {
                        IDSGEXXDriverLERR(t)
-                           << "Error writing WIDTH:" << t->width;
+                           << "Error writing WIDTH:" << val;
+                      
                      }
 
                      return p.clone();
@@ -420,10 +440,21 @@ int IDSGEXXDriver::initializeCamera(
                      IDSGEXXDriverLDBG(t) << "read HEIGHT:" << t->height;
                      chaos::common::data::CDWUniquePtr ret(
                          new chaos::common::data::CDataWrapper());
+                      int w,h;
+                      
                      ret->addInt32Value("value", t->height);
                      ret->addInt32Value("max", t->camera.getHeightMax());
-                     ret->addInt32Value("min", 0);
+                     if(t->camera.getMinAoiSize(&w,&h)==0){
+                            ret->addInt32Value("min", h);
 
+                     } else {
+                            ret->addInt32Value("min", 0);
+
+                     }
+                     
+                      if(t->camera.getMinAoiInc(&w,&h)==0){
+                        ret->addInt32Value("inc", h);
+                      }
                      return ret;
                    }
                    return chaos::common::data::CDWUniquePtr();
@@ -440,15 +471,24 @@ int IDSGEXXDriver::initializeCamera(
                      if (val > t->camera.getHeightMax()) {
                        val = t->camera.getHeightMax();
                      }
+                     int w,h;
+                      if(t->camera.getMinAoiInc(&w,&h)==0){
+                        if(w>1){
+                          int r=val%h;
+                          if(val>h){
+                            val=val-r;
+                          }
+                        }
+                      }
                      if (t->camera.setHeight(val) == 0) {
-                       IDSGEXXDriverLDBG(t) << "write HEIGHT:" << t->height;
+                       IDSGEXXDriverLDBG(t) << "write HEIGHT:" << val;
                        if ((val = t->camera.getHeight()) >= 0) {
                          t->height = val;
                        }
                        t->camera.initMemoryPool(4);
                      } else {
                        IDSGEXXDriverLERR(t)
-                           << "Error writing HEIGHT:" << t->height;
+                           << "Error writing HEIGHT:" << val;
                      }
 
                      return p.clone();
@@ -473,7 +513,14 @@ int IDSGEXXDriver::initializeCamera(
           ret->addInt32Value("value", t->offsetx);
           ret->addInt32Value("max", t->camera.getWidthMax() - t->offsetx);
           ret->addInt32Value("min", 0);
+          int w,h;
+          if(t->camera.getMinPosInc(&w,&h)==0){
+                ret->addInt32Value("inc", w);
 
+          } else {
+                ret->addInt32Value("inc", 1);
+
+          }
           return ret;
         }
         return chaos::common::data::CDWUniquePtr();
@@ -485,9 +532,16 @@ int IDSGEXXDriver::initializeCamera(
         IDSGEXXDriver *t = (IDSGEXXDriver *)thi;
         if (p.hasKey("value")) {
           int32_t val = p.getInt32Value("value");
-          t->offsetx = val;
+          int w=0,h=0;
+          if(t->camera.getMinPosInc(&w,&h)==0){
+            if(val>w){
+              val=val-(val%w);
+            }
+          }
 
           if (t->camera.setOffsetX(val) == 0) {
+            t->offsetx = val;
+
             IDSGEXXDriverLDBG(t) << "write OFFSETX:" << t->offsetx;
           } else {
             IDSGEXXDriverLERR(t) << "Error writing OFFSETX:" << t->offsetx;
@@ -515,7 +569,14 @@ int IDSGEXXDriver::initializeCamera(
           ret->addInt32Value("value", t->offsety);
           ret->addInt32Value("max", t->camera.getHeightMax() - t->offsety);
           ret->addInt32Value("min", 0);
+          int w,h;
+          if(t->camera.getMinPosInc(&w,&h)==0){
+                ret->addInt32Value("inc", h);
 
+          } else {
+                ret->addInt32Value("inc", 1);
+
+          }
           return ret;
         }
         return chaos::common::data::CDWUniquePtr();
@@ -527,9 +588,16 @@ int IDSGEXXDriver::initializeCamera(
         IDSGEXXDriver *t = (IDSGEXXDriver *)thi;
         if (p.hasKey("value")) {
           int32_t val = p.getInt32Value("value");
-          t->offsety = val;
-
+          int w,h=0;
+          if(t->camera.getMinPosInc(&w,&h)==0){
+            if(val>h){
+              val=val-(val%h);
+            }
+          }
+ 
           if (t->camera.setOffsetY(val) == 0) {
+              t->offsety = val;
+
             IDSGEXXDriverLDBG(t) << "write OFFSETY:" << t->offsety;
           } else {
             IDSGEXXDriverLERR(t) << "Error writing OFFSETY:" << t->offsety;
@@ -574,10 +642,18 @@ int IDSGEXXDriver::initializeCamera(
                      -> chaos::common::data::CDWUniquePtr {
                    IDSGEXXDriver *t = (IDSGEXXDriver *)thi;
                    t->pixelclk = t->camera.getPixelClock();
+                   int min,max,inc;
+                   
+
                    IDSGEXXDriverLDBG(t) << "READ PIXEL CLOCK:" << t->pixelclk;
                    chaos::common::data::CDWUniquePtr ret(
                        new chaos::common::data::CDataWrapper());
                    ret->addInt32Value("value", t->pixelclk);
+                   if(t->camera.getPixelClockRange(&min,&max,&inc)==0){
+                    ret->addInt32Value("max", max);
+                    ret->addInt32Value("min", min);
+
+                   }
                    return ret;
 
                  },
@@ -587,6 +663,15 @@ int IDSGEXXDriver::initializeCamera(
                    IDSGEXXDriver *t = (IDSGEXXDriver *)thi;
                    if (p.hasKey("value")) {
                      int32_t val = p.getInt32Value("value");
+                     int min,max,inc;
+                     if(t->camera.getPixelClockRange(&min,&max,&inc)==0){
+                       if(val>max){
+                         val=max;
+                       }
+                       if(val<min){
+                        val =min;
+                       }
+                   }
                      IDSGEXXDriverLDBG(t) << "WRITE PIXEL CLOCK:" << val;
                      t->camera.setPixelClock(&val);
                      t->pixelclk = val;
@@ -635,6 +720,13 @@ int IDSGEXXDriver::initializeCamera(
                    chaos::common::data::CDWUniquePtr ret(
                        new chaos::common::data::CDataWrapper());
                    ret->addDoubleValue("value", t->exposure);
+                   double max,min,inc;
+                   if(t->camera.getExposureRange(&min,&max,&inc)==0){
+                    ret->addDoubleValue("max", max);
+                    ret->addDoubleValue("min", min);
+                    ret->addDoubleValue("inc", inc);
+
+                   }
                    return ret;
 
                  },
@@ -644,7 +736,15 @@ int IDSGEXXDriver::initializeCamera(
                    IDSGEXXDriver *t = (IDSGEXXDriver *)thi;
                    if (p.hasKey("value")) {
                      double val = p.getDoubleValue("value");
-
+                      double max,min,inc;
+                      if(t->camera.getExposureRange(&min,&max,&inc)==0){
+                        if(val>max){
+                          val=max;
+                        }  
+                        if(val<min){
+                          val=min;
+                        }
+                      }
                      t->camera.setExposure(&val);
                      IDSGEXXDriverLDBG(t) << "WROTE SHUTTER:" << val;
 

@@ -113,7 +113,11 @@ public:
   int getHeight() const;
   int getOffsetX() const;
   int getOffsetY() const;
-  
+  int getMinAoiInc(int*width,int*height);
+  int getMinPosInc(int*x,int*y);
+
+  int getMinAoiSize(int*width,int*height);
+
   int getZoom() const { return zoom_; }
   uEyeColor getColorMode();
   bool getAutoExposure() const { return auto_exposure_; }
@@ -125,6 +129,10 @@ public:
   unsigned int getHardwareGain();
   TriggerMode getTriggerMode();
   TriggerMode getSupportedTriggers();
+
+  int getExposureRange(double *min,double*max,double*inc);
+  int getFrameTimeRange(double *min,double*max,double*inc);
+  int getPixelClockRange(int *min,int*max,int*inc);
 
   // Set Properties
   void setColorMode(uEyeColor mode);

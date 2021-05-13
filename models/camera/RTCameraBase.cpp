@@ -321,7 +321,16 @@ bool RTCameraBase::setDrvProp(const std::string &name, int32_t value,
   int ret;
   int32_t valuer;
   AttributeSharedCacheWrapper *cc = getAttributeCache();
+ /* if((name==OFFSETX_KEY) &&(*sizex!=*osizex)){
+      RTCameraBaseLDBG_ << "CANNOT SET " << name << " BECAUSE WIDTH is out of set:" << *sizex;
 
+    return true;
+  }
+  if((name==OFFSETY_KEY) &&(*sizey!=*osizey)){
+      RTCameraBaseLDBG_ << "CANNOT SET " << name << " BECAUSE HEIGHT is out of set:" << *sizey;
+
+    return true;
+  }*/
   RTCameraBaseLDBG_ << "SETTING IPROP:" << name << " VALUE:" << value;
   bool stopgrab =
       (
@@ -1199,7 +1208,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
     getAttributeCache()->setOutputDomainAsChanged();
     sleep(1);
   }
-  if((*sizex !=*osizex)){
+  /*if((*sizex !=*osizex)){
       if(*sizex>0){
         RTCameraBaseLERR_ << "SETPOINT WIDTH "<<*sizex<<" OUTPUT WIDTH:"<<*osizex;
         driver->setCameraProperty(WIDTH_KEY, *sizex);
@@ -1211,8 +1220,8 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       RTCameraBaseLERR_ << "SETPOINT OFFSETX "<<*offsetx<<" OUTPUT OFFSETX:"<<*ooffsetx;
       driver->setCameraProperty(OFFSETX_KEY, *offsetx);
 
-  }
-  if((*sizey !=*osizey)){
+  }*/
+ /* if((*sizey !=*osizey)){
     if(*sizey>0){
       RTCameraBaseLERR_ << "SETPOINT HEIGHT "<<*sizey<<" OUTPUT HEIGHT:"<<*osizey;
       driver->setCameraProperty(HEIGHT_KEY, *sizey);
@@ -1224,7 +1233,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       RTCameraBaseLERR_ << "SETPOINT OFFSETY "<<*offsety<<" OUTPUT OFFSETY:"<<*ooffsety;
       driver->setCameraProperty(OFFSETY_KEY, *offsety);
 
-  }
+  }*/
 
   if (buffering > 1) {
     // get the output attribute pointer form the internal cache
@@ -1416,6 +1425,8 @@ bool RTCameraBase::unitRestoreToSnapshot(chaos::cu::control_manager::AbstractSha
 //! attribute changed handler
 	bool RTCameraBase::unitInputAttributePreChangeHandler(chaos::common::data::CDWUniquePtr& prop){
   // in case of roi we must be assure that before the resize and then the offset.
+  
+  /*
   if(prop->hasKey("WIDTH")&&prop->hasKey("HEIGHT")&&prop->hasKey("OFFSETX")&&prop->hasKey("OFFSETY")){
     int ret = driver->setCameraProperty("WIDTH", prop->getInt32Value("WIDTH"));
       usleep(200000);
@@ -1430,20 +1441,14 @@ bool RTCameraBase::unitRestoreToSnapshot(chaos::cu::control_manager::AbstractSha
 
     RTCameraBaseLDBG_ << "ROI " << ret;
     
-  /*  if(prop->hasKey("OFFSETY")){
-      *refy=*refy+(prop->getInt32Value("OFFSETY")-*ooffsety);
-    }
-    if(prop->hasKey("OFFSETX")){
-      *refx=*refx+(prop->getInt32Value("OFFSETX")-*ooffsetx);
-    }
-    */
-    prop->removeKey("HEIGHT");
+      prop->removeKey("HEIGHT");
     prop->removeKey("WIDTH");
     prop->removeKey("OFFSETX");
     prop->removeKey("OFFSETY");
 
 
   }
+  */
 
 
   return true;
