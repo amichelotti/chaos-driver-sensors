@@ -52,6 +52,9 @@ protected:
         const int buffering;
         cv::Mat* subImage;
         bool applyCalib,performCalib,applyReference;
+        int refenceThick,refenceR,refenceG,refenceB;
+        
+
         std::string calibimage;
         ChaosUniquePtr<::common::misc::data::SharedMem> shared_mem;
         int32_t *sizex,*sizey,*offsetx,*offsety,*osizex,*osizey,*ooffsetx,*ooffsety;

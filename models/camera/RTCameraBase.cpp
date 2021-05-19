@@ -110,7 +110,8 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
       hw_trigger_timeout_us(5000000), sw_trigger_timeout_us(0), imagesizex(0),
       imagesizey(0), apply_resize(false), trigger_timeout(5000), bpp(3),
       stopCapture(true), stopEncoding(true), subImage(NULL),performCalib(false),
-      applyCalib(false),applyReference(true) {
+      applyCalib(false),applyReference(true),refenceThick(2),refenceR(0),refenceG(255),refenceB(0)
+ {
   RTCameraBaseLDBG_ << "Creating " << _control_unit_id
                     << " params:" << _control_unit_param;
 
@@ -180,6 +181,11 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
   
 
   CREATE_CU_BOOL_PROP("referenceON","referenceOn",applyReference,RTCameraBase);
+  CREATE_CU_INT_PROP("referenceThick","referenceThick",refenceThick,1,20,1,RTCameraBase);
+  CREATE_CU_INT_PROP("referenceR","referenceR",refenceR,0,255,1,RTCameraBase);
+  CREATE_CU_INT_PROP("referenceG","referenceG",refenceG,0,255,1,RTCameraBase);
+  CREATE_CU_INT_PROP("referenceB","referenceB",refenceB,0,255,1,RTCameraBase);
+
 
   CREATE_CU_BOOL_PROP("apply_calib","apply_calib",applyCalib,RTCameraBase);
 
@@ -1159,19 +1165,19 @@ void calcXYFromAngle(double sx,double sy,double angle,double&x,double &y){
   x=sqrt(pow(sx*cos(angle),2)+pow(sy*sin(angle),2));
   y=sqrt(pow(sx*sin(angle),2)+pow(sy*cos(angle),2));
 }
-void plotEllipse(Mat color,int32_t X_m,int32_t Y_m,int32_t S_x,int32_t S_y,int32_t rho,const Scalar& col  ){
+void plotEllipse(Mat color,int32_t X_m,int32_t Y_m,int32_t S_x,int32_t S_y,int32_t rho,const Scalar& col,int tick=1  ){
   double lx,ly;
   calcXYFromAngle(S_x,S_y,rho,lx,ly);
             line(color,Point(X_m-lx,Y_m-ly),Point(X_m+lx,Y_m+ly),col,1);
             line(color,Point(X_m-lx,Y_m+ly),Point(X_m+lx,Y_m-ly),col,1);
 
             ellipse(color, Point(X_m, Y_m), Size(S_x, S_y), rho, 0, 360,
-                    col, 1, 8);
+                    col, tick, 8);
 
 }
 int RTCameraBase::filtering(cv::Mat &image) { 
   if(applyReference && (*refsx)&&(*refsy)){
-           plotEllipse(image,*refx, *refy,*refsx, *refsy,*refrho,Scalar(255,255, 255));
+           plotEllipse(image,*refx, *refy,*refsx, *refsy,*refrho,Scalar(refenceR,refenceG, refenceB),refenceThick);
 
   }
   return 0; 
