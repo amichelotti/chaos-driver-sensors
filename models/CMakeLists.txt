@@ -8,7 +8,6 @@ add_subdirectory(LeyboldCenterOne)
 IF(OPENCV)
 FILE(REMOVE camera/ShapeSim/UnitServerIgnore)
 FILE(REMOVE camera/CameraShared/UnitServerIgnore)
-
 add_subdirectory(camera/ShapeSim)
 add_subdirectory(camera/CameraShared)
 
