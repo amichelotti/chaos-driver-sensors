@@ -461,6 +461,9 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
                               __PRETTY_FUNCTION__);
     }
   }
+addAttributeToDataSet("REFABS", "Absolute(true)/Relative(false)",
+                          chaos::DataType::TYPE_BOOLEAN, chaos::DataType::Input);
+
  addAttributeToDataSet("REFX", "Reference centerX",
                           chaos::DataType::TYPE_INT32, chaos::DataType::Input);
 addAttributeToDataSet("REFY", "Reference centerY",
@@ -613,7 +616,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   refy=cc->getROPtr<int32_t>(DOMAIN_INPUT, "REFY");
   refsx=cc->getROPtr<int32_t>(DOMAIN_INPUT, "REFSX");
   refsy=cc->getROPtr<int32_t>(DOMAIN_INPUT, "REFSY");
-
+  refabs=cc->getROPtr<bool>(DOMAIN_INPUT, "REFABS");
   refrho=cc->getROPtr<int32_t>(DOMAIN_INPUT, "REFRHO");
 
   pacquire = cc->getRWPtr<bool>(DOMAIN_OUTPUT, "ACQUIRE");
@@ -1171,7 +1174,14 @@ void plotEllipse(Mat color,int32_t X_m,int32_t Y_m,int32_t S_x,int32_t S_y,int32
 }
 int RTCameraBase::filtering(cv::Mat &image) { 
   if(applyReference && (*refsx)&&(*refsy)){
-           plotEllipse(image,*refx, *refy,*refsx, *refsy,*refrho,Scalar(255,255, 255));
+    int x=*refx,y=*refy;
+    if(*refabs){
+        x=x-*offsetx;
+        y=y-*offsety;
+    }
+    if((x>=0) && (y>=0)){
+      plotEllipse(image,x, y,*refsx, *refsy,*refrho,Scalar(255,255, 255));
+    }
 
   }
   return 0; 

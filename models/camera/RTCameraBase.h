@@ -66,6 +66,7 @@ protected:
         bool*pacquire,*ptrigger,*ppulse;
         const int32_t *refsx,*refsy,*refrho;
         const int32_t *refx,*refy;
+        const bool*refabs;
         //double ZOOMX,ZOOMY;
         chaos::common::data::CDataWrapper filters;
         
