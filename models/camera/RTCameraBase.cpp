@@ -26,6 +26,11 @@
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#ifdef CERN_ROOT
+
+#include <driver/misc/models/cernRoot/rootGaussianImage2dFit.h>
+#endif
+
 #define DECODE_CVENCODING(e, cvenc)                                            \
   if (e == #cvenc) {                                                           \
     RTCameraBaseLDBG_ << "Found Encoding:" << #cvenc;                          \
@@ -110,7 +115,8 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
       hw_trigger_timeout_us(5000000), sw_trigger_timeout_us(0), imagesizex(0),
       imagesizey(0), apply_resize(false), trigger_timeout(5000), bpp(3),
       stopCapture(true), stopEncoding(true), subImage(NULL),performCalib(false),
-      applyCalib(false),applyReference(true) {
+      applyCalib(false),applyReference(true),refenceThick(2),refenceR(0),refenceG(255),refenceB(0),fit_level(0),performAutoReference(false)
+ {
   RTCameraBaseLDBG_ << "Creating " << _control_unit_id
                     << " params:" << _control_unit_param;
 
@@ -180,6 +186,11 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
   
 
   CREATE_CU_BOOL_PROP("referenceON","referenceOn",applyReference,RTCameraBase);
+  CREATE_CU_INT_PROP("referenceThick","referenceThick",refenceThick,1,20,1,RTCameraBase);
+  CREATE_CU_INT_PROP("referenceR","referenceR",refenceR,0,255,1,RTCameraBase);
+  CREATE_CU_INT_PROP("referenceG","referenceG",refenceG,0,255,1,RTCameraBase);
+  CREATE_CU_INT_PROP("referenceB","referenceB",refenceB,0,255,1,RTCameraBase);
+
 
   CREATE_CU_BOOL_PROP("apply_calib","apply_calib",applyCalib,RTCameraBase);
 
@@ -552,6 +563,8 @@ addBinaryAttributeAsMIMETypeToDataSet("FRAMEBUFFER", "output image",
   addStateVariable(StateVariableTypeAlarmCU, "encode_error",
                    "an error occurred during encode", LOG_FREQUENCY);
   
+  addStateVariable(StateVariableTypeAlarmCU, "auto_reference_error",
+                   "an error occurred during autoreference", LOG_FREQUENCY);
   addStateVariable(StateVariableTypeAlarmDEV, "capture_error",
                    "an error occurred during capture", LOG_FREQUENCY);
   addStateVariable(StateVariableTypeAlarmDEV, "capture_timeout",
@@ -612,12 +625,12 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   fmt = cc->getRWPtr<char>(DOMAIN_INPUT, "FMT");
   ofmt = cc->getRWPtr<char>(DOMAIN_OUTPUT, "FMT");
   
-  refx=cc->getROPtr<int32_t>(DOMAIN_INPUT, "REFX");
-  refy=cc->getROPtr<int32_t>(DOMAIN_INPUT, "REFY");
-  refsx=cc->getROPtr<int32_t>(DOMAIN_INPUT, "REFSX");
-  refsy=cc->getROPtr<int32_t>(DOMAIN_INPUT, "REFSY");
-  refabs=cc->getROPtr<bool>(DOMAIN_INPUT, "REFABS");
-  refrho=cc->getROPtr<int32_t>(DOMAIN_INPUT, "REFRHO");
+  refx=cc->getRWPtr<int32_t>(DOMAIN_INPUT, "REFX");
+  refy=cc->getRWPtr<int32_t>(DOMAIN_INPUT, "REFY");
+  refsx=cc->getRWPtr<int32_t>(DOMAIN_INPUT, "REFSX");
+  refsy=cc->getRWPtr<int32_t>(DOMAIN_INPUT, "REFSY");
+  refabs=cc->getRWPtr<bool>(DOMAIN_INPUT, "REFABS");
+  refrho=cc->getRWPtr<int32_t>(DOMAIN_INPUT, "REFRHO");
 
   pacquire = cc->getRWPtr<bool>(DOMAIN_OUTPUT, "ACQUIRE");
   ptrigger = cc->getRWPtr<bool>(DOMAIN_OUTPUT, "TRIGGER");
@@ -815,6 +828,8 @@ void RTCameraBase::stopGrabbing() {
 
   setStateVariableSeverity(StateVariableTypeAlarmCU, "encode_error",
                            chaos::common::alarm::MultiSeverityAlarmLevelClear);
+  setStateVariableSeverity(StateVariableTypeAlarmCU, "auto_reference_error",
+                           chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmCU, "encodeQueueFull",
                            chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmCU, "captureQueueFull",
@@ -827,7 +842,7 @@ void RTCameraBase::unitStart() throw(chaos::CException) {
   getAttributeCache()->setInputDomainAsChanged();
   getAttributeCache()->setOutputDomainAsChanged();
   getAttributeCache()->setCustomDomainAsChanged();
-
+  performAutoReference=false;
   pushCustomDataset();
   startGrabbing();
 }
@@ -1162,36 +1177,87 @@ void calcXYFromAngle(double sx,double sy,double angle,double&x,double &y){
   x=sqrt(pow(sx*cos(angle),2)+pow(sy*sin(angle),2));
   y=sqrt(pow(sx*sin(angle),2)+pow(sy*cos(angle),2));
 }
-void plotEllipse(Mat color,int32_t X_m,int32_t Y_m,int32_t S_x,int32_t S_y,int32_t rho,const Scalar& col  ){
+void plotEllipse(Mat& color,int32_t X_m,int32_t Y_m,int32_t S_x,int32_t S_y,int32_t rho,const Scalar& col,int tick=1  ){
   double lx,ly;
   calcXYFromAngle(S_x,S_y,rho,lx,ly);
             line(color,Point(X_m-lx,Y_m-ly),Point(X_m+lx,Y_m+ly),col,1);
             line(color,Point(X_m-lx,Y_m+ly),Point(X_m+lx,Y_m-ly),col,1);
 
             ellipse(color, Point(X_m, Y_m), Size(S_x, S_y), rho, 0, 360,
-                    col, 1, 8);
+                    col, tick);
 
 }
 int RTCameraBase::filtering(cv::Mat &image) { 
+#ifdef CERN_ROOT
+if(performAutoReference){
+
+  setStateVariableSeverity(StateVariableTypeAlarmCU, "auto_reference_error",
+                           chaos::common::alarm::MultiSeverityAlarmLevelClear);
+  performAutoReference=false;
+  double a,x,y,sx,sy,rho;
+  if(root::image::rootGaussianImage2dFit(image,fit_threshold,fit_level,a,x,y,sx,sy,rho)==0){
+    applyReference=true;
+    *refx=(int)x;
+    *refy=(int)y;
+    *refsx=(int)sx;
+    *refsy=(int)sy;
+    *refrho=rho;
+    *refabs=false;
+    getAttributeCache()->setInputDomainAsChanged();
+    RTCameraBaseLDBG_<<"AUTO REFERENCE:("<<x<<","<<y<<") sx:"<<sx<<" sy:"<<sy<<" rho:"<<rho;
+    pushInputDataset();
+  } else {
+    setStateVariableSeverity(StateVariableTypeAlarmCU, "auto_reference_error",
+                           chaos::common::alarm::MultiSeverityAlarmLevelWarning);
+    RTCameraBaseLERR_<<"FAILED AUTO REFERENCE:("<<x<<","<<y<<") sx:"<<sx<<" sy:"<<sy<<" rho:"<<rho;
+
+  }
+  
+}
+#endif
+
   if(applyReference && (*refsx)&&(*refsy)){
     int x=*refx,y=*refy;
     if(*refabs){
         x=x-*offsetx;
         y=y-*offsety;
     }
-    if((x>=0) && (y>=0)){
-      plotEllipse(image,x, y,*refsx, *refsy,*refrho,Scalar(255,255, 255));
-    }
+  //  if((x>=0) && (y>=0)){
+      //RTCameraBaseLDBG_<<"Ellipse:("<<x<<","<<y<<") sx:"<<*refsx<<" sy:"<<*refsy<<" rho:"<<*refrho<<"R:"<<refenceR<<",G:"<<refenceG<<",B:"<<refenceB<<" tick:"<<refenceThick;
+      if((refenceR != refenceG) || (refenceR != refenceB)){
+        if (image.channels() == 1){
+          cvtColor(image,image,CV_GRAY2RGB);
+        }
 
+      }
+      plotEllipse(image,x, y,*refsx, *refsy,*refrho,Scalar(refenceR,refenceG, refenceB),refenceThick);
+    //}
   }
-  return 0; 
-  }
+  return 0;
+}
+
 
 chaos::common::data::CDWUniquePtr
 RTCameraBase::unitPerformCalibration(chaos::common::data::CDWUniquePtr data) {
   applyCalib = false;
+  performAutoReference=false;
+  fit_threshold=0;
+  if(data.get() && data->hasKey("autoreference")){
+    performAutoReference=true;
+
+    int threshold=0;
+    if(data->hasKey("threshold")){
+    fit_threshold=data->getInt32Value("threshold");
+    }
+    if(data->hasKey("fit_level")){
+    fit_level=data->getInt32Value("fit_level");
+    }
+    return chaos::common::data::CDWUniquePtr();
+
+  }
   performCalib = true;
   RTCameraBaseLDBG_ << "Perform calibration";
+  
   addTag("CALIBRATION");
   while (performCalib) {
     usleep(100000);
