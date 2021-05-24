@@ -1789,9 +1789,9 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
         //             ptrGrabResult->GetImageSize())?bcount:
         //             ptrGrabResult->GetImageSize();
         int size_ret = ptrGrabResult->GetImageSize();
-        BaslerScoutDriverLDBG_ << " Size " << ptrGrabResult->GetWidth() << "x"
+       /* BaslerScoutDriverLDBG_ << " Size " << ptrGrabResult->GetWidth() << "x"
                                << ptrGrabResult->GetHeight()
-                               << " Image Raw Size: " << size_ret;
+                               << " Image Raw Size: " << size_ret;*/
         if (img) {
           *img = new camera_buf_t(pImageBuffer, size_ret,
                                   ptrGrabResult->GetWidth(),
