@@ -110,7 +110,7 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
       hw_trigger_timeout_us(5000000), sw_trigger_timeout_us(0), imagesizex(0),
       imagesizey(0), apply_resize(false), trigger_timeout(5000), bpp(3),
       stopCapture(true), stopEncoding(true), subImage(NULL),performCalib(false),
-      applyCalib(false),applyReference(true),refenceThick(2),refenceR(0),refenceG(255),refenceB(0)
+      applyCalib(false),applyReference(false),refenceThick(2),refenceR(0),refenceG(255),refenceB(0)
  {
   RTCameraBaseLDBG_ << "Creating " << _control_unit_id
                     << " params:" << _control_unit_param;
@@ -1165,13 +1165,22 @@ void calcXYFromAngle(double sx,double sy,double angle,double&x,double &y){
   x=sqrt(pow(sx*cos(angle),2)+pow(sy*sin(angle),2));
   y=sqrt(pow(sx*sin(angle),2)+pow(sy*cos(angle),2));
 }
-void plotEllipse(Mat color,int32_t X_m,int32_t Y_m,int32_t S_x,int32_t S_y,int32_t rho,const Scalar& col,int tick=1  ){
+void plotEllipse(Mat color,int32_t X_m,int32_t Y_m,int32_t S_x,int32_t S_y,int32_t r,const Scalar& col,int tick=1  ){
   double lx,ly;
-  calcXYFromAngle(S_x,S_y,rho,lx,ly);
-            line(color,Point(X_m-lx,Y_m-ly),Point(X_m+lx,Y_m+ly),col,1);
-            line(color,Point(X_m-lx,Y_m+ly),Point(X_m+lx,Y_m-ly),col,1);
+ // calcXYFromAngle(S_x,S_y,rho,lx,ly);
+  double a=S_x,b=S_y;
+      double cx0=X_m-a*cos(r);
+      double cy0=Y_m-a*sin(r);
+      double cx1=X_m+a*cos(r);
+      double cy1=Y_m+a*sin(r);
+      double cmx0=X_m+b*sin(r);
+      double cmy0=Y_m-b*cos(r);
+      double cmx1=X_m-b*sin(r);
+      double cmy1=Y_m+b*cos(r);
+            line(color,Point(cx0,cy0),Point(cx1,cy1),col,1);
+            line(color,Point(cmx0,cmy0),Point(cmx1,cmy1),col,1);
 
-            ellipse(color, Point(X_m, Y_m), Size(S_x, S_y), rho, 0, 360,
+            ellipse(color, Point(X_m, Y_m), Size(S_x, S_y), r, 0, 360,
                     col, tick, 8);
 
 }
