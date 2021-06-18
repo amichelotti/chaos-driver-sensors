@@ -146,7 +146,7 @@ void VTemperatureDriver::driverInit(const chaos::common::data::CDataWrapper& s) 
         VTemperatureDriver *t=(VTemperatureDriver *)thi;
             chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
 
-            ret->addDoubleValue("value",t->temp);
+            ret->addDoubleValue(PROPERTY_VALUE_KEY,t->temp);
 
             return ret;
         
