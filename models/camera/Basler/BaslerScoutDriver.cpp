@@ -1750,7 +1750,7 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
       } else {
         BaslerScoutDriverLERR_ << "TRIGGER TIMEOUT : ";
 
-        return TRIGGER_TIMEOUT_ERROR;
+        return chaos::ErrorCode::EC_GENERIC_TIMEOUT;
       }
 
       while ((camerap->GetGrabResultWaitObject().Wait(0) == 0) &&

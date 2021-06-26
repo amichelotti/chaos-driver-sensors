@@ -886,7 +886,7 @@ void RTCameraBase::captureThread() {
 
     } else {
       if (stopCapture == false) {
-        if (ret == TRIGGER_TIMEOUT_ERROR) {
+        if (ret == chaos::ErrorCode::EC_GENERIC_TIMEOUT) {
           RTCameraBaseLERR_ << " wait returned:" << ret
                             << " timeout stopped:" << stopCapture;
           setStateVariableSeverity(
@@ -1427,7 +1427,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
         goInFatalError("Encode exception ", -1004, __PRETTY_FUNCTION__);
       }
     } else {
-      if (ret == TRIGGER_TIMEOUT_ERROR) {
+      if (ret == chaos::ErrorCode::EC_GENERIC_TIMEOUT) {
         RTCameraBaseLERR_ << " wait returned:" << ret;
         setStateVariableSeverity(
             StateVariableTypeAlarmDEV, "capture_timeout",
