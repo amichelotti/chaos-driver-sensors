@@ -485,7 +485,7 @@ addAttributeToDataSet("REFY", "Reference centerY",
 addAttributeToDataSet("REFSY", "Reference centerSY",
                           chaos::DataType::TYPE_INT32, chaos::DataType::Input);
  addAttributeToDataSet("REFRHO", "Reference centerRho",
-                          chaos::DataType::TYPE_INT32, chaos::DataType::Input);                   
+                          chaos::DataType::TYPE_DOUBLE, chaos::DataType::Input);                   
  
   /****
    *
@@ -630,7 +630,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   refsx=cc->getRWPtr<int32_t>(DOMAIN_INPUT, "REFSX");
   refsy=cc->getRWPtr<int32_t>(DOMAIN_INPUT, "REFSY");
   refabs=cc->getRWPtr<bool>(DOMAIN_INPUT, "REFABS");
-  refrho=cc->getRWPtr<int32_t>(DOMAIN_INPUT, "REFRHO");
+  refrho=cc->getRWPtr<double>(DOMAIN_INPUT, "REFRHO");
 
   pacquire = cc->getRWPtr<bool>(DOMAIN_OUTPUT, "ACQUIRE");
   ptrigger = cc->getRWPtr<bool>(DOMAIN_OUTPUT, "TRIGGER");
@@ -1212,6 +1212,7 @@ if(performAutoReference){
     *refsy=(int)sy;
     *refrho=rho;
     *refabs=false;
+    
     getAttributeCache()->setInputDomainAsChanged();
     RTCameraBaseLDBG_<<"AUTO REFERENCE:("<<x<<","<<y<<") sx:"<<sx<<" sy:"<<sy<<" rho:"<<rho;
     pushInputDataset();

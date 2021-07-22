@@ -67,7 +67,8 @@ protected:
         uint32_t framebuf_encoding;
         std::string framebuf_encoding_s;
         bool*pacquire,*ptrigger,*ppulse;
-         int32_t *refsx,*refsy,*refrho;
+         int32_t *refsx,*refsy;
+         double*refrho;
          int32_t *refx,*refy;
          bool*refabs;
         bool performAutoReference;
