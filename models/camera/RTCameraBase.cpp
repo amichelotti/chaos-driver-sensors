@@ -176,10 +176,10 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
         RTCameraBase *t=(RTCameraBase *)thi;
         t->encode_params.clear();
       t->encode_params.push_back(IMWRITE_PNG_COMPRESSION);
-      t->encode_params.push_back(p.getInt32Value("value"));
+      t->encode_params.push_back(p.getInt32Value(PROPERTY_VALUE_KEY));
       t->encode_params.push_back(IMWRITE_PNG_STRATEGY);
       t->encode_params.push_back(IMWRITE_PNG_STRATEGY_DEFAULT);
-      LDBG_ << "using png compression factor:"<<p.getInt32Value("value");
+      LDBG_ << "using png compression factor:"<<p.getInt32Value(PROPERTY_VALUE_KEY);
       return p.clone();
       });
 
@@ -200,11 +200,11 @@ RTCameraBase::RTCameraBase(const string &_control_unit_id,
 createProperty("apply_calib",applyCalib,"apply_calib",[](AbstractControlUnit*thi,const std::string&name,
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
         chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
-        ret->addBoolValue("value",((RTCameraBase*)thi)->applyCalib);
+        ret->addBoolValue(PROPERTY_VALUE_KEY,((RTCameraBase*)thi)->applyCalib);
         return ret;
       },[](AbstractControlUnit*thi,const std::string&name,
        const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr { 
-          ((RTCameraBase*)thi)->applyCalib=p.getBoolValue("value");
+          ((RTCameraBase*)thi)->applyCalib=p.getBoolValue(PROPERTY_VALUE_KEY);
           if(((RTCameraBase*)thi)->applyCalib){
              cv::Mat sub = imread(((RTCameraBase*)thi)->calibimage);
             if (sub.data) {
@@ -886,7 +886,7 @@ void RTCameraBase::captureThread() {
 
     } else {
       if (stopCapture == false) {
-        if (ret == TRIGGER_TIMEOUT_ERROR) {
+        if (ret == chaos::ErrorCode::EC_GENERIC_TIMEOUT) {
           RTCameraBaseLERR_ << " wait returned:" << ret
                             << " timeout stopped:" << stopCapture;
           setStateVariableSeverity(
@@ -1428,7 +1428,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
         goInFatalError("Encode exception ", -1004, __PRETTY_FUNCTION__);
       }
     } else {
-      if (ret == TRIGGER_TIMEOUT_ERROR) {
+      if (ret == chaos::ErrorCode::EC_GENERIC_TIMEOUT) {
         RTCameraBaseLERR_ << " wait returned:" << ret;
         setStateVariableSeverity(
             StateVariableTypeAlarmDEV, "capture_timeout",

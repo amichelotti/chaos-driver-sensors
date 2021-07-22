@@ -58,7 +58,6 @@ enum GrabStrategy {
     CAMERA_LATEST, // keep last images (number is defined by NIMAGES)
     CAMERA_INCOMING // start grabbing just after the SW is waiting for
 } ;
-#define TRIGGER_TIMEOUT_ERROR chaos::ErrorCode::EC_GENERIC_TIMEOUT
 #define CAMERA_GRAB_ERROR -200
 #define CAMERA_GRAB_STOP -20
 #define LOG_FREQUENCY 10000
