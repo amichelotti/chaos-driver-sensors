@@ -93,6 +93,7 @@ namespace camera{
 int ShapeSim::initializeCamera(const chaos::common::data::CDataWrapper& json) {
     int ret=-2;
     ShapeSimLDBG_<<"intialize camera:"<<json.getCompliantJSONString();
+    serial_id=rand();
     propsToCamera(( chaos::common::data::CDataWrapper*)&json);
     original_width=width;
     original_height=height;
@@ -258,6 +259,7 @@ ShapeSim::ShapeSim():shots(0),frames(0),fn(NULL),pixelEncoding(CV_8UC3),tmode(CA
           return p.clone();
       });
       */
+      CREATE_INT_PROP("SerialNumber","",serial_id,0,0xffffffff,1);
 
       CREATE_INT_PROP("ExposureTimeRaw","SHUTTER",shutter_raw,0,CAM_MAX_SHUTTER,1);
       CREATE_INT_PROP("GainRaw","GAIN",gain_raw,0,CAM_MAX_GAIN,1);

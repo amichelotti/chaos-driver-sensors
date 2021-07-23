@@ -69,7 +69,7 @@ class ShapeSim:public ::driver::sensor::camera::CameraDriverBridge {
      int trigger_mode;
      int propsToCamera(chaos::common::data::CDataWrapper*p);
      int cameraToProps(chaos::common::data::CDataWrapper*p);
-     int width,height,offsetx,offsety,original_width,original_height;
+     int width,height,offsetx,offsety,original_width,original_height,serial_id;
      float tmp_centerx,tmp_centery,tmp_sizex,tmp_sizey,tmp_rotangle,tmp_tickness;
      // beam
      double amplitude,err_amplitude,max_amplitude,inc_amplitude,tmp_amplitude;
