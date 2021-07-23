@@ -1781,6 +1781,8 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
         //  converter.OutputBitAlignment=OutputBitAlignment_MsbAligned;
         // converter.Convert(target,ptrGrabResult);
 
+        
+
         // int
         // size_ret=(bcount<target.GetImageSize())?bcount:target.GetImageSize();
         //            memcpy(buffer,target.GetBuffer(),size_ret);
