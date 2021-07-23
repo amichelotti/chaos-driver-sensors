@@ -1095,7 +1095,7 @@ int BaslerScoutDriver::initializeCamera(
       CREATE_VALUE_PROP("Gamma", "", double);
 
       createProperty(
-          "trigger_mode", "", "TRIGGER_MODE",
+          "camera_trigger_mode",
           [](AbstractDriver *thi, const std::string &name,
              const chaos::common::data::CDataWrapper &p)
               -> chaos::common::data::CDWUniquePtr {
@@ -1105,11 +1105,11 @@ int BaslerScoutDriver::initializeCamera(
             chaos::common::data::CDWUniquePtr ret(
                 new chaos::common::data::CDataWrapper());
             t->getProperty("TriggerMode", ton, true);
-            LDBG_ << " Trigger Mode:" << ton;
+            LDBG_ << name <<"- Trigger Mode:" << ton;
             if (ton == "On") {
               std::string tsource;
               t->getProperty("TriggerSource", tsource, true);
-              LDBG_ << " Trigger Mode:" << tsource;
+              LDBG_ << name << " Trigger Mode:" << tsource;
 
               if (tsource.find("Line") != std::string::npos) {
                 ret->addInt32Value(PROPERTY_VALUE_KEY, CAMERA_TRIGGER_HW_HI);
@@ -1134,12 +1134,14 @@ int BaslerScoutDriver::initializeCamera(
              const chaos::common::data::CDataWrapper &p)
               -> chaos::common::data::CDWUniquePtr {
             BaslerScoutDriver *t = (BaslerScoutDriver *)thi;
+            LDBG_ << name << " Trigger Mode WRITE" << p.getJSONString();
+
             if (p.hasKey(PROPERTY_VALUE_KEY)) {
               int32_t trigger_mode = p.getInt32Value(PROPERTY_VALUE_KEY);
               //
               switch (trigger_mode) {
               case (CAMERA_TRIGGER_CONTINOUS): {
-                LDBG_ << " TRIGGER CONTINOUS";
+                LDBG_ << name << " TRIGGER CONTINOUS";
                 t->setPropertyValue("TriggerMode", "Off", true);
 
                 break;
@@ -1150,7 +1152,7 @@ int BaslerScoutDriver::initializeCamera(
                 break;
               }*/
               case CAMERA_TRIGGER_HW_LOW: {
-                LDBG_ << " TRIGGER HW HILO";
+                LDBG_ << name << " TRIGGER HW HILO";
 
                 t->setPropertyValue("TriggerMode", "On", true);
 
@@ -1160,7 +1162,7 @@ int BaslerScoutDriver::initializeCamera(
               }
               case CAMERA_TRIGGER_SINGLE:
               case CAMERA_TRIGGER_HW_HI: {
-                LDBG_ << " TRIGGER HW HILO";
+                LDBG_ << name << " TRIGGER HW HILO";
                 t->setPropertyValue("TriggerMode", "On", true);
                 t->setPropertyValue("TriggerSource", "Line1", true);
                 t->setPropertyValue("TriggerActivation", "RisingEdge", true);
@@ -1168,7 +1170,7 @@ int BaslerScoutDriver::initializeCamera(
                 break;
               }
               case CAMERA_TRIGGER_SOFT: {
-                LDBG_ << " TRIGGER SOFT";
+                LDBG_ << name << " TRIGGER SOFT";
                 t->setPropertyValue("TriggerMode", "On", true);
                 t->setPropertyValue("TriggerSource", "Software", true);
 
@@ -1180,7 +1182,7 @@ int BaslerScoutDriver::initializeCamera(
             LERR_ << " not value in property: " << name;
 
             return chaos::common::data::CDWUniquePtr();
-          });
+          }, "TRIGGER_MODE");
       /** initial settings */
       /*ChaosStringVector contained_key;
       camera_custom_props.getAllKey(contained_key);

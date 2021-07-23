@@ -238,6 +238,8 @@ void RTCameraBase::updateProperty() {
   int ret = 0;
   if ((ret = driver->getCameraProperties(camera_props)) != 0) {
     RTCameraBaseLERR_ << "Error retriving camera properties ret:" << ret;
+  } else {
+    RTCameraBaseLDBG_<<"UpdateCamera from driver properties:"<<camera_props.getJSONString();
   }
   camera_props.getAllKey(props);
   AttributeSharedCacheWrapper *cc = getAttributeCache();

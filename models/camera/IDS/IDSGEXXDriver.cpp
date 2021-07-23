@@ -755,7 +755,7 @@ int IDSGEXXDriver::initializeCamera(
                    return chaos::common::data::CDWUniquePtr();
 
                  });
-  createProperty("trgmode", trgmode, "TRIGGER_MODE",
+  createProperty("camera_trigger_mode", trgmode, "TRIGGER_MODE",
                  [](AbstractDriver *thi, const std::string &name,
                     const chaos::common::data::CDataWrapper &p)
                      -> chaos::common::data::CDWUniquePtr {

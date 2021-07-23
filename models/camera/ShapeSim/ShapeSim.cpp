@@ -269,7 +269,7 @@ ShapeSim::ShapeSim():shots(0),frames(0),fn(NULL),pixelEncoding(CV_8UC3),tmode(CA
       CREATE_INT_PROP("offsetx","OFFSETX",offsetx,0,width,1);
       CREATE_INT_PROP("offsety","OFFSETY",offsety,0,height,1);
 
-      CREATE_INT_PROP("trigger_mode","TRIGGER_MODE",trigger_mode,0,10,1);
+      CREATE_INT_PROP("camera_trigger_mode","TRIGGER_MODE",trigger_mode,0,10,1);
 
       CREATE_DOUBLE_PROP("framerate","FRAMERATE",framerate,0.0,100.0,1.0);
      CREATE_INT_PROP("centerx","",centerx,0,width,1);
