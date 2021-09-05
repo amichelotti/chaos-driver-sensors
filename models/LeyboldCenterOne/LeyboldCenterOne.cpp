@@ -128,7 +128,7 @@ int LeyboldCenterOne::updateValue(){
             hw_string=ans;
             LeyboldCenterOneLDBG_<<"PR1:"<<ans;
 
-             if(sscanf(ans.c_str(),"%d,%f",&state,&pressure)==2){
+             if(sscanf(ans.c_str(),"%d,%lf",&state,&pressure)==2){
                  return 0;
             }
         }
@@ -194,7 +194,7 @@ void LeyboldCenterOne::driverInit(const chaos::common::data::CDataWrapper& s) th
      createProperty("COM", continuos_mode,0,2,1,"",NULL,[](AbstractDriver*thi,const std::string&name,
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
         LeyboldCenterOne *t=(LeyboldCenterOne *)thi;
-            int32_t val=p.getInt32Value("value");
+            int32_t val=p.getInt32Value(PROPERTY_VALUE_KEY);
             if(t->setContinousMode(val)==0){
                 LeyboldCenterOneLDBG_<<"continuos mode "<<val;
                 t->continuos_mode=val;
@@ -236,7 +236,7 @@ void LeyboldCenterOne::driverInit(const chaos::common::data::CDataWrapper& s) th
                     value=SENSOR_STATE_OK;
             }
 
-            ret->addInt32Value("value",value);
+            ret->addInt32Value(PROPERTY_VALUE_KEY,value);
 
             return ret;
         
@@ -248,7 +248,7 @@ void LeyboldCenterOne::driverInit(const chaos::common::data::CDataWrapper& s) th
         LeyboldCenterOne *t=(LeyboldCenterOne *)thi;
             chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
 
-            ret->addDoubleValue("value",t->pressure);
+            ret->addDoubleValue(PROPERTY_VALUE_KEY,t->pressure);
 
             return ret;
         

@@ -269,15 +269,15 @@ int BaslerScoutDriver::setNode(const std::string &node_name, int32_t val) {
     }
     if (!IsWritable(node)) {
       STOP_GRABBING(camerap);
-
+      stopped=true;
     }
   //  if (IsWritable(node)) {
       // no min/max
-      if(node->GetMin()==node->GetMax()){
+      /*if(node->GetMin()==node->GetMax()){
           node->SetValue(val);
         RESTORE_GRABBING(camerap);
           return 0;
-      }
+      }*/
       if (val < node->GetMin()) {
 
         val = node->GetMin();
@@ -292,7 +292,9 @@ int BaslerScoutDriver::setNode(const std::string &node_name, int32_t val) {
                                << val;
       }
       node->SetValue(val);
+      if(stopped){
       RESTORE_GRABBING(camerap);
+      }
 
 /*    } else {
       BaslerScoutDriverLERR_ << "Node:" << node_name << " is not writable";
@@ -326,6 +328,11 @@ int BaslerScoutDriver::setNode(const std::string &node_name, double val) {
 
       return -1;
     }
+    bool stopped=false;
+    if (!IsWritable(node)) {
+      STOP_GRABBING(camerap);
+      stopped=true;
+    }
     if (val < node->GetMin()) {
 
       val = node->GetMin();
@@ -340,6 +347,9 @@ int BaslerScoutDriver::setNode(const std::string &node_name, double val) {
                              << val;
     }
     node->SetValue(val);
+     if(stopped){
+      RESTORE_GRABBING(camerap);
+      }
     /*  if(IsWritable(node)){
         node->SetValue(val);
     } else {
@@ -728,10 +738,10 @@ public:
             0) {                                                               \
           chaos::common::data::CDWUniquePtr ret(                               \
               new chaos::common::data::CDataWrapper());                        \
-          ret->append("value", val);                                           \
-          ret->append("min", min);                                             \
-          ret->append("max", max);                                             \
-          ret->append("inc", inc);                                             \
+          ret->append(PROPERTY_VALUE_KEY, val);                                           \
+          ret->append(PROPERTY_VALUE_MIN_KEY, min);                                             \
+          ret->append(PROPERTY_VALUE_MAX_KEY, max);                                             \
+          ret->append(PROPERTY_VALUE_INC_KEY, inc);                                             \
           return ret;                                                          \
         }                                                                      \
         BaslerScoutDriverLERR << " cannot get " #type << " " << name;          \
@@ -740,7 +750,7 @@ public:
       [](AbstractDriver *thi, const std::string &name,                         \
          const chaos::common::data::CDataWrapper &p)                           \
           -> chaos::common::data::CDWUniquePtr {                               \
-        type val = p.getValue<type>("value");                                  \
+        type val = p.getValue<type>(PROPERTY_VALUE_KEY);                                  \
         if (((BaslerScoutDriver *)thi)->setNode(name, val) != 0) {             \
           BaslerScoutDriverLERR << " cannot set " #type << " " << name         \
                                 << " to:" << val;                              \
@@ -759,7 +769,7 @@ public:
                    if (((BaslerScoutDriver *)thi)->getNode(name, val) == 0) {  \
                      chaos::common::data::CDWUniquePtr ret(                    \
                          new chaos::common::data::CDataWrapper());             \
-                     ret->append("value", val);                                \
+                     ret->append(PROPERTY_VALUE_KEY, val);                                \
                      return ret;                                               \
                    }                                                           \
                    BaslerScoutDriverLERR << " cannot get " #type << " "        \
@@ -769,7 +779,7 @@ public:
                  [](AbstractDriver *thi, const std::string &name,              \
                     const chaos::common::data::CDataWrapper &p)                \
                      -> chaos::common::data::CDWUniquePtr {                    \
-                   type val = p.getValue<type>("value");                       \
+                   type val = p.getValue<type>(PROPERTY_VALUE_KEY);                       \
                    if (((BaslerScoutDriver *)thi)->setNode(name, val) != 0) {  \
                      BaslerScoutDriverLERR << " cannot set " #type << " "      \
                                            << name << " to:" << val;           \
@@ -788,13 +798,13 @@ chaos::common::data::CDWUniquePtr {\
         if (getNode(name, ((BaslerScoutDriver*)thi)->camerap, val) == 0) {\
           chaos::common::data::CDWUniquePtr ret(new
 chaos::common::data::CDataWrapper());\
-          ret->addInt32Value("value",val);ret->addInt32Value("min",node->GetMin());ret->addInt32Value("max",node->GetMax());ret->addInt32Value("inc",node->GetInc());}\
+          ret->addInt32Value(PROPERTY_VALUE_KEY,val);ret->addInt32Value(PROPERTY_VALUE_MIN_KEY,node->GetMin());ret->addInt32Value(PROPERTY_VALUE_MAX_KEY,node->GetMax());ret->addInt32Value(PROPERTY_VALUE_INC_KEY,node->GetInc());}\
         BaslerScoutDriverLERR_<<" cannot get int32_t "<<name;\
         return chaos::common::data::CDWUniquePtr();\
       },[](AbstractDriver*thi,const std::string&name,\
        const chaos::common::data::CDataWrapper &p) ->
 chaos::common::data::CDWUniquePtr { \
-        int32_t val=p.getInt32Value("value");\
+        int32_t val=p.getInt32Value(PROPERTY_VALUE_KEY);\
          if(setNode(name,((BaslerScoutDriver*)thi)->camerap,val)!=0){\
             BaslerScoutDriverLERR_<<" cannot set int32_t "<<name<<" to:"<<val;\
             return chaos::common::data::CDWUniquePtr();}\
@@ -809,13 +819,13 @@ chaos::common::data::CDWUniquePtr {\
         if (getNode(name, ((BaslerScoutDriver*)thi)->camerap, val) == 0) {\
   The         chaos::common::data::CDWUniquePtr ret(new
 chaos::common::data::CDataWrapper());\
-          ret->addDoubleValue("value",val);ret->addDoubleValue("min",node->GetMin());ret->addDoubleValue("max",node->GetMax());ret->addDoubleValue("inc",node->GetInc());}\
+          ret->addDoubleValue(PROPERTY_VALUE_KEY,val);ret->addDoubleValue(PROPERTY_VALUE_MIN_KEY,node->GetMin());ret->addDoubleValue(PROPERTY_VALUE_MAX_KEY,node->GetMax());ret->addDoubleValue(PROPERTY_VALUE_INC_KEY,node->GetInc());}\
         BaslerScoutDriverLERR_<<" cannot get double "<<name;\
         return chaos::common::data::CDWUniquePtr();\
       },[](AbstractDriver*thi,const std::string&name,\
        const chaos::common::data::CDataWrapper &p) ->
 chaos::common::data::CDWUniquePtr { \
-        double val=p.getDoubleValue("value");\
+        double val=p.getDoubleValue(PROPERTY_VALUE_KEY);\
          if(setNode(name,((BaslerScoutDriver*)thi)->camerap,val)!=0){
             BaslerScoutDriverLERR_<<" cannot set double "<<name<<" to:"<<val;\
             return chaos::common::data::CDWUniquePtr();}\
@@ -830,13 +840,13 @@ chaos::common::data::CDWUniquePtr {\
         if (getNode(name, ((BaslerScoutDriver*)thi)->camerap, val) == 0) {\
           chaos::common::data::CDWUniquePtr ret(new
 chaos::common::data::CDataWrapper());\
-          ret->addStringValue("value",val);}\
+          ret->addStringValue(PROPERTY_VALUE_KEY,val);}\
         BaslerScoutDriverLERR_<<" cannot get string "<<name;\
         return chaos::common::data::CDWUniquePtr();\
       },[](AbstractDriver*thi,const std::string&name,\
        const chaos::common::data::CDataWrapper &p) ->
 chaos::common::data::CDWUniquePtr { \
-        std::string val=p.getDoubleValue("value");\
+        std::string val=p.getDoubleValue(PROPERTY_VALUE_KEY);\
          if(setNode(name,((BaslerScoutDriver*)thi)->camerap,val)!=0){
             BaslerScoutDriverLERR_<<" cannot set string "<<name<<" to:"<<val;\
             return chaos::common::data::CDWUniquePtr();}\
@@ -1044,7 +1054,7 @@ int BaslerScoutDriver::initializeCamera(
                   if (pixelFormat.IsValid()) {
                     chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
                     std::string cv = basler2cv((Pylon::EPixelType)pixelFormat->GetIntValue());
-                    ret->append("value",cv);
+                    ret->append(PROPERTY_VALUE_KEY,cv);
                     ret->append("raw",pixelFormat->ToString());
                     return ret;                                               
                   }                                                           
@@ -1060,7 +1070,7 @@ int BaslerScoutDriver::initializeCamera(
                   if (pixelFormat.IsValid()) {
                     try {
 
-                    std::string cv =p.getStringValue("value");
+                    std::string cv =p.getStringValue(PROPERTY_VALUE_KEY);
                     pixelFormat->SetIntValue(cv2basler(cv));
                     return p.clone();   
                     }  catch (const GenericException &e) {
@@ -1085,7 +1095,7 @@ int BaslerScoutDriver::initializeCamera(
       CREATE_VALUE_PROP("Gamma", "", double);
 
       createProperty(
-          "trigger_mode", "", "TRIGGER_MODE",
+          "camera_trigger_mode",
           [](AbstractDriver *thi, const std::string &name,
              const chaos::common::data::CDataWrapper &p)
               -> chaos::common::data::CDWUniquePtr {
@@ -1095,41 +1105,43 @@ int BaslerScoutDriver::initializeCamera(
             chaos::common::data::CDWUniquePtr ret(
                 new chaos::common::data::CDataWrapper());
             t->getProperty("TriggerMode", ton, true);
-            LDBG_ << " Trigger Mode:" << ton;
+            LDBG_ << name <<"- Trigger Mode:" << ton;
             if (ton == "On") {
               std::string tsource;
               t->getProperty("TriggerSource", tsource, true);
-              LDBG_ << " Trigger Mode:" << tsource;
+              LDBG_ << name << " Trigger Mode:" << tsource;
 
               if (tsource.find("Line") != std::string::npos) {
-                ret->addInt32Value("value", CAMERA_TRIGGER_HW_HI);
+                ret->addInt32Value(PROPERTY_VALUE_KEY, CAMERA_TRIGGER_HW_HI);
               }
               if (tsource.find("Software") != std::string::npos) {
-                ret->addInt32Value("value", CAMERA_TRIGGER_SOFT);
+                ret->addInt32Value(PROPERTY_VALUE_KEY, CAMERA_TRIGGER_SOFT);
               }
               if (tsource.find("Counter") != std::string::npos) {
-                ret->addInt32Value("value", CAMERA_TRIGGER_COUNTER);
+                ret->addInt32Value(PROPERTY_VALUE_KEY, CAMERA_TRIGGER_COUNTER);
               }
               if (tsource.find("Timer") != std::string::npos) {
-                ret->addInt32Value("value", CAMERA_TRIGGER_TIMER);
+                ret->addInt32Value(PROPERTY_VALUE_KEY, CAMERA_TRIGGER_TIMER);
               }
             } else {
-              ret->addInt32Value("value", CAMERA_TRIGGER_CONTINOUS);
+              ret->addInt32Value(PROPERTY_VALUE_KEY, CAMERA_TRIGGER_CONTINOUS);
             }
-            ret->addInt32Value("max", CAMERA_UNDEFINED - 1);
-            ret->addInt32Value("min", 0);
+            ret->addInt32Value(PROPERTY_VALUE_MAX_KEY, CAMERA_UNDEFINED - 1);
+            ret->addInt32Value(PROPERTY_VALUE_MIN_KEY, 0);
             return ret;
           },
           [](AbstractDriver *thi, const std::string &name,
              const chaos::common::data::CDataWrapper &p)
               -> chaos::common::data::CDWUniquePtr {
             BaslerScoutDriver *t = (BaslerScoutDriver *)thi;
-            if (p.hasKey("value")) {
-              int32_t trigger_mode = p.getInt32Value("value");
+            LDBG_ << name << " Trigger Mode WRITE" << p.getJSONString();
+
+            if (p.hasKey(PROPERTY_VALUE_KEY)) {
+              int32_t trigger_mode = p.getInt32Value(PROPERTY_VALUE_KEY);
               //
               switch (trigger_mode) {
               case (CAMERA_TRIGGER_CONTINOUS): {
-                LDBG_ << " TRIGGER CONTINOUS";
+                LDBG_ << name << " TRIGGER CONTINOUS";
                 t->setPropertyValue("TriggerMode", "Off", true);
 
                 break;
@@ -1140,7 +1152,7 @@ int BaslerScoutDriver::initializeCamera(
                 break;
               }*/
               case CAMERA_TRIGGER_HW_LOW: {
-                LDBG_ << " TRIGGER HW HILO";
+                LDBG_ << name << " TRIGGER HW HILO";
 
                 t->setPropertyValue("TriggerMode", "On", true);
 
@@ -1150,7 +1162,7 @@ int BaslerScoutDriver::initializeCamera(
               }
               case CAMERA_TRIGGER_SINGLE:
               case CAMERA_TRIGGER_HW_HI: {
-                LDBG_ << " TRIGGER HW HILO";
+                LDBG_ << name << " TRIGGER HW HILO";
                 t->setPropertyValue("TriggerMode", "On", true);
                 t->setPropertyValue("TriggerSource", "Line1", true);
                 t->setPropertyValue("TriggerActivation", "RisingEdge", true);
@@ -1158,7 +1170,7 @@ int BaslerScoutDriver::initializeCamera(
                 break;
               }
               case CAMERA_TRIGGER_SOFT: {
-                LDBG_ << " TRIGGER SOFT";
+                LDBG_ << name << " TRIGGER SOFT";
                 t->setPropertyValue("TriggerMode", "On", true);
                 t->setPropertyValue("TriggerSource", "Software", true);
 
@@ -1170,7 +1182,7 @@ int BaslerScoutDriver::initializeCamera(
             LERR_ << " not value in property: " << name;
 
             return chaos::common::data::CDWUniquePtr();
-          });
+          }, "TRIGGER_MODE");
       /** initial settings */
       /*ChaosStringVector contained_key;
       camera_custom_props.getAllKey(contained_key);
@@ -1722,10 +1734,10 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
 
     return -1;
   }
-  if (stopGrabbing) {
+  /*if (stopGrabbing) {
     BaslerScoutDriverLERR_ << "Grabbing is stopped ";
     return CAMERA_GRAB_STOP;
-  }
+  }*/
   try {
     Pylon::CGrabResultPtr ptrGrabResult;
     if(timeout_ms==0){
@@ -1740,7 +1752,7 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
       } else {
         BaslerScoutDriverLERR_ << "TRIGGER TIMEOUT : ";
 
-        return TRIGGER_TIMEOUT_ERROR;
+        return chaos::ErrorCode::EC_GENERIC_TIMEOUT;
       }
 
       while ((camerap->GetGrabResultWaitObject().Wait(0) == 0) &&
@@ -1771,6 +1783,8 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
         //  converter.OutputBitAlignment=OutputBitAlignment_MsbAligned;
         // converter.Convert(target,ptrGrabResult);
 
+        
+
         // int
         // size_ret=(bcount<target.GetImageSize())?bcount:target.GetImageSize();
         //            memcpy(buffer,target.GetBuffer(),size_ret);
@@ -1779,13 +1793,15 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
         //             ptrGrabResult->GetImageSize())?bcount:
         //             ptrGrabResult->GetImageSize();
         int size_ret = ptrGrabResult->GetImageSize();
-        BaslerScoutDriverLDBG_ << " Size " << ptrGrabResult->GetWidth() << "x"
+       /* BaslerScoutDriverLDBG_ << " Size " << ptrGrabResult->GetWidth() << "x"
                                << ptrGrabResult->GetHeight()
-                               << " Image Raw Size: " << size_ret;
+                               << " Image Raw Size: " << size_ret;*/
         if (img) {
           *img = new camera_buf_t(pImageBuffer, size_ret,
                                   ptrGrabResult->GetWidth(),
-                                  ptrGrabResult->GetHeight());
+                                  ptrGrabResult->GetHeight(),
+                                  ptrGrabResult->GetOffsetX(),
+                                  ptrGrabResult->GetOffsetY());
           // memcpy(hostbuf,pImageBuffer,size_ret);
         }
         if (fn) {

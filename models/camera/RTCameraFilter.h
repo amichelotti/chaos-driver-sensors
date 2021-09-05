@@ -29,7 +29,6 @@ class TF2;
 
 #endif
 
-#define DEFAULT_RESOLUTION 640 * 480 * 3
 
 #include "RTCameraBase.h"
 namespace driver {

@@ -51,7 +51,10 @@ public:
 protected:
         const int buffering;
         cv::Mat* subImage;
-        bool applyCalib,performCalib;
+        bool applyCalib,performCalib,applyReference;
+        int refenceThick,refenceR,refenceG,refenceB;
+        
+
         std::string calibimage;
         ChaosUniquePtr<::common::misc::data::SharedMem> shared_mem;
         int32_t *sizex,*sizey,*offsetx,*offsety,*osizex,*osizey,*ooffsetx,*ooffsety;
@@ -63,14 +66,19 @@ protected:
         uint8_t* framebuf;
         uint32_t framebuf_encoding;
         std::string framebuf_encoding_s;
-          bool*pacquire,*ptrigger,*ppulse;
-
+        bool*pacquire,*ptrigger,*ppulse;
+         int32_t *refsx,*refsy;
+         double*refrho;
+         int32_t *refx,*refy;
+         bool*refabs;
+        bool performAutoReference;
+        int fit_threshold,fit_level;
         //double ZOOMX,ZOOMY;
         chaos::common::data::CDataWrapper filters;
         
         typedef struct encoded {
             std::vector<unsigned char>* img;
-            int sizex,sizey;
+            int sizex,sizey,offsetx,offsety;
             encoded():img(NULL){};
         } encoded_t;
 
@@ -104,6 +112,7 @@ protected:
         CameraDriverInterface*driver;
         void updateProperty();
         bool setCamera(const std::string &name, bool value, uint32_t size=sizeof(bool));
+        bool setCamera(const std::string &name, int32_t value, uint32_t size=sizeof(bool));
 
         bool setDrvProp(const std::string &name, const int32_t value, uint32_t size=sizeof(int32_t));
         bool setDrvProp(const std::string &name, const double value, uint32_t size=sizeof(double));

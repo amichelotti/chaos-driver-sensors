@@ -348,6 +348,31 @@ INT nRet;
     return nRet;
 
 }
+int Camera::getExposureRange(double *min,double*max,double*inc){
+double dblRange[3]; // min, max and increment
+ int ret= is_Exposure(cam_,IS_EXPOSURE_CMD_GET_EXPOSURE_RANGE,(void*)dblRange,sizeof(dblRange));
+*min=dblRange[0];
+*max=dblRange[1];
+*inc=dblRange[2];
+
+return ret;
+}
+int Camera::getFrameTimeRange(double *min,double*max,double*inc){
+  return is_GetFrameTimeRange (cam_, min, max, inc);
+
+}
+int Camera::getPixelClockRange(int *min,int*max,int*inc){
+  int iRange[3]; // min, max and increment
+
+  int ret=is_PixelClock(cam_, IS_PIXELCLOCK_CMD_GET_RANGE, (void*)iRange, sizeof(iRange));
+  *min=iRange[0];
+*max=iRange[1];
+*inc=iRange[2];
+
+  return ret;
+
+}
+
 int Camera::getAOI(int& posx,int& posy,int& width,int& height){
    IS_RECT rectAOI;
   INT nRet = is_AOI(cam_, IS_AOI_IMAGE_GET_AOI, (void*)&rectAOI, sizeof(rectAOI));
@@ -638,6 +663,31 @@ Camera::~Camera()
 {
   closeCamera();
 }
+int Camera::getMinAoiInc(int*width,int*height){
+  IS_SIZE_2D sizeInc;
+  int ret=is_AOI(cam_, IS_AOI_IMAGE_GET_SIZE_INC , (void*)&sizeInc, sizeof(sizeInc)); 
+  *width=sizeInc.s32Width;
+  *height=sizeInc.s32Height;
+  return ret;
+}
+int Camera::getMinPosInc(int*x,int*y){
+
+IS_SIZE_2D sizeMin;
+  int ret= is_AOI(cam_, IS_AOI_IMAGE_GET_POS_INC , (void*)&sizeMin, sizeof(sizeMin)); 
+  *x=sizeMin.s32Width;
+  *y=sizeMin.s32Height;
+  return ret;
+}
+
+int Camera::getMinAoiSize(int*width,int*height){
+  IS_SIZE_2D sizeMin;
+  int ret= is_AOI(cam_, IS_AOI_IMAGE_GET_SIZE_MIN , (void*)&sizeMin, sizeof(sizeMin)); 
+  *width=sizeMin.s32Width;
+  *height=sizeMin.s32Height;
+  return ret;
+
+}
+
 int Camera::getWidth() const { 
   //return cam_info_.nMaxWidth / zoom_; 
   IS_SIZE_2D imageSize;
