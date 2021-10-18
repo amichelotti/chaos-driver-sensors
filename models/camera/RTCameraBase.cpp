@@ -930,6 +930,12 @@ void RTCameraBase::encodeThread() {
                     << " , assuming framebuf:" << framebuf_encoding_s << "("
                     << framebuf_encoding << ") bpp:" << bpp
                     << " thread STARTED";
+  std::string fname = getDeviceID();
+  replace(fname.begin(), fname.end(), '/', '_');
+#ifdef CAMERA_GEN_VIDEO
+
+  VideoWriter video(fname+".avi", cv::VideoWriter::fourcc('M','J','P','G'), 10, Size(*sizex,*sizey));
+#endif
   while ((!stopCapture)&&(hasStopped()==false)) {
 
     camera_buf_t* framebuf;
@@ -1085,7 +1091,9 @@ void RTCameraBase::encodeThread() {
          ele.sizey=image.rows;
          ele.offsetx=framebuf->offsetx;
          ele.offsety=  framebuf->offsety;
-
+#ifdef CAMERA_GEN_VIDEO
+         video.write(image);
+#endif
         bool code = cv::imencode(encoding, image, *encbuf,encode_params);
         delete(framebuf);
         // image.deallocate();
