@@ -106,6 +106,7 @@ protected:
         uint64_t encode_time,capture_time,network_time,counter_capture,counter_encode;
         void encodeThread();
         int bufinuse;
+        const int32_t*rot;
         int32_t* enc_frame_rate,*capture_frame_rate;
         double*shutter,*brightness,*contrast,*sharpness,*gain;
          char*fmt,*ofmt;

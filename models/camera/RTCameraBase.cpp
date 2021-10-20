@@ -474,6 +474,8 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
                               __PRETTY_FUNCTION__);
     }
   }
+addAttributeToDataSet("ROT", "Rotation angle (degree)",
+                          chaos::DataType::TYPE_INT32, chaos::DataType::Input);
 addAttributeToDataSet("REFABS", "Absolute(true)/Relative(false)",
                           chaos::DataType::TYPE_BOOLEAN, chaos::DataType::Input);
 
@@ -621,6 +623,8 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   ooffsety = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, OFFSETY_KEY);
   
   //
+  rot = cc->getROPtr<int32_t>(DOMAIN_INPUT, "ROT");
+
   mode = *cc->getROPtr<int32_t>(DOMAIN_INPUT, TRIGGER_MODE_KEY);
   omode = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, TRIGGER_MODE_KEY);
   //   camera_out=cc->getRWPtr<uint8_t>(DOMAIN_OUTPUT, "FRAMEBUFFER");
@@ -919,6 +923,14 @@ void RTCameraBase::captureThread() {
 
   RTCameraBaseLDBG_ << "Capture thread ENDED Queue:" << captureImg.length()<<" has Stopped:"<<hasStopped();
 }
+Mat rotate(Mat src, double angle)
+{
+    Mat dst;
+    Point2f pt(src.cols/2., src.rows/2.);    
+    Mat r = getRotationMatrix2D(pt, angle, 1.0);
+    warpAffine(src, dst, r, Size(src.cols, src.rows));
+    return dst;
+}
 void RTCameraBase::encodeThread() {
   uint64_t start;
   counter_encode = 0;
@@ -1082,7 +1094,9 @@ void RTCameraBase::encodeThread() {
             image = res;
           }
         }
-
+        if(*rot){
+          image=rotate(image,*rot);
+        }
         filtering(image);
         encbuf = new std::vector<unsigned char>();
         // RTCameraBaseLDBG_ << "Encoding "<<encoding<<" , row:"<<image.rows<<"
