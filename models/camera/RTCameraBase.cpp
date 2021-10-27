@@ -186,16 +186,14 @@ RTCameraBase::RTCameraBase(const string &               _control_unit_id,
   CREATE_CU_INT_PROP("referenceR", "referenceR", refenceR, 0, 255, 1, RTCameraBase);
   CREATE_CU_INT_PROP("referenceG", "referenceG", refenceG, 0, 255, 1, RTCameraBase);
   CREATE_CU_INT_PROP("referenceB", "referenceB", refenceB, 0, 255, 1, RTCameraBase);
-
-  CREATE_CU_BOOL_PROP("apply_calib", "apply_calib", applyCalib, RTCameraBase);
-
   CREATE_CU_BOOL_PROP("performCalib", "performCalib", performCalib, RTCameraBase);
 
   createProperty(
       "apply_calib", applyCalib, "apply_calib", [](AbstractControlUnit *thi, const std::string &name, const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
         chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
         ret->addBoolValue(PROPERTY_VALUE_KEY,((RTCameraBase*)thi)->applyCalib);
-        return ret; }, [](AbstractControlUnit *thi, const std::string &name, const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr { 
+        return ret; 
+        }, [](AbstractControlUnit *thi, const std::string &name, const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr { 
           ((RTCameraBase*)thi)->applyCalib=p.getBoolValue(PROPERTY_VALUE_KEY);
           if(((RTCameraBase*)thi)->applyCalib){
               chaos::common::data::CDWUniquePtr calibrazione=  ((RTCameraBase*)thi)->loadData("calibration_image");
@@ -1189,9 +1187,9 @@ RTCameraBase::unitPerformCalibration(chaos::common::data::CDWUniquePtr data) {
   while (performCalib) {
     usleep(100000);
   }
-  if (!(data.get() && data->hasKey("disable"))) {
-    applyCalib = true;
-  }
+      
+  applyCalib = true;
+
   removeTag("CALIBRATION");
   RTCameraBaseLDBG_ << "END calibration";
   return chaos::common::data::CDWUniquePtr();
