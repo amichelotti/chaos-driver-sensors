@@ -158,8 +158,7 @@ void RTCameraFilter::unitDefineActionAndDataset() throw(chaos::CException) {
                           chaos::DataType::TYPE_DOUBLE,
                           chaos::DataType::Input);
     
-   /* 
-   addHandlerOnInputAttributeName
+   
     addAttributeToDataSet("AMPLITUDE", "Estimated amplitude ", chaos::DataType::TYPE_DOUBLE,
                           chaos::DataType::Output);
     addAttributeToDataSet("X", "Estimated X ", chaos::DataType::TYPE_DOUBLE,
