@@ -159,28 +159,7 @@ void RTCameraFilter::unitDefineActionAndDataset() throw(chaos::CException) {
                           chaos::DataType::Input);
     
    /* 
-   addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraFilter,
-                                   double>(
-        this, &::driver::sensor::camera::RTCameraFilter::setDrvProp,
-        "REFX");
-    addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraFilter,
-                                   double>(
-        this, &::driver::sensor::camera::RTCameraFilter::setDrvProp,
-        "REFY");
-
-    addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraFilter,
-                                   double>(
-        this, &::driver::sensor::camera::RTCameraFilter::setDrvProp,
-        "REFSX");
-    addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraFilter,
-                                   double>(
-        this, &::driver::sensor::camera::RTCameraFilter::setDrvProp,
-        "REFSY");
-addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraFilter,
-                                   double>(
-        this, &::driver::sensor::camera::RTCameraFilter::setDrvProp,
-        "REFRHO");
-*/
+   addHandlerOnInputAttributeName
     addAttributeToDataSet("AMPLITUDE", "Estimated amplitude ", chaos::DataType::TYPE_DOUBLE,
                           chaos::DataType::Output);
     addAttributeToDataSet("X", "Estimated X ", chaos::DataType::TYPE_DOUBLE,

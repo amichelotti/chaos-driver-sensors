@@ -511,11 +511,11 @@ addAttributeToDataSet("REFSY", "Reference centerSY",
                         chaos::DataType::Bidirectional);
   addAttributeToDataSet("PULSE", "Is pulse", chaos::DataType::TYPE_BOOLEAN,
                         chaos::DataType::Bidirectional);
-  addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase, bool>(
+  addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, bool>(
       this, &::driver::sensor::camera::RTCameraBase::setCamera, "ACQUIRE");
-  addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase, bool>(
+  addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, bool>(
       this, &::driver::sensor::camera::RTCameraBase::setCamera, "TRIGGER");
-  addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase, bool>(
+  addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase, bool>(
       this, &::driver::sensor::camera::RTCameraBase::setCamera, "PULSE");
 addBinaryAttributeAsMIMETypeToDataSet("FRAMEBUFFER", "output image",
                                         "image/png", chaos::DataType::Output);
@@ -541,12 +541,12 @@ addBinaryAttributeAsMIMETypeToDataSet("FRAMEBUFFER", "output image",
       // sizeof(bool));
       // addCustomAttribute(*i,sizeof(double),camera_props.getValueType(*i));
       if (camera_props.getValueType(*i) == chaos::DataType::TYPE_DOUBLE) {
-        addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase,
+        addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase,
                                        double>(
             this, &::driver::sensor::camera::RTCameraBase::setDrvProp, *i);
       }
       if (camera_props.getValueType(*i) == chaos::DataType::TYPE_INT32) {
-        addHandlerOnInputAttributeName<::driver::sensor::camera::RTCameraBase,
+        addHandlerOnInputAttributeName< ::driver::sensor::camera::RTCameraBase,
                                        int32_t>(
             this, &::driver::sensor::camera::RTCameraBase::setDrvProp, *i);
       }
