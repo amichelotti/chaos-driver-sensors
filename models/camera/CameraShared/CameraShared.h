@@ -57,7 +57,7 @@ class CameraShared: public ::driver::sensor::camera::CameraDriverBridge {
   void driverDeinit() throw(chaos::CException) ;
     // This smart pointer will receive the grab result data.
      int32_t tmode; //0 continous, 1 software,2 hw,3 singleshot
-     ChaosUniquePtr<::common::misc::data::SharedMem> shared_mem;
+     ChaosUniquePtr< ::common::misc::data::SharedMem> shared_mem;
 
      
      int32_t gstrategy;

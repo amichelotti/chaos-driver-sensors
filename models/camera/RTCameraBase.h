@@ -56,7 +56,7 @@ protected:
         
 
         std::string calibimage;
-        ChaosUniquePtr<::common::misc::data::SharedMem> shared_mem;
+        ChaosUniquePtr< ::common::misc::data::SharedMem> shared_mem;
         int32_t *sizex,*sizey,*offsetx,*offsety,*osizex,*osizey,*ooffsetx,*ooffsety;
         // if >0 then this is the camera window created, each grab should fit this size.
         int32_t imagesizex,imagesizey;
@@ -92,7 +92,7 @@ protected:
         bool stopCapture,stopEncoding;
         boost::thread capture_th,encode_th;
       //  std::vector<unsigned char> encbuf[CAMERA_FRAME_BUFFERING];//encode stage
-        chaos::common::thread::TLockFreeQueue<::driver::sensor::camera::camera_buf_t*,CAMERA_FRAME_BUFFERING> captureImg;
+        chaos::common::thread::TLockFreeQueue< ::driver::sensor::camera::camera_buf_t*,CAMERA_FRAME_BUFFERING> captureImg;
         chaos::common::thread::TLockFreeQueue<encoded_t,CAMERA_FRAME_BUFFERING> encodedImg;
 
         //boost::condition_variable wait_capture,wait_encode,full_capture,full_encode;
@@ -106,6 +106,7 @@ protected:
         uint64_t encode_time,capture_time,network_time,counter_capture,counter_encode;
         void encodeThread();
         int bufinuse;
+        const int32_t*rot;
         int32_t* enc_frame_rate,*capture_frame_rate;
         double*shutter,*brightness,*contrast,*sharpness,*gain;
          char*fmt,*ofmt;
