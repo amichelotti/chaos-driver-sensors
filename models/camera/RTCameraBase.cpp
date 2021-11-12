@@ -802,7 +802,12 @@ void RTCameraBase::captureThread() {
   while ((!stopCapture) && (hasStopped() == false)) {
     img   = 0;
     start = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
-
+    if(mode==CAMERA_DISABLE_ACQUIRE){
+      
+      boost::this_thread::sleep_for(boost::chrono::seconds{1});
+      continue;
+    }
+    
     ret = driver->waitGrab(&img, ((*ppulse) ? 0 : trigger_timeout));
 
     if ((img != 0) && (ret > 0)) {
@@ -1208,38 +1213,14 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       (mode != CAMERA_DISABLE_ACQUIRE) && (mode != CAMERA_TRIGGER_CONTINOUS);
   // *ppulse = ((mode == CAMERA_TRIGGER_SINGLE) || (mode == CAMERA_TRIGGER_SOFT));
   *omode = mode;
-  if (mode == CAMERA_DISABLE_ACQUIRE) {
+ /* if (mode == CAMERA_DISABLE_ACQUIRE) {
     getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", 0, 0);
     getAttributeCache()->setOutputDomainAsChanged();
     sleep(1);
+    return;
   }
-  /*if((*sizex !=*osizex)){
-      if(*sizex>0){
-        RTCameraBaseLERR_ << "SETPOINT WIDTH "<<*sizex<<" OUTPUT WIDTH:"<<*osizex;
-        driver->setCameraProperty(WIDTH_KEY, *sizex);
-      } else {
-        *sizex=*osizex;
-      }
-
-  } else if(*offsetx!=*ooffsetx){
-      RTCameraBaseLERR_ << "SETPOINT OFFSETX "<<*offsetx<<" OUTPUT OFFSETX:"<<*ooffsetx;
-      driver->setCameraProperty(OFFSETX_KEY, *offsetx);
-
-  }*/
-  /* if((*sizey !=*osizey)){
-    if(*sizey>0){
-      RTCameraBaseLERR_ << "SETPOINT HEIGHT "<<*sizey<<" OUTPUT HEIGHT:"<<*osizey;
-      driver->setCameraProperty(HEIGHT_KEY, *sizey);
-    }else {
-        *sizey=*osizey;
-      }
-
-  } else if(*offsety!=*ooffsety){
-      RTCameraBaseLERR_ << "SETPOINT OFFSETY "<<*offsety<<" OUTPUT OFFSETY:"<<*ooffsety;
-      driver->setCameraProperty(OFFSETY_KEY, *offsety);
-
-  }*/
-
+  */
+ 
   if (buffering > 1) {
     // get the output attribute pointer form the internal cache
     if ((encode_time > 0) && (capture_time > 0)) {
