@@ -1209,36 +1209,16 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
   // *ppulse = ((mode == CAMERA_TRIGGER_SINGLE) || (mode == CAMERA_TRIGGER_SOFT));
   *omode = mode;
   if (mode == CAMERA_DISABLE_ACQUIRE) {
-    getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", 0, 0);
-    getAttributeCache()->setOutputDomainAsChanged();
-    sleep(1);
+    
+    if(encodedImg.length()==0){
+      //getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", 0, 0);
+      sleep(1);
+
+      return;
+
+    }
   }
-  /*if((*sizex !=*osizex)){
-      if(*sizex>0){
-        RTCameraBaseLERR_ << "SETPOINT WIDTH "<<*sizex<<" OUTPUT WIDTH:"<<*osizex;
-        driver->setCameraProperty(WIDTH_KEY, *sizex);
-      } else {
-        *sizex=*osizex;
-      }
-
-  } else if(*offsetx!=*ooffsetx){
-      RTCameraBaseLERR_ << "SETPOINT OFFSETX "<<*offsetx<<" OUTPUT OFFSETX:"<<*ooffsetx;
-      driver->setCameraProperty(OFFSETX_KEY, *offsetx);
-
-  }*/
-  /* if((*sizey !=*osizey)){
-    if(*sizey>0){
-      RTCameraBaseLERR_ << "SETPOINT HEIGHT "<<*sizey<<" OUTPUT HEIGHT:"<<*osizey;
-      driver->setCameraProperty(HEIGHT_KEY, *sizey);
-    }else {
-        *sizey=*osizey;
-      }
-
-  } else if(*offsety!=*ooffsety){
-      RTCameraBaseLERR_ << "SETPOINT OFFSETY "<<*offsety<<" OUTPUT OFFSETY:"<<*ooffsety;
-      driver->setCameraProperty(OFFSETY_KEY, *offsety);
-
-  }*/
+ 
 
   if (buffering > 1) {
     // get the output attribute pointer form the internal cache
