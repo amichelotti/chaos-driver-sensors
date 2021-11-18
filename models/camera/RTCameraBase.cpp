@@ -467,7 +467,7 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
    *
    */
   addAttributeToDataSet("FMT", "image format (jpg,png,gif...)", chaos::DataType::TYPE_STRING, chaos::DataType::Bidirectional, 16);
-  if (buffering > 1) {
+  if (buffering > 0) {
     addAttributeToDataSet("CAPTURE_FRAMERATE", "Capture Frame Rate", chaos::DataType::TYPE_INT32, chaos::DataType::Output);
     addAttributeToDataSet("ENCODE_FRAMERATE", "Encode Frame Rate", chaos::DataType::TYPE_INT32, chaos::DataType::Output);
   }
@@ -602,7 +602,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   *ptrigger = false;
   *ppulse   = false;
 
-  if (buffering > 1) {
+  if (buffering > 0) {
     capture_frame_rate =
         cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, "CAPTURE_FRAMERATE");
     enc_frame_rate = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, "ENCODE_FRAMERATE");
@@ -710,7 +710,7 @@ void RTCameraBase::startGrabbing() {
   driver->startGrab(0);
   if (stopCapture == true) {
     stopCapture = false;
-    if (buffering > 1) {
+    if (buffering > 0) {
       capture_th = boost::thread(&RTCameraBase::captureThread, this);
     }
   }
@@ -719,7 +719,7 @@ void RTCameraBase::haltThreads() {
   int ret;
   RTCameraBaseLDBG_ << "Stop Grab low level:" << stopCapture;
   stopCapture = true;
-  if (buffering > 1) {
+  if (buffering > 0) {
     captureImg.unblock();
     encodedImg.unblock();
 
@@ -1220,7 +1220,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
   }
  
 
-  if (buffering > 1) {
+  if (buffering > 0) {
     // get the output attribute pointer form the internal cache
     if ((encode_time > 0) && (capture_time > 0)) {
       *enc_frame_rate     = (1000000 * counter_encode / encode_time);

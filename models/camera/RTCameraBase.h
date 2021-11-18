@@ -24,7 +24,7 @@
 #include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
 
 #define DEFAULT_RESOLUTION 640*480*3
-#define CAMERA_FRAME_BUFFERING 2
+#define CAMERA_FRAME_BUFFERING 1
 
 namespace cv {class Mat;}
 namespace driver{
