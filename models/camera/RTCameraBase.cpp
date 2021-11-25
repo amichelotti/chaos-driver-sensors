@@ -854,11 +854,32 @@ void RTCameraBase::captureThread() {
 
   RTCameraBaseLDBG_ << "Capture thread ENDED Queue:" << captureImg.length() << " has Stopped:" << hasStopped();
 }
-Mat rotate(Mat src, double angle) {
+Mat rotate(Mat src, int angle) {
   Mat     dst;
-  Point2f pt(src.cols / 2., src.rows / 2.);
-  Mat     r = getRotationMatrix2D(pt, angle, 1.0);
-  warpAffine(src, dst, r, Size(src.cols, src.rows));
+  if(angle==-90){
+    cv::rotate(src, dst, cv::ROTATE_90_CLOCKWISE);
+
+  } else if(angle==90){
+    cv::rotate(src, dst, cv::ROTATE_90_COUNTERCLOCKWISE);
+
+  }else if(angle==180){
+    cv::rotate(src, dst, cv::ROTATE_180);
+
+  }else if(angle==-270){
+    cv::rotate(src, dst, cv::ROTATE_90_CLOCKWISE);
+
+  } else if(angle==270){
+    cv::rotate(src, dst, cv::ROTATE_90_COUNTERCLOCKWISE);
+
+  } else {
+     Point2f pt(src.cols / 2., src.rows / 2.);
+    Mat     r = getRotationMatrix2D(pt, angle, 1.0);
+    cv::Rect2f bbox = cv::RotatedRect(cv::Point2f(), src.size(), angle).boundingRect2f();
+      // adjust transformation matrix
+    r.at<double>(0,2) += bbox.width/2.0 - src.cols/2.0;
+    r.at<double>(1,2) += bbox.height/2.0 - src.rows/2.0;
+    warpAffine(src, dst, r, Size(src.cols, src.rows));
+  }
   return dst;
 }
 void RTCameraBase::encodeThread() {
@@ -1008,8 +1029,9 @@ void RTCameraBase::encodeThread() {
             image = res;
           }
         }
-        if (*rot) {
-          image = rotate(image, *rot);
+        int rota=*rot%360;
+        if (rota) {
+          image = rotate(image, rota);
         }
         filtering(image);
         encbuf = new std::vector<unsigned char>();
