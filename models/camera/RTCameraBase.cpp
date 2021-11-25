@@ -858,7 +858,7 @@ Mat rotate(Mat src, int angle) {
   Mat     dst;
   if(angle==-90){
     cv::rotate(src, dst, cv::ROTATE_90_CLOCKWISE);
-
+    
   } else if(angle==90){
     cv::rotate(src, dst, cv::ROTATE_90_COUNTERCLOCKWISE);
 
