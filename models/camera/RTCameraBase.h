@@ -95,7 +95,7 @@ protected:
         chaos::common::thread::TLockFreeQueue< ::driver::sensor::camera::camera_buf_t*,CAMERA_FRAME_BUFFERING> captureImg;
         chaos::common::thread::TLockFreeQueue<encoded_t,CAMERA_FRAME_BUFFERING> encodedImg;
 
-        //boost::condition_variable wait_capture,wait_encode,full_capture,full_encode;
+
 
         //boost::lockfree::queue<::driver::sensor::camera::camera_buf_t*, boost::lockfree::fixed_sized<true> > captureImg;
         //boost::lockfree::queue<encoded_t, boost::lockfree::fixed_sized<true> > encodedImg;

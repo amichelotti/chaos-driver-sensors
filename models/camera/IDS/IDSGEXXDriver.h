@@ -60,7 +60,7 @@ class IDSGEXXDriver: public ::driver::sensor::camera::CameraDriverBridge {
      int propsToCamera(chaos::common::data::CDataWrapper*p);
      int cameraToProps(chaos::common::data::CDataWrapper*p);
     bool deinitialized;
-    boost::mutex lock;
+    ChaosMutex lock;
 public:
     double framerate,exposure;
     int32_t width,height,offsetx,offsety,gain,zoom,pixelclk,trgmode,old_size;

@@ -393,7 +393,7 @@ int IDSGEXXDriver::initializeCamera(
                      -> chaos::common::data::CDWUniquePtr {
                    IDSGEXXDriver *t = (IDSGEXXDriver *)thi;
                    if (p.hasKey(PROPERTY_VALUE_KEY)) {
-                     boost::mutex::scoped_lock ll(t->lock);
+                     ChaosLockGuard ll(t->lock);
 
                      int32_t val = p.getInt32Value(PROPERTY_VALUE_KEY);
                      if (val > t->camera.getWidthMax()) {
@@ -465,7 +465,7 @@ int IDSGEXXDriver::initializeCamera(
                      -> chaos::common::data::CDWUniquePtr {
                    IDSGEXXDriver *t = (IDSGEXXDriver *)thi;
                    if (p.hasKey(PROPERTY_VALUE_KEY)) {
-                     boost::mutex::scoped_lock ll(t->lock);
+                     ChaosLockGuard ll(t->lock);
 
                      int32_t val = p.getInt32Value(PROPERTY_VALUE_KEY);
                      if (val > t->camera.getHeightMax()) {
@@ -1185,7 +1185,7 @@ int IDSGEXXDriver::startGrab(uint32_t _shots, void *_framebuf,
   IDSGEXXDriverLDBG_ << "Start Grabbing";
   shots = _shots;
   fn = _fn;
-  boost::mutex::scoped_lock ll(lock);
+  ChaosLockGuard ll(lock);
 
   if (grabbing == false) {
     camera.initMemoryPool(4);
@@ -1211,7 +1211,7 @@ int IDSGEXXDriver::waitGrab(camera_buf_t **hostbuf, uint32_t timeout_ms) {
   int32_t ret = 0;
   size_t size_ret = 0;
   const char *buf = 0;
-  boost::mutex::scoped_lock ll(lock);
+  ChaosLockGuard ll(lock);
 
   if (grabbing == false) {
     return -10;
@@ -1238,7 +1238,7 @@ int IDSGEXXDriver::waitGrab(uint32_t timeout_ms) {
   return waitGrab(NULL, timeout_ms);
 }
 int IDSGEXXDriver::stopGrab() {
-  boost::mutex::scoped_lock ll(lock);
+  ChaosLockGuard ll(lock);
   grabbing = false;
   camera.destroyMemoryPool();
 
@@ -1354,7 +1354,7 @@ IDSGEXXDriver::setDrvProperties(chaos::common::data::CDWUniquePtr prop) {
       // stopGrab();
       IDSGEXXDriverLDBG_ << "Performing AOI (rounded )" << w << "x" << h << "("
                          << x << "," << y << ")";
-      boost::mutex::scoped_lock ll(lock);
+      ChaosLockGuard ll(lock);
 
       if (camera.setAOI(x, y, w, h) == 0) {
         prop->removeKey("OFFSETX");
