@@ -827,12 +827,14 @@ void RTCameraBase::captureThread() {
 
     } else {
       if (stopCapture == false) {
-        if ((ret == chaos::ErrorCode::EC_GENERIC_TIMEOUT)&&(mode!=CAMERA_TRIGGER_SINGLE)) {
-          RTCameraBaseLERR_ << " wait returned:" << ret
-                            << " timeout stopped:" << stopCapture;
-          setStateVariableSeverity(
-              StateVariableTypeAlarmDEV, "capture_timeout", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
-
+        if ((ret == chaos::ErrorCode::EC_GENERIC_TIMEOUT)) {
+          if(mode!=CAMERA_TRIGGER_SINGLE){
+            RTCameraBaseLERR_ << " wait returned:" << ret
+                              << " timeout stopped:" << stopCapture;
+            setStateVariableSeverity(
+                StateVariableTypeAlarmDEV, "capture_timeout", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
+          }
+          continue;
         } else if (ret == CAMERA_GRAB_STOP) {
           metadataLogging(chaos::common::metadata_logging::StandardLoggingChannel::LogLevelError, "unexplectly driver stopped grabbing");
           haltThreads();
