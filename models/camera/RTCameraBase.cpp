@@ -311,7 +311,7 @@ bool RTCameraBase::setCamera(const std::string &name, bool value, uint32_t size)
   } else if (name == "PULSE") {
     /*return setDrvProp(TRIGGER_MODE_KEY, (value == false) ? CAMERA_TRIGGER_CONTINOUS
                                                       : CAMERA_TRIGGER_SINGLE);*/
-    return setDrvProp(TRIGGER_MODE_KEY, (value == false) ? CAMERA_TRIGGER_CONTINOUS : CAMERA_TRIGGER_HW_HI);
+    return setDrvProp(TRIGGER_MODE_KEY, (value == false) ? CAMERA_TRIGGER_CONTINOUS : CAMERA_TRIGGER_SINGLE);
   }
   return false;
 }
@@ -344,7 +344,7 @@ bool RTCameraBase::setDrvProp(const std::string &name, int32_t value, uint32_t s
   if (stopgrab && (hasStopped() == false)) {
     stopGrabbing();
   }
-  if ((name == TRIGGER_MODE_KEY) && (value == CAMERA_TRIGGER_SINGLE) || (value == CAMERA_TRIGGER_SOFT)) {
+  if ((name == TRIGGER_MODE_KEY) && (value == CAMERA_TRIGGER_SINGLE) ) {
     *ppulse = true;
 
     //is equal to an HW trigger.
@@ -357,17 +357,16 @@ bool RTCameraBase::setDrvProp(const std::string &name, int32_t value, uint32_t s
     ss << "error setting \"" << name << "\" to " << value << " ret:" << ret;
     setStateVariableSeverity(
         StateVariableTypeAlarmDEV, "error_setting_property", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
-    metadataLogging(
+   /* metadataLogging(
         chaos::common::metadata_logging::StandardLoggingChannel::LogLevelError,
-        ss.str());
+        ss.str());*/
   }
+    int32_t *pmode = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, name);
 
   if ((name == TRIGGER_MODE_KEY)) {
     // updateProperty();
     driver->getCameraProperty(name, valuer);
-    int32_t *pmode = cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, name);
 
-    mode = *pmode = valuer;
     switch (mode) {
       case CAMERA_DISABLE_ACQUIRE:
         getAttributeCache()->setInputAttributeValue("ACQUIRE", false);
@@ -394,7 +393,7 @@ bool RTCameraBase::setDrvProp(const std::string &name, int32_t value, uint32_t s
     }
   }
   RTCameraBaseLDBG_ << "SET IPROP:" << name << " SET VALUE:" << value
-                    << " READ VALUE:" << valuer << " ret:" << ret;
+                    << " READ VALUE:" << valuer << " ret:" << ret<< " mode:"<<mode;
   if (hasStopped() == false) {
     if (stopgrab &&
         !((name == TRIGGER_MODE_KEY) && (value == CAMERA_DISABLE_ACQUIRE))) {
@@ -405,7 +404,8 @@ bool RTCameraBase::setDrvProp(const std::string &name, int32_t value, uint32_t s
     }
   }
   updateDatasetFromDriverProperty();
-
+  mode = *pmode = ((value!=CAMERA_TRIGGER_SINGLE)?valuer:CAMERA_TRIGGER_SINGLE);
+  pushOutputDataset();
   return (ret == 0);
 }
 
@@ -803,7 +803,7 @@ void RTCameraBase::captureThread() {
     img   = 0;
     start = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
 
-    ret = driver->waitGrab(&img, ((*ppulse) ? 0 : trigger_timeout));
+    ret = driver->waitGrab(&img, trigger_timeout);
 
     if ((img != 0) && (ret > 0)) {
       // keep alarm high
@@ -827,7 +827,7 @@ void RTCameraBase::captureThread() {
 
     } else {
       if (stopCapture == false) {
-        if (ret == chaos::ErrorCode::EC_GENERIC_TIMEOUT) {
+        if ((ret == chaos::ErrorCode::EC_GENERIC_TIMEOUT)&&(mode!=CAMERA_TRIGGER_SINGLE)) {
           RTCameraBaseLERR_ << " wait returned:" << ret
                             << " timeout stopped:" << stopCapture;
           setStateVariableSeverity(
@@ -839,11 +839,12 @@ void RTCameraBase::captureThread() {
           setStateVariableSeverity(
               StateVariableTypeAlarmDEV, "capture_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
         } else if (ret < 0) {
-          RTCameraBaseLERR_ << " Error wait returned:" << ret;
-          std::string error = driver->getLastError();
-          if (error.size()) {
+            std::string error = driver->getLastError();
+
+          RTCameraBaseLERR_ << " Error wait returned:" << ret<<" error:"<<error;
+          /*if (error.size()) {
             metadataLogging(chaos::common::metadata_logging::StandardLoggingChannel::LogLevelError, error);
-          }
+          }*/
           setStateVariableSeverity(
               StateVariableTypeAlarmDEV, "capture_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
           usleep(100000);

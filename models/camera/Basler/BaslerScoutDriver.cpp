@@ -1105,17 +1105,31 @@ int BaslerScoutDriver::initializeCamera(
             chaos::common::data::CDWUniquePtr ret(
                 new chaos::common::data::CDataWrapper());
             t->getProperty("TriggerMode", ton, true);
-            LDBG_ << name <<"- Trigger Mode:" << ton;
+            LDBG_ << name <<"- Read Trigger Mode:" << ton<<" tmode="<<t->tmode;
             if (ton == "On") {
               std::string tsource;
               t->getProperty("TriggerSource", tsource, true);
               LDBG_ << name << " Trigger Mode:" << tsource;
 
               if (tsource.find("Line") != std::string::npos) {
-                ret->addInt32Value(PROPERTY_VALUE_KEY, CAMERA_TRIGGER_HW_HI);
+                if(t->tmode==CAMERA_TRIGGER_SINGLE){
+                  ret->addInt32Value(PROPERTY_VALUE_KEY,CAMERA_TRIGGER_SINGLE);
+                } else {
+                  t->getProperty("TriggerActivation", tsource);
+                  if( tsource =="RisingEdge"){
+                    ret->addInt32Value(PROPERTY_VALUE_KEY, CAMERA_TRIGGER_HW_HI);
+                      t->tmode= CAMERA_TRIGGER_HW_HI;
+                  } else if(tsource=="FallingEdge"){
+                    ret->addInt32Value(PROPERTY_VALUE_KEY,CAMERA_TRIGGER_HW_LOW);
+                    t->tmode= CAMERA_TRIGGER_HW_LOW;
+                  }
+
+                }
               }
               if (tsource.find("Software") != std::string::npos) {
                 ret->addInt32Value(PROPERTY_VALUE_KEY, CAMERA_TRIGGER_SOFT);
+                t->tmode= CAMERA_TRIGGER_SOFT;
+
               }
               if (tsource.find("Counter") != std::string::npos) {
                 ret->addInt32Value(PROPERTY_VALUE_KEY, CAMERA_TRIGGER_COUNTER);
@@ -1125,6 +1139,8 @@ int BaslerScoutDriver::initializeCamera(
               }
             } else {
               ret->addInt32Value(PROPERTY_VALUE_KEY, CAMERA_TRIGGER_CONTINOUS);
+              t->tmode= CAMERA_TRIGGER_CONTINOUS;
+
             }
             ret->addInt32Value(PROPERTY_VALUE_MAX_KEY, CAMERA_UNDEFINED - 1);
             ret->addInt32Value(PROPERTY_VALUE_MIN_KEY, 0);
@@ -1176,7 +1192,9 @@ int BaslerScoutDriver::initializeCamera(
 
                 break;
               }
+               t->tmode=(driver::sensor::camera::TriggerModes)trigger_mode;
               }
+             
               return p.clone();
             }
             LERR_ << " not value in property: " << name;
@@ -1258,7 +1276,7 @@ BaslerScoutDriver::BaslerScoutDriver():camerap(NULL),shots(0),framebuf(NULL),fn(
 }
 */
 
-BaslerScoutDriver::BaslerScoutDriver() {
+BaslerScoutDriver::BaslerScoutDriver():waitobjref(NULL) {
   camerap = NULL;
   shots = 0;
   fn = NULL;
@@ -1734,31 +1752,47 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
 
     return -1;
   }
-  /*if (stopGrabbing) {
+  waitobjref=NULL;
+  uint32_t tim;
+  if (stopGrabbing) {
     BaslerScoutDriverLERR_ << "Grabbing is stopped ";
     return CAMERA_GRAB_STOP;
-  }*/
+  }
   try {
     Pylon::CGrabResultPtr ptrGrabResult;
-    if(timeout_ms==0){
-      timeout_ms = 1000*60*3600; // 0 means for ever, map to an 1h 
-    }
     if (tmode > CAMERA_TRIGGER_SINGLE) {
+      BaslerScoutDriverLDBG_ << "Wait for "<<timeout_ms<<" tmode:"<<tmode;
       if (camerap->WaitForFrameTriggerReady(timeout_ms,TimeoutHandling_Return
                                             /*TimeoutHandling_ThrowException*/)) {
         if (tmode == CAMERA_TRIGGER_SOFT) {
           camerap->ExecuteSoftwareTrigger();
         }
       } else {
-        BaslerScoutDriverLERR_ << "TRIGGER TIMEOUT : ";
+        BaslerScoutDriverLERR_ << "TRIGGER TIMEOUT : "<<timeout_ms<< " ms mode:"<<tmode;
 
         return chaos::ErrorCode::EC_GENERIC_TIMEOUT;
       }
 
-      while ((camerap->GetGrabResultWaitObject().Wait(0) == 0) &&
+     /* while ((camerap->GetGrabResultWaitObject().Wait(0) == 0) &&
              (stopGrabbing == false)) {
-        WaitObject::Sleep(1);
+          if((timeout_ms-=1000) >0){
+              WaitObject::Sleep(1);
+          } else {
+             BaslerScoutDriverLERR_ << "TRIGGER TIMEOUT AFTER ACTIVE WAIT: "<<timeout_ms<< " ms mode:"<<tmode;
+
+            return chaos::ErrorCode::EC_GENERIC_TIMEOUT;
+          }
+      }*/
+      waitobjref=(Pylon::WaitObject*)&(camerap->GetGrabResultWaitObject());
+
+      if((waitobjref->Wait(timeout_ms)) == 0){
+         BaslerScoutDriverLERR_ << "GRAB TIMEOUT AFTER WAIT: "<<timeout_ms<< " ms mode:"<<tmode;
+          return chaos::ErrorCode::EC_GENERIC_TIMEOUT;
       }
+      
+    }
+    if(stopGrabbing){
+     return CAMERA_GRAB_STOP;
     }
     int nBuffersInQueue = 0;
     if (camerap->RetrieveResult(timeout_ms, ptrGrabResult,
@@ -1880,9 +1914,12 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
       results from output queue.";
   */
   } catch (const GenericException &e) {
+     std::stringstream ss;
+    ss << "An exception occurred during Wait:" << " msg:" << e.GetDescription();
+    BaslerScoutDriverLERR_ << ss.str();
+    setLastError(ss.str());
     // Error handling.
-    BaslerScoutDriverLERR << "An exception occurred during wait :"
-                          << e.GetDescription();
+  
     return -300;
   } catch (...) {
     BaslerScoutDriverLERR << "An Uknown exception occurre during wait";
@@ -1895,8 +1932,8 @@ int BaslerScoutDriver::waitGrab(uint32_t timeout_ms) {
   return waitGrab((camera_buf_t **)NULL, timeout_ms);
 }
 int BaslerScoutDriver::stopGrab() {
-  BaslerScoutDriverLDBG_ << "Stop  Grabbing";
-
+  BaslerScoutDriverLDBG_ << "Stop  Grabbing, unblock waiting";
+ 
   stopGrabbing = true;
   if(camerap->IsGrabbing()){
     camerap->StopGrabbing();

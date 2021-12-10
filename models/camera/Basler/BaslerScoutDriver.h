@@ -25,6 +25,7 @@
 #include <driver/sensors/core/CameraDriverBridge.h>
 #include <chaos/common/data/DatasetDB.h>
 #include <stdint.h>
+//#include <pylon/PylonIncludes.h>
 namespace cu_driver = chaos::cu::driver_manager::driver;
 
 /*
@@ -33,6 +34,7 @@ namespace cu_driver = chaos::cu::driver_manager::driver;
 DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(BaslerScoutDriver)
 namespace Pylon{
   class CInstantCamera;
+  class WaitObject;
 
 };
 namespace driver {
@@ -61,7 +63,8 @@ class BaslerScoutDriver:public ::driver::sensor::camera::CameraDriverBridge {
      //int getNode(const std::string &node_name, Pylon::CInstantCamera *camera, double &percent,const std::string pub="");
 
     //int getNodeInPercentage(const std::string &node_name, Pylon::CInstantCamera*camera, float &percent,const std::string& pub="");
-    
+     Pylon::WaitObject* waitobjref;
+     
 public:
     int setNode(const std::string &node_name,bool val);
     int setNode(const std::string &node_name, std::string val);
