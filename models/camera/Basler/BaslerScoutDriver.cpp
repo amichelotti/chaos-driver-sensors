@@ -442,7 +442,7 @@ int BaslerScoutDriver::getNode(const std::string &node_name, std::string &val) {
   return 0;
 }
 
-int BaslerScoutDriver::getNode(const std::string &node_name, bool &val) {
+int BaslerScoutDriver::getNode(const std::string &node_name, bool& val) {
   try {
     std::stringstream ss;
     BaslerScoutDriverLDBG_ << "getting bool node:" << node_name;
@@ -760,29 +760,29 @@ public:
       },                                                                       \
       pub);
 
-#define CREATE_PROP(n, pub, type)                                              \
+#define CREATE_PROP(n, pub, typ)                                              \
   createProperty(n,                                                            \
                  [](AbstractDriver *thi, const std::string &name,              \
                     const chaos::common::data::CDataWrapper &p)                \
                      -> chaos::common::data::CDWUniquePtr {                    \
-                   type val, max, min, inc;                                    \
-                   if (((BaslerScoutDriver *)thi)->getNode(name, val) == 0) {  \
+                   typ _val;                                    \
+                   if (((BaslerScoutDriver *)thi)->getNode(name, _val) == 0) {  \
                      chaos::common::data::CDWUniquePtr ret(                    \
                          new chaos::common::data::CDataWrapper());             \
-                     ret->append(PROPERTY_VALUE_KEY, val);                                \
+                     ret->append(PROPERTY_VALUE_KEY, _val);                                \
                      return ret;                                               \
                    }                                                           \
-                   BaslerScoutDriverLERR << " cannot get " #type << " "        \
+                   BaslerScoutDriverLERR << " cannot get " #typ << " "        \
                                          << name;                              \
                    return chaos::common::data::CDWUniquePtr();                 \
                  },                                                            \
                  [](AbstractDriver *thi, const std::string &name,              \
                     const chaos::common::data::CDataWrapper &p)                \
                      -> chaos::common::data::CDWUniquePtr {                    \
-                   type val = p.getValue<type>(PROPERTY_VALUE_KEY);                       \
-                   if (((BaslerScoutDriver *)thi)->setNode(name, val) != 0) {  \
-                     BaslerScoutDriverLERR << " cannot set " #type << " "      \
-                                           << name << " to:" << val;           \
+                   typ _val = p.getValue<typ>(PROPERTY_VALUE_KEY);                       \
+                   if (((BaslerScoutDriver *)thi)->setNode(name, _val) != 0) {  \
+                     BaslerScoutDriverLERR << " cannot set " #typ << " "      \
+                                           << name << " to:" << _val;           \
                      return chaos::common::data::CDWUniquePtr();               \
                    }                                                           \
                    return p.clone();                                           \
@@ -1021,9 +1021,19 @@ int BaslerScoutDriver::initializeCamera(
       CREATE_VALUE_PROP("Height", "HEIGHT", int32_t)
       CREATE_VALUE_PROP("OffsetX", "OFFSETX", int32_t);
       CREATE_VALUE_PROP("OffsetY", "OFFSETY", int32_t);
+   //   CREATE_PROP("ReverseX", "", bool);
+   //   CREATE_PROP("ReverseY", "", bool);
       CREATE_VALUE_PROP("AcquisitionFrameRateAbs", "FRAMERATE", double);
       CREATE_VALUE_PROP("GainRaw", "GAIN", int32_t);
       CREATE_VALUE_PROP("ExposureTimeRaw", "SHUTTER", int32_t);
+      
+      CREATE_PROP("ExposureTimeAbs", "", double);
+      CREATE_PROP("ExposureTimeBaseAbs", "", double);
+      CREATE_PROP("ExposureMode","",std::string);
+      CREATE_PROP("ShutterMode","",std::string);
+
+    //  CREATE_PROP("ExposureTimeBaseAbsEnable", "", bool);
+       
       CREATE_VALUE_PROP("BslBrightness", "BRIGHTNESS", double);
 
       CREATE_VALUE_PROP("BslContrast", "CONTRAST", double);
@@ -1090,7 +1100,7 @@ int BaslerScoutDriver::initializeCamera(
       CREATE_PROP("TestImageSelector", "", std::string);
       CREATE_PROP("GainAuto", "", std::string);
       CREATE_PROP("ExposureAuto", "", std::string);
-      CREATE_PROP("GammaEnable", "", bool);
+    //  CREATE_PROP("GammaEnable", "", bool);
 
       CREATE_VALUE_PROP("Gamma", "", double);
 

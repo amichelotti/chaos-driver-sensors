@@ -71,7 +71,7 @@ public:
     int setNode(const std::string &node_name,int32_t val);
     int setNode(const std::string &node_name, double val);
     int getNode(const std::string &node_name, std::string&val);
-    int getNode(const std::string &node_name, bool&val);
+    int getNode(const std::string &node_name, bool& val);
 
     int getNode(const std::string &node_name, double &val,double&max,double& min,double& inc);
     int getNode(const std::string &node_name, int32_t &val,int32_t&max,int32_t& min,int32_t& inc);

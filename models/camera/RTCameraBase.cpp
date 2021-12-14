@@ -365,7 +365,6 @@ bool RTCameraBase::setDrvProp(const std::string &name, int32_t value, uint32_t s
 
   if ((name == TRIGGER_MODE_KEY)) {
     // updateProperty();
-    driver->getCameraProperty(name, valuer);
 
     switch (mode) {
       case CAMERA_DISABLE_ACQUIRE:
@@ -392,8 +391,7 @@ bool RTCameraBase::setDrvProp(const std::string &name, int32_t value, uint32_t s
         break;
     }
   }
-  RTCameraBaseLDBG_ << "SET IPROP:" << name << " SET VALUE:" << value
-                    << " READ VALUE:" << valuer << " ret:" << ret<< " mode:"<<mode;
+  RTCameraBaseLDBG_ << "SET IPROP:" << name << " SET VALUE:" << value << " ret:" << ret<< " mode:"<<mode;
   if (hasStopped() == false) {
     if (stopgrab &&
         !((name == TRIGGER_MODE_KEY) && (value == CAMERA_DISABLE_ACQUIRE))) {
@@ -404,7 +402,12 @@ bool RTCameraBase::setDrvProp(const std::string &name, int32_t value, uint32_t s
     }
   }
   updateDatasetFromDriverProperty();
-  mode = *pmode = ((value!=CAMERA_TRIGGER_SINGLE)?valuer:CAMERA_TRIGGER_SINGLE);
+  if ((name == TRIGGER_MODE_KEY)) {
+    driver->getCameraProperty(name, valuer);
+
+    mode = *pmode = ((value!=CAMERA_TRIGGER_SINGLE)?valuer:CAMERA_TRIGGER_SINGLE);
+  }
+
   pushOutputDataset();
   return (ret == 0);
 }
@@ -1267,7 +1270,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
     std::vector<unsigned char> *a;
     // RTCameraBaseLDBG_ << "popping encode queue:"<<encodedImg.length();
 
-    int ret = encodedImg.wait_and_pop(ele);
+    int ret = encodedImg.wait_and_pop(ele,trigger_timeout);
     if ((ret >= 0) && ele.img) {
       a = ele.img;
       //  RTCameraBaseLDBG_ << " Encode Queue:" << encodedImg.length()<< " Capture Queue:" << captureImg.length();
