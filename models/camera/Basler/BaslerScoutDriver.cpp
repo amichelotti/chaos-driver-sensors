@@ -1021,18 +1021,18 @@ int BaslerScoutDriver::initializeCamera(
       CREATE_VALUE_PROP("Height", "HEIGHT", int32_t)
       CREATE_VALUE_PROP("OffsetX", "OFFSETX", int32_t);
       CREATE_VALUE_PROP("OffsetY", "OFFSETY", int32_t);
-   //   CREATE_PROP("ReverseX", "", bool);
-   //   CREATE_PROP("ReverseY", "", bool);
+      CREATE_PROP("ReverseX", "", bool);
+      CREATE_PROP("ReverseY", "", bool);
       CREATE_VALUE_PROP("AcquisitionFrameRateAbs", "FRAMERATE", double);
       CREATE_VALUE_PROP("GainRaw", "GAIN", int32_t);
       CREATE_VALUE_PROP("ExposureTimeRaw", "SHUTTER", int32_t);
       
-      CREATE_PROP("ExposureTimeAbs", "", double);
-      CREATE_PROP("ExposureTimeBaseAbs", "", double);
+      CREATE_VALUE_PROP("ExposureTimeAbs", "", double);
+      CREATE_VALUE_PROP("ExposureTimeBaseAbs", "", double);
       CREATE_PROP("ExposureMode","",std::string);
       CREATE_PROP("ShutterMode","",std::string);
 
-    //  CREATE_PROP("ExposureTimeBaseAbsEnable", "", bool);
+      CREATE_PROP("ExposureTimeBaseAbsEnable", "", bool);
        
       CREATE_VALUE_PROP("BslBrightness", "BRIGHTNESS", double);
 
@@ -1100,7 +1100,7 @@ int BaslerScoutDriver::initializeCamera(
       CREATE_PROP("TestImageSelector", "", std::string);
       CREATE_PROP("GainAuto", "", std::string);
       CREATE_PROP("ExposureAuto", "", std::string);
-    //  CREATE_PROP("GammaEnable", "", bool);
+      CREATE_PROP("GammaEnable", "", bool);
 
       CREATE_VALUE_PROP("Gamma", "", double);
 
