@@ -1286,7 +1286,7 @@ BaslerScoutDriver::BaslerScoutDriver():camerap(NULL),shots(0),framebuf(NULL),fn(
 }
 */
 
-BaslerScoutDriver::BaslerScoutDriver():waitobjref(NULL) {
+BaslerScoutDriver::BaslerScoutDriver() {
   camerap = NULL;
   shots = 0;
   fn = NULL;
@@ -1762,7 +1762,6 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
 
     return -1;
   }
-  waitobjref=NULL;
   uint32_t tim;
   if (stopGrabbing) {
     BaslerScoutDriverLERR_ << "Grabbing is stopped ";
@@ -1772,8 +1771,8 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
     Pylon::CGrabResultPtr ptrGrabResult;
     if (tmode > CAMERA_TRIGGER_SINGLE) {
       BaslerScoutDriverLDBG_ << "Wait for "<<timeout_ms<<" tmode:"<<tmode;
-      if (camerap->WaitForFrameTriggerReady(timeout_ms,TimeoutHandling_Return
-                                            /*TimeoutHandling_ThrowException*/)) {
+      /*if (camerap->WaitForFrameTriggerReady(timeout_ms,TimeoutHandling_Return
+                                            )) {
         if (tmode == CAMERA_TRIGGER_SOFT) {
           camerap->ExecuteSoftwareTrigger();
         }
@@ -1781,24 +1780,25 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
         BaslerScoutDriverLERR_ << "TRIGGER TIMEOUT : "<<timeout_ms<< " ms mode:"<<tmode;
 
         return chaos::ErrorCode::EC_GENERIC_TIMEOUT;
-      }
+      }*/
 
-     /* while ((camerap->GetGrabResultWaitObject().Wait(0) == 0) &&
+      while ((camerap->GetGrabResultWaitObject().Wait(1000) == 0) &&
              (stopGrabbing == false)) {
           if((timeout_ms-=1000) >0){
-              WaitObject::Sleep(1);
+            //  WaitObject::Sleep(1000);
           } else {
              BaslerScoutDriverLERR_ << "TRIGGER TIMEOUT AFTER ACTIVE WAIT: "<<timeout_ms<< " ms mode:"<<tmode;
 
             return chaos::ErrorCode::EC_GENERIC_TIMEOUT;
           }
-      }*/
+      }
+      /*
       waitobjref=(Pylon::WaitObject*)&(camerap->GetGrabResultWaitObject());
 
       if((waitobjref->Wait(timeout_ms)) == 0){
          BaslerScoutDriverLERR_ << "GRAB TIMEOUT AFTER WAIT: "<<timeout_ms<< " ms mode:"<<tmode;
           return chaos::ErrorCode::EC_GENERIC_TIMEOUT;
-      }
+      }*/
       
     }
     if(stopGrabbing){
@@ -1928,6 +1928,7 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
     ss << "An exception occurred during Wait:" << " msg:" << e.GetDescription();
     BaslerScoutDriverLERR_ << ss.str();
     setLastError(ss.str());
+    
     // Error handling.
   
     return -300;
