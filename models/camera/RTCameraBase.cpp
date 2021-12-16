@@ -1201,17 +1201,25 @@ RTCameraBase::unitPerformCalibration(chaos::common::data::CDWUniquePtr data) {
   applyCalib           = false;
   performAutoReference = false;
   fit_threshold        = 0;
-  if (data.get() && data->hasKey("autoreference")) {
-    performAutoReference = true;
+  if (data.get()){
+      if(data->hasKey("autoreference")) {
+        performAutoReference = true;
 
-    int threshold = 0;
-    if (data->hasKey("threshold")) {
-      fit_threshold = data->getInt32Value("threshold");
+        int threshold = 0;
+        if (data->hasKey("threshold")) {
+          fit_threshold = data->getInt32Value("threshold");
+        }
+        if (data->hasKey("fit_level")) {
+          fit_level = data->getInt32Value("fit_level");
+        }
+        return chaos::common::data::CDWUniquePtr();
     }
-    if (data->hasKey("fit_level")) {
-      fit_level = data->getInt32Value("fit_level");
+    if(data->hasKey("calibration")&&data->isBoolValue("calibration")&&(data->getBoolValue("calibration")==false)) {
+          applyCalib = false;
+        performCalib = false;
+
+        return chaos::common::data::CDWUniquePtr();
     }
-    return chaos::common::data::CDWUniquePtr();
   }
   performCalib = true;
   RTCameraBaseLDBG_ << "Perform calibration";
