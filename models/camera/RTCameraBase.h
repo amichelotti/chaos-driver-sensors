@@ -55,7 +55,6 @@ protected:
         int refenceThick,refenceR,refenceG,refenceB;
         
 
-        std::string calibimage;
         ChaosUniquePtr< ::common::misc::data::SharedMem> shared_mem;
         int32_t *sizex,*sizey,*offsetx,*offsety,*osizex,*osizey,*ooffsetx,*ooffsety;
         // if >0 then this is the camera window created, each grab should fit this size.

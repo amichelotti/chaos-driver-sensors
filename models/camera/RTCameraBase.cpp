@@ -203,10 +203,13 @@ RTCameraBase::RTCameraBase(const string &               _control_unit_id,
                 std::vector<uchar> data = std::vector<uchar>(buf, buf + size);
                 cv::Mat sub=cv::imdecode(data,IMREAD_ANYCOLOR | IMREAD_ANYDEPTH);
                 if (sub.data) {
+                  if(((RTCameraBase*)thi)->subImage){
+                     delete ((RTCameraBase*)thi)->subImage;
+                  }
                   ((RTCameraBase*)thi)->subImage = new cv::Mat(sub);
-                  LDBG_ << " Loading CALIB DATA:" << ((RTCameraBase*)thi)->calibimage;
+                  LDBG_ << " Loading CALIB DATA";
                 } else {
-                  LERR_ << " CALIB DATA does not exists:" << ((RTCameraBase*)thi)->calibimage;
+                  LERR_ << " CALIB DATA does not exists";
                 }
               }
 
@@ -1228,7 +1231,20 @@ RTCameraBase::unitPerformCalibration(chaos::common::data::CDWUniquePtr data) {
   while (performCalib) {
     usleep(100000);
   }
-      
+  chaos::common::data::CDWUniquePtr calibrazione=  loadData("calibration_image");
+  uint32_t size;
+  const char * buf=calibrazione->getBinaryValue("FRAMEBUFFER",size);
+  std::vector<uchar> dimg = std::vector<uchar>(buf, buf + size);
+  cv::Mat sub=cv::imdecode(dimg,IMREAD_ANYCOLOR | IMREAD_ANYDEPTH);
+  if (sub.data) {
+    if(subImage){
+      delete subImage;
+    }
+    subImage = new cv::Mat(sub);
+    LDBG_ << " Loading CALIB DATA" ;
+  } else {
+    LERR_ << " CALIB DATA does not exists";
+  }  
   applyCalib = true;
 
   removeTag("CALIBRATION");
