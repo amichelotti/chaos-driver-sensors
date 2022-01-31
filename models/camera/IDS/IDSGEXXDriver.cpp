@@ -41,8 +41,7 @@ using namespace ::driver::sensor::camera;
   LERR_ << "[IDSGEXXDriver:" << __PRETTY_FUNCTION__ << "]-" << t->serial << "-"
 // GET_PLUGIN_CLASS_DEFINITION
 // we need only to define the driver because we don't are makeing a plugin
-OPEN_CU_DRIVER_PLUGIN_CLASS_DEFINITION(IDSGEXXDriver, 1.0.0,
-                                       ::driver::sensor::camera::IDSGEXXDriver)
+OPEN_CU_DRIVER_PLUGIN_CLASS_DEFINITION(IDSGEXXDriver, 1.0.0,::driver::sensor::camera::IDSGEXXDriver)
 REGISTER_CU_DRIVER_PLUGIN_CLASS_INIT_ATTRIBUTE(
     ::driver::sensor::camera::IDSGEXXDriver, http_address / dnsname
     : port)
