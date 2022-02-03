@@ -52,8 +52,9 @@ protected:
         const int buffering;
         cv::Mat* subImage;
         bool applyCalib,performCalib,applyReference;
-        int refenceThick,refenceR,refenceG,refenceB;
-        
+        int refenceThick,refenceR,refenceG,refenceB,calibrationImages;
+        std::vector<cv::Mat> calibimages;
+        cv::Mat getMean(const std::vector<cv::Mat>& images);
 
         ChaosUniquePtr< ::common::misc::data::SharedMem> shared_mem;
         int32_t *sizex,*sizey,*offsetx,*offsety,*osizex,*osizey,*ooffsetx,*ooffsety;

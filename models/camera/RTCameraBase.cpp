@@ -108,7 +108,7 @@ RTCameraBase::RTCameraBase(const string &               _control_unit_id,
                            const string &               _control_unit_param,
                            const ControlUnitDriverList &_control_unit_drivers,
                            const int                    _buffering)
-    : RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers), driver(NULL), framebuf_encoding(CV_8UC3), buffering(_buffering), encode_time(0), capture_time(0), network_time(0), hw_trigger_timeout_us(5000000), sw_trigger_timeout_us(0), imagesizex(0), imagesizey(0), apply_resize(false), trigger_timeout(5000), bpp(3), stopCapture(true), stopEncoding(true), subImage(NULL), performCalib(false), applyCalib(false), applyReference(false), refenceThick(2), refenceR(0), refenceG(255), refenceB(0) {
+    : RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers), driver(NULL), framebuf_encoding(CV_8UC3), buffering(_buffering), encode_time(0), capture_time(0), network_time(0), hw_trigger_timeout_us(5000000), sw_trigger_timeout_us(0), imagesizex(0), imagesizey(0), apply_resize(false), trigger_timeout(5000), bpp(3), stopCapture(true), stopEncoding(true), subImage(NULL), performCalib(false), applyCalib(false),calibrationImages(1), applyReference(false), refenceThick(2), refenceR(0), refenceG(255), refenceB(0) {
   RTCameraBaseLDBG_ << "Creating " << _control_unit_id
                     << " params:" << _control_unit_param;
 
@@ -187,6 +187,7 @@ RTCameraBase::RTCameraBase(const string &               _control_unit_id,
   CREATE_CU_INT_PROP("referenceG", "referenceG", refenceG, 0, 255, 1, RTCameraBase);
   CREATE_CU_INT_PROP("referenceB", "referenceB", refenceB, 0, 255, 1, RTCameraBase);
   CREATE_CU_BOOL_PROP("performCalib", "performCalib", performCalib, RTCameraBase);
+  CREATE_CU_INT_PROP("calibrationImages", "calibrationImages", calibrationImages,0,1000,1, RTCameraBase);
 
   createProperty(
       "apply_calib", applyCalib, "apply_calib", [](AbstractControlUnit *thi, const std::string &name, const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
@@ -229,6 +230,32 @@ RTCameraBase::~RTCameraBase() {
   if (subImage) {
     delete subImage;
   }
+}
+
+cv::Mat RTCameraBase::getMean(const std::vector<cv::Mat>& images)
+{
+    if (images.empty()) return cv::Mat();
+
+    // Create a 0 initialized image to use as accumulator
+    cv::Mat m(images[0].rows, images[0].cols, CV_64FC3);
+    m.setTo(Scalar(0,0,0,0));
+
+    // Use a temp image to hold the conversion of each input image to CV_64FC3
+    // This will be allocated just the first time, since all your images have
+    // the same size.
+    Mat temp;
+    for (int i = 0; i < images.size(); ++i)
+    {
+        // Convert the input images to CV_64FC3 ...
+        images[i].convertTo(temp, CV_64FC3);
+
+        // ... so you can accumulate
+        m += temp;
+    }
+
+    // Convert back to CV_8UC3 type, applying the division to get the actual mean
+    m.convertTo(m, CV_8U, 1. / images.size());
+    return m;
 }
 void RTCameraBase::updateProperty() {
   std::vector<std::string>          props;
@@ -982,29 +1009,15 @@ void RTCameraBase::encodeThread() {
           }
         }
         if (performCalib) {
-          RTCameraBaseLDBG_ << "Calibrate";
           if (image.data) {
-            if (subImage) {
-              delete subImage;
-            }
-            subImage = new cv::Mat(image);
-            std::vector<unsigned char> encbuf;
-            bool                       code = cv::imencode(encoding, image, encbuf, encode_params);
-            if (code) {
-                uchar *ptr = reinterpret_cast<uchar *>(&(encbuf[0]));
-                chaos::common::data::CDataWrapper cal;
-                cal.addBinaryValue("FRAMEBUFFER",(const char*)ptr, encbuf.size());
-                saveData("calibration_image",cal);
-                //getAttributeCache()->setCustomAttributeValue("FRAMEBUFFER", ptr, encbuf.size());
-                //getAttributeCache()->setCustomDomainAsChanged();
-
-                //pushCustomDataset();
-              }
+           if(calibimages.size()<calibrationImages) {
+              calibimages.push_back(cv::Mat(image));
+              RTCameraBaseLDBG_ << "Calibration images:"<<calibimages.size();
+           }
               
            
           }
 
-          performCalib = false;
         }
       } catch (cv::Exception &ex) {
         std::stringstream ss;
@@ -1220,32 +1233,48 @@ RTCameraBase::unitPerformCalibration(chaos::common::data::CDWUniquePtr data) {
     if(data->hasKey("calibration")&&data->isBoolValue("calibration")&&(data->getBoolValue("calibration")==false)) {
           applyCalib = false;
         performCalib = false;
-
+        if(data->hasKey("samples")){
+          calibrationImages=data->getInt32Value("samples");
+        }
         return chaos::common::data::CDWUniquePtr();
     }
   }
-  performCalib = true;
-  RTCameraBaseLDBG_ << "Perform calibration";
+   if (subImage) {
+        delete subImage;
+        subImage=NULL;
+  }
+  calibimages.clear();
+  std::stringstream ss;
+  ss << "Perform calibration on "<<calibrationImages<<" images";
+
+  metadataLogging(
+        chaos::common::metadata_logging::StandardLoggingChannel::LogLevelInfo,
+        ss.str());
 
   addTag("CALIBRATION");
-  while (performCalib) {
-    usleep(100000);
+  performCalib = true;
+
+  while (calibimages.size()<calibrationImages) {
+    usleep(10000);
   }
-  chaos::common::data::CDWUniquePtr calibrazione=  loadData("calibration_image");
-  uint32_t size;
-  const char * buf=calibrazione->getBinaryValue("FRAMEBUFFER",size);
-  std::vector<uchar> dimg = std::vector<uchar>(buf, buf + size);
-  cv::Mat sub=cv::imdecode(dimg,IMREAD_ANYCOLOR | IMREAD_ANYDEPTH);
-  if (sub.data) {
-    if(subImage){
-      delete subImage;
-    }
-    subImage = new cv::Mat(sub);
-    LDBG_ << " Loading CALIB DATA" ;
-  } else {
-    LERR_ << " CALIB DATA does not exists";
-  }  
-  applyCalib = true;
+  performCalib = false;
+
+  std::vector<unsigned char> encbuf;
+  subImage=new cv::Mat(getMean(calibimages));
+  //for_each(calibimages.begin(),calibimages.end(),[](const cv::Mat& ele){delete ele;});
+    calibimages.clear();
+
+  bool code = cv::imencode(encoding, *subImage, encbuf, encode_params);
+  if (code) {
+      uchar *ptr = reinterpret_cast<uchar *>(&(encbuf[0]));
+      chaos::common::data::CDataWrapper cal;
+      cal.addBinaryValue("FRAMEBUFFER",(const char*)ptr, encbuf.size());
+      saveData("calibration_image",cal);
+      
+      applyCalib = true;
+
+  }
+   
 
   removeTag("CALIBRATION");
   RTCameraBaseLDBG_ << "END calibration";
