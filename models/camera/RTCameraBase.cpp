@@ -203,10 +203,12 @@ RTCameraBase::RTCameraBase(const string                &_control_unit_id,
                 std::vector<uchar> data = std::vector<uchar>(buf, buf + size);
                 cv::Mat sub=cv::imdecode(data,IMREAD_ANYCOLOR | IMREAD_ANYDEPTH);
                 if (sub.data) {
-                  if(((RTCameraBase*)thi)->subImage){
-                     delete ((RTCameraBase*)thi)->subImage;
-                  }
+                  cv::Mat *t=((RTCameraBase*)thi)->subImage;
                   ((RTCameraBase*)thi)->subImage = new cv::Mat(sub);
+
+                  if(t){
+                     delete t;
+                  }
                   LDBG_ << " Loading CALIB DATA";
                 } else {
                   LERR_ << " CALIB DATA does not exists";
@@ -231,11 +233,11 @@ RTCameraBase::~RTCameraBase() {
   }
 }
 
-cv::Mat RTCameraBase::getMean(const std::vector<cv::Mat> &images) {
+cv::Mat RTCameraBase::getMean(const std::vector<cv::Mat*> &images) {
   if (images.empty()) return cv::Mat();
 
   // Create a 0 initialized image to use as accumulator
-  cv::Mat m(images[0].rows, images[0].cols, CV_64FC3);
+  cv::Mat m(images[0]->rows, images[0]->cols, CV_64FC3);
   m.setTo(Scalar(0, 0, 0, 0));
 
   // Use a temp image to hold the conversion of each input image to CV_64FC3
@@ -244,7 +246,7 @@ cv::Mat RTCameraBase::getMean(const std::vector<cv::Mat> &images) {
   Mat temp;
   for (int i = 0; i < images.size(); ++i) {
     // Convert the input images to CV_64FC3 ...
-    images[i].convertTo(temp, CV_64FC3);
+    images[i]->convertTo(temp, CV_64FC3);
 
     // ... so you can accumulate
     m += temp;
@@ -559,8 +561,8 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
   addStateVariable(StateVariableTypeAlarmDEV, "capture_error", "an error occurred during capture", LOG_FREQUENCY);
   addStateVariable(StateVariableTypeAlarmDEV, "capture_timeout", "a timeout has occurred", LOG_FREQUENCY);
 
-  addStateVariable(StateVariableTypeAlarmDEV, "captureQueueFull", "Queue Capture Full", LOG_FREQUENCY);
-  addStateVariable(StateVariableTypeAlarmDEV, "encodeQueueFull", "Queue Encode Full", LOG_FREQUENCY);
+  addStateVariable(StateVariableTypeAlarmCU, "captureQueueFull", "Queue Capture Full", LOG_FREQUENCY);
+  addStateVariable(StateVariableTypeAlarmCU, "encodeQueueFull", "Queue Encode Full", LOG_FREQUENCY);
 }
 
 //! Define custom control unit attribute
@@ -796,9 +798,6 @@ void RTCameraBase::stopGrabbing() {
   setStateVariableSeverity(StateVariableTypeAlarmDEV, "error_setting_property", chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmDEV, "capture_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmDEV, "capture_timeout", chaos::common::alarm::MultiSeverityAlarmLevelClear);
-
-  setStateVariableSeverity(StateVariableTypeAlarmCU, "framebuf_encode_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
-
   setStateVariableSeverity(StateVariableTypeAlarmCU, "encode_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmCU, "auto_reference_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmCU, "encodeQueueFull", chaos::common::alarm::MultiSeverityAlarmLevelClear);
@@ -914,7 +913,7 @@ void RTCameraBase::encodeThread() {
   uint64_t start;
   counter_encode = 0;
   // bpp = cv2fmt(framebuf_encoding, framebuf_encoding_s);
-  setStateVariableSeverity(StateVariableTypeAlarmCU, "framebuf_encode_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+  setStateVariableSeverity(StateVariableTypeAlarmCU, "encode_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
 
   RTCameraBaseLDBG_ << "Encode " << encoding
                     << " , assuming framebuf:" << framebuf_encoding_s << "("
@@ -955,7 +954,7 @@ void RTCameraBase::encodeThread() {
       int isizey = framebuf->height;
 
       if (isizey * isizex * bpp > framebuf->size) {
-        setStateVariableSeverity(StateVariableTypeAlarmCU, "framebuf_encode_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+        setStateVariableSeverity(StateVariableTypeAlarmCU, "encode_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
         continue;
       }
 
@@ -1003,16 +1002,14 @@ void RTCameraBase::encodeThread() {
         if (performCalib) {
           if (image.data) {
             if (calibimages.size() < calibrationImages) {
-              calibimages.push_back(cv::Mat(image));
+              calibimages.push_back(new cv::Mat(image));
               RTCameraBaseLDBG_ << "Calibration images:" << calibimages.size();
               setState(NodeHealtDefinitionValue::NODE_HEALT_STATUS_CALIBRATE,false);
             } else {
               std::vector<unsigned char> encbuf;
-              if (subImage) {
-                delete subImage;
-              }
+              
               subImage = new cv::Mat(getMean(calibimages));
-              // for_each(calibimages.begin(),calibimages.end(),[](const cv::Mat& ele){delete ele;});
+              for_each(calibimages.begin(),calibimages.end(),[](const cv::Mat* ele){delete ele;});
               calibimages.clear();
 
               bool code = cv::imencode(encoding, *subImage, encbuf, encode_params);
@@ -1256,6 +1253,8 @@ RTCameraBase::unitPerformCalibration(chaos::common::data::CDWUniquePtr data) {
     delete subImage;
     subImage = NULL;
   }
+   applyCalib   = false;
+
   calibimages.clear();
   std::stringstream ss;
   ss << "Perform calibration on " << calibrationImages << " images";
