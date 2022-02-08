@@ -235,25 +235,28 @@ RTCameraBase::~RTCameraBase() {
 
 cv::Mat RTCameraBase::getMean(const std::vector<cv::Mat*> &images) {
   if (images.empty()) return cv::Mat();
-
+  cv::Mat m=*images[0];
+  //Mat m = Mat::zeros(images[0]->size(), CV_32F); //larger depth to avoid saturation
   // Create a 0 initialized image to use as accumulator
-  cv::Mat m(images[0]->rows, images[0]->cols, CV_64FC3);
-  m.setTo(Scalar(0, 0, 0, 0));
+ // cv::Mat m(images[0]->rows, images[0]->cols, CV_64FC3);
+  //m.setTo(Scalar(0, 0, 0, 0));
 
   // Use a temp image to hold the conversion of each input image to CV_64FC3
   // This will be allocated just the first time, since all your images have
   // the same size.
-  Mat temp;
-  for (int i = 0; i < images.size(); ++i) {
+  //Mat temp;
+  for (int i = 1; i < images.size(); ++i) {
     // Convert the input images to CV_64FC3 ...
-    images[i]->convertTo(temp, CV_64FC3);
+    //RTCameraBaseLDBG_ << "converting "<<i;
+    //cv::accumulate(*images[i], m);
+    cv::addWeighted(m,0.5,*images[i],0.5,0,m);
+    //images[i]->convertTo(temp, CV_64FC3);
 
     // ... so you can accumulate
-    m += temp;
+    //m += temp;
   }
-
   // Convert back to CV_8UC3 type, applying the division to get the actual mean
-  m.convertTo(m, CV_8U, 1. / images.size());
+   RTCameraBaseLDBG_ << "done "<<m.cols<<"x"<<m.rows;
   return m;
 }
 void RTCameraBase::updateProperty() {
@@ -1027,34 +1030,45 @@ void RTCameraBase::encodeThread() {
           if (image.data) {
             if (calibimages.size() < calibrationImages) {
               calibimages.push_back(new cv::Mat(image));
-              RTCameraBaseLDBG_ << "Calibration images:" << calibimages.size();
+              RTCameraBaseLDBG_ << "Calibration images:" << calibimages.size()<<" "<<image.cols<<"x"<<image.rows;
               setState(NodeHealtDefinitionValue::NODE_HEALT_STATUS_CALIBRATE,false);
             } else {
               std::vector<unsigned char> encbuf;
-              
-              subImage = new cv::Mat(getMean(calibimages));
-              for_each(calibimages.begin(),calibimages.end(),[](const cv::Mat* ele){delete ele;});
-              calibimages.clear();
+              RTCameraBaseLDBG_ << "Average ";
 
-              bool code = cv::imencode(encoding, *subImage, encbuf, encode_params);
-              if (code) {
-                uchar                            *ptr = reinterpret_cast<uchar *>(&(encbuf[0]));
-                chaos::common::data::CDataWrapper cal;
-                cal.addBinaryValue("FRAMEBUFFER", (const char *)ptr, encbuf.size());
-                saveData("calibration_image", cal);
-                setStateVariableSeverity(StateVariableTypeAlarmCU, "calibration_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+              cv::Mat res=getMean(calibimages);
+              RTCameraBaseLDBG_ << "Average size:"<<res.cols<<"x"<<res.rows;
 
-                applyCalib = true;
-              } else {
-                setStateVariableSeverity(StateVariableTypeAlarmCU, "calibration_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+              if(res.data){
+                subImage = new cv::Mat(res);
+                RTCameraBaseLDBG_ << "Calibrated image:" << subImage->cols<<"x"<<subImage->rows;
+
+                for_each(calibimages.begin(),calibimages.end(),[](const cv::Mat* ele){delete ele;});
+                calibimages.clear();
+
+                bool code = cv::imencode(encoding, *subImage, encbuf, encode_params);
+                if (code) {
+                  uchar                            *ptr = reinterpret_cast<uchar *>(&(encbuf[0]));
+                  chaos::common::data::CDataWrapper cal;
+                  cal.addBinaryValue("FRAMEBUFFER", (const char *)ptr, encbuf.size());
+                  saveData("calibration_image", cal);
+                  applyCalib = true;
+                  setStateVariableSeverity(StateVariableTypeAlarmCU, "calibration_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+
+                } else {
+                  setStateVariableSeverity(StateVariableTypeAlarmCU, "calibration_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+
+                }
+
+                removeTag("CALIBRATION");
+                RTCameraBaseLDBG_ << "END calibration";
+                setState(NodeHealtDefinitionValue::NODE_HEALT_STATUS_START,true);
+              }else {
+                RTCameraBaseLERR_ << "Wrong resulting calibration image";
 
               }
-
-              removeTag("CALIBRATION");
-              RTCameraBaseLDBG_ << "END calibration";
-              setState(NodeHealtDefinitionValue::NODE_HEALT_STATUS_START,true);
-
               performCalib = false;
+
             }
           }
         }
@@ -1257,6 +1271,8 @@ RTCameraBase::unitPerformCalibration(chaos::common::data::CDWUniquePtr data) {
   performAutoReference = false;
   fit_threshold        = 0;
   if (data.get()) {
+      RTCameraBaseLDBG_ << "Peform calibration:" << data->getJSONString();
+
     if (data->hasKey("autoreference")) {
       performAutoReference = true;
 
@@ -1272,11 +1288,12 @@ RTCameraBase::unitPerformCalibration(chaos::common::data::CDWUniquePtr data) {
     if (data->hasKey("calibration") && data->isBoolValue("calibration") && (data->getBoolValue("calibration") == false)) {
       applyCalib   = false;
       performCalib = false;
-      if (data->hasKey("samples")) {
-        calibrationImages = data->getInt32Value("samples");
-      }
+     
       return chaos::common::data::CDWUniquePtr();
     }
+  }
+   if (data->hasKey("samples")) {
+        calibrationImages = data->getInt32Value("samples");
   }
   if (subImage) {
     delete subImage;

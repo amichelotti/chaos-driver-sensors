@@ -649,51 +649,51 @@ public:
   void OnOpened(CInstantCamera &camera) { driver->propsToCamera(camera, NULL); }
 
   void OnGrabStart(CInstantCamera &camera) {
-    BaslerScoutDriverLDBG << "OnGrabStart event for device "
+    BaslerScoutDriverLAPP_ << "OnGrabStart event for device "
                           << camera.GetDeviceInfo().GetModelName();
   }
 
   void OnGrabStarted(CInstantCamera &camera) {
-    BaslerScoutDriverLDBG << "OnGrabStarted event for device "
+    BaslerScoutDriverLAPP_ << "OnGrabStarted event for device "
                           << camera.GetDeviceInfo().GetModelName();
   }
 
   void OnGrabStop(CInstantCamera &camera) {
-    BaslerScoutDriverLDBG << "OnGrabStop event for device "
+    BaslerScoutDriverLAPP_ << "OnGrabStop event for device "
                           << camera.GetDeviceInfo().GetModelName();
   }
 
   void OnGrabStopped(CInstantCamera &camera) {
-    BaslerScoutDriverLDBG << "OnGrabStopped event for device "
+    BaslerScoutDriverLAPP_ << "OnGrabStopped event for device "
                           << camera.GetDeviceInfo().GetModelName();
   }
 
   void OnClose(CInstantCamera &camera) {
-    BaslerScoutDriverLDBG << "OnClose event for device "
+    BaslerScoutDriverLAPP_ << "OnClose event for device "
                           << camera.GetDeviceInfo().GetModelName();
   }
 
   void OnClosed(CInstantCamera &camera) {
-    BaslerScoutDriverLDBG << "OnClosed event for device "
+    BaslerScoutDriverLAPP_ << "OnClosed event for device "
                           << camera.GetDeviceInfo().GetModelName();
   }
 
   void OnDestroy(CInstantCamera &camera) {
-    BaslerScoutDriverLDBG << "OnDestroy event for device "
+    BaslerScoutDriverLAPP_ << "OnDestroy event for device "
                           << camera.GetDeviceInfo().GetModelName();
   }
 
   void OnDestroyed(CInstantCamera & /*camera*/) {
-    BaslerScoutDriverLDBG << "OnDestroyed event";
+    BaslerScoutDriverLAPP_ << "OnDestroyed event";
   }
 
   void OnDetach(CInstantCamera &camera) {
-    BaslerScoutDriverLDBG << "OnDetach event for device "
+    BaslerScoutDriverLAPP_ << "OnDetach event for device "
                           << camera.GetDeviceInfo().GetModelName();
   }
 
   void OnDetached(CInstantCamera &camera) {
-    BaslerScoutDriverLDBG << "OnDetached event for device "
+    BaslerScoutDriverLAPP_ << "OnDetached event for device "
                           << camera.GetDeviceInfo().GetModelName();
   }
 
@@ -704,7 +704,7 @@ public:
   }
 
   void OnCameraDeviceRemoved(CInstantCamera &camera) {
-    BaslerScoutDriverLDBG << "OnCameraDeviceRemoved event for device "
+    BaslerScoutDriverLAPP_ << "OnCameraDeviceRemoved event for device "
                           << camera.GetDeviceInfo().GetModelName();
   }
 };
@@ -1021,18 +1021,18 @@ int BaslerScoutDriver::initializeCamera(
       CREATE_VALUE_PROP("Height", "HEIGHT", int32_t)
       CREATE_VALUE_PROP("OffsetX", "OFFSETX", int32_t);
       CREATE_VALUE_PROP("OffsetY", "OFFSETY", int32_t);
-      CREATE_PROP("ReverseX", "", bool);
-      CREATE_PROP("ReverseY", "", bool);
+      //CREATE_PROP("ReverseX", "", bool);
+      //CREATE_PROP("ReverseY", "", bool);
       CREATE_VALUE_PROP("AcquisitionFrameRateAbs", "FRAMERATE", double);
       CREATE_VALUE_PROP("GainRaw", "GAIN", int32_t);
       CREATE_VALUE_PROP("ExposureTimeRaw", "SHUTTER", int32_t);
       
-      CREATE_VALUE_PROP("ExposureTimeAbs", "", double);
-      CREATE_VALUE_PROP("ExposureTimeBaseAbs", "", double);
-      CREATE_PROP("ExposureMode","",std::string);
-      CREATE_PROP("ShutterMode","",std::string);
+     // CREATE_VALUE_PROP("ExposureTimeAbs", "", double);
+     // CREATE_VALUE_PROP("ExposureTimeBaseAbs", "", double);
+     // CREATE_PROP("ExposureMode","",std::string);
+     // CREATE_PROP("ShutterMode","",std::string);
 
-      CREATE_PROP("ExposureTimeBaseAbsEnable", "", bool);
+     // CREATE_PROP("ExposureTimeBaseAbsEnable", "", bool);
        
       CREATE_VALUE_PROP("BslBrightness", "BRIGHTNESS", double);
 
@@ -1770,7 +1770,7 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
   try {
     Pylon::CGrabResultPtr ptrGrabResult;
     if (tmode > CAMERA_TRIGGER_SINGLE) {
-      BaslerScoutDriverLDBG_ << "Wait for "<<timeout_ms<<" tmode:"<<tmode;
+     // BaslerScoutDriverLDBG_ << "Wait for "<<timeout_ms<<" tmode:"<<tmode;
       /*if (camerap->WaitForFrameTriggerReady(timeout_ms,TimeoutHandling_Return
                                             )) {
         if (tmode == CAMERA_TRIGGER_SOFT) {
@@ -1782,16 +1782,19 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
         return chaos::ErrorCode::EC_GENERIC_TIMEOUT;
       }*/
 
-      while ((camerap->GetGrabResultWaitObject().Wait(1000) == 0) &&
+      /*while ((camerap->GetGrabResultWaitObject().Wait(1000) == 0) &&
              (stopGrabbing == false)) {
           if((timeout_ms-=1000) >0){
             //  WaitObject::Sleep(1000);
           } else {
-             BaslerScoutDriverLERR_ << "TRIGGER TIMEOUT AFTER ACTIVE WAIT: "<<timeout_ms<< " ms mode:"<<tmode;
-
+            bool isremoved=camerap->IsCameraDeviceRemoved();
+             BaslerScoutDriverLERR_ << "TRIGGER TIMEOUT AFTER ACTIVE WAIT: "<<timeout_ms<< " ms mode:"<<tmode<<" is removed:"<<isremoved;
+            if(isremoved){
+              camerap->A
+            }
             return chaos::ErrorCode::EC_GENERIC_TIMEOUT;
           }
-      }
+      }*/
       /*
       waitobjref=(Pylon::WaitObject*)&(camerap->GetGrabResultWaitObject());
 
@@ -1816,26 +1819,6 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
         // Access the image data.
 
         const uint8_t *pImageBuffer = (uint8_t *)ptrGrabResult->GetBuffer();
-        //      cout << "Gray value of first pixel: " << (uint32_t)
-        //      pImageBuffer[0] << endl << endl;
-
-        // CPylonImage target;
-        // CImageFormatConverter converter;
-        // converter.OutputPixelFormat=PixelType_RGB8packed;
-        // converter.OutputPixelFormat=PixelType_BGR8packed;
-        //  converter.OutputPixelFormat=PixelType_Mono8;
-        //  converter.OutputBitAlignment=OutputBitAlignment_MsbAligned;
-        // converter.Convert(target,ptrGrabResult);
-
-        
-
-        // int
-        // size_ret=(bcount<target.GetImageSize())?bcount:target.GetImageSize();
-        //            memcpy(buffer,target.GetBuffer(),size_ret);
-
-        //             int size_ret=(bcount<=
-        //             ptrGrabResult->GetImageSize())?bcount:
-        //             ptrGrabResult->GetImageSize();
         int size_ret = ptrGrabResult->GetImageSize();
        /* BaslerScoutDriverLDBG_ << " Size " << ptrGrabResult->GetWidth() << "x"
                                << ptrGrabResult->GetHeight()
@@ -1861,68 +1844,14 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
         setLastError(ss.str());
         return CAMERA_GRAB_ERROR;
       }
-    }
-    /*
-      while (camerap->RetrieveResult(timeout_ms, ptrGrabResult,
-      TimeoutHandling_Return))
-      {
-          if (ptrGrabResult->GetNumberOfSkippedImages())
-          {
-              BaslerScoutDriverLDBG_ << "Skipped " <<
-      ptrGrabResult->GetNumberOfSkippedImages() << " image, timeout
-      ms"<<timeout_ms;
+    } else {
+            bool isremoved=camerap->IsCameraDeviceRemoved();
+             BaslerScoutDriverLERR_ << "TRIGGER TIMEOUT AFTER Retrive WAIT: "<<timeout_ms<< " ms mode:"<<tmode<<" is removed:"<<isremoved;
+            if(isremoved){
+            }
+            return chaos::ErrorCode::EC_GENERIC_TIMEOUT;
           }
-          if (ptrGrabResult->GrabSucceeded())
-          {
-              // Access the image data.
-
-              const uint8_t *pImageBuffer = (uint8_t
-      *)ptrGrabResult->GetBuffer();
-              //      cout << "Gray value of first pixel: " << (uint32_t)
-      pImageBuffer[0] << endl << endl;
-
-              // CPylonImage target;
-              // CImageFormatConverter converter;
-              // converter.OutputPixelFormat=PixelType_RGB8packed;
-              // converter.OutputPixelFormat=PixelType_BGR8packed;
-              //  converter.OutputPixelFormat=PixelType_Mono8;
-              //  converter.OutputBitAlignment=OutputBitAlignment_MsbAligned;
-              //converter.Convert(target,ptrGrabResult);
-
-              // int
-      size_ret=(bcount<target.GetImageSize())?bcount:target.GetImageSize();
-              //            memcpy(buffer,target.GetBuffer(),size_ret);
-
-              //             int size_ret=(bcount<=
-      ptrGrabResult->GetImageSize())?bcount: ptrGrabResult->GetImageSize(); int
-      size_ret = ptrGrabResult->GetImageSize(); BaslerScoutDriverLDBG_ << " Size
-      "
-      << ptrGrabResult->GetWidth() << "x" << ptrGrabResult->GetHeight() << "
-      Image Raw Size: " << size_ret; if (img)
-              {
-                  *img = (const char *)pImageBuffer;
-                  //memcpy(hostbuf,pImageBuffer,size_ret);
-              }
-              if (fn)
-              {
-                  fn(pImageBuffer, size_ret, ptrGrabResult->GetWidth(),
-      ptrGrabResult->GetHeight());
-              }
-
-              return size_ret;
-          }
-          else
-          {
-              BaslerScoutDriverLERR_ << "Error: " <<
-      ptrGrabResult->GetErrorCode()
-      << " " << ptrGrabResult->GetErrorDescription(); return CAMERA_GRAB_ERROR;
-          }
-
-          nBuffersInQueue++;
-      }
-       BaslerScoutDriverLDBG_ << "Retrieved " << nBuffersInQueue << " grab
-      results from output queue.";
-  */
+    
   } catch (const GenericException &e) {
      std::stringstream ss;
     ss << "An exception occurred during Wait:" << " msg:" << e.GetDescription();
