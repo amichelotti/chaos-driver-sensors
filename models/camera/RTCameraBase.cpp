@@ -365,7 +365,7 @@ bool RTCameraBase::setDrvProp(const std::string &name, int32_t value, uint32_t s
   RTCameraBaseLDBG_ << "SETTING IPROP:" << name << " VALUE:" << value;
   bool stopgrab =
       (
-          /*((name == WIDTH_KEY) ) ||
+       /* ((name == WIDTH_KEY) ) ||
        ((name == HEIGHT_KEY) ) ||
        ((name == OFFSETX_KEY) ) ||
        ((name == OFFSETY_KEY) ) ||*/
@@ -871,10 +871,14 @@ void RTCameraBase::captureThread() {
           }
           continue;
         } else if (ret == CAMERA_GRAB_STOP) {
-          metadataLogging(chaos::common::metadata_logging::StandardLoggingChannel::LogLevelError, "unexplectly driver stopped grabbing");
+        /*  metadataLogging(chaos::common::metadata_logging::StandardLoggingChannel::LogLevelError, "unexplectly driver stopped grabbing");
           haltThreads();
           setStateVariableSeverity(
-              StateVariableTypeAlarmDEV, "capture_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+              StateVariableTypeAlarmDEV, "capture_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);*/
+          RTCameraBaseLERR_ << " camera stopped grabbing :" << ret;
+
+         setStateVariableSeverity(
+              StateVariableTypeAlarmDEV, "capture_error", chaos::common::alarm::MultiSeverityAlarmLevelWarning);     
         } else if (ret < 0) {
           std::string error = driver->getLastError();
 

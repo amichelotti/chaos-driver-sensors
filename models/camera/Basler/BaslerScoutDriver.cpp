@@ -213,6 +213,7 @@ int BaslerScoutDriver::setNode(const std::string &node_name, bool val) {
        << " msg:" << e.GetDescription();
     BaslerScoutDriverLERR_ << ss.str();
     setLastError(ss.str());
+    
     return -3;
   } catch (...) {
     BaslerScoutDriverLERR << "An Uknown exception occurre during set of Node:"
@@ -1842,6 +1843,7 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
         ss << "Error: " << ptrGrabResult->GetErrorCode() << " "
            << ptrGrabResult->GetErrorDescription();
         setLastError(ss.str());
+        BaslerScoutDriverLERR_<<ss.str();
         return CAMERA_GRAB_ERROR;
       }
     } else {
