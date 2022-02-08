@@ -369,7 +369,12 @@ bool RTCameraBase::setDrvProp(const std::string &name, int32_t value, uint32_t s
           ((name == TRIGGER_MODE_KEY)));
 
   // bool stopgrab = ((name == TRIGGER_MODE_KEY) && (value == CAMERA_DISABLE_ACQUIRE));
-
+  if(((name == WIDTH_KEY) ) ||
+       ((name == HEIGHT_KEY) ) ||
+       ((name == OFFSETX_KEY) ) ||
+       ((name == OFFSETY_KEY))){
+         applyCalib=false;
+       }
   if (stopgrab && (hasStopped() == false)) {
     stopGrabbing();
   }
@@ -556,6 +561,7 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
   addStateVariable(
       StateVariableTypeAlarmDEV, "error_setting_property", "the operation in not supported i.e property not present or accessible");
   addStateVariable(StateVariableTypeAlarmCU, "encode_error", "an error occurred during encode", LOG_FREQUENCY);
+  addStateVariable(StateVariableTypeAlarmCU, "calibration_error", "an error during calibration (i.e. different size) ", LOG_FREQUENCY);
 
   addStateVariable(StateVariableTypeAlarmCU, "auto_reference_error", "an error occurred during autoreference", LOG_FREQUENCY);
   addStateVariable(StateVariableTypeAlarmDEV, "capture_error", "an error occurred during capture", LOG_FREQUENCY);
@@ -799,6 +805,8 @@ void RTCameraBase::stopGrabbing() {
   setStateVariableSeverity(StateVariableTypeAlarmDEV, "capture_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmDEV, "capture_timeout", chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmCU, "encode_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+  setStateVariableSeverity(StateVariableTypeAlarmCU, "calibration_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+
   setStateVariableSeverity(StateVariableTypeAlarmCU, "auto_reference_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmCU, "encodeQueueFull", chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmCU, "captureQueueFull", chaos::common::alarm::MultiSeverityAlarmLevelClear);
@@ -959,6 +967,20 @@ void RTCameraBase::encodeThread() {
       }
 
       cv::Mat image;
+      if(applyCalib && subImage){
+        if((subImage->cols !=isizex) &&(subImage->rows != isizey)){
+          RTCameraBaseLDBG_ << "Disabling calibration size mismatch calib:"<<subImage->rows<<"x"<<subImage->cols<<" image:"<<isizex<<isizey;
+          setStateVariableSeverity(StateVariableTypeAlarmCU, "calibration_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+
+          delete subImage;
+          subImage=NULL;
+          applyCalib=false;
+        } else {
+            setStateVariableSeverity(StateVariableTypeAlarmCU, "calibration_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+
+        }
+             
+      }
       try {
         if (framebuf_encoding == cv::COLOR_BayerBG2RGB) {
           //   cv::Mat mat16uc1(*sizey, *sizex, CV_16UC1, a.buf);
@@ -970,6 +992,8 @@ void RTCameraBase::encodeThread() {
 
           // mat16uc3_rgb.convertTo(mat8uc3_rgb, CV_8UC3);
           if (applyCalib && subImage) {
+           
+            
             image = (mat8uc3_rgb - *subImage);
 
           } else {
@@ -1018,7 +1042,12 @@ void RTCameraBase::encodeThread() {
                 chaos::common::data::CDataWrapper cal;
                 cal.addBinaryValue("FRAMEBUFFER", (const char *)ptr, encbuf.size());
                 saveData("calibration_image", cal);
+                setStateVariableSeverity(StateVariableTypeAlarmCU, "calibration_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+
                 applyCalib = true;
+              } else {
+                setStateVariableSeverity(StateVariableTypeAlarmCU, "calibration_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+
               }
 
               removeTag("CALIBRATION");
