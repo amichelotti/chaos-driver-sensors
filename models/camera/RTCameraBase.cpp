@@ -699,7 +699,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   RTCameraBaseLDBG_ << "Going to acquire images " << *sizex << "x" << *sizey
                     << " bpp:" << bpp
                     << " framebuf_encoding:" << framebuf_encoding_s << " ("
-                    << framebuf_encoding << ")";
+                    << framebuf_encoding << ") ";
   if (*fmt == 0) {
     strcpy(encoding, ".png");
 
@@ -933,7 +933,7 @@ void RTCameraBase::encodeThread() {
   RTCameraBaseLDBG_ << "Encode " << encoding
                     << " , assuming framebuf:" << framebuf_encoding_s << "("
                     << framebuf_encoding << ") bpp:" << bpp
-                    << " thread STARTED";
+                    << " thread STARTED "<<CV_8UC1;
   std::string fname = getDeviceID();
   replace(fname.begin(), fname.end(), '/', '_');
 #ifdef CAMERA_GEN_VIDEO

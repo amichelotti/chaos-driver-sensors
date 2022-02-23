@@ -1,7 +1,7 @@
 /*
  *	ShapeSim.h
  *  Software emulated beam camera
- *	!CHOAS
+ *	!CHAOS
  *	Created by Andrea Michelotti
  *
  *    	Copyright 2013 INFN, National Institute of Nuclear Physics
@@ -66,6 +66,7 @@ class ShapeSim:public ::driver::sensor::camera::CameraDriverBridge {
      cameraGrabCallBack fn;
      bool initialized;
      int pixelEncoding;
+     std::string pixelEncoding_str;
      int trigger_mode;
      int propsToCamera(chaos::common::data::CDataWrapper*p);
      int cameraToProps(chaos::common::data::CDataWrapper*p);

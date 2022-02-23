@@ -42,6 +42,24 @@ using namespace cv;
 #define ShapeSimLDBG_ LDBG_ << "[ShapeSim:" << __PRETTY_FUNCTION__ << "]"
 #define ShapeSimLERR_ LERR_ << "[ShapeSim:" << __PRETTY_FUNCTION__ << "]"
 
+#define CREATE_INT_PROP(n, pub, var, min, max, inc) \
+  createProperty(                                   \
+      n, var, (int32_t)min, (int32_t)max, (int32_t)inc, pub, [](AbstractDriver* thi, const std::string& name, const chaos::common::data::CDataWrapper& p) -> chaos::common::data::CDWUniquePtr {\
+        chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());\
+        ret->addInt32Value(PROPERTY_VALUE_KEY,((ShapeSim*)thi)->var);\
+        return ret; }, [](AbstractDriver* thi, const std::string& name, const chaos::common::data::CDataWrapper& p) -> chaos::common::data::CDWUniquePtr { \
+          ((ShapeSim*)thi)->var=p.getInt32Value(PROPERTY_VALUE_KEY);\
+          return p.clone(); });
+
+#define CREATE_DOUBLE_PROP(n, pub, var, min, max, inc) \
+  createProperty(                                      \
+      n, var, min, max, inc, pub, [](AbstractDriver* thi, const std::string& name, const chaos::common::data::CDataWrapper& p) -> chaos::common::data::CDWUniquePtr {\
+        chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());\
+        ret->addDoubleValue(PROPERTY_VALUE_KEY,((ShapeSim*)thi)->var);\
+        return ret; }, [](AbstractDriver* thi, const std::string& name, const chaos::common::data::CDataWrapper& p) -> chaos::common::data::CDWUniquePtr { \
+          ((ShapeSim*)thi)->var=p.getDoubleValue(PROPERTY_VALUE_KEY);\
+          return p.clone(); });
+
 #define GETDBLPARAM(w, name)                                        \
   if (w->hasKey(#name)) {                                           \
     name = w->getDoubleValue(#name);                                \
@@ -119,7 +137,12 @@ int ShapeSim::initializeCamera(const chaos::common::data::CDataWrapper& json) {
   if (shape_params->hasKey("framerate")) {
     framerate = shape_params->getDoubleValue("framerate");
   }
+ if (json.hasKey(FRAMEBUFFER_ENCODING_KEY) && json.isStringValue(FRAMEBUFFER_ENCODING_KEY)) {
+    pixelEncoding_str=json.getStringValue(FRAMEBUFFER_ENCODING_KEY);
+    pixelEncoding = fmt2cv(pixelEncoding_str);
+    ShapeSimLDBG_ << "setting FRAMEBUFFER_ENCODING " << pixelEncoding_str<<" :"<<pixelEncoding;
 
+  }
   if (shape_params->hasKey("type")) {
     shape_type = shape_params->getStringValue("type");
     ret        = 0;
@@ -187,29 +210,21 @@ int ShapeSim::initializeCamera(const chaos::common::data::CDataWrapper& json) {
     GETDBLPARAM(shape_params, inc_amplitude);
     GETDBLPARAM(shape_params, rho);
   }
+  CREATE_INT_PROP("centerx", "", centerx, 0, width, 1);
+  CREATE_INT_PROP("centery", "", centery, 0, height, 1);
+  CREATE_INT_PROP("sizex", "", sizex, 0, width, 1);
+  CREATE_INT_PROP("sizey", "", sizey, 0, height, 1);
+  CREATE_DOUBLE_PROP("sigmax", "", sigmax, 0.0, 1.0*width, 0.1);
+  CREATE_DOUBLE_PROP("sigmay", "", sigmay, 0.0, 1.0*height, 0.1);
+  CREATE_DOUBLE_PROP("movex","", movex,0.0,1024.0,0.1);
+  CREATE_DOUBLE_PROP("movey", "",movey,0.0,1024.0,0.1);
+  CREATE_DOUBLE_PROP("rot", "",rot,0.0,1024.0,0.01);
+  
   return ret;
 }
 
-#define CREATE_INT_PROP(n, pub, var, min, max, inc) \
-  createProperty(                                   \
-      n, var, (int32_t)min, (int32_t)max, (int32_t)inc, pub, [](AbstractDriver* thi, const std::string& name, const chaos::common::data::CDataWrapper& p) -> chaos::common::data::CDWUniquePtr {\
-        chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());\
-        ret->addInt32Value(PROPERTY_VALUE_KEY,((ShapeSim*)thi)->var);\
-        return ret; }, [](AbstractDriver* thi, const std::string& name, const chaos::common::data::CDataWrapper& p) -> chaos::common::data::CDWUniquePtr { \
-          ((ShapeSim*)thi)->var=p.getInt32Value(PROPERTY_VALUE_KEY);\
-          return p.clone(); });
-
-#define CREATE_DOUBLE_PROP(n, pub, var, min, max, inc) \
-  createProperty(                                      \
-      n, var, min, max, inc, pub, [](AbstractDriver* thi, const std::string& name, const chaos::common::data::CDataWrapper& p) -> chaos::common::data::CDWUniquePtr {\
-        chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());\
-        ret->addDoubleValue(PROPERTY_VALUE_KEY,((ShapeSim*)thi)->var);\
-        return ret; }, [](AbstractDriver* thi, const std::string& name, const chaos::common::data::CDataWrapper& p) -> chaos::common::data::CDWUniquePtr { \
-          ((ShapeSim*)thi)->var=p.getDoubleValue(PROPERTY_VALUE_KEY);\
-          return p.clone(); });
-
 ShapeSim::ShapeSim()
-    : shots(0), frames(0), fn(NULL), pixelEncoding(CV_8UC3), tmode(CAMERA_TRIGGER_CONTINOUS), gstrategy(CAMERA_LATEST_ONLY), initialized(false), height(CAM_DEFAULT_HEIGTH), width(CAM_DEFAULT_WIDTH), framerate(1.0), offsetx(0), offsety(0), rot(0) {
+    : shots(0), frames(0), fn(NULL), pixelEncoding(CV_8UC3), pixelEncoding_str("CV_8UC3"),tmode(CAMERA_TRIGGER_CONTINOUS), gstrategy(CAMERA_LATEST_ONLY), initialized(false), height(CAM_DEFAULT_HEIGTH), width(CAM_DEFAULT_WIDTH), framerate(1.0), offsetx(0), offsety(0), rot(0) {
   ShapeSimLDBG_ << "Created Driver";
   movex = movey = rot = 0;
   max_movex = max_movey = min_movex = min_movey = 0;
@@ -257,13 +272,33 @@ ShapeSim::ShapeSim()
   CREATE_INT_PROP("camera_trigger_mode", "TRIGGER_MODE", trigger_mode, 0, 10, 1);
 
   CREATE_DOUBLE_PROP("framerate", "FRAMERATE", framerate, 0.0, 100.0, 1.0);
-  CREATE_INT_PROP("centerx", "", centerx, 0, width, 1);
-  CREATE_INT_PROP("centery", "", centery, 0, height, 1);
-  CREATE_INT_PROP("sizex", "", sizex, 0, width, 1);
-  CREATE_INT_PROP("sizey", "", sizey, 0, height, 1);
+  
+  createProperty("PixelFormat", "",  FRAMEBUFFER_ENCODING_KEY,                                                         
+                 [](AbstractDriver *thi, const std::string &name,              
+                    const chaos::common::data::CDataWrapper &p)                
+                     -> chaos::common::data::CDWUniquePtr {                    
+                   std::string val;
+                   ShapeSim *t=(ShapeSim *)thi;
+                  chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
+                  ret->append(PROPERTY_VALUE_KEY,t->pixelEncoding_str);
+                  ret->append("raw",t->pixelEncoding_str);
+                  ShapeSimLDBG_ << "Pixel Encoding "<<t->pixelEncoding_str<<" :"<<t->pixelEncoding;
 
-  CREATE_DOUBLE_PROP("sigmax", "", sigmax, 0.0, 100.0, 1.0);
-  CREATE_DOUBLE_PROP("sigmay", "", sigmay, 0.0, 100.0, 1.0);
+                                 
+                   return ret;                 
+                 },                                                            
+                 [](AbstractDriver *thi, const std::string &name,              
+                    const chaos::common::data::CDataWrapper &p)                
+                     -> chaos::common::data::CDWUniquePtr {                    
+                
+                   
+                      ShapeSimLERR_ << "Cannot set Pixel Encoding";
+                                                                
+                                                                            
+                                                         
+                   return chaos::common::data::CDWUniquePtr();                                           
+                 }
+    );
 
   /*
       createProperty("GainRaw",gain_raw,0,CAM_MAX_GAIN,1,"GAIN",[](AbstractCameraDriver*thi,const std::string&name,
@@ -413,13 +448,13 @@ int ShapeSim::propsToCamera(chaos::common::data::CDataWrapper* p) {
   }
 
 
-  */
+  
   if (p->hasKey(FRAMEBUFFER_ENCODING_KEY) && p->isStringValue(FRAMEBUFFER_ENCODING_KEY)) {
     ShapeSimLDBG_ << "setting FRAMEBUFFER_ENCODING " << p->getStringValue(FRAMEBUFFER_ENCODING_KEY);
 
     pixelEncoding = fmt2cv(p->getStringValue(FRAMEBUFFER_ENCODING_KEY));
   }
-
+*/
   return ret;
 }
 
@@ -467,6 +502,10 @@ void ShapeSim::createBeamImage(Size size, Mat& output, float uX, float uY, float
     cvtColor(temp, output, CV_GRAY2BGR);
   } else if (pixelEncoding == CV_8UC1) {
     temp.convertTo(output, CV_8U);
+
+  }else if (pixelEncoding == CV_16SC1) {
+    temp.convertTo(output, CV_16S);
+
 
   } else {
     throw chaos::CException(-4, "Unsupported Encoding ", __PRETTY_FUNCTION__);
@@ -517,9 +556,43 @@ void ShapeSim::applyCameraParams(cv::Mat& image) {
 
   for (int y = 0; y < image.rows; y++) {
     for (int x = 0; x < image.cols; x++) {
+      if(image.channels()==1){
+
+        switch(image.depth()){
+          
+          case CV_8U:{
+            float f=(((double)1.0 * gain_raw) / CAM_MAX_GAIN * image.at<uchar>(y, x)+ (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
+
+              image.at<uchar>(y, x)=saturate_cast<uchar>(f);
+          }
+            break;
+          case CV_16S:{
+            float f=(((double)1.0 * gain_raw) / CAM_MAX_GAIN * image.at<int16_t>(y, x)+ (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
+
+            image.at<int16_t>(y, x)=saturate_cast<int16_t>(f);
+            break;
+          }
+          case CV_16U:{
+            float f=(((double)1.0 * gain_raw) / CAM_MAX_GAIN * image.at<uint16_t>(y, x)+ (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
+
+            image.at<uint16_t>(y, x)=saturate_cast<uint16_t>(f);
+          }
+            break;
+          default:{
+            float f=(((double)1.0 * gain_raw) / CAM_MAX_GAIN * image.at<char>(y, x)+ (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
+
+            image.at<char>(y, x)=saturate_cast<char>(f);
+            break;
+          }
+        }
+        
+      } else {
       for (int c = 0; c < image.channels(); c++) {
+              float f=(((double)1.0 * gain_raw) / CAM_MAX_GAIN * image.at<Vec3b>(y, x)[c] + (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
+
         image.at<Vec3b>(y, x)[c] =
-            saturate_cast<uchar>((((double)1.0 * gain_raw) / CAM_MAX_GAIN * image.at<Vec3b>(y, x)[c] + (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER));
+            saturate_cast<uchar>(f);
+      }
       }
     }
   }
