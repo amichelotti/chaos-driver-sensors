@@ -507,7 +507,11 @@ void ShapeSim::createBeamImage(Size size, Mat& output, float uX, float uY, float
     temp.convertTo(output, CV_16S);
 
 
-  } else {
+  } else if (pixelEncoding == CV_16UC1) {
+    temp.convertTo(output, CV_16U);
+
+
+  }else {
     throw chaos::CException(-4, "Unsupported Encoding ", __PRETTY_FUNCTION__);
   }
 }
@@ -561,25 +565,25 @@ void ShapeSim::applyCameraParams(cv::Mat& image) {
         switch(image.depth()){
           
           case CV_8U:{
-            float f=(((double)1.0 * gain_raw) / CAM_MAX_GAIN * image.at<uchar>(y, x)+ (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
+            float f=(((double)1.0 * gain_raw) * image.at<uchar>(y, x)+ (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
 
               image.at<uchar>(y, x)=saturate_cast<uchar>(f);
           }
             break;
           case CV_16S:{
-            float f=(((double)1.0 * gain_raw) / CAM_MAX_GAIN * image.at<int16_t>(y, x)+ (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
+            float f=(((double)1.0 * gain_raw)  * image.at<int16_t>(y, x)+ (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
 
             image.at<int16_t>(y, x)=saturate_cast<int16_t>(f);
             break;
           }
           case CV_16U:{
-            float f=(((double)1.0 * gain_raw) / CAM_MAX_GAIN * image.at<uint16_t>(y, x)+ (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
+            float f=(((double)1.0 * gain_raw) * image.at<uint16_t>(y, x)+ (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
 
             image.at<uint16_t>(y, x)=saturate_cast<uint16_t>(f);
           }
             break;
           default:{
-            float f=(((double)1.0 * gain_raw) / CAM_MAX_GAIN * image.at<char>(y, x)+ (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
+            float f=(((double)1.0 * gain_raw)  * image.at<char>(y, x)+ (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
 
             image.at<char>(y, x)=saturate_cast<char>(f);
             break;
