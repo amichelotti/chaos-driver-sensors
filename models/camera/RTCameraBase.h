@@ -24,7 +24,7 @@
 #include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
 
 #define DEFAULT_RESOLUTION 640*480*3
-#define CAMERA_FRAME_BUFFERING 1
+#define CAMERA_FRAME_BUFFERING 10
 
 namespace cv {class Mat;}
 namespace driver{
@@ -79,6 +79,7 @@ protected:
         typedef struct encoded {
             std::vector<unsigned char>* img;
             int sizex,sizey,offsetx,offsety;
+            uint64_t ts;
             encoded():img(NULL){};
         } encoded_t;
 

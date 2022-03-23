@@ -94,6 +94,7 @@ struct camera_buf_t {
             int32_t height;
             int32_t offsetx;
             int32_t offsety;
+            uint64_t ts;
 
             camera_buf_t(int32_t _size,int32_t _width,int32_t _height,int32_t _offsetx=0,int32_t _offsety=0):width(_width),height(_height),offsetx(_offsetx),offsety(_offsety){
                 buf=(uint8_t*)malloc(_size);

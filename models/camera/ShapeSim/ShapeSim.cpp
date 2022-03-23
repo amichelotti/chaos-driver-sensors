@@ -662,7 +662,7 @@ int ShapeSim::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
   } else if (shape_type == "ellipse") {
     // get parameters
 
-    fs << img.cols << "x" << img.rows << " orig [" << original_width << "x" << original_height << " " << shape_type << ":(" << tmp_centerx << "," << tmp_centery << ") " << tmp_sizex << "x" << tmp_sizey << "," << tmp_rotangle << "," << tmp_tickness;
+   // fs << img.cols << "x" << img.rows << " orig [" << original_width << "x" << original_height << " " << shape_type << ":(" << tmp_centerx << "," << tmp_centery << ") " << tmp_sizex << "x" << tmp_sizey << "," << tmp_rotangle << "," << tmp_tickness;
 
     rectangle(img, Point(0, 0), Point(width - 1, height - 1), Scalar(colr, colg, colb));
 
@@ -675,7 +675,11 @@ int ShapeSim::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
             Scalar(colr, colg, colb),
             tmp_tickness,
             linetype);
-    putText(img, ss.str(), Point(10, 25), FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1, LINE_AA);
+    uint64_t ts= chaos::common::utility::TimingUtil::getTimeStamp();
+
+    putText(img, ss.str(), Point(10, 25), FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255, 255, 255), 2, LINE_AA);
+    std::string ts_s=chaos::common::utility::TimingUtil::toString(ts,std::string("%H:%M:%S%F"));
+    putText(img, ts_s, Point(1, height/2), FONT_HERSHEY_SIMPLEX, 2,cv::Scalar(255,255,255), 3, LINE_AA);
 
     // putText(img,fs.str(),Point(10,height-25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
   } else if (shape_type.size()) {
@@ -726,21 +730,27 @@ int ShapeSim::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
 #endif
 
   if (size > 0 && cropped.data) {
-    ShapeSimLDBG_ << ss.str() << "," << fs.str() << " size byte:" << size << " framerate:" << framerate << " Framebuf encoding:" << pixelEncoding;
     *buf = new camera_buf_t(cropped.data, size, cropped.cols, cropped.rows);
   } else {
     ShapeSimLERR_ << "BAD BUFFER GIVEN " << shape_type << "(" << width << "X" << height << ")" << frames << " center " << tmp_centerx << "," << tmp_centery << " sizex:" << tmp_sizex << " sizey:" << tmp_sizey << " color:" << colr << "R," << colg << "G," << colb << " size byte:" << size;
+    return ret;
   }
 
   ret = size;
 
   if (framerate > 0) {
     uint64_t now        = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
-    double   diff       = (1000000.0 / framerate) - (now - last_acquisition_ts);
-    last_acquisition_ts = now;
+
+    int32_t   diff       = (1000000.0 / framerate) - (now - last_acquisition_ts);
     if (diff > 0) {
-      boost::this_thread::sleep_for(boost::chrono::microseconds((uint64_t)diff));
+
+      //boost::this_thread::sleep_for(boost::chrono::microseconds((uint64_t)diff));
+      usleep(diff);
     }
+    //ShapeSimLDBG_ << ss.str() << "," << fs.str() << " size byte:" << size << " framerate:" << framerate << " Framebuf encoding:" << pixelEncoding<<" diff:"<<diff;
+
+
+    (*buf)->ts=last_acquisition_ts=chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
   }
   /*    if((ret=camera.captureImage(timeout_ms,(char*)framebuf,&size_ret))==0){
       ShapeSimLDBG_<<"Retrieved Image "<<camera.getWidth()<<"x"<<camera.getHeight()<<" raw size:"<<size_ret;

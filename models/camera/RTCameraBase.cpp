@@ -123,7 +123,6 @@ RTCameraBase::RTCameraBase(const string                &_control_unit_id,
 
     chaos::common::data::CDataWrapper p;
     chaos::common::data::CDWUniquePtr calibrazione = loadData("calibration_image");
-
     p.setSerializedJsonData(_control_unit_param.c_str());
     if (p.hasKey(FRAMEBUFFER_ENCODING_KEY) &&
         p.isStringValue(FRAMEBUFFER_ENCODING_KEY)) {
@@ -600,6 +599,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   int     ret;
   int32_t itype;
   int32_t width, height;
+  useCustomHigResolutionTimestamp(true);
 
   AttributeSharedCacheWrapper *cc = getAttributeCache();
   performCalib                    = false;
@@ -847,19 +847,18 @@ void RTCameraBase::captureThread() {
       setStateVariableSeverity(
           StateVariableTypeAlarmDEV, "capture_timeout", chaos::common::alarm::MultiSeverityAlarmLevelClear);
 
-      capture_time +=
-          (chaos::common::utility::TimingUtil::getTimeStampInMicroseconds() -
-           start);
+     
       counter_capture++;
       bool pushret;
       int  retry = 3;
-      // RTCameraBaseLDBG_ << "push image:"<<img->size<<" queue:"<<captureImg.length();
 
       pushret = captureImg.push(img);
       if (pushret < 0) {
         RTCameraBaseLERR_ << "Error on Queue:" << pushret << " queue:" << captureImg.length();
       }
-
+      capture_time +=
+          (chaos::common::utility::TimingUtil::getTimeStampInMicroseconds() -
+           start);
     } else {
       if (stopCapture == false) {
         if ((ret == chaos::ErrorCode::EC_GENERIC_TIMEOUT)) {
@@ -1120,6 +1119,7 @@ void RTCameraBase::encodeThread() {
         ele.sizey   = image.rows;
         ele.offsetx = framebuf->offsetx;
         ele.offsety = framebuf->offsety;
+        ele.ts= framebuf->ts;
 #ifdef CAMERA_GEN_VIDEO
         video.write(image);
 #endif
@@ -1136,16 +1136,17 @@ void RTCameraBase::encodeThread() {
         } else {
           setStateVariableSeverity(
               StateVariableTypeAlarmCU, "encode_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
-          encode_time += (chaos::common::utility::TimingUtil::
-                              getTimeStampInMicroseconds() -
-                          start);
-          counter_encode++;
+         
           bool encoderet;
 
           ele.img = encbuf;
           //  RTCameraBaseLDBG_ << "pushing encode queue:"<<encodedImg.length();
 
           encoderet = encodedImg.push(ele);
+          encode_time += (chaos::common::utility::TimingUtil::
+                              getTimeStampInMicroseconds() -
+                          start);
+          counter_encode++;
           if (encoderet < 0) {
             // FULL
             /* setStateVariableSeverity(
@@ -1342,7 +1343,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       *capture_frame_rate = (1000000 * counter_capture / capture_time);
     }
 
-    if ((counter_capture % 100000) == 0) {
+    if ((counter_capture % 1000) == 0) {
       // RTCameraBaseLDBG_<<"CAPTURE TIME
       // (us):"<<capture_time/counter_capture<<"
       // HZ:"<<(1000000*counter_capture/capture_time)<<" ENCODE TIME
@@ -1368,6 +1369,9 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       *ooffsetx = ele.offsetx;
       *ooffsety = ele.offsety;
       getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ptr, a->size());
+      //RTCameraBaseLDBG_ << "push image:"<<a->size()<<" capture queue:"<<captureImg.length() <<" encode queue:"<<encodedImg.length()<<" lat:"<<(chaos::common::utility::TimingUtil::getTimeStamp()-ele.ts/1000)<<" ms";
+
+      setHigResolutionAcquistionTimestamp(ele.ts);
 #ifdef CAMERA_ENABLE_SHARED
 
       if (shared_mem.get()) {
@@ -1422,6 +1426,9 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
               StateVariableTypeAlarmCU, "encode_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
           ptr = reinterpret_cast<uchar *>(&(encbuf[0]));
           getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ptr, encbuf.size());
+         // RTCameraBaseLDBG_ << "push image:"<<encbuf.size()<<" capture queue:"<<captureImg.length() <<" encode queue:"<<encodedImg.length()<<" lat:"<<(chaos::common::utility::TimingUtil::getTimeStampInMicroseconds()-img->ts)<<" us";
+
+          setHigResolutionAcquistionTimestamp(img->ts);
 #ifdef CAMERA_ENABLE_SHARED
 
           if (shared_mem.get()) {
