@@ -109,12 +109,18 @@ int ShapeSim::initializeCamera(const chaos::common::data::CDataWrapper& json) {
   ShapeSimLDBG_ << "intialize camera:" << json.getCompliantJSONString();
   serial_id = rand();
   propsToCamera((chaos::common::data::CDataWrapper*)&json);
-  original_width  = width;
-  original_height = height;
+
+  
   if (json.hasKey("SHAPE")) {
     if (json.isCDataWrapperValue("SHAPE")) {
       shape_params = json.getCSDataValue("SHAPE");
       if (shape_params != NULL) {
+        if (shape_params->hasKey("width")) {
+          width = shape_params->getInt32Value("width");
+        }
+        if (shape_params->hasKey("height")) {
+          height = shape_params->getInt32Value("height");
+        }
         if (shape_params->hasKey("type")) {
           ret         = 0;
           initialized = true;
@@ -132,16 +138,16 @@ int ShapeSim::initializeCamera(const chaos::common::data::CDataWrapper& json) {
   } else {
     ShapeSimLERR_ << "Missing 'SHAPE' key:" << json.getCompliantJSONString();
   }
-
+  original_width  = width;
+  original_height = height;
   // fetch parameters
   if (shape_params->hasKey("framerate")) {
     framerate = shape_params->getDoubleValue("framerate");
   }
- if (json.hasKey(FRAMEBUFFER_ENCODING_KEY) && json.isStringValue(FRAMEBUFFER_ENCODING_KEY)) {
-    pixelEncoding_str=json.getStringValue(FRAMEBUFFER_ENCODING_KEY);
-    pixelEncoding = fmt2cv(pixelEncoding_str);
-    ShapeSimLDBG_ << "setting FRAMEBUFFER_ENCODING " << pixelEncoding_str<<" :"<<pixelEncoding;
-
+  if (json.hasKey(FRAMEBUFFER_ENCODING_KEY) && json.isStringValue(FRAMEBUFFER_ENCODING_KEY)) {
+    pixelEncoding_str = json.getStringValue(FRAMEBUFFER_ENCODING_KEY);
+    pixelEncoding     = fmt2cv(pixelEncoding_str);
+    ShapeSimLDBG_ << "setting FRAMEBUFFER_ENCODING " << pixelEncoding_str << " :" << pixelEncoding;
   }
   if (shape_params->hasKey("type")) {
     shape_type = shape_params->getStringValue("type");
@@ -214,17 +220,17 @@ int ShapeSim::initializeCamera(const chaos::common::data::CDataWrapper& json) {
   CREATE_INT_PROP("centery", "", centery, 0, height, 1);
   CREATE_INT_PROP("sizex", "", sizex, 0, width, 1);
   CREATE_INT_PROP("sizey", "", sizey, 0, height, 1);
-  CREATE_DOUBLE_PROP("sigmax", "", sigmax, 0.0, 1.0*width, 0.1);
-  CREATE_DOUBLE_PROP("sigmay", "", sigmay, 0.0, 1.0*height, 0.1);
-  CREATE_DOUBLE_PROP("movex","", movex,0.0,1024.0,0.1);
-  CREATE_DOUBLE_PROP("movey", "",movey,0.0,1024.0,0.1);
-  CREATE_DOUBLE_PROP("rot", "",rot,0.0,1024.0,0.01);
-  
+  CREATE_DOUBLE_PROP("sigmax", "", sigmax, 0.0, 1.0 * width, 0.1);
+  CREATE_DOUBLE_PROP("sigmay", "", sigmay, 0.0, 1.0 * height, 0.1);
+  CREATE_DOUBLE_PROP("movex", "", movex, 0.0, 1024.0, 0.1);
+  CREATE_DOUBLE_PROP("movey", "", movey, 0.0, 1024.0, 0.1);
+  CREATE_DOUBLE_PROP("rot", "", rot, 0.0, 1024.0, 0.01);
+
   return ret;
 }
 
 ShapeSim::ShapeSim()
-    : shots(0), frames(0), fn(NULL), pixelEncoding(CV_8UC3), pixelEncoding_str("CV_8UC3"),tmode(CAMERA_TRIGGER_CONTINOUS), gstrategy(CAMERA_LATEST_ONLY), initialized(false), height(CAM_DEFAULT_HEIGTH), width(CAM_DEFAULT_WIDTH), framerate(1.0), offsetx(0), offsety(0), rot(0) {
+    : shots(0), frames(0), fn(NULL), pixelEncoding(CV_8UC3), pixelEncoding_str("CV_8UC3"), tmode(CAMERA_TRIGGER_CONTINOUS), gstrategy(CAMERA_LATEST_ONLY), initialized(false), height(CAM_DEFAULT_HEIGTH), width(CAM_DEFAULT_WIDTH), framerate(1.0), offsetx(0), offsety(0), rot(0) {
   ShapeSimLDBG_ << "Created Driver";
   movex = movey = rot = 0;
   max_movex = max_movey = min_movex = min_movey = 0;
@@ -272,11 +278,9 @@ ShapeSim::ShapeSim()
   CREATE_INT_PROP("camera_trigger_mode", "TRIGGER_MODE", trigger_mode, 0, 10, 1);
 
   CREATE_DOUBLE_PROP("framerate", "FRAMERATE", framerate, 0.0, 100.0, 1.0);
-  
-  createProperty("PixelFormat", "",  FRAMEBUFFER_ENCODING_KEY,                                                         
-                 [](AbstractDriver *thi, const std::string &name,              
-                    const chaos::common::data::CDataWrapper &p)                
-                     -> chaos::common::data::CDWUniquePtr {                    
+
+  createProperty(
+      "PixelFormat", "", FRAMEBUFFER_ENCODING_KEY, [](AbstractDriver* thi, const std::string& name, const chaos::common::data::CDataWrapper& p) -> chaos::common::data::CDWUniquePtr {                    
                    std::string val;
                    ShapeSim *t=(ShapeSim *)thi;
                   chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
@@ -285,20 +289,14 @@ ShapeSim::ShapeSim()
                   ShapeSimLDBG_ << "Pixel Encoding "<<t->pixelEncoding_str<<" :"<<t->pixelEncoding;
 
                                  
-                   return ret;                 
-                 },                                                            
-                 [](AbstractDriver *thi, const std::string &name,              
-                    const chaos::common::data::CDataWrapper &p)                
-                     -> chaos::common::data::CDWUniquePtr {                    
+                   return ret; }, [](AbstractDriver* thi, const std::string& name, const chaos::common::data::CDataWrapper& p) -> chaos::common::data::CDWUniquePtr {                    
                 
                    
                       ShapeSimLERR_ << "Cannot set Pixel Encoding";
                                                                 
                                                                             
                                                          
-                   return chaos::common::data::CDWUniquePtr();                                           
-                 }
-    );
+                   return chaos::common::data::CDWUniquePtr(); });
 
   /*
       createProperty("GainRaw",gain_raw,0,CAM_MAX_GAIN,1,"GAIN",[](AbstractCameraDriver*thi,const std::string&name,
@@ -448,7 +446,7 @@ int ShapeSim::propsToCamera(chaos::common::data::CDataWrapper* p) {
   }
 
 
-  
+
   if (p->hasKey(FRAMEBUFFER_ENCODING_KEY) && p->isStringValue(FRAMEBUFFER_ENCODING_KEY)) {
     ShapeSimLDBG_ << "setting FRAMEBUFFER_ENCODING " << p->getStringValue(FRAMEBUFFER_ENCODING_KEY);
 
@@ -503,15 +501,13 @@ void ShapeSim::createBeamImage(Size size, Mat& output, float uX, float uY, float
   } else if (pixelEncoding == CV_8UC1) {
     temp.convertTo(output, CV_8U);
 
-  }else if (pixelEncoding == CV_16SC1) {
+  } else if (pixelEncoding == CV_16SC1) {
     temp.convertTo(output, CV_16S);
-
 
   } else if (pixelEncoding == CV_16UC1) {
     temp.convertTo(output, CV_16U);
 
-
-  }else {
+  } else {
     throw chaos::CException(-4, "Unsupported Encoding ", __PRETTY_FUNCTION__);
   }
 }
@@ -560,43 +556,39 @@ void ShapeSim::applyCameraParams(cv::Mat& image) {
 
   for (int y = 0; y < image.rows; y++) {
     for (int x = 0; x < image.cols; x++) {
-      if(image.channels()==1){
+      if (image.channels() == 1) {
+        switch (image.depth()) {
+          case CV_8U: {
+            float f = (((double)1.0 * gain_raw) * image.at<uchar>(y, x) + (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
 
-        switch(image.depth()){
-          
-          case CV_8U:{
-            float f=(((double)1.0 * gain_raw) * image.at<uchar>(y, x)+ (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
+            image.at<uchar>(y, x) = saturate_cast<uchar>(f);
+          } break;
+          case CV_16S: {
+            float f = (((double)1.0 * gain_raw) * image.at<int16_t>(y, x) + (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
 
-              image.at<uchar>(y, x)=saturate_cast<uchar>(f);
-          }
-            break;
-          case CV_16S:{
-            float f=(((double)1.0 * gain_raw)  * image.at<int16_t>(y, x)+ (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
-
-            image.at<int16_t>(y, x)=saturate_cast<int16_t>(f);
+            image.at<int16_t>(y, x) = saturate_cast<int16_t>(f);
             break;
           }
-          case CV_16U:{
-            float f=(((double)1.0 * gain_raw) * image.at<uint16_t>(y, x)+ (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
+          case CV_16U: {
+            float f = (((double)1.0 * gain_raw) * image.at<uint16_t>(y, x) + (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
 
-            image.at<uint16_t>(y, x)=saturate_cast<uint16_t>(f);
-          }
-            break;
-          default:{
-            float f=(((double)1.0 * gain_raw)  * image.at<char>(y, x)+ (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
+            image.at<uint16_t>(y, x) = saturate_cast<uint16_t>(f);
+          } break;
+          default: {
+            float f = (((double)1.0 * gain_raw) * image.at<char>(y, x) + (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
 
-            image.at<char>(y, x)=saturate_cast<char>(f);
+            image.at<char>(y, x) = saturate_cast<char>(f);
             break;
           }
         }
-        
-      } else {
-      for (int c = 0; c < image.channels(); c++) {
-              float f=(((double)1.0 * gain_raw) / CAM_MAX_GAIN * image.at<Vec3b>(y, x)[c] + (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
 
-        image.at<Vec3b>(y, x)[c] =
-            saturate_cast<uchar>(f);
-      }
+      } else {
+        for (int c = 0; c < image.channels(); c++) {
+          float f = (((double)1.0 * gain_raw) / CAM_MAX_GAIN * image.at<Vec3b>(y, x)[c] + (((double)1.0 * brightness_raw)) / CAM_MAX_BRIGHTNESS) * (((double)1.0 * shutter_raw) / CAM_MAX_SHUTTER);
+
+          image.at<Vec3b>(y, x)[c] =
+              saturate_cast<uchar>(f);
+        }
       }
     }
   }
@@ -662,7 +654,7 @@ int ShapeSim::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
   } else if (shape_type == "ellipse") {
     // get parameters
 
-   // fs << img.cols << "x" << img.rows << " orig [" << original_width << "x" << original_height << " " << shape_type << ":(" << tmp_centerx << "," << tmp_centery << ") " << tmp_sizex << "x" << tmp_sizey << "," << tmp_rotangle << "," << tmp_tickness;
+    // fs << img.cols << "x" << img.rows << " orig [" << original_width << "x" << original_height << " " << shape_type << ":(" << tmp_centerx << "," << tmp_centery << ") " << tmp_sizex << "x" << tmp_sizey << "," << tmp_rotangle << "," << tmp_tickness;
 
     rectangle(img, Point(0, 0), Point(width - 1, height - 1), Scalar(colr, colg, colb));
 
@@ -675,11 +667,11 @@ int ShapeSim::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
             Scalar(colr, colg, colb),
             tmp_tickness,
             linetype);
-    uint64_t ts= chaos::common::utility::TimingUtil::getTimeStamp();
+    uint64_t ts = chaos::common::utility::TimingUtil::getTimeStamp();
 
     putText(img, ss.str(), Point(10, 25), FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255, 255, 255), 2, LINE_AA);
-    std::string ts_s=chaos::common::utility::TimingUtil::toString(ts,std::string("%H:%M:%S%F"));
-    putText(img, ts_s, Point(1, height/2), FONT_HERSHEY_SIMPLEX, 2,cv::Scalar(255,255,255), 3, LINE_AA);
+    std::string ts_s = chaos::common::utility::TimingUtil::toString(ts, std::string("%H:%M:%S%F"));
+    putText(img, ts_s, Point(1, height / 2), FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(255, 255, 255), 3, LINE_AA);
 
     // putText(img,fs.str(),Point(10,height-25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
   } else if (shape_type.size()) {
@@ -692,8 +684,8 @@ int ShapeSim::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
           return -5;
         }
       } catch (cv::Exception e) {
-      LERR_ << "## cannot create image from file:" <<shape_type<<" error:"<< e.msg;
-    } catch (...) {
+        LERR_ << "## cannot create image from file:" << shape_type << " error:" << e.msg;
+      } catch (...) {
         LERR_ << "## Exception Reading:" << shape_type;
         return -7;
       }
@@ -739,18 +731,16 @@ int ShapeSim::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
   ret = size;
 
   if (framerate > 0) {
-    uint64_t now        = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
+    uint64_t now = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
 
-    int32_t   diff       = (1000000.0 / framerate) - (now - last_acquisition_ts);
+    int32_t diff = (1000000.0 / framerate) - (now - last_acquisition_ts);
     if (diff > 0) {
-
-      //boost::this_thread::sleep_for(boost::chrono::microseconds((uint64_t)diff));
+      // boost::this_thread::sleep_for(boost::chrono::microseconds((uint64_t)diff));
       usleep(diff);
     }
-    //ShapeSimLDBG_ << ss.str() << "," << fs.str() << " size byte:" << size << " framerate:" << framerate << " Framebuf encoding:" << pixelEncoding<<" diff:"<<diff;
+    // ShapeSimLDBG_ << ss.str() << "," << fs.str() << " size byte:" << size << " framerate:" << framerate << " Framebuf encoding:" << pixelEncoding<<" diff:"<<diff;
 
-
-    (*buf)->ts=last_acquisition_ts=chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
+    (*buf)->ts = last_acquisition_ts = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
   }
   /*    if((ret=camera.captureImage(timeout_ms,(char*)framebuf,&size_ret))==0){
       ShapeSimLDBG_<<"Retrieved Image "<<camera.getWidth()<<"x"<<camera.getHeight()<<" raw size:"<<size_ret;
