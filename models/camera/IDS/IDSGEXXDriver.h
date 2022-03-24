@@ -1,7 +1,7 @@
 /*
  *	IDSGEXXDriver.h
  *  Software emulated temperature driver
- *	!CHOAS
+ *	!CHAOS
  *	Created by Andrea Michelotti
  *
  *    	Copyright 2013 INFN, National Institute of Nuclear Physics
@@ -20,7 +20,6 @@
  */
 #ifndef IDSGEXXDriver_H
 #define IDSGEXXDriver_H
-#include "Camera.h"
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <driver/sensors/core/CameraDriverBridge.h>
 #include <chaos/common/data/DatasetDB.h>
@@ -33,6 +32,9 @@ namespace cu_driver = chaos::cu::driver_manager::driver;
  */
 DEFINE_CU_DRIVER_DEFINITION_PROTOTYPE(IDSGEXXDriver)
 
+namespace ueye {
+    class Camera;
+}
 namespace driver {
     namespace sensor {
         namespace camera {
@@ -44,7 +46,7 @@ class IDSGEXXDriver: public ::driver::sensor::camera::CameraDriverBridge {
 
 
  protected:
-   int get_next_image(char **mem, INT *image_id,int32_t timeout);
+  // int get_next_image(char **mem, int *image_id,int32_t timeout);
 
  void driverInit(const char *initParameter) ;
  void driverInit(const chaos::common::data::CDataWrapper& json);
@@ -52,8 +54,8 @@ class IDSGEXXDriver: public ::driver::sensor::camera::CameraDriverBridge {
   int initializeCamera(const chaos::common::data::CDataWrapper& json) ;
   void driverDeinit() ;
     // This smart pointer will receive the grab result data.
-     HIDS hCam;
-     ueye::Camera camera;
+     //HIDS hCam;
+     ueye::Camera* camera;
      int32_t memID;
      bool initialized;
      bool grabbing;
@@ -66,8 +68,6 @@ public:
     int32_t width,height,offsetx,offsety,gain,zoom,pixelclk,trgmode,old_size;
     std::string framebuf_enc;
 
-    int32_t IDStrgmode2trgmode(ueye::TriggerMode ids);
-    ueye::TriggerMode trgmode2IDStrgmode(int32_t cam);
     
 	IDSGEXXDriver();
 	~IDSGEXXDriver();

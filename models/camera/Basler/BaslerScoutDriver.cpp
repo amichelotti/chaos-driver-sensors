@@ -1004,6 +1004,8 @@ int BaslerScoutDriver::initializeCamera(
         createProperty("Friend", (const std::string &)friendname);
         createProperty("FullName", (const std::string &)fullname);
         createProperty("SerialNumber", (const std::string &)sn);
+        createProperty("Version",std::string("BaslerScoutDriver-" BASLERVER) );
+
       }
       if (camerap && json.hasKey("TRIGGER_MODE")) {
         int tmode = json.getInt32Value("TRIGGER_MODE");

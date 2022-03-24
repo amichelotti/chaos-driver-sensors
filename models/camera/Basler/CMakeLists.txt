@@ -13,6 +13,7 @@ ELSE()
   MESSAGE(STATUS "Adding Basler")
 
 SET(PYLON_VERSION 5.1.0)
+ADD_DEFINITIONS(-DBASLERVER=\"${PYLON_VERSION}\")
 
 find_library (pylonbase NAMES pylonbase-${PYLON_VERSION}  PATHS ${PYLON5}/lib)
 find_library (pylonutil NAMES pylonutility-${PYLON_VERSION} PATHS ${PYLON5}/lib)
