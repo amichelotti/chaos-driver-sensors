@@ -1233,6 +1233,8 @@ int IDSGEXXDriver::waitGrab(camera_buf_t **hostbuf, uint32_t timeout_ms) {
       // memcpy(hostbuf,buf,size_ret);
       *hostbuf = new camera_buf_t((uint8_t *)buf, size_ret, width, height,
                                   offsetx, offsety);
+      (*hostbuf)->ts = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
+
     }
   } else {
     IDSGEXXDriverLERR_ << "No Image.. Timeout? ret:" << ret;

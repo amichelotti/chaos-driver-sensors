@@ -1832,6 +1832,8 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
                                   ptrGrabResult->GetHeight(),
                                   ptrGrabResult->GetOffsetX(),
                                   ptrGrabResult->GetOffsetY());
+         (*img)->ts = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
+    
           // memcpy(hostbuf,pImageBuffer,size_ret);
         }
         if (fn) {
