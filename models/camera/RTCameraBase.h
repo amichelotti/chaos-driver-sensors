@@ -75,7 +75,6 @@ protected:
         int fit_threshold,fit_level;
         //double ZOOMX,ZOOMY;
         chaos::common::data::CDataWrapper filters;
-        
         typedef struct encoded {
             std::vector<unsigned char>* img;
             int sizex,sizey,offsetx,offsety;
@@ -108,11 +107,13 @@ protected:
         void encodeThread();
         int bufinuse;
         const int32_t*rot;
-        int32_t* enc_frame_rate,*capture_frame_rate;
+        int32_t* enc_frame_rate,*capture_frame_rate,compression_factor,png_strategy;
         double*shutter,*brightness,*contrast,*sharpness,*gain;
          char*fmt,*ofmt;
         CameraDriverInterface*driver;
         void updateProperty();
+        bool setCamera(const std::string &name, std::string value, uint32_t size=sizeof(bool));
+
         bool setCamera(const std::string &name, bool value, uint32_t size=sizeof(bool));
         bool setCamera(const std::string &name, int32_t value, uint32_t size=sizeof(bool));
 
@@ -164,7 +165,8 @@ protected:
     chaos::common::data::CDWUniquePtr unitPerformCalibration(chaos::common::data::CDWUniquePtr data);
 
     virtual int filtering(cv::Mat&image);
-    
+    void changeEncodingParam(int32_t val);
+
     chaos::common::data::CDWUniquePtr getAction(chaos::common::data::CDWUniquePtr );
     chaos::common::data::CDWUniquePtr setAction(chaos::common::data::CDWUniquePtr );
     bool unitRestoreToSnapshot(chaos::cu::control_manager::AbstractSharedDomainCache * const snapshot_cache) throw(chaos::CException);
