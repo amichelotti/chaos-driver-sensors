@@ -919,7 +919,7 @@ void RTCameraBase::captureThread() {
       bool pushret;
       int  retry = 3;
       if(captureImg.length()==CAMERA_FRAME_BUFFERING/2){
-        boost::this_thread::yield();
+       // boost::this_thread::yield();
         setStateVariableSeverity(
                 StateVariableTypeAlarmCU, "captureQueue", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
         RTCameraBaseLERR_ << "Warning Capture queue :" << captureImg.length();
@@ -927,7 +927,7 @@ void RTCameraBase::captureThread() {
 
       } else if(captureImg.length()==CAMERA_FRAME_BUFFERING){
         RTCameraBaseLERR_ << "Error Capture queue :" << captureImg.length();
-        boost::this_thread::yield();
+      //  boost::this_thread::yield();
 
 setStateVariableSeverity(
                 StateVariableTypeAlarmCU, "captureQueue", chaos::common::alarm::MultiSeverityAlarmLevelHigh);

@@ -736,6 +736,9 @@ int IDSGEXXDriver::initializeCamera(
                    chaos::common::data::CDWUniquePtr ret(
                        new chaos::common::data::CDataWrapper());
                    ret->addInt32Value(PROPERTY_VALUE_KEY, t->gain);
+                    ret->addInt32Value(PROPERTY_VALUE_MAX_KEY, 100);
+                    ret->addInt32Value(PROPERTY_VALUE_MIN_KEY, 0);
+                    ret->addInt32Value(PROPERTY_VALUE_INC_KEY, 1);
                    return ret;
 
                  },
@@ -745,9 +748,13 @@ int IDSGEXXDriver::initializeCamera(
                    IDSGEXXDriver *t = (IDSGEXXDriver *)thi;
                    if (p.hasKey(PROPERTY_VALUE_KEY)) {
                      int32_t val = p.getInt32Value(PROPERTY_VALUE_KEY);
-                     IDSGEXXDriverLDBG(t) << "WRITE GAIN:" << val;
 
-                     t->camera->setHardwareGain(&val);
+                     if(t->camera->setHardwareGain(&val)){
+                      IDSGEXXDriverLDBG(t) << "WROTE GAIN:" << val;
+
+                     } else {
+                       IDSGEXXDriverLERR(t) << "WRITING GAIN:" << val;
+                     }
                      t->gain =  t->camera->getHardwareGain();
                      return p.clone();
                    }
