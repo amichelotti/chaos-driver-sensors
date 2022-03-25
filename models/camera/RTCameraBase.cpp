@@ -26,6 +26,7 @@
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+
 /*
    IMWRITE_PNG_STRATEGY_DEFAULT      = 0,
     IMWRITE_PNG_STRATEGY_FILTERED     = 1,
