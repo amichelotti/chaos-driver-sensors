@@ -159,7 +159,7 @@ public:
   int getFrameRate(double*rate);
   void setGainBoost(bool *enable);
   void setAutoGain(bool *enable);
-  void setHardwareGain(int *gain);
+  bool setHardwareGain(int *gain);
   bool setTriggerMode(TriggerMode mode);
   void setFlashWithGlobalParams(FlashMode mode);
   void setFlash(FlashMode mode, int delay_usec, unsigned int duration_usec);

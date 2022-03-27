@@ -45,8 +45,8 @@ ADD_SUBDIRECTORY(models)
 ADD_EXECUTABLE(sensorsServer test/sensorsServer)
 ADD_EXECUTABLE(sensorsClient test/sensorsClient)
 
- TARGET_LINK_LIBRARIES(sensorsServer ${PROJECT_NAME} ${DRIVERS_LIB} chaos_cutoolkit chaos_common common_serial pthread ${camera_lib})
- TARGET_LINK_LIBRARIES(sensorsClient ${PROJECT_NAME} chaos_common pthread ${DRIVERS_LIB} ${camera_lib})
+ TARGET_LINK_LIBRARIES(sensorsServer ${PROJECT_NAME} ${DRIVERS_LIB} chaos_cutoolkit chaos_common common_serial pthread)
+ TARGET_LINK_LIBRARIES(sensorsClient ${PROJECT_NAME} chaos_common pthread ${DRIVERS_LIB})
 
  FILE(GLOB files "core/*.h")
 INSTALL(FILES ${files} DESTINATION include/driver/sensors/core)

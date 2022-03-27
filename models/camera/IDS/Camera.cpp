@@ -238,8 +238,10 @@ double Camera::getExposure()
 }
 unsigned int Camera::getHardwareGain()
 {
-  hardware_gain_ = is_SetHWGainFactor(cam_, IS_GET_MASTER_GAIN_FACTOR, 0);
-  return hardware_gain_;
+  //hardware_gain_ = is_SetHWGainFactor(cam_, IS_GET_MASTER_GAIN_FACTOR, 0);
+  //return hardware_gain_;
+  int gain = is_SetHardwareGain(cam_, IS_GET_MASTER_GAIN, IS_IGNORE_PARAMETER, IS_IGNORE_PARAMETER, IS_IGNORE_PARAMETER);
+  return gain;
 }
 TriggerMode Camera::getTriggerMode()
 {
@@ -461,16 +463,19 @@ void Camera::setAutoGain(bool *enable)
   }
   auto_gain_ = *enable;
 }
-void Camera::setHardwareGain(int *gain)
+bool Camera::setHardwareGain(int *gain)
 {
   bool b = false;
   setAutoGain(&b);
   if (*gain < 0)
     *gain = 0;
-  if (*gain > 400)
-    *gain = 400;
-  hardware_gain_ = is_SetHWGainFactor(cam_, IS_SET_MASTER_GAIN_FACTOR, *gain);
-  *gain = hardware_gain_;
+  if (*gain > 100)
+    *gain = 100;
+  if(is_SetHardwareGain(cam_ ,*gain, IS_IGNORE_PARAMETER, IS_IGNORE_PARAMETER, IS_IGNORE_PARAMETER) == IS_SUCCESS){
+    return true;
+  }
+  return false;
+  
 }
 bool Camera::setTriggerMode(TriggerMode mode)
 {
