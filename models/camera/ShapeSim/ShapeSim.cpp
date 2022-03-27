@@ -497,7 +497,11 @@ void ShapeSim::createBeamImage(Size size, Mat& output, float uX, float uY, float
   normalize(temp, temp, 0.0, 255, NORM_MINMAX);
   if (pixelEncoding == CV_8UC3) {
     temp.convertTo(temp, CV_8U);
-    cvtColor(temp, output, CV_GRAY2BGR);
+    #if (CV_VERSION_MAJOR >= 4)
+         cvtColor(temp, output,cv::COLOR_GRAY2BGR);
+        #else
+    cvtColor(temp, output, cv::CV_GRAY2BGR);
+        #endif
   } else if (pixelEncoding == CV_8UC1) {
     temp.convertTo(output, CV_8U);
 

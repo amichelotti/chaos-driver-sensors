@@ -23,10 +23,8 @@
 #include <driver/sensors/core/AbstractSensorDriver.h>
 #include <driver/sensors/core/CameraDriverInterface.h>
 #include <opencv2/core/core.hpp>
-
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-
 /*
    IMWRITE_PNG_STRATEGY_DEFAULT      = 0,
     IMWRITE_PNG_STRATEGY_FILTERED     = 1,
@@ -390,7 +388,11 @@ bool RTCameraBase::setCamera(const std::string &name, std::string value, uint32_
       strcpy(encoding, ".png");
 
    } else {
+    if(strcmp(encoding,value.c_str())&&(!strcmp(value.c_str(),".jpg"))){
+      compression_factor=90;
+    }
     snprintf(encoding, sizeof(encoding), "%s", value.c_str());
+    
   }
   strncpy(ofmt, encoding, sizeof(encoding));
   }
@@ -1352,7 +1354,11 @@ int RTCameraBase::filtering(cv::Mat &image) {
     // RTCameraBaseLDBG_<<"Ellipse:("<<x<<","<<y<<") sx:"<<*refsx<<" sy:"<<*refsy<<" rho:"<<*refrho<<"R:"<<refenceR<<",G:"<<refenceG<<",B:"<<refenceB<<" tick:"<<refenceThick;
     if ((refenceR != refenceG) || (refenceR != refenceB)) {
       if (image.channels() == 1) {
+        #if (CV_VERSION_MAJOR >= 4)
+         cvtColor(image, image,cv::COLOR_GRAY2BGR);
+        #else
         cvtColor(image, image, CV_GRAY2RGB);
+        #endif
       }
     }
     plotEllipse(image, x, y, *refsx, *refsy, *refrho, Scalar(refenceR, refenceG, refenceB), refenceThick);
