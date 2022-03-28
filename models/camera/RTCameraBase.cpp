@@ -1357,7 +1357,7 @@ int RTCameraBase::filtering(cv::Mat &image) {
         #if (CV_VERSION_MAJOR >= 4)
          cvtColor(image, image,cv::COLOR_GRAY2BGR);
         #else
-        cvtColor(image, image, CV_GRAY2RGB);
+        cvtColor(image, image, cv::COLOR_GRAY2RGB);
         #endif
       }
     }
