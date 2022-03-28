@@ -25,6 +25,9 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#ifdef CERN_ROOT
+#include <driver/misc/models/cernRoot/rootGaussianImage2dFit.h>
+#endif
 /*
    IMWRITE_PNG_STRATEGY_DEFAULT      = 0,
     IMWRITE_PNG_STRATEGY_FILTERED     = 1,
@@ -32,7 +35,7 @@
     IMWRITE_PNG_STRATEGY_RLE          = 3,
     IMWRITE_PNG_STRATEGY_FIXED        = 4,
 */
-#ifdef CERN_ROOT
+#ifdef CERN_ROOTg
 
 #include <driver/misc/models/cernRoot/rootGaussianImage2dFit.h>
 #endif
@@ -815,7 +818,9 @@ void RTCameraBase::startGrabbing() {
   if (stopCapture == true) {
     stopCapture = false;
     if (buffering > 0) {
-      capture_th = boost::thread(&RTCameraBase::captureThread, this);
+      capture_th = std::thread(&RTCameraBase::captureThread, this);
+      encode_th = std::thread(&RTCameraBase::encodeThread, this);
+
     }
   }
 }
@@ -828,25 +833,15 @@ void RTCameraBase::haltThreads() {
     encodedImg.unblock();
 
     if (encode_th.joinable()) {
-      if (boost::this_thread::get_id() != encode_th.get_id()) {
-        if (encode_th.try_join_for(boost::chrono::milliseconds(2 * chaos::common::constants::CUTimersTimeoutinMSec))) {
+      if (std::this_thread::get_id() != encode_th.get_id()) {
+          encode_th.join();
           RTCameraBaseLDBG_ << "encodeThread joined!";
-
-        } else {
-          encode_th.interrupt();
-          RTCameraBaseLERR_ << "Timeout of encodeThread interrupted";
-        }
       }
     }
     if (capture_th.joinable()) {
-      if (boost::this_thread::get_id() != capture_th.get_id()) {
-        if (capture_th.try_join_for(boost::chrono::milliseconds(2 * chaos::common::constants::CUTimersTimeoutinMSec))) {
-          RTCameraBaseLDBG_ << "captureThread joined!";
+      if (std::this_thread::get_id() != capture_th.get_id()) {
+        capture_th.join();
 
-        } else {
-          capture_th.interrupt();
-          RTCameraBaseLERR_ << "Timeout of captureThread interrupted";
-        }
       }
     }
   }
@@ -901,7 +896,6 @@ void RTCameraBase::captureThread() {
   counter_capture = 0;
   RTCameraBaseLDBG_ << "Capture thread STARTED";
   
-  encode_th = boost::thread(&RTCameraBase::encodeThread, this);
 
   while ((!stopCapture) && (hasStopped() == false)) {
     img   = 0;
@@ -1120,7 +1114,7 @@ void RTCameraBase::encodeThread() {
 
                 for_each(calibimages.begin(),calibimages.end(),[](const cv::Mat* ele){delete ele;});
                 calibimages.clear();
-
+                
                 bool code = cv::imencode(encoding, *subImage, encbuf, encode_params);
                 if (code) {
                   uchar                            *ptr = reinterpret_cast<uchar *>(&(encbuf[0]));
@@ -1319,6 +1313,7 @@ void plotEllipse(Mat color, int32_t X_m, int32_t Y_m, int32_t S_x, int32_t S_y, 
 }
 int RTCameraBase::filtering(cv::Mat &image) {
 #ifdef CERN_ROOT
+
   if (performAutoReference) {
     setStateVariableSeverity(StateVariableTypeAlarmCU, "auto_reference_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
     performAutoReference = false;

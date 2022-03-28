@@ -90,7 +90,7 @@ protected:
 
         void captureThread();
         bool stopCapture,stopEncoding;
-        boost::thread capture_th,encode_th;
+        std::thread capture_th,encode_th;
       //  std::vector<unsigned char> encbuf[CAMERA_FRAME_BUFFERING];//encode stage
         chaos::common::thread::TLockFreeQueue< ::driver::sensor::camera::camera_buf_t*,CAMERA_FRAME_BUFFERING> captureImg;
         chaos::common::thread::TLockFreeQueue<encoded_t,CAMERA_FRAME_BUFFERING> encodedImg;

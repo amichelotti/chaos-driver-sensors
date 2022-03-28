@@ -15,7 +15,7 @@ ELSE()
 	MESSAGE(STATUS "Adding IDS ${IDS}")
 
 #separate_arguments(pylon)
-FILE(GLOB ids_libs ${IDS}/lib/libueye_api.so.1)
+FILE(GLOB ids_libs ${IDS}/lib/*.so*)
 MESSAGE(STATUS "copying ${ids_libs}")
 FILE(COPY ${ids_libs} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 SET(DRIVERS_LIB ${DRIVERS_LIB} ${PROJECT_NAME} PARENT_SCOPE)
