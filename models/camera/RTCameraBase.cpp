@@ -374,10 +374,7 @@ void RTCameraBase::changeEncodingParam(int32_t val){
       encode_params.push_back(IMWRITE_JPEG_QUALITY);
       encode_params.push_back(val);
 
-    } else {
-      LERR_ << "Invalid encoding:'"<<encoding;
-
-    }
+  } 
     compression_factor=val;
 
 }
@@ -388,13 +385,14 @@ bool RTCameraBase::setCamera(const std::string &name, std::string value, uint32_
       strcpy(encoding, ".png");
 
    } else {
-    if(strcmp(encoding,value.c_str())&&(!strcmp(value.c_str(),".jpg"))){
+    if(strcmp(encoding,value.c_str())&&(!strcmp(value.c_str(),"jpg"))){
       compression_factor=90;
     }
-    snprintf(encoding, sizeof(encoding), "%s", value.c_str());
+    snprintf(encoding, sizeof(encoding), ".%s", value.c_str());
     
   }
-  strncpy(ofmt, encoding, sizeof(encoding));
+  // ofmt not .
+  strncpy(ofmt, &encoding[1], sizeof(encoding));
   }
   changeEncodingParam(compression_factor);
   return true;
@@ -775,7 +773,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   } else {
     snprintf(encoding, sizeof(encoding), ".%s", fmt);
   }
-  strncpy(ofmt, encoding, sizeof(encoding));
+  strncpy(ofmt, &encoding[1], sizeof(encoding));
   changeEncodingParam(compression_factor);
   updateProperty();
 }
