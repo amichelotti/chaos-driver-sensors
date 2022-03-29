@@ -14,6 +14,7 @@ namespace driver{
                  void*ptr;
                  size_t size;
                  uint64_t ts;
+                // uint64_t encts;
                  Encoder():ptr(NULL),size(0){};
                  ~Encoder();
                  bool encode(const char*enc,cv::Mat&,std::vector<int>&);

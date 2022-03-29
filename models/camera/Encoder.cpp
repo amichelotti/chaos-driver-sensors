@@ -16,7 +16,7 @@ bool Encoder::encode(const char *encoding, cv::Mat &ma, std::vector<int> &encode
     bool ret;
     sizex=ma.cols;
     sizey=ma.rows;
-
+#if 0
     if (!strcmp(encoding, ".png")) {
       spng_ctx        *ctx;
       int              ret;
@@ -56,17 +56,19 @@ bool Encoder::encode(const char *encoding, cv::Mat &ma, std::vector<int> &encode
         return false;
       }
       ptr = spng_get_png_buffer(ctx, &size, &ret);
-      ts=chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
+    //  ts=chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
       spng_ctx_free(ctx);
 
       return (ptr!=NULL);
-    } else {
+    } else 
+#endif
+      {
       ret = cv::imencode(encoding, ma, encbuf, encode_params);
       if (ret) {
         ptr  = reinterpret_cast<uchar *>(&(encbuf[0]));
         size = encbuf.size();
       }
-      ts=chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
+     // ts=chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
 
       return ret;
     }

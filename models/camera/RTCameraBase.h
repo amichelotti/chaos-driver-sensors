@@ -22,7 +22,7 @@
 #include  <chaos/common/thread/TLockFreeQueue.h> 
 #include <common/misc/data/core/SharedMem.h>
 #include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
-
+#include "Encoder.h"
 #define DEFAULT_RESOLUTION 640*480*3
 #define CAMERA_FRAME_BUFFERING 10
 
@@ -93,8 +93,8 @@ protected:
         std::thread capture_th,encode_th;
       //  std::vector<unsigned char> encbuf[CAMERA_FRAME_BUFFERING];//encode stage
         chaos::common::thread::TLockFreeQueue< ::driver::sensor::camera::camera_buf_t*,CAMERA_FRAME_BUFFERING> captureImg;
-        chaos::common::thread::TLockFreeQueue<encoded_t,CAMERA_FRAME_BUFFERING> encodedImg;
-
+       // chaos::common::thread::TLockFreeQueue<encoded_t,CAMERA_FRAME_BUFFERING> encodedImg;
+        chaos::common::thread::TLockFreeQueue<Encoder*,CAMERA_FRAME_BUFFERING> encodedImg;
 
 
         //boost::lockfree::queue<::driver::sensor::camera::camera_buf_t*, boost::lockfree::fixed_sized<true> > captureImg;

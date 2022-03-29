@@ -377,6 +377,10 @@ void RTCameraBase::changeEncodingParam(int32_t val){
       encode_params.push_back(IMWRITE_JPEG_QUALITY);
       encode_params.push_back(val);
 
+  } else if(!strcmp(encoding,".webp")){
+      encode_params.push_back(IMWRITE_WEBP_QUALITY);
+      encode_params.push_back(val);
+
   } 
     compression_factor=val;
 
@@ -390,6 +394,9 @@ bool RTCameraBase::setCamera(const std::string &name, std::string value, uint32_
    } else {
     if(strcmp(encoding,value.c_str())&&(!strcmp(value.c_str(),"jpg"))){
       compression_factor=90;
+    }
+    if(strcmp(encoding,value.c_str())&&(!strcmp(value.c_str(),"webp"))){
+      compression_factor=100;
     }
     snprintf(encoding, sizeof(encoding), ".%s", value.c_str());
     
@@ -1160,9 +1167,9 @@ void RTCameraBase::encodeThread() {
 
         //  metadataLogging(chaos::common::metadata_logging::StandardLoggingChannel::LogLevelError,ss.str());
       }
-      std::vector<unsigned char> *encbuf = NULL;
-      encoded_t                   ele;
-
+      //std::vector<unsigned char> *encbuf = NULL;
+      //encoded_t                   ele;
+      Encoder* ele=new Encoder();
       try {
         // bool code = cv::imencode(encoding, image, buf );
         // apply_zoom=(ZOOMX!=0.0) ||(ZOOMY!=0.0);
@@ -1178,34 +1185,41 @@ void RTCameraBase::encodeThread() {
           image = rotate(image, rota);
         }
         filtering(image);
-        encbuf = new std::vector<unsigned char>();
+       // encbuf = new std::vector<unsigned char>();
         // RTCameraBaseLDBG_ << "Encoding "<<encoding<<" , row:"<<image.rows<<"
         // col:"<<image.cols<<" channels:"<<image.channels();
-        ele.sizex   = image.cols;
-        ele.sizey   = image.rows;
-        ele.offsetx = framebuf->offsetx;
-        ele.offsety = framebuf->offsety;
-        ele.ts= framebuf->ts;
+       /* 
+       ele.sizex   = image.cols;
+       ele.sizey   = image.rows;
+       ele.offsetx = framebuf->offsetx;
+       ele.offsety = framebuf->offsety;
+       ele.ts= framebuf->ts;
+        */
+       ele->offsetx=framebuf->offsetx;
+       ele->offsety=framebuf->offsety;
+       ele->ts=framebuf->ts;
+
 #ifdef CAMERA_GEN_VIDEO
         video.write(image);
 #endif
-        bool code = cv::imencode(encoding, image, *encbuf, encode_params);
+       // bool code = cv::imencode(encoding, image, *encbuf, encode_params);
+       bool code=ele->encode(encoding,image,encode_params);
         delete (framebuf);
         // image.deallocate();
         if (code == false) {
           setStateVariableSeverity(
               StateVariableTypeAlarmCU, "encode_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
           RTCameraBaseLERR_ << "Encode error:" << fmt;
-          delete encbuf;
-
-          encbuf = NULL;
+          delete ele;
+          ele=NULL;
+        //  encbuf = NULL;
         } else {
           setStateVariableSeverity(
               StateVariableTypeAlarmCU, "encode_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
          
           bool encoderet;
 
-          ele.img = encbuf;
+          //ele.img = encbuf;
           //  RTCameraBaseLDBG_ << "pushing encode queue:"<<encodedImg.length();
         if(encodedImg.length()==CAMERA_FRAME_BUFFERING){
            setStateVariableSeverity(
@@ -1247,15 +1261,21 @@ void RTCameraBase::encodeThread() {
           goInFatalError(ss.str(), -1000, __PRETTY_FUNCTION__);
         }
 
-        if (encbuf) {
+        /*if (encbuf) {
           delete encbuf;
+        }*/
+        if(ele){
+          delete ele;
         }
 
       } catch (std::runtime_error &e) {
         std::stringstream ss;
         ss << "Encode exception:" << e.what() << " orher:" << fmt;
-        if (encbuf) {
+     /*   if (encbuf) {
           delete encbuf;
+        }*/
+         if(ele){
+          delete ele;
         }
         if (!stopCapture) {
           goInFatalError(ss.str(), -1001, __PRETTY_FUNCTION__);
@@ -1266,8 +1286,11 @@ void RTCameraBase::encodeThread() {
         std::stringstream ss;
         ss << "Uknown Encode exception:" << fmt;
 
-        if (encbuf) {
+       /* if (encbuf) {
           delete encbuf;
+        }*/
+         if(ele){
+          delete ele;
         }
         if (!stopCapture) {
           usleep(100000);
@@ -1444,24 +1467,26 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       counter_encode  = 0;
       counter_capture = 0;
     }
-    encoded_t                   ele;
-    std::vector<unsigned char> *a;
+   // encoded_t                   ele;
+   // std::vector<unsigned char> *a;
+    Encoder*ele=NULL;
     // RTCameraBaseLDBG_ << "popping encode queue:"<<encodedImg.length();
 
     int ret = encodedImg.wait_and_pop(ele, trigger_timeout);
-    if ((ret >= 0) && ele.img) {
-      a = ele.img;
+    //if ((ret >= 0) && ele.img) {
+    if ((ret >= 0) && ele->ptr) {
+      //a = ele.img;
       //  RTCameraBaseLDBG_ << " Encode Queue:" << encodedImg.length()<< " Capture Queue:" << captureImg.length();
 
-      ptr       = reinterpret_cast<uchar *>(&((*a)[0]));
-      *osizex   = ele.sizex;
-      *osizey   = ele.sizey;
-      *ooffsetx = ele.offsetx;
-      *ooffsety = ele.offsety;
-      getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ptr, a->size());
+      ptr       = ele->ptr;//reinterpret_cast<uchar *>(&((*a)[0]));
+      *osizex   = ele->sizex;
+      *osizey   = ele->sizey;
+      *ooffsetx = ele->offsetx;
+      *ooffsety = ele->offsety;
+      getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ptr, ele->size/*a->size()*/);
       //RTCameraBaseLDBG_ << "push image:"<<a->size()<<" capture queue:"<<captureImg.length() <<" encode queue:"<<encodedImg.length()<<" lat:"<<(chaos::common::utility::TimingUtil::getTimeStamp()-ele.ts/1000)<<" ms";
 
-      setHigResolutionAcquistionTimestamp(ele.ts);
+      setHigResolutionAcquistionTimestamp(ele->ts);
 #ifdef CAMERA_ENABLE_SHARED
 
       if (shared_mem.get()) {
@@ -1469,8 +1494,8 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
         shared_mem->notify_all();
       }
 #endif
-      delete (a);
-
+     // delete (a);
+      delete (ele);
       getAttributeCache()->setOutputDomainAsChanged();
     }
   } else {
@@ -1487,12 +1512,12 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
 
       *osizex = img->width;
       *osizey = img->height;
-      ;
+      
       *ooffsetx = img->offsetx;
       *ooffsety = img->offsety;
 
       cv::Mat                     image(*osizey, *osizex, framebuf_encoding, (uint8_t *)img->buf);
-      std::vector<unsigned char> *encbuf = NULL;
+     // std::vector<unsigned char> *encbuf = NULL;
       try {
         // bool code = cv::imencode(encoding, image, buf );
         // apply_zoom=(ZOOMX!=0.0) ||(ZOOMY!=0.0);
@@ -1504,9 +1529,10 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
           }
         }
         filtering(image);
-        std::vector<unsigned char> encbuf;
-
-        bool code = cv::imencode(encoding, image, encbuf);
+     //   std::vector<unsigned char> encbuf;
+          Encoder enc;
+          bool code= enc.encode(encoding,image,encode_params);
+       // bool code = cv::imencode(encoding, image, encbuf);
         if (code == false) {
           setStateVariableSeverity(
               StateVariableTypeAlarmCU, "encode_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
@@ -1514,8 +1540,11 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
         } else {
           setStateVariableSeverity(
               StateVariableTypeAlarmCU, "encode_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
-          ptr = reinterpret_cast<uchar *>(&(encbuf[0]));
-          getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ptr, encbuf.size());
+          //ptr = reinterpret_cast<uchar *>(&(encbuf[0]));
+          //getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ptr, encbuf.size());
+          if(enc.ptr){
+            getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", enc.ptr, enc.size);
+          }
          // RTCameraBaseLDBG_ << "push image:"<<encbuf.size()<<" capture queue:"<<captureImg.length() <<" encode queue:"<<encodedImg.length()<<" lat:"<<(chaos::common::utility::TimingUtil::getTimeStampInMicroseconds()-img->ts)<<" us";
 
           setHigResolutionAcquistionTimestamp(img->ts);
@@ -1560,8 +1589,13 @@ void RTCameraBase::unitDeinit() throw(chaos::CException) {
   captureImg.get().consume_all([this](camera_buf_t *i) {
     delete (i);
   });
+  /*
   encodedImg.get().consume_all([this](encoded_t i) {
     delete (i.img);
+  });
+  */
+ encodedImg.get().consume_all([this](Encoder* i) {
+    delete (i);
   });
   /*
   captureImg.consume_all([this](camera_buf_t* i) {
