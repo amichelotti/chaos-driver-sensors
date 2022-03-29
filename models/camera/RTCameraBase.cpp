@@ -374,6 +374,7 @@ void RTCameraBase::changeEncodingParam(int32_t val){
       encode_params.push_back(IMWRITE_PNG_STRATEGY);
       encode_params.push_back(png_strategy);
   } else if(!strcmp(encoding,".jpg")){
+
       encode_params.push_back(IMWRITE_JPEG_QUALITY);
       encode_params.push_back(val);
 
@@ -396,7 +397,7 @@ bool RTCameraBase::setCamera(const std::string &name, std::string value, uint32_
       compression_factor=90;
     }
     if(strcmp(encoding,value.c_str())&&(!strcmp(value.c_str(),"webp"))){
-      compression_factor=100;
+      compression_factor=101; // looseless
     }
     snprintf(encoding, sizeof(encoding), ".%s", value.c_str());
     
