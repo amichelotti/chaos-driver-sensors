@@ -8,7 +8,9 @@ namespace driver{
          namespace camera{
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-fpermissive"
+#if 0
 #include "spng.c"
+#endif
 #pragma GCC diagnostic pop
 
 bool Encoder::encode(const char *encoding, cv::Mat &ma, std::vector<int> &encode_params) {

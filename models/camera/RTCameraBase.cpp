@@ -209,11 +209,15 @@ createProperty("png_strategy", png_strategy, "png_strategy", [](AbstractControlU
     return p.clone();
   });
 
+  char ver[256];
+  sprintf(ver,"%d.%d.%d",CV_VERSION_MAJOR,CV_VERSION_MINOR,CV_VERSION_REVISION);
+  createProperty("opencv",std::string(ver));
   CREATE_CU_BOOL_PROP("referenceON", "referenceOn", applyReference, RTCameraBase);
   CREATE_CU_INT_PROP("referenceThick", "referenceThick", refenceThick, 1, 20, 1, RTCameraBase);
-  CREATE_CU_INT_PROP("referenceR", "referenceR", refenceR, 0, 255, 1, RTCameraBase);
+ /* CREATE_CU_INT_PROP("referenceR", "referenceR", refenceR, 0, 255, 1, RTCameraBase);
   CREATE_CU_INT_PROP("referenceG", "referenceG", refenceG, 0, 255, 1, RTCameraBase);
   CREATE_CU_INT_PROP("referenceB", "referenceB", refenceB, 0, 255, 1, RTCameraBase);
+  */
   CREATE_CU_BOOL_PROP("performCalib", "performCalib", performCalib, RTCameraBase);
   CREATE_CU_INT_PROP("calibrationImages", "calibrationImages", calibrationImages, 0, 1000, 1, RTCameraBase);
 
@@ -1435,7 +1439,7 @@ RTCameraBase::unitPerformCalibration(chaos::common::data::CDWUniquePtr data) {
 
 //! Execute the Control Unit work
 void RTCameraBase::unitRun() throw(chaos::CException) {
-  uchar *ptr;
+  //uchar *ptr;
   *pacquire = (mode != CAMERA_DISABLE_ACQUIRE);
   *ptrigger =
       (mode != CAMERA_DISABLE_ACQUIRE) && (mode != CAMERA_TRIGGER_CONTINOUS);
@@ -1479,12 +1483,12 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       //a = ele.img;
       //  RTCameraBaseLDBG_ << " Encode Queue:" << encodedImg.length()<< " Capture Queue:" << captureImg.length();
 
-      ptr       = ele->ptr;//reinterpret_cast<uchar *>(&((*a)[0]));
+     // ptr       = ;//reinterpret_cast<uchar *>(&((*a)[0]));
       *osizex   = ele->sizex;
       *osizey   = ele->sizey;
       *ooffsetx = ele->offsetx;
       *ooffsety = ele->offsety;
-      getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ptr, ele->size/*a->size()*/);
+      getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ele->ptr, ele->size/*a->size()*/);
       //RTCameraBaseLDBG_ << "push image:"<<a->size()<<" capture queue:"<<captureImg.length() <<" encode queue:"<<encodedImg.length()<<" lat:"<<(chaos::common::utility::TimingUtil::getTimeStamp()-ele.ts/1000)<<" ms";
 
       setHigResolutionAcquistionTimestamp(ele->ts);
