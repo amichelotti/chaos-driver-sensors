@@ -868,9 +868,13 @@ void RTCameraBase::haltThreads() {
   stopCapture = true;
   stopEncoding=true;
   if (buffering > 0) {
-    captureImg.unblock();
-    encodedImg.unblock();
-    
+    for(int cnt=0;cnt<ENCODE_THREADS;cnt++){
+      captureImg[cnt].unblock();
+      encodedImg[cnt].unblock();
+    }
+    pthread_cancel(capture_th);
+    pthread_cancel(encode_th);
+
     pthread_join(capture_th,NULL);
     pthread_join(encode_th,NULL);
 
@@ -958,15 +962,15 @@ void RTCameraBase::captureThread() {
      
       bool pushret;
       int  retry = 3;
-      if(captureImg.length()==CAMERA_FRAME_BUFFERING/2){
+      if(captureImg[0].length()==CAMERA_FRAME_BUFFERING/2){
        // boost::this_thread::yield();
         setStateVariableSeverity(
                 StateVariableTypeAlarmCU, "captureQueue", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
-        RTCameraBaseLERR_ << "Warning Capture queue :" << captureImg.length();
+        RTCameraBaseLERR_ << "Warning Capture queue :" << captureImg[0].length();
 
 
-      } else if(captureImg.length()==CAMERA_FRAME_BUFFERING){
-        RTCameraBaseLERR_ << "Error Capture queue :" << captureImg.length();
+      } else if(captureImg[0].length()==CAMERA_FRAME_BUFFERING){
+        RTCameraBaseLERR_ << "Error Capture queue :" << captureImg[0].length();
       //  boost::this_thread::yield();
 
 setStateVariableSeverity(
@@ -976,10 +980,10 @@ setStateVariableSeverity(
 StateVariableTypeAlarmCU, "captureQueue", chaos::common::alarm::MultiSeverityAlarmLevelClear);
 
       }
-      pushret = captureImg.push(img);
+      pushret = captureImg[0].push(img);
 
       if (pushret < 0) {
-        RTCameraBaseLERR_ << "Error on Queue:" << pushret << " queue:" << captureImg.length();
+        RTCameraBaseLERR_ << "Error on Queue:" << pushret << " queue:" << captureImg[0].length();
         setStateVariableSeverity(
                 StateVariableTypeAlarmCU, "captureQueue", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
         continue;
@@ -1023,7 +1027,7 @@ StateVariableTypeAlarmCU, "captureQueue", chaos::common::alarm::MultiSeverityAla
     }
   }
 
-  RTCameraBaseLDBG_ << "Capture thread ENDED Queue:" << captureImg.length() << " has Stopped:" << hasStopped();
+  RTCameraBaseLDBG_ << "Capture thread ENDED Queue:" << captureImg[0].length() << " has Stopped:" << hasStopped();
 }
 Mat rotate(Mat src, int angle) {
   Mat dst;
@@ -1071,8 +1075,8 @@ void RTCameraBase::encodeThread() {
 #endif
   while ((!stopCapture) && (hasStopped() == false)) {
     camera_buf_t *framebuf;
-    // RTCameraBaseLDBG_ << "popping image queue:"<<captureImg.length();
-    int ret = captureImg.wait_and_pop(framebuf);
+    // RTCameraBaseLDBG_ << "popping image queue:"<<captureImg[0].length();
+    int ret = captureImg[0].wait_and_pop(framebuf);
     if ((ret >= 0) && framebuf && framebuf->buf) {
       start = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
       int isizex = framebuf->width;
@@ -1258,18 +1262,18 @@ void RTCameraBase::encodeThread() {
           bool encoderet;
 
           //ele.img = encbuf;
-          //  RTCameraBaseLDBG_ << "pushing encode queue:"<<encodedImg.length();
-        if(encodedImg.length()==CAMERA_FRAME_BUFFERING){
+          //  RTCameraBaseLDBG_ << "pushing encode queue:"<<encodedImg[0].length();
+        if(encodedImg[0].length()==CAMERA_FRAME_BUFFERING){
            setStateVariableSeverity(
                    StateVariableTypeAlarmCU, "encodeQueue",
                    chaos::common::alarm::MultiSeverityAlarmLevelHigh);
-            RTCameraBaseLERR_ << "Error encodeQueue queue :" << encodedImg.length();
+            RTCameraBaseLERR_ << "Error encodeQueue queue :" << encodedImg[0].length();
 
-        } else if(encodedImg.length()==CAMERA_FRAME_BUFFERING/2){
+        } else if(encodedImg[0].length()==CAMERA_FRAME_BUFFERING/2){
            setStateVariableSeverity(
                    StateVariableTypeAlarmCU, "encodeQueue",
                    chaos::common::alarm::MultiSeverityAlarmLevelWarning);
-            RTCameraBaseLERR_ << "Warning encodeQueue queue :" << encodedImg.length();
+            RTCameraBaseLERR_ << "Warning encodeQueue queue :" << encodedImg[0].length();
 
         } else {
           setStateVariableSeverity(
@@ -1277,14 +1281,14 @@ void RTCameraBase::encodeThread() {
                    chaos::common::alarm::MultiSeverityAlarmLevelClear);
         }
 
-          encoderet = encodedImg.push(ele);
+          encoderet = encodedImg[0].push(ele);
          
           if (encoderet < 0) {
             // FULL
              setStateVariableSeverity(
                    StateVariableTypeAlarmCU, "encodeQueue",
                    chaos::common::alarm::MultiSeverityAlarmLevelHigh);
-            RTCameraBaseLDBG_ << "Encode Queue Error: " << encoderet << " queue:" << encodedImg.length();
+            RTCameraBaseLDBG_ << "Encode Queue Error: " << encoderet << " queue:" << encodedImg[0].length();
             continue;
           } 
            encode_time += (chaos::common::utility::TimingUtil::
@@ -1340,10 +1344,10 @@ void RTCameraBase::encodeThread() {
     }
   }
 
-  RTCameraBaseLDBG_ << "Encode thread exiting Queue: " << encodedImg.length() << " has Stopped:" << hasStopped();
+  RTCameraBaseLDBG_ << "Encode thread exiting Queue: " << encodedImg[0].length() << " has Stopped:" << hasStopped();
 
   /*
-  encodedImg.consume_all([this](encoded_t i) {
+  encodedImg[0].consume_all([this](encoded_t i) {
      delete (i.img);
      encodeQueue--;
    });
@@ -1479,7 +1483,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
   // *ppulse = ((mode == CAMERA_TRIGGER_SINGLE) || (mode == CAMERA_TRIGGER_SOFT));
   *omode = mode;
   if (mode == CAMERA_DISABLE_ACQUIRE) {
-    if (encodedImg.length() == 0) {
+    if (encodedImg[0].length() == 0) {
       // getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", 0, 0);
       sleep(1);
 
@@ -1508,13 +1512,13 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
    // encoded_t                   ele;
    // std::vector<unsigned char> *a;
     Encoder*ele=NULL;
-    // RTCameraBaseLDBG_ << "popping encode queue:"<<encodedImg.length();
+    // RTCameraBaseLDBG_ << "popping encode queue:"<<encodedImg[0].length();
 
-    int ret = encodedImg.wait_and_pop(ele, trigger_timeout);
+    int ret = encodedImg[0].wait_and_pop(ele, trigger_timeout);
     //if ((ret >= 0) && ele.img) {
     if ((ret >= 0) && ele->ptr) {
       //a = ele.img;
-      //  RTCameraBaseLDBG_ << " Encode Queue:" << encodedImg.length()<< " Capture Queue:" << captureImg.length();
+      //  RTCameraBaseLDBG_ << " Encode Queue:" << encodedImg[0].length()<< " Capture Queue:" << captureImg[0].length();
 
      // ptr       = ;//reinterpret_cast<uchar *>(&((*a)[0]));
       *osizex   = ele->sizex;
@@ -1522,7 +1526,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       *ooffsetx = ele->offsetx;
       *ooffsety = ele->offsety;
       getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ele->ptr, ele->size/*a->size()*/);
-      //RTCameraBaseLDBG_ << "push image:"<<a->size()<<" capture queue:"<<captureImg.length() <<" encode queue:"<<encodedImg.length()<<" lat:"<<(chaos::common::utility::TimingUtil::getTimeStamp()-ele.ts/1000)<<" ms";
+      //RTCameraBaseLDBG_ << "push image:"<<a->size()<<" capture queue:"<<captureImg[0].length() <<" encode queue:"<<encodedImg[0].length()<<" lat:"<<(chaos::common::utility::TimingUtil::getTimeStamp()-ele.ts/1000)<<" ms";
 
       setHigResolutionAcquistionTimestamp(ele->ts);
 #ifdef CAMERA_ENABLE_SHARED
@@ -1583,7 +1587,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
           if(enc.ptr){
             getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", enc.ptr, enc.size);
           }
-         // RTCameraBaseLDBG_ << "push image:"<<encbuf.size()<<" capture queue:"<<captureImg.length() <<" encode queue:"<<encodedImg.length()<<" lat:"<<(chaos::common::utility::TimingUtil::getTimeStampInMicroseconds()-img->ts)<<" us";
+         // RTCameraBaseLDBG_ << "push image:"<<encbuf.size()<<" capture queue:"<<captureImg[0].length() <<" encode queue:"<<encodedImg[0].length()<<" lat:"<<(chaos::common::utility::TimingUtil::getTimeStampInMicroseconds()-img->ts)<<" us";
 
           setHigResolutionAcquistionTimestamp(img->ts);
 #ifdef CAMERA_ENABLE_SHARED
@@ -1623,29 +1627,22 @@ void RTCameraBase::unitStop() throw(chaos::CException) {
 //! Deinit the Control Unit
 void RTCameraBase::unitDeinit() throw(chaos::CException) {
   stopGrabbing();
-
-  captureImg.get().consume_all([this](camera_buf_t *i) {
+  for(int cnt=0;cnt<ENCODE_THREADS;cnt++){
+    captureImg[cnt].get().consume_all([this](camera_buf_t *i) {
     delete (i);
+   
   });
+  
   /*
-  encodedImg.get().consume_all([this](encoded_t i) {
+  encodedImg[0].get().consume_all([this](encoded_t i) {
     delete (i.img);
   });
   */
- encodedImg.get().consume_all([this](Encoder* i) {
+ encodedImg[cnt].get().consume_all([this](Encoder* i) {
     delete (i);
   });
-  /*
-  captureImg.consume_all([this](camera_buf_t* i) {
-    delete(i);
-    captureQueue--;
-  });
-
-  encodedImg.consume_all([this](encoded_t i) {
-    delete (i.img);
-    encodeQueue--;
-  });
-  */
+  }
+  
   driver->cameraDeinit();
 }
 

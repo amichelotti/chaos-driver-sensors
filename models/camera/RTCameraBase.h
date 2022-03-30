@@ -25,6 +25,7 @@
 #include "Encoder.h"
 #define DEFAULT_RESOLUTION 640*480*3
 #define CAMERA_FRAME_BUFFERING 10
+#define ENCODE_THREADS 2
 
 namespace cv {class Mat;}
 namespace driver{
@@ -94,9 +95,9 @@ protected:
         pthread_t capture_th,encode_th;
 
       //  std::vector<unsigned char> encbuf[CAMERA_FRAME_BUFFERING];//encode stage
-        chaos::common::thread::TLockFreeQueue< ::driver::sensor::camera::camera_buf_t*,CAMERA_FRAME_BUFFERING> captureImg;
+        chaos::common::thread::TLockFreeQueue< ::driver::sensor::camera::camera_buf_t*,CAMERA_FRAME_BUFFERING> captureImg[ENCODE_THREADS];
        // chaos::common::thread::TLockFreeQueue<encoded_t,CAMERA_FRAME_BUFFERING> encodedImg;
-        chaos::common::thread::TLockFreeQueue<Encoder*,CAMERA_FRAME_BUFFERING> encodedImg;
+        chaos::common::thread::TLockFreeQueue<Encoder*,CAMERA_FRAME_BUFFERING> encodedImg[ENCODE_THREADS];
 
 
         //boost::lockfree::queue<::driver::sensor::camera::camera_buf_t*, boost::lockfree::fixed_sized<true> > captureImg;
