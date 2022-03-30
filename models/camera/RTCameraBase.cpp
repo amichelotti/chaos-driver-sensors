@@ -792,6 +792,17 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   changeEncodingParam(compression_factor);
   updateProperty();
 }
+static void* encode(void*ptr){
+  RTCameraBase*p=(RTCameraBase*)ptr;
+  p->encodeThread();
+  return NULL;
+
+}
+static void* capture(void*ptr){
+  RTCameraBase*p=(RTCameraBase*)ptr;
+  p->captureThread();
+  return NULL;
+}
 void RTCameraBase::cameraGrabCallBack(const void *buf, uint32_t blen, uint32_t width, uint32_t heigth, uint32_t error) {}
 void RTCameraBase::startGrabbing() {
   RTCameraBaseLDBG_ << "Start Grabbing";
@@ -830,8 +841,23 @@ void RTCameraBase::startGrabbing() {
   if (stopCapture == true) {
     stopCapture = false;
     if (buffering > 0) {
-      capture_th = std::thread(&RTCameraBase::captureThread, this);
-      encode_th = std::thread(&RTCameraBase::encodeThread, this);
+      pthread_attr_t thread_attr;
+      struct     sched_param  param;
+    
+      pthread_attr_init(&thread_attr);  // Initialise the attributes
+      pthread_attr_setschedpolicy(&thread_attr, SCHED_RR);  // Set attributes to RR p
+      param.sched_priority = 50;
+      pthread_attr_setschedparam(&thread_attr, &param); // Set attributes to priority 30
+      pthread_create(&capture_th, &thread_attr, capture, (void*)this);
+      param.sched_priority = 99;
+      pthread_attr_setschedpolicy(&thread_attr, SCHED_FIFO);  // must be yield by processor, no timeslice
+
+      pthread_create(&encode_th, &thread_attr, encode, (void*)this);
+      pthread_attr_destroy(&thread_attr); // We've done with the attributes
+
+
+    //  capture_th = std::thread(&RTCameraBase::captureThread, this);
+    //  encode_th = std::thread(&RTCameraBase::encodeThread, this);
 
     }
   }
@@ -840,10 +866,16 @@ void RTCameraBase::haltThreads() {
   int ret;
   RTCameraBaseLDBG_ << "Stop Grab low level:" << stopCapture;
   stopCapture = true;
+  stopEncoding=true;
   if (buffering > 0) {
     captureImg.unblock();
     encodedImg.unblock();
+    
+    pthread_join(capture_th,NULL);
+    pthread_join(encode_th,NULL);
 
+
+#if 0
     if (encode_th.joinable()) {
       if (std::this_thread::get_id() != encode_th.get_id()) {
           encode_th.join();
@@ -856,6 +888,7 @@ void RTCameraBase::haltThreads() {
 
       }
     }
+#endif
   }
 
   RTCameraBaseLDBG_ << "Stopped Grab driver:" << ret;
