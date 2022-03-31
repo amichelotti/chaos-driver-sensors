@@ -564,7 +564,7 @@ bool Camera::setTriggerDelay(int delay_usec)
   return (err==IS_SUCCESS);
 }
 
-int Camera::getTriggerDelay(int *min,int*max,int*inc){
+int Camera::getTriggerDelay(int32_t *min,int32_t*max,int32_t*inc){
   int delay=-1;
   delay=is_SetTriggerDelay(cam_, IS_GET_TRIGGER_DELAY);
   if(min){
@@ -576,6 +576,7 @@ int Camera::getTriggerDelay(int *min,int*max,int*inc){
   if(inc){
     *inc=is_SetTriggerDelay(cam_, IS_GET_TRIGGER_DELAY_GRANULARITY);
   }
+  return delay;
 }
 
 bool Camera::forceTrigger()

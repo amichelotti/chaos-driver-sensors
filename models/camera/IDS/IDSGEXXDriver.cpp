@@ -839,7 +839,7 @@ int IDSGEXXDriver::initializeCamera(
                     const chaos::common::data::CDataWrapper &p)
                      -> chaos::common::data::CDWUniquePtr {
                    IDSGEXXDriver *t = (IDSGEXXDriver *)thi;
-                    int min,max,inc;
+                    int32_t min,max,inc;
 
                    t->trgdelay = t->camera->getTriggerDelay(&min,&max,&inc);
                    
