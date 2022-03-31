@@ -558,9 +558,24 @@ void Camera::flashUpdateGlobalParams()
     checkError(is_IO(cam_, IS_IO_CMD_FLASH_APPLY_GLOBAL_PARAMS, NULL, 0));
   }
 }
-void Camera::setTriggerDelay(int delay_usec)
+bool Camera::setTriggerDelay(int delay_usec)
 {
-  checkError(is_SetTriggerDelay(cam_, delay_usec));
+  int err=is_SetTriggerDelay(cam_, delay_usec);
+  return (err==IS_SUCCESS);
+}
+
+int Camera::getTriggerDelay(int *min,int*max,int*inc){
+  int delay=-1;
+  delay=is_SetTriggerDelay(cam_, IS_GET_TRIGGER_DELAY);
+  if(min){
+   *min=is_SetTriggerDelay(cam_, IS_GET_MIN_TRIGGER_DELAY);
+  }
+  if(max){
+    *max=is_SetTriggerDelay(cam_, IS_GET_MAX_TRIGGER_DELAY);
+  }
+  if(inc){
+    *inc=is_SetTriggerDelay(cam_, IS_GET_TRIGGER_DELAY_GRANULARITY);
+  }
 }
 
 bool Camera::forceTrigger()

@@ -834,6 +834,43 @@ int IDSGEXXDriver::initializeCamera(
                    return chaos::common::data::CDWUniquePtr();
 
                  });
+   createProperty("trigger_delay", trgdelay, "TRIGGER_DELAY",
+                 [](AbstractDriver *thi, const std::string &name,
+                    const chaos::common::data::CDataWrapper &p)
+                     -> chaos::common::data::CDWUniquePtr {
+                   IDSGEXXDriver *t = (IDSGEXXDriver *)thi;
+                    int min,max,inc;
+
+                   t->trgdelay = t->camera->getTriggerDelay(&min,&max,&inc);
+                   
+
+                   IDSGEXXDriverLDBG(t) << "READ Trigger Delay:" << t->trgdelay;
+                   chaos::common::data::CDWUniquePtr ret(
+                       new chaos::common::data::CDataWrapper());
+                   ret->addInt32Value(PROPERTY_VALUE_KEY, t->trgdelay);
+                   ret->addInt32Value(PROPERTY_VALUE_MAX_KEY, max);
+                  ret->addInt32Value(PROPERTY_VALUE_MIN_KEY, min);
+                  ret->addInt32Value(PROPERTY_VALUE_INC_KEY, inc);
+             //     ret->addStringValue(PROPERTY_VALUE_DESC_KEY,"trigger delay us");
+                   
+                   return ret;
+
+                 },
+                 [](AbstractDriver *thi, const std::string &name,
+                    const chaos::common::data::CDataWrapper &p)
+                     -> chaos::common::data::CDWUniquePtr {
+                   IDSGEXXDriver *t = (IDSGEXXDriver *)thi;
+                   if (p.hasKey(PROPERTY_VALUE_KEY)) {
+                     int32_t val = p.getInt32Value(PROPERTY_VALUE_KEY);
+                    
+                     IDSGEXXDriverLDBG(t) << "WRITE Trigger Delay:" << val;
+                     t->camera->setTriggerDelay(val);
+                     return p.clone();
+                   }
+                   return chaos::common::data::CDWUniquePtr();
+
+                 });
+
   return 0;
 }
 

@@ -65,7 +65,7 @@ class IDSGEXXDriver: public ::driver::sensor::camera::CameraDriverBridge {
     ChaosMutex lock;
 public:
     double framerate,exposure;
-    int32_t width,height,offsetx,offsety,gain,zoom,pixelclk,trgmode,old_size;
+    int32_t width,height,offsetx,offsety,gain,zoom,pixelclk,trgmode,trgdelay,old_size;
     std::string framebuf_enc;
 
     

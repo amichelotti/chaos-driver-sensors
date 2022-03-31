@@ -164,7 +164,8 @@ public:
   void setFlashWithGlobalParams(FlashMode mode);
   void setFlash(FlashMode mode, int delay_usec, unsigned int duration_usec);
   void setFlash(FlashMode mode);
-  void setTriggerDelay(int delay_usec);
+  bool setTriggerDelay(int delay_usec);
+  int getTriggerDelay(int *min,int*max,int*inc);
 
   bool forceTrigger();
 
