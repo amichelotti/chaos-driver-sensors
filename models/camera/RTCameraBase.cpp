@@ -881,7 +881,7 @@ void RTCameraBase::haltThreads() {
             captureImg[cnt].unblock();
             encodedImg[cnt].unblock();
       }
-      RTCameraBaseLDBG_ << "unblocking fifo "cd ;
+      RTCameraBaseLDBG_ << "unblocking fifo ";
 
       usleep(10000);
     }
