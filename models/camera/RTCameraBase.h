@@ -48,9 +48,9 @@ public:
      */
     ~RTCameraBase();
         void cameraGrabCallBack(const void*buf,uint32_t blen,uint32_t width,uint32_t heigth, uint32_t error);
-        void encodeThread();
+        void encodeThread(int indx);
         void captureThread();
-
+        int encode_id;
 protected:
         const int buffering;
         cv::Mat* subImage;
@@ -91,7 +91,7 @@ protected:
       //  buf_t framebuf_out[CAMERA_FRAME_BUFFERING]; //capture stage
         std::vector<int> encode_params;
 
-        bool stopCapture,stopEncoding;
+        bool stopCapture,capture_exited;
         pthread_t capture_th,encode_th;
 
       //  std::vector<unsigned char> encbuf[CAMERA_FRAME_BUFFERING];//encode stage
@@ -105,7 +105,7 @@ protected:
         //boost::mutex mutex_io,mutex_encode;
 
         uint32_t hw_trigger_timeout_us,sw_trigger_timeout_us,trigger_timeout; // 0 =wait indefinitively
-        
+        int capture_cnt,encode_cnt;
         uint64_t encode_time,capture_time,network_time,counter_capture,counter_encode;
         int bufinuse;
         const int32_t*rot;
