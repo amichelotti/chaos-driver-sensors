@@ -69,7 +69,8 @@ class MemCacheCam:public ::driver::sensor::camera::CameraDriverBridge {
      int bigendian;
     uint64_t last_acquisition_ts;
      ///
-     int32_t gain_raw,brightness_raw,shutter_raw;
+     double gain_raw;
+     int32_t brightness_raw,shutter_raw;
      // shape parameters
      ChaosUniquePtr<chaos::common::data::CDataWrapper> shape_params;
      //

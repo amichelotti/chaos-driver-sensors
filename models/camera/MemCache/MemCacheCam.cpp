@@ -85,17 +85,15 @@ CLOSE_REGISTER_PLUGIN
 
 
 MemCacheCam::MemCacheCam()
-    : fn(NULL),bigendian(1), tmode(CAMERA_TRIGGER_CONTINOUS), pixelEncoding(CV_8UC3), pixelEncoding_str("CV_8UC3"), height(CAM_DEFAULT_HEIGTH), width(CAM_DEFAULT_WIDTH), framerate(1.0), offsetx(0), offsety(0), mc_client(NULL) {
+    : fn(NULL),bigendian(1), gain_raw(1.0),tmode(CAMERA_TRIGGER_CONTINOUS), pixelEncoding(CV_8UC3), pixelEncoding_str("CV_8UC3"), height(CAM_DEFAULT_HEIGTH), width(CAM_DEFAULT_WIDTH), framerate(1.0), offsetx(0), offsety(0), mc_client(NULL) {
   MemCacheCamLDBG_ << "Created Driver";
-  gain_raw       = 0;
   brightness_raw = 0;
-  shutter_raw    = 0;
+  shutter_raw    = 1;
   serial_id      = time(NULL);
   CREATE_INT_PROP("SerialNumber", "", serial_id, 0, 0xffffffff, 1);
   CREATE_INT_PROP("BigEndian", "", bigendian, 0, 1, 1);
 
   CREATE_INT_PROP("ExposureTimeRaw", "SHUTTER", shutter_raw, 0, CAM_MAX_SHUTTER, 1);
-  CREATE_INT_PROP("GainRaw", "GAIN", gain_raw, 0, CAM_MAX_GAIN, 1);
   CREATE_INT_PROP("BslBrightnessRaw", "BRIGHTNESS", brightness_raw, 0, CAM_MAX_BRIGHTNESS, 1);
   CREATE_INT_PROP("width", "WIDTH", width, 0, 4096, 1);
   CREATE_INT_PROP("height", "HEIGHT", height, 0, 4096, 1);
@@ -104,7 +102,7 @@ MemCacheCam::MemCacheCam()
   CREATE_DOUBLE_PROP("framerate", "FRAMERATE", framerate, 0.0, 100.0, 1.0);
   CREATE_INT_PROP("camera_trigger_mode", "TRIGGER_MODE", tmode, 0, 10, 1);
   CREATE_INT_PROP("ExposureTimeRaw", "SHUTTER", shutter_raw, 0, CAM_MAX_SHUTTER, 1);
-  CREATE_INT_PROP("GainRaw", "GAIN", gain_raw, 0, CAM_MAX_GAIN, 1);
+  CREATE_DOUBLE_PROP("GainRaw", "GAIN", gain_raw, 0.0, 100.0, 0.1);
   createProperty(
       "PixelFormat", "", FRAMEBUFFER_ENCODING_KEY, [](AbstractDriver* thi, const std::string& name, const chaos::common::data::CDataWrapper& p) -> chaos::common::data::CDWUniquePtr {                    
                    std::string val;
@@ -112,6 +110,7 @@ MemCacheCam::MemCacheCam()
                   chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
                   ret->append(PROPERTY_VALUE_KEY,t->pixelEncoding_str);
                   ret->append("raw",t->pixelEncoding_str);
+
                   MemCacheCamLDBG_ << "Pixel Encoding "<<t->pixelEncoding_str<<" :"<<t->pixelEncoding;
 
                                  
@@ -321,6 +320,8 @@ int MemCacheCam::startGrab(uint32_t _shots, void* _framebuf, cameraGrabCallBack 
 
   last_acquisition_ts = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
   MemCacheCamLDBG_ << "Start Grabbing at:" << framerate << " frame/s";
+  pixelEncoding     = fmt2cv(pixelEncoding_str);
+
   return ret;
 }
 #define RND_DIST(var)                                                            \
@@ -333,7 +334,7 @@ int MemCacheCam::startGrab(uint32_t _shots, void* _framebuf, cameraGrabCallBack 
 
 void MemCacheCam::applyCameraParams(cv::Mat& image) {
   if (gain_raw < 0) {
-    gain_raw = CAM_MAX_GAIN;
+    gain_raw = 1.0;
   }
   if (brightness_raw < 0) {
     brightness_raw = CAM_MAX_BRIGHTNESS;
@@ -389,7 +390,7 @@ int MemCacheCam::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
   uint32_t               flags = 0;
   memcached_return_t     rc;
   boost::random::mt19937 gen(std::time(0));
-  cv::Mat                img = Mat::zeros(original_height, original_width, pixelEncoding);
+  //cv::Mat                img = Mat::zeros(original_height, original_width, pixelEncoding);
 
   // img.zeros(cv::Size(height,width),  CV_8UC3);
   // img.setTo(cv::Scalar::all(0));
@@ -417,7 +418,7 @@ int MemCacheCam::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
       width=ptr[1];
       height=ptr[0];
     }
-    MemCacheCamLDBG_ << "Acquired \"" << key << "\" size:" << value_length << " " << width << "x" << height << " encoding:" << pixelEncoding_str;
+    MemCacheCamLDBG_ << "Acquired \"" << key << "\" size:" << value_length << " " << width << "x" << height << " encoding:" << pixelEncoding_str<<"("<<pixelEncoding<<")";
     int siz=value_length - 2 * sizeof(uint32_t);
     
     *buf          = new camera_buf_t(siz , width, height);
@@ -428,17 +429,24 @@ int MemCacheCam::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
       for(int cnt=0;cnt<siz/sizeof(uint16_t);cnt++){
         if(bigendian){
           pu[cnt]=chaos::common::utility::byte_swap<chaos::common::utility::host_endian,
-                                                                             chaos::common::utility::big_endian, uint16_t>(src[cnt]);
+                                                                             chaos::common::utility::big_endian, uint16_t>(src[cnt])* gain_raw + brightness_raw;
+      //    printf("%d ",pu[cnt]);
         } else {
-           pu[cnt]=src[cnt];
+           pu[cnt]=src[cnt]* gain_raw + brightness_raw;
         }
       }
+    //  printf("\n");
+
     }
     if((pixelEncoding==CV_8UC1)||(pixelEncoding==CV_8SC1)){
       const uint8_t*src=(const uint8_t*)&ptr[2];
 
       uint8_t*pu=(uint8_t*)(*buf)->buf;
-      memcpy(pu,src,siz);
+      for(int cnt=0;cnt<siz;cnt++){
+          pu[cnt]=src[cnt]* gain_raw + brightness_raw;
+
+      }
+
     }
     free(value);
     return siz;
