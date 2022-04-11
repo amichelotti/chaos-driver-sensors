@@ -418,34 +418,42 @@ int MemCacheCam::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
       width=ptr[1];
       height=ptr[0];
     }
-    MemCacheCamLDBG_ << "Acquired \"" << key << "\" size:" << value_length << " " << width << "x" << height << " encoding:" << pixelEncoding_str<<"("<<pixelEncoding<<")";
     int siz=value_length - 2 * sizeof(uint32_t);
-    
-    *buf          = new camera_buf_t(siz , width, height);
+    *buf          = new camera_buf_t(siz*sizeof(uint16_t) , width, height);
+
     if((pixelEncoding==CV_16UC1)||(pixelEncoding==CV_16SC1)){
       const uint16_t*src=(const uint16_t*)&ptr[2];
-
+      uint16_t max=0,min=65536;
       uint16_t*pu=(uint16_t*)(*buf)->buf;
       for(int cnt=0;cnt<siz/sizeof(uint16_t);cnt++){
         if(bigendian){
-          pu[cnt]=chaos::common::utility::byte_swap<chaos::common::utility::host_endian,
-                                                                             chaos::common::utility::big_endian, uint16_t>(src[cnt])* gain_raw + brightness_raw;
+          uint16_t val=chaos::common::utility::byte_swap<chaos::common::utility::host_endian,
+                                                                             chaos::common::utility::big_endian, uint16_t>(src[cnt]);
+                                                                           
+          pu[cnt]=val* gain_raw + brightness_raw;
       //    printf("%d ",pu[cnt]);
+          max=std::max(pu[cnt],max);
+          min=std::min(pu[cnt],min);   
         } else {
            pu[cnt]=src[cnt]* gain_raw + brightness_raw;
         }
       }
     //  printf("\n");
+        MemCacheCamLDBG_ << "Acquired \"" << key << "\" size:" << value_length << " " << width << "x" << height << " encoding:" << pixelEncoding_str<<"("<<pixelEncoding<<")" <<" MAX:"<<max<<" MIN:"<<min;
 
     }
     if((pixelEncoding==CV_8UC1)||(pixelEncoding==CV_8SC1)){
       const uint8_t*src=(const uint8_t*)&ptr[2];
+      uint8_t max=0,min=256;
 
       uint8_t*pu=(uint8_t*)(*buf)->buf;
       for(int cnt=0;cnt<siz;cnt++){
           pu[cnt]=src[cnt]* gain_raw + brightness_raw;
+          max=std::max(pu[cnt],max);
+          min=std::min(pu[cnt],min);
 
       }
+        MemCacheCamLDBG_ << "Acquired \"" << key << "\" size:" << value_length << " " << width << "x" << height << " encoding:" << pixelEncoding_str<<"("<<pixelEncoding<<")" <<" MAX:"<<max<<" MIN:"<<min;
 
     }
     free(value);
