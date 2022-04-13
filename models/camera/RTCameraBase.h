@@ -23,10 +23,10 @@
 #include <common/misc/data/core/SharedMem.h>
 #include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
 #include "Encoder.h"
+#include <chaos/common/direct_io/HttpStreamManager.h>
 #define DEFAULT_RESOLUTION 640*480*3
 #define CAMERA_FRAME_BUFFERING 10
 #define ENCODE_THREADS 2
-
 namespace cv {class Mat;}
 namespace driver{
     
@@ -54,11 +54,12 @@ public:
 protected:
         const int buffering;
         cv::Mat* subImage;
-        bool applyCalib,performCalib,applyReference;
+        bool applyCalib,performCalib,applyReference,cameraStreamEnable;
         int refenceThick,refenceR,refenceG,refenceB,calibrationImages;
         std::vector<cv::Mat*> calibimages;
         cv::Mat getMean(const std::vector<cv::Mat*>& images);
-
+        chaos::common::direct_io::HttpStreamManager* streamer;
+        std::string streamName;
         ChaosUniquePtr< ::common::misc::data::SharedMem> shared_mem;
         int32_t *sizex,*sizey,*offsetx,*offsety,*osizex,*osizey,*ooffsetx,*ooffsety;
         // if >0 then this is the camera window created, each grab should fit this size.
@@ -126,6 +127,7 @@ protected:
         void haltThreads();
         void fatalErrorHandler(const chaos::CException & r);
         void stopGrabbing();
+        void updateStreamLink();
 		/*!
 		Define the Control Unit Dataset and Actions
 		*/

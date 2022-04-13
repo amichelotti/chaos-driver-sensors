@@ -88,6 +88,8 @@
   }
 using namespace chaos;
 using namespace chaos::common::data::cache;
+using namespace chaos::common::direct_io;
+
 using namespace chaos::cu::driver_manager::driver;
 using namespace ::driver::sensor::camera;
 using namespace chaos::cu::control_manager;
@@ -117,7 +119,7 @@ RTCameraBase::RTCameraBase(const string                &_control_unit_id,
                            const string                &_control_unit_param,
                            const ControlUnitDriverList &_control_unit_drivers,
                            const int                    _buffering)
-    : RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers), driver(NULL), capture_exited(true),capture_cnt(0),encode_cnt(0),framebuf_encoding(CV_8UC3), buffering(_buffering), png_strategy(IMWRITE_PNG_STRATEGY_DEFAULT ),encode_time(0), capture_time(0), network_time(0), hw_trigger_timeout_us(5000000), sw_trigger_timeout_us(0), imagesizex(0), imagesizey(0), apply_resize(false), trigger_timeout(5000), bpp(3), stopCapture(true), subImage(NULL), performCalib(false), applyCalib(false), calibrationImages(1), applyReference(false), refenceThick(2), refenceR(0), refenceG(255), refenceB(0) {
+    : RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers), driver(NULL), streamer(NULL),capture_exited(true),capture_cnt(0),encode_cnt(0),framebuf_encoding(CV_8UC3), buffering(_buffering), png_strategy(IMWRITE_PNG_STRATEGY_DEFAULT ),encode_time(0), capture_time(0), network_time(0), hw_trigger_timeout_us(5000000), sw_trigger_timeout_us(0), imagesizex(0), imagesizey(0), apply_resize(false), trigger_timeout(5000), bpp(3), stopCapture(true), subImage(NULL), performCalib(false), applyCalib(false),cameraStreamEnable(true), calibrationImages(1), applyReference(false), refenceThick(2), refenceR(0), refenceG(255), refenceB(0) {
   RTCameraBaseLDBG_ << "Creating " << _control_unit_id
                     << " params:" << _control_unit_param;
 
@@ -126,12 +128,14 @@ RTCameraBase::RTCameraBase(const string                &_control_unit_id,
 
   try {
     std::stringstream ss;
-    /*   std::string fname = _control_unit_id;
-      replace(fname.begin(), fname.end(), '/', '_');
-      ss << "/tmp/"<<fname << "_calib.png";
-      calibimage=ss.str();
-    */
-
+    
+      streamName = _control_unit_id;
+      replace(streamName.begin(), streamName.end(), '/', '_');
+ 
+    if(HttpStreamManager::getInstance()->getRoot().size()){
+      streamer=HttpStreamManager::getInstance();
+      RTCameraBaseLDBG_<<"Publishing on "<<HttpStreamManager::getInstance()->getRoot()+streamName;
+    }
     chaos::common::data::CDataWrapper p;
     chaos::common::data::CDWUniquePtr calibrazione = loadData("calibration_image");
     p.setSerializedJsonData(_control_unit_param.c_str());
@@ -219,6 +223,7 @@ createProperty("png_strategy", png_strategy, "png_strategy", [](AbstractControlU
   CREATE_CU_INT_PROP("referenceB", "referenceB", refenceB, 0, 255, 1, RTCameraBase);
   */
   CREATE_CU_BOOL_PROP("performCalib", "performCalib", performCalib, RTCameraBase);
+
   CREATE_CU_INT_PROP("calibrationImages", "calibrationImages", calibrationImages, 0, 1000, 1, RTCameraBase);
 
   createProperty(
@@ -248,6 +253,16 @@ createProperty("png_strategy", png_strategy, "png_strategy", [](AbstractControlU
               }
 
           }
+          return p.clone(); });
+
+          createProperty(
+      "cameraStreamEnable", cameraStreamEnable, "cameraStreamEnable", [](AbstractControlUnit *thi, const std::string &name, const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
+        ret->addBoolValue(PROPERTY_VALUE_KEY,((RTCameraBase*)thi)->cameraStreamEnable);
+        return ret; }, [](AbstractControlUnit *thi, const std::string &name, const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr { 
+          ((RTCameraBase*)thi)->cameraStreamEnable=p.getBoolValue(PROPERTY_VALUE_KEY);
+          ((RTCameraBase*)thi)->updateStreamLink();
+        
           return p.clone(); });
 }
 
@@ -671,9 +686,30 @@ void RTCameraBase::unitDefineCustomAttribute() {
   // getAttributeCache()->setCustomAttributeValue(chaos::ControlUnitNodeDefinitionKey::CONTROL_UNIT_DRIVER_INFO,
   // (void *)config.c_str(),
   //    config.size()+1);
-  // getAttributeCache()->setCustomDomainAsChanged();
-  // pushCustomDataset();
-  // getAttributeCache()->addCustomAttribute("FRAMEBUFFER", 8, chaos::DataType::TYPE_BYTEARRAY);
+  if(streamer&&cameraStreamEnable){
+
+    getAttributeCache()->addCustomAttribute("stream", 128, chaos::DataType::TYPE_STRING);
+    std::string streampath="http://"+HttpStreamManager::getInstance()->getRoot()+streamName;
+    getAttributeCache()->setCustomAttributeValue("stream",(void*)streampath.c_str(),streampath.length());
+    getAttributeCache()->setCustomDomainAsChanged();
+    pushCustomDataset();
+  } 
+
+}
+void RTCameraBase::updateStreamLink(){
+  if(streamer&&cameraStreamEnable){
+
+    std::string streampath="http://"+HttpStreamManager::getInstance()->getRoot()+streamName;
+    getAttributeCache()->setCustomAttributeValue("stream",(void*)streampath.c_str(),streampath.length());
+    getAttributeCache()->setCustomDomainAsChanged();
+    pushCustomDataset();
+  } else {
+    getAttributeCache()->setCustomAttributeValue("stream",(void*)"",1);
+    getAttributeCache()->setCustomDomainAsChanged();
+    pushCustomDataset();
+
+  }
+
 }
 
 //! Initialize the Custom Control Unit
@@ -1562,7 +1598,9 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       *ooffsety = ele->offsety;
       getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ele->ptr, ele->size/*a->size()*/);
       //RTCameraBaseLDBG_ << "push image:"<<a->size()<<" capture queue:"<<captureImg[0].length() <<" encode queue:"<<encodedImg[0].length()<<" lat:"<<(chaos::common::utility::TimingUtil::getTimeStamp()-ele.ts/1000)<<" ms";
-
+      if(streamer&&cameraStreamEnable){
+        streamer->publish(streamName,std::string( ( const char*)ele->ptr, ele->size));
+      }
       setHigResolutionAcquistionTimestamp(ele->ts);
 #ifdef CAMERA_ENABLE_SHARED
 
@@ -1621,6 +1659,9 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
           //getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ptr, encbuf.size());
           if(enc.ptr){
             getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", enc.ptr, enc.size);
+            if(streamer&&cameraStreamEnable){
+                streamer->publish(streamName,std::string( ( const char*)enc.ptr, enc.size));
+            }
           }
          // RTCameraBaseLDBG_ << "push image:"<<encbuf.size()<<" capture queue:"<<captureImg[0].length() <<" encode queue:"<<encodedImg[0].length()<<" lat:"<<(chaos::common::utility::TimingUtil::getTimeStampInMicroseconds()-img->ts)<<" us";
 
