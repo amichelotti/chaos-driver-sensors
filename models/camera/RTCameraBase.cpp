@@ -255,15 +255,7 @@ createProperty("png_strategy", png_strategy, "png_strategy", [](AbstractControlU
           }
           return p.clone(); });
 
-          createProperty(
-      "cameraStreamEnable", cameraStreamEnable, "cameraStreamEnable", [](AbstractControlUnit *thi, const std::string &name, const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
-        chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
-        ret->addBoolValue(PROPERTY_VALUE_KEY,((RTCameraBase*)thi)->cameraStreamEnable);
-        return ret; }, [](AbstractControlUnit *thi, const std::string &name, const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr { 
-          ((RTCameraBase*)thi)->cameraStreamEnable=p.getBoolValue(PROPERTY_VALUE_KEY);
-          ((RTCameraBase*)thi)->updateStreamLink();
-        
-          return p.clone(); });
+          
 }
 
 /*
@@ -686,29 +678,38 @@ void RTCameraBase::unitDefineCustomAttribute() {
   // getAttributeCache()->setCustomAttributeValue(chaos::ControlUnitNodeDefinitionKey::CONTROL_UNIT_DRIVER_INFO,
   // (void *)config.c_str(),
   //    config.size()+1);
+  createProperty(
+      "cameraStreamEnable", cameraStreamEnable, "cameraStreamEnable", [](AbstractControlUnit *thi, const std::string &name, const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
+        ret->addBoolValue(PROPERTY_VALUE_KEY,((RTCameraBase*)thi)->cameraStreamEnable);
+        return ret; }, [](AbstractControlUnit *thi, const std::string &name, const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr { 
+          ((RTCameraBase*)thi)->cameraStreamEnable=p.getBoolValue(PROPERTY_VALUE_KEY);
+          ((RTCameraBase*)thi)->updateStreamLink();
+        
+          return p.clone(); });
   if(streamer&&cameraStreamEnable){
-
-    getAttributeCache()->addCustomAttribute("stream", 128, chaos::DataType::TYPE_STRING);
-    std::string streampath="http://"+HttpStreamManager::getInstance()->getRoot()+streamName;
-    getAttributeCache()->setCustomAttributeValue("stream",(void*)streampath.c_str(),streampath.length());
-    getAttributeCache()->setCustomDomainAsChanged();
-    pushCustomDataset();
+    updateStreamLink();
+    
   } 
 
 }
 void RTCameraBase::updateStreamLink(){
-  if(streamer&&cameraStreamEnable){
+    getAttributeCache()->addCustomAttribute("stream", 128, chaos::DataType::TYPE_STRING);
 
-    std::string streampath="http://"+HttpStreamManager::getInstance()->getRoot()+streamName;
-    getAttributeCache()->setCustomAttributeValue("stream",(void*)streampath.c_str(),streampath.length());
-    getAttributeCache()->setCustomDomainAsChanged();
-    pushCustomDataset();
-  } else {
-    getAttributeCache()->setCustomAttributeValue("stream",(void*)"",1);
-    getAttributeCache()->setCustomDomainAsChanged();
-    pushCustomDataset();
 
-  }
+    if(streamer&&cameraStreamEnable){
+
+      std::string streampath="http://"+HttpStreamManager::getInstance()->getRoot()+streamName;
+      getAttributeCache()->setCustomAttributeValue("stream",(void*)streampath.c_str(),streampath.length());
+      getAttributeCache()->setCustomDomainAsChanged();
+      pushCustomDataset();
+    } else {
+      getAttributeCache()->setCustomAttributeValue("stream",(void*)"",1);
+      getAttributeCache()->setCustomDomainAsChanged();
+      pushCustomDataset();
+
+    }
+  
 
 }
 
