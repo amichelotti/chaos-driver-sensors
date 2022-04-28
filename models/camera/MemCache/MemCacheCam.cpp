@@ -423,7 +423,7 @@ int MemCacheCam::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
 
     if((pixelEncoding==CV_16UC1)||(pixelEncoding==CV_16SC1)){
       const uint16_t*src=(const uint16_t*)&ptr[2];
-      uint16_t max=0,min=65536;
+      uint16_t max=0,min=65535;
       uint16_t*pu=(uint16_t*)(*buf)->buf;
       for(int cnt=0;cnt<siz/sizeof(uint16_t);cnt++){
         if(bigendian){
@@ -444,7 +444,7 @@ int MemCacheCam::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
     }
     if((pixelEncoding==CV_8UC1)||(pixelEncoding==CV_8SC1)){
       const uint8_t*src=(const uint8_t*)&ptr[2];
-      uint8_t max=0,min=256;
+      uint8_t max=0,min=255;
 
       uint8_t*pu=(uint8_t*)(*buf)->buf;
       for(int cnt=0;cnt<siz;cnt++){
