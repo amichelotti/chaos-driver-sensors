@@ -3,6 +3,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <chaos/common/utility/TimingUtil.h>
+#define AVLDBG_ LDBG_ << "[Encoder -" << "] " << __PRETTY_FUNCTION__ << " - "
+
 namespace driver{
     namespace sensor{
          namespace camera{
@@ -67,8 +69,9 @@ bool Encoder::encode(const char *encoding, cv::Mat &ma, std::vector<int> &encode
       {
       ret = cv::imencode(encoding, ma, encbuf, encode_params);
       if (ret) {
-        ptr  = reinterpret_cast<uchar *>(&(encbuf[0]));
-        size = encbuf.size();
+        uchar*ptr  = reinterpret_cast<uchar *>(&(encbuf[0]));
+        size_t size = encbuf.size();
+        assign((void*)ptr,size,size,false);
       }
      // ts=chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
 
@@ -77,9 +80,13 @@ bool Encoder::encode(const char *encoding, cv::Mat &ma, std::vector<int> &encode
   }
 }
  Encoder::~Encoder(){
+    //  AVLDBG_<<" DELETE BUFFER:"<<static_cast<void*>(this)<<" size:"<<this->size();
+
+#if 0
      if(ptr&&(encbuf.size()==0)){
         free(ptr);
 
      }
+#endif
  }        
          }}}

@@ -810,7 +810,7 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
     imagesizex = *sizex;
     imagesizey = *sizey;
   }
-  cc->setOutputAttributeNewSize("FRAMEBUFFER", imagesizex * imagesizey * (bpp), true);
+  //cc->setOutputAttributeNewSize("FRAMEBUFFER", imagesizex * imagesizey * (bpp), true);
 
   // framebuf = (uint8_t*)malloc(size);
   bpp = cv2fmt(framebuf_encoding, framebuf_encoding_s);
@@ -1587,7 +1587,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
     encode_cnt=((encode_cnt+1)%ENCODE_THREADS);
 
     //if ((ret >= 0) && ele.img) {
-    if (ele->ptr) {
+    if (ele->data()) {
 
       //a = ele.img;
       //  RTCameraBaseLDBG_ << " Encode Queue:" << encodedImg[0].length()<< " Capture Queue:" << captureImg[0].length();
@@ -1597,10 +1597,10 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       *osizey   = ele->sizey;
       *ooffsetx = ele->offsetx;
       *ooffsety = ele->offsety;
-      getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ele->ptr, ele->size/*a->size()*/);
+      getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ele,chaos::CHAOS_BUFFER_OWN_CALLEE);
       //RTCameraBaseLDBG_ << "push image:"<<a->size()<<" capture queue:"<<captureImg[0].length() <<" encode queue:"<<encodedImg[0].length()<<" lat:"<<(chaos::common::utility::TimingUtil::getTimeStamp()-ele.ts/1000)<<" ms";
       if(streamer&&cameraStreamEnable){
-        streamer->publish(streamName,std::string( ( const char*)ele->ptr, ele->size));
+        streamer->publish(streamName,std::string( ( const char*)ele->data(), ele->size()));
       }
       setHigResolutionAcquistionTimestamp(ele->ts);
 #ifdef CAMERA_ENABLE_SHARED
@@ -1611,7 +1611,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       }
 #endif
      // delete (a);
-      delete (ele);
+      //delete (ele);
       getAttributeCache()->setOutputDomainAsChanged();
     }
   } else {
@@ -1646,8 +1646,8 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
         }
         filtering(image);
      //   std::vector<unsigned char> encbuf;
-          Encoder enc;
-          bool code= enc.encode(encoding,image,encode_params);
+          Encoder* enc=new Encoder();
+          bool code= enc->encode(encoding,image,encode_params);
        // bool code = cv::imencode(encoding, image, encbuf);
         if (code == false) {
           setStateVariableSeverity(
@@ -1658,10 +1658,10 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
               StateVariableTypeAlarmCU, "encode_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
           //ptr = reinterpret_cast<uchar *>(&(encbuf[0]));
           //getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ptr, encbuf.size());
-          if(enc.ptr){
-            getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", enc.ptr, enc.size);
+          if(enc->data()){
+            getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", enc,chaos::CHAOS_BUFFER_OWN_CALLEE);
             if(streamer&&cameraStreamEnable){
-                streamer->publish(streamName,std::string( ( const char*)enc.ptr, enc.size));
+                streamer->publish(streamName,std::string( ( const char*)enc->data(), enc->size()));
             }
           }
          // RTCameraBaseLDBG_ << "push image:"<<encbuf.size()<<" capture queue:"<<captureImg[0].length() <<" encode queue:"<<encodedImg[0].length()<<" lat:"<<(chaos::common::utility::TimingUtil::getTimeStampInMicroseconds()-img->ts)<<" us";
@@ -1670,7 +1670,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
 #ifdef CAMERA_ENABLE_SHARED
 
           if (shared_mem.get()) {
-            shared_mem->writeMsg((void *)ptr, encbuf.size());
+            shared_mem->writeMsg((void *)enc->data(), encbuf->size());
             shared_mem->notify_all();
           }
 #endif
