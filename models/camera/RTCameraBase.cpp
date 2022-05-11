@@ -891,7 +891,7 @@ void RTCameraBase::startGrabbing() {
       param.sched_priority = 99;
       pthread_attr_setschedpolicy(&thread_attr, SCHED_FIFO);  // must be yield by processor, no timeslice
       for(int cnt=0;cnt<ENCODE_THREADS;cnt++){
-        pthread_create(&encode_th, &thread_attr, encode, (void*)this);
+        pthread_create(&encode_th[cnt], &thread_attr, encode, (void*)this);
       }
       pthread_attr_destroy(&thread_attr); // We've done with the attributes
       
@@ -908,36 +908,37 @@ void RTCameraBase::haltThreads() {
   if(stopCapture ){
     return;
   }
-  RTCameraBaseLDBG_ << "Stop Grab low level:" << stopCapture;
+  RTCameraBaseLDBG_ << "Stop Grab low level:" << stopCapture<<" capture exited:"<<capture_exited<<" buffering:"<<buffering;
 
   stopCapture = true;
   if (buffering > 0) {
    
-    while(capture_exited==false){
+    do {
         for(int cnt=0;cnt<ENCODE_THREADS;cnt++){
             captureImg[cnt].unblock();
             encodedImg[cnt].unblock();
       }
       RTCameraBaseLDBG_ << "unblocking fifo ";
-
-      usleep(10000);
-    }
+    } while(capture_exited==false);
     
      if(pthread_self()!=capture_th){
-        pthread_cancel(capture_th);
-    //    RTCameraBaseLDBG_ << "Joining capture thread";
+      //  pthread_cancel(capture_th);
+        RTCameraBaseLDBG_ << "Joining capture thread pid:"<<std::hex<<capture_th;
 
         pthread_join(capture_th,NULL);
      //   RTCameraBaseLDBG_ << "Joining capture thread OK";
 
     }
-    if(pthread_self()!=encode_th){
-    //  RTCameraBaseLDBG_ << "Joining encode thread";
+    for(int cnt=0;cnt<ENCODE_THREADS;cnt++){
 
-      pthread_cancel(encode_th);
-      pthread_join(encode_th,NULL);
+    if(pthread_self()!=encode_th[cnt]){
+      RTCameraBaseLDBG_ << "Joining encode thread "<<cnt<<" pid:"<<std::hex<<encode_th[cnt];
+
+     // pthread_cancel(encode_th[cnt]);
+      pthread_join(encode_th[cnt],NULL);
      // RTCameraBaseLDBG_ << "Joining encode thread OK";
 
+    }
     }
     
 
@@ -1597,6 +1598,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       *osizey   = ele->sizey;
       *ooffsetx = ele->offsetx;
       *ooffsety = ele->offsety;
+      setOutputTimestamp(chaos::common::utility::TimingUtil::getTimeStamp());
       getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ele,chaos::CHAOS_BUFFER_OWN_CALLEE);
       //RTCameraBaseLDBG_ << "push image:"<<a->size()<<" capture queue:"<<captureImg[0].length() <<" encode queue:"<<encodedImg[0].length()<<" lat:"<<(chaos::common::utility::TimingUtil::getTimeStamp()-ele.ts/1000)<<" ms";
       if(streamer&&cameraStreamEnable){
@@ -1704,7 +1706,9 @@ void RTCameraBase::unitStop() throw(chaos::CException) {
 void RTCameraBase::unitDeinit() throw(chaos::CException) {
   stopGrabbing();
   for(int cnt=0;cnt<ENCODE_THREADS;cnt++){
-    captureImg[cnt].get().consume_all([this](camera_buf_t *i) {
+    captureImg[cnt].get().consume_all([this,cnt](camera_buf_t *i) {
+    RTCameraBaseLDBG_ << cnt<< "] Capture frames deleted :" << static_cast<void*>(i);
+
     delete (i);
    
   });
@@ -1714,7 +1718,9 @@ void RTCameraBase::unitDeinit() throw(chaos::CException) {
     delete (i.img);
   });
   */
- encodedImg[cnt].get().consume_all([this](Encoder* i) {
+ encodedImg[cnt].get().consume_all([this,cnt](Encoder* i) {
+     RTCameraBaseLDBG_ << cnt<< "] Encode frames deleted :" << static_cast<void*>(i);
+
     delete (i);
   });
   }

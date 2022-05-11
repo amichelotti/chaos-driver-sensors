@@ -81,7 +81,7 @@ bool Encoder::encode(const char *encoding, cv::Mat &ma, std::vector<int> &encode
 }
  Encoder::~Encoder(){
     //  AVLDBG_<<" DELETE BUFFER:"<<static_cast<void*>(this)<<" size:"<<this->size();
-
+    detach();
 #if 0
      if(ptr&&(encbuf.size()==0)){
         free(ptr);
