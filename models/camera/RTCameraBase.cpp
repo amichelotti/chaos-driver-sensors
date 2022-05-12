@@ -17,7 +17,6 @@
  *    	See the License for the specific language governing permissions and
  *    	limitations under the License.
  */
-
 #include "RTCameraBase.h"
 #include <chaos/cu_toolkit/control_manager/AttributeSharedCacheWrapper.h>
 #include <driver/sensors/core/AbstractSensorDriver.h>
@@ -1599,7 +1598,12 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
       *ooffsetx = ele->offsetx;
       *ooffsety = ele->offsety;
       setOutputTimestamp(chaos::common::utility::TimingUtil::getTimeStamp());
+#ifdef ZERO_COPY
       getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ele,chaos::CHAOS_BUFFER_OWN_CALLEE);
+
+#else   
+      getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ele->data(),ele->size());
+#endif
       //RTCameraBaseLDBG_ << "push image:"<<a->size()<<" capture queue:"<<captureImg[0].length() <<" encode queue:"<<encodedImg[0].length()<<" lat:"<<(chaos::common::utility::TimingUtil::getTimeStamp()-ele.ts/1000)<<" ms";
       if(streamer&&cameraStreamEnable){
         streamer->publish(streamName,std::string( ( const char*)ele->data(), ele->size()));
@@ -1612,8 +1616,10 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
         shared_mem->notify_all();
       }
 #endif
-     // delete (a);
-      //delete (ele);
+#ifndef ZERO_COPY
+
+  delete (ele);
+#endif
       getAttributeCache()->setOutputDomainAsChanged();
     }
   } else {
@@ -1661,7 +1667,12 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
           //ptr = reinterpret_cast<uchar *>(&(encbuf[0]));
           //getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ptr, encbuf.size());
           if(enc->data()){
+#ifdef ZERO_COPY
             getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", enc,chaos::CHAOS_BUFFER_OWN_CALLEE);
+#else
+            getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", enc->data(),enc->size());
+
+#endif
             if(streamer&&cameraStreamEnable){
                 streamer->publish(streamName,std::string( ( const char*)enc->data(), enc->size()));
             }
@@ -1669,6 +1680,11 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
          // RTCameraBaseLDBG_ << "push image:"<<encbuf.size()<<" capture queue:"<<captureImg[0].length() <<" encode queue:"<<encodedImg[0].length()<<" lat:"<<(chaos::common::utility::TimingUtil::getTimeStampInMicroseconds()-img->ts)<<" us";
 
           setHigResolutionAcquistionTimestamp(img->ts);
+#ifndef ZERO_COPY
+
+      delete (enc);
+#endif
+
 #ifdef CAMERA_ENABLE_SHARED
 
           if (shared_mem.get()) {
