@@ -913,6 +913,8 @@ int BaslerScoutDriver::initializeCamera(
       camerap = NULL;
     }
     if (camerap == NULL) {
+      BaslerScoutDriverLDBG_ << "Initializing Pylon " BASLERVER;
+
       PylonInitialize();
       BaslerScoutDriverLDBG_ << "Pylon driver initialized";
       // Create an instant camera object for the camera device found first.
@@ -934,8 +936,20 @@ int BaslerScoutDriver::initializeCamera(
         CInstantCameraArray cameras(devices.size());
         BaslerScoutDriverLDBG_ << "Found " << cameras.GetSize()
                                << " cameras, looking for serial:" << serial;
+        for (size_t i = 0; (i < cameras.GetSize());i++) {
+            BaslerScoutDriverLDBG_ << "Retrive information " << devices[i].GetSerialNumber()<<" name:"<<devices[i].GetFriendlyName()<<" Model:"<<devices[i].GetModelName();
+            if(devices[i].GetSerialNumber().c_str() == serial){
+              BaslerScoutDriverLDBG_<<serial<<" FOUND: "<<devices[i].GetModelName();
+              pdev = tlFactory.CreateDevice(devices[i]);
+              camerap = new CInstantCamera(pdev);
 
+            }
+
+        }
+        /*
         for (size_t i = 0; (i < cameras.GetSize()) && (found == 0); ++i) {
+          BaslerScoutDriverLDBG_ << "Retrive information " << devices[i].GetSerialNumber()<<" name:"<<devices[i].GetFriendlyName()<<
+                               << " cameras, looking for serial:" << serial;
           pdev = tlFactory.CreateDevice(devices[i]);
 
           cameras[i].Attach(pdev);
@@ -963,20 +977,16 @@ int BaslerScoutDriver::initializeCamera(
             camerap = new CInstantCamera(pdev);
 
             found++;
-            /* if (camerap && (!camerap->IsOpen()))
-             {
-                 BaslerScoutDriverLDBG_ << "Opening Camera";
-
-                 camerap->Open();
-             }*/
+            
+            
           } else {
             // BaslerScoutDriverLDBG_ << " removing " <<
             // cameras[i].GetDeviceInfo().GetSerialNumber();
             cameras[i].DetachDevice();
             tlFactory.DestroyDevice(pdev);
             // delete pdev;
-          }
-        }
+          }*/
+  
       } else {
         BaslerScoutDriverLDBG_
             << "No \"serial\" specified getting first camera..";
