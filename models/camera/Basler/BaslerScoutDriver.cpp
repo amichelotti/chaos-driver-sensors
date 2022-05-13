@@ -1016,6 +1016,30 @@ int BaslerScoutDriver::initializeCamera(
         createProperty("SerialNumber", (const std::string &)sn);
         createProperty("Version",std::string("BaslerScoutDriver-" BASLERVER) );
 
+        /*
+        // Payload Size
+int64_t payloadSize = camera.PayloadSize.GetValue();
+// Packet Size
+camera.GevSCPSPacketSize.SetValue(1500);
+// Inter-Packet Delay
+camera.GevSCPD.SetValue(1000);
+// Frame transmission delay
+camera.GevSCFTD.SetValue(1000);
+// Bandwidth Assigned
+int64_t bandwidthAssigned = camera.GevSCBWA.GetValue();
+// Bandwidth Reserve
+camera.GevSCBWR.SetValue(10);
+// Bandwidth Reserve Accumulation
+camera.GevSCBWRA.SetValue(10);
+// Frame Jitter Max
+int64_t jitterMax = camera.GevSCFJM.GetValue();
+// Device Max Throughput
+int64_t maxThroughput = camera.GevSCDMT.GetValue();
+// Device Current Throughput
+int64_t currentThroughput = camera.GevSCDCT.GetValue();
+// Heartbeat Timeout
+camera.GevHeartbeatTimeout.SetValue(5000);
+        */
       }
       if (camerap && json.hasKey("TRIGGER_MODE")) {
         int tmode = json.getInt32Value("TRIGGER_MODE");
@@ -1029,6 +1053,10 @@ int BaslerScoutDriver::initializeCamera(
 
         camerap->Open();
       }
+     // setNode("GevSCPSPacketSize", 1500);
+      
+      setNode("GevSCPD", 10000);
+
       setNode("AcquisitionFrameRateEnable", true);
       CREATE_VALUE_PROP("Width", "WIDTH", int32_t)
       CREATE_VALUE_PROP("Height", "HEIGHT", int32_t)
@@ -1039,7 +1067,8 @@ int BaslerScoutDriver::initializeCamera(
       CREATE_VALUE_PROP("AcquisitionFrameRateAbs", "FRAMERATE", double);
       CREATE_VALUE_PROP("GainRaw", "GAIN", int32_t);
       CREATE_VALUE_PROP("ExposureTimeRaw", "SHUTTER", int32_t);
-      
+      CREATE_VALUE_PROP("GevSCPSPacketSize", "",int32_t);
+      CREATE_VALUE_PROP("GevSCPD","",int32_t);
      // CREATE_VALUE_PROP("ExposureTimeAbs", "", double);
      // CREATE_VALUE_PROP("ExposureTimeBaseAbs", "", double);
      // CREATE_PROP("ExposureMode","",std::string);
