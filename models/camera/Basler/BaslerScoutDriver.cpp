@@ -213,7 +213,10 @@ int BaslerScoutDriver::setNode(const std::string &node_name, bool val) {
        << " msg:" << e.GetDescription();
     BaslerScoutDriverLERR_ << ss.str();
     setLastError(ss.str());
-    
+     if(camerap->IsPylonDeviceAttached()){
+       camerap->Open();
+     }
+
     return -3;
   } catch (...) {
     BaslerScoutDriverLERR << "An Uknown exception occurre during set of Node:"
@@ -248,6 +251,9 @@ int BaslerScoutDriver::setNode(const std::string &node_name, std::string val) {
        << " msg:" << e.GetDescription();
     BaslerScoutDriverLERR_ << ss.str();
     setLastError(ss.str());
+    if(!camerap->IsPylonDeviceAttached()){
+       camerap->Open();
+     }
     return -3;
   } catch (...) {
     BaslerScoutDriverLERR_ << "An exception occurre during set of Node:"
@@ -308,6 +314,9 @@ int BaslerScoutDriver::setNode(const std::string &node_name, int32_t val) {
        << " msg:" << e.GetDescription();
     BaslerScoutDriverLERR_ << ss.str();
     setLastError(ss.str());
+    if(!camerap->IsPylonDeviceAttached()){
+       camerap->Open();
+     }
     return -3;
   } catch (...) {
     BaslerScoutDriverLERR << "An exception occurre during set of Node:"
@@ -365,6 +374,9 @@ int BaslerScoutDriver::setNode(const std::string &node_name, double val) {
        << " msg:" << e.GetDescription();
     BaslerScoutDriverLERR_ << ss.str();
     setLastError(ss.str());
+    if(!camerap->IsPylonDeviceAttached()){
+       camerap->Open();
+     }
     return -3;
   } catch (...) {
     BaslerScoutDriverLERR << "An exception occurre during SET of Node:"
@@ -404,6 +416,9 @@ static int setNodeInPercentage(const std::string &node_name,
     BaslerScoutDriverLERR << "An exception occurred during SET of Node:"
                           << node_name;
     BaslerScoutDriverLERR << e.GetDescription();
+    if(camera.IsPylonDeviceAttached()){
+       camera.Open();
+     }
     return -3;
   } catch (...) {
     BaslerScoutDriverLERR << "An exception occurre during SET of Node:"
@@ -434,10 +449,14 @@ int BaslerScoutDriver::getNode(const std::string &node_name, std::string &val) {
        << " msg:" << e.GetDescription();
     BaslerScoutDriverLERR_ << ss.str();
     setLastError(ss.str());
+    if(!camerap->IsPylonDeviceAttached()){
+       camerap->Open();
+     }
     return -3;
   } catch (...) {
     BaslerScoutDriverLERR << "An exception occurre during GET of Node:"
                           << node_name;
+        
     return -2;
   }
   return 0;
@@ -509,6 +528,9 @@ int BaslerScoutDriver::getNode(const std::string &node_name, double &percent,
        << " msg:" << e.GetDescription();
     BaslerScoutDriverLERR_ << ss.str();
     setLastError(ss.str());
+    if(!camerap->IsPylonDeviceAttached()){
+       camerap->Open();
+     }
     return -3;
   } catch (...) {
     BaslerScoutDriverLERR << "An exception occurre during GET of Node:"
@@ -551,7 +573,9 @@ int BaslerScoutDriver::getNode(const std::string &node_name, int32_t &percent,
        << " msg:" << e.GetDescription();
     BaslerScoutDriverLERR_ << ss.str();
     setLastError(ss.str());
-
+if(!camerap->IsPylonDeviceAttached()){
+       camerap->Open();
+     }
     return -3;
   } catch (...) {
     BaslerScoutDriverLERR << "An exception occurre during GET of Node:"
@@ -600,6 +624,9 @@ static int getNodeInPercentage(const std::string &node_name,
        << " msg:" << e.GetDescription();
     BaslerScoutDriverLERR << ss.str();
     // setLastError(ss.str());
+    if(camera->IsPylonDeviceAttached()){
+       camera->Open();
+     }
     return -3;
   } catch (...) {
     BaslerScoutDriverLERR << "An exception occurre during GET of Node:"
@@ -1056,7 +1083,12 @@ camera.GevHeartbeatTimeout.SetValue(5000);
      // setNode("GevSCPSPacketSize", 1500);
       
       //setNode("GevSCPD", 10000);
-      setNode("HeartbeatTimeout", 30000);
+      setNode("GevHeartbeatTimeout", 30000);
+      setNode("ReadTimeout", 5000);
+      setNode("WriteTimeout", 5000);
+      setNode("MaxRetryCountRead", 4);
+      setNode("MaxRetryCountWrite", 4);
+
       setNode("AcquisitionFrameRateEnable", true);
       CREATE_VALUE_PROP("Width", "WIDTH", int32_t)
       CREATE_VALUE_PROP("Height", "HEIGHT", int32_t)
@@ -1071,6 +1103,10 @@ camera.GevHeartbeatTimeout.SetValue(5000);
       CREATE_VALUE_PROP("GevSCPD","",int32_t);
       CREATE_VALUE_PROP("GevHeartbeatTimeout","",int32_t);
 
+      CREATE_VALUE_PROP("MaxRetryCountRead","",int32_t);
+      CREATE_VALUE_PROP("MaxRetryCountWrite","",int32_t);
+      CREATE_VALUE_PROP("ReadTimeout","",int32_t);
+      CREATE_VALUE_PROP("WriteTimeout","",int32_t);
      // CREATE_VALUE_PROP("ExposureTimeAbs", "", double);
      // CREATE_VALUE_PROP("ExposureTimeBaseAbs", "", double);
      // CREATE_PROP("ExposureMode","",std::string);
@@ -1081,6 +1117,7 @@ camera.GevHeartbeatTimeout.SetValue(5000);
       CREATE_VALUE_PROP("BslBrightness", "BRIGHTNESS", double);
 
       CREATE_VALUE_PROP("BslContrast", "CONTRAST", double);
+      CREATE_VALUE_PROP("DeviceTemperature","",double);
       CREATE_PROP("BslContrastMode", "", std::string);
       CREATE_PROP("BslBlackLevelCompensationMode", "", std::string);
 
@@ -1332,6 +1369,8 @@ BaslerScoutDriver::BaslerScoutDriver():camerap(NULL),shots(0),framebuf(NULL),fn(
 
 BaslerScoutDriver::BaslerScoutDriver() {
   camerap = NULL;
+  istrategy = (int)GrabStrategy_LatestImageOnly;
+
   shots = 0;
   fn = NULL;
   tmode = CAMERA_TRIGGER_CONTINOUS;
@@ -1770,16 +1809,17 @@ int BaslerScoutDriver::startGrab(uint32_t _shots, void *_framebuf,
   BaslerScoutDriverLDBG_ << "Start Grabbing";
   shots = _shots;
   fn = _fn;
-  EGrabStrategy strategy;
   /*if (props->hasKey("GRAB_STRATEGY")) {
     gstrategy = (GrabStrategy)props->getInt32Value("GRAB_STRATEGY");
   }*/
-  int32_t istrategy = gstrategy;
-  getProperty("GRAB_STRATEGY", istrategy);
-  gstrategy = (driver::sensor::camera::GrabStrategy)istrategy;
+  int32_t _strategy = gstrategy;
+  EGrabStrategy strategy;
+  getProperty("GRAB_STRATEGY", _strategy);
+  gstrategy = (driver::sensor::camera::GrabStrategy)_strategy;
   switch (gstrategy) {
   case CAMERA_ONE_BY_ONE:
     strategy = GrabStrategy_OneByOne;
+  
     break;
   case CAMERA_LATEST_ONLY:
     strategy = GrabStrategy_LatestImageOnly;
@@ -1792,6 +1832,7 @@ int BaslerScoutDriver::startGrab(uint32_t _shots, void *_framebuf,
 
     break;
   }
+  istrategy=(int)strategy;
   if (shots > 0) {
     camerap->StartGrabbing((size_t)shots, strategy);
   } else {
@@ -1831,7 +1872,7 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
           if((timeout_ms-=1000) >0){
             //  WaitObject::Sleep(1000);
           } else {
-            bool isremoved=camerap->IsCameraDeviceRemoved();
+            bool isremoved=!camerap->IsPylonDeviceAttached();
              BaslerScoutDriverLERR_ << "TRIGGER TIMEOUT AFTER ACTIVE WAIT: "<<timeout_ms<< " ms mode:"<<tmode<<" is removed:"<<isremoved;
             if(isremoved){
               camerap->A
@@ -1885,17 +1926,33 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
         return size_ret;
       } else {
         std::stringstream ss;
-        ss << "Error: " << ptrGrabResult->GetErrorCode() << " "
+        ss << "Error: " << std::hex<<ptrGrabResult->GetErrorCode() << " "
            << ptrGrabResult->GetErrorDescription();
         setLastError(ss.str());
         BaslerScoutDriverLERR_<<ss.str();
+
+        if(ptrGrabResult->GetErrorCode()==3774873620){
+          if(camerap->IsPylonDeviceAttached()){
+            camerap->StopGrabbing();
+          } else {
+            camerap->Close();
+            camerap->Open();
+          }
+          camerap->StartGrabbing((EGrabStrategy )istrategy);
+
+          return CAMERA_BANDWIDTH_ERROR;
+        }
         return CAMERA_GRAB_ERROR;
       }
     } else {
             bool isremoved=camerap->IsCameraDeviceRemoved();
-             BaslerScoutDriverLERR_ << "TRIGGER TIMEOUT AFTER Retrive WAIT: "<<timeout_ms<< " ms mode:"<<tmode<<" is removed:"<<isremoved;
-            if(isremoved){
+             BaslerScoutDriverLERR_ << "TRIGGER TIMEOUT AFTER Retrive WAIT: "<<timeout_ms<< " ms mode:"<<tmode<<" is removed:"<<isremoved << " is attached:"<<camerap->IsPylonDeviceAttached();
+            if(isremoved || !camerap->IsPylonDeviceAttached()){
+              camerap->Open();
+              camerap->StartGrabbing((EGrabStrategy )istrategy);
+              return CAMERA_DRIVER_DISCONNECT;
             }
+
             return chaos::ErrorCode::EC_GENERIC_TIMEOUT;
           }
     

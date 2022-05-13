@@ -654,8 +654,11 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
   addStateVariable(StateVariableTypeAlarmCU, "calibration_error", "an error during calibration (i.e. different size) ", LOG_FREQUENCY);
 
   addStateVariable(StateVariableTypeAlarmCU, "auto_reference_error", "an error occurred during autoreference", LOG_FREQUENCY);
+  addStateVariable(StateVariableTypeAlarmDEV, "camera_bandwidth", "camera bandwith", LOG_FREQUENCY);
+
   addStateVariable(StateVariableTypeAlarmDEV, "capture_error", "an error occurred during capture", LOG_FREQUENCY);
   addStateVariable(StateVariableTypeAlarmDEV, "capture_timeout", "a timeout has occurred", LOG_FREQUENCY);
+  addStateVariable(StateVariableTypeAlarmDEV, "camera_disconnect", "The camera appears disconnected", LOG_FREQUENCY);
 
   addStateVariable(StateVariableTypeAlarmCU, "captureQueue", "Queue Capture warning half, full error", LOG_FREQUENCY);
   addStateVariable(StateVariableTypeAlarmCU, "encodeQueue", "Queue Encode warning half, full error", LOG_FREQUENCY);
@@ -981,6 +984,8 @@ void RTCameraBase::stopGrabbing() {
   setStateVariableSeverity(StateVariableTypeAlarmDEV, "error_setting_property", chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmDEV, "capture_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmDEV, "capture_timeout", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+  setStateVariableSeverity(StateVariableTypeAlarmDEV, "device_disconnect", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+  setStateVariableSeverity(StateVariableTypeAlarmDEV, "camera_bandwidth", chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmCU, "encode_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmCU, "calibration_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
 
@@ -1022,8 +1027,10 @@ void RTCameraBase::captureThread() {
           StateVariableTypeAlarmDEV, "capture_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
       setStateVariableSeverity(
           StateVariableTypeAlarmDEV, "capture_timeout", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+      setStateVariableSeverity(StateVariableTypeAlarmDEV, "camera_bandwidth", chaos::common::alarm::MultiSeverityAlarmLevelClear);
 
-     
+     setStateVariableSeverity(
+          StateVariableTypeAlarmDEV, "camera_disconnect", chaos::common::alarm::MultiSeverityAlarmLevelClear);
       int pushret;
       int  retry = 3;
       if(captureImg[capture_cnt].length()==CAMERA_FRAME_BUFFERING/2){
@@ -1072,26 +1079,32 @@ StateVariableTypeAlarmCU, "captureQueue", chaos::common::alarm::MultiSeverityAla
                 StateVariableTypeAlarmDEV, "capture_timeout", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
           }
           continue;
-        } else if (ret == CAMERA_GRAB_STOP) {
-        /*  metadataLogging(chaos::common::metadata_logging::StandardLoggingChannel::LogLevelError, "unexplectly driver stopped grabbing");
-          haltThreads();
-          setStateVariableSeverity(
-              StateVariableTypeAlarmDEV, "capture_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);*/
-          RTCameraBaseLERR_ << " camera stopped grabbing :" << ret;
+        } 
+        switch(ret){
+        case  chaos::ErrorCode::EC_GENERIC_TIMEOUT:
+        RTCameraBaseLERR_ << " TIMEOUT:" << ret;
+        setStateVariableSeverity(
+            StateVariableTypeAlarmDEV, "capture_timeout", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
 
-         setStateVariableSeverity(
-              StateVariableTypeAlarmDEV, "capture_error", chaos::common::alarm::MultiSeverityAlarmLevelWarning);     
-        } else if (ret < 0) {
-          std::string error = driver->getLastError();
+        break;
+        case CAMERA_DRIVER_DISCONNECT:
+            RTCameraBaseLERR_ << " DISCONNECTED:" << ret;
 
-          RTCameraBaseLERR_ << " Error wait returned:" << ret << " error:" << error;
-          /*if (error.size()) {
-            metadataLogging(chaos::common::metadata_logging::StandardLoggingChannel::LogLevelError, error);
-          }*/
-          setStateVariableSeverity(
-              StateVariableTypeAlarmDEV, "capture_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
-          usleep(100000);
-        }
+        setStateVariableSeverity(
+          StateVariableTypeAlarmDEV, "camera_disconnect", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+        break;
+        case CAMERA_BANDWIDTH_ERROR:
+        RTCameraBaseLERR_ << " BANDWITH :" << ret;
+
+        setStateVariableSeverity(
+          StateVariableTypeAlarmDEV, "camera_bandwidth", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+        break;
+        default:
+          RTCameraBaseLERR_ << " Error wait returned:" << ret;
+        setStateVariableSeverity(
+            StateVariableTypeAlarmDEV, "capture_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+      } 
+        
       }
     }
   }
@@ -1633,7 +1646,8 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
           StateVariableTypeAlarmDEV, "capture_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
       setStateVariableSeverity(
           StateVariableTypeAlarmDEV, "capture_timeout", chaos::common::alarm::MultiSeverityAlarmLevelClear);
-
+      setStateVariableSeverity(
+          StateVariableTypeAlarmDEV, "camera_disconnect", chaos::common::alarm::MultiSeverityAlarmLevelClear);
       *osizex = img->width;
       *osizey = img->height;
       
@@ -1698,17 +1712,31 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
         goInFatalError("Encode exception ", -1004, __PRETTY_FUNCTION__);
       }
     } else {
-      if (ret == chaos::ErrorCode::EC_GENERIC_TIMEOUT) {
-        RTCameraBaseLERR_ << " wait returned:" << ret;
+      switch(ret){
+        case  chaos::ErrorCode::EC_GENERIC_TIMEOUT:
+        RTCameraBaseLERR_ << " TIMEOUT:" << ret;
         setStateVariableSeverity(
             StateVariableTypeAlarmDEV, "capture_timeout", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
 
-      } else if (ret < 0) {
-        RTCameraBaseLERR_ << " Error wait returned:" << ret;
+        break;
+        case CAMERA_DRIVER_DISCONNECT:
+            RTCameraBaseLERR_ << " DISCONNECTED:" << ret;
+
+        setStateVariableSeverity(
+          StateVariableTypeAlarmDEV, "camera_disconnect", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+        break;
+        case CAMERA_BANDWIDTH_ERROR:
+        RTCameraBaseLERR_ << " BANDWITH :" << ret;
+
+        setStateVariableSeverity(
+          StateVariableTypeAlarmDEV, "camera_bandwidth", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+        break;
+        default:
+          RTCameraBaseLERR_ << " Error wait returned:" << ret;
         setStateVariableSeverity(
             StateVariableTypeAlarmDEV, "capture_error", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
       }
-    }
+          }
   }
 }
 

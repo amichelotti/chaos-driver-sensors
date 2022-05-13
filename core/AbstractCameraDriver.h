@@ -58,7 +58,10 @@ enum GrabStrategy {
     CAMERA_LATEST, // keep last images (number is defined by NIMAGES)
     CAMERA_INCOMING // start grabbing just after the SW is waiting for
 } ;
-#define CAMERA_GRAB_ERROR -200
+#define CAMERA_GRAB_ERROR -2000
+#define CAMERA_DRIVER_DISCONNECT -2001
+#define CAMERA_BANDWIDTH_ERROR -2002
+
 #define CAMERA_GRAB_STOP -20
 #define LOG_FREQUENCY 10000
 #define TRIGGER_MODE_KEY "TRIGGER_MODE"

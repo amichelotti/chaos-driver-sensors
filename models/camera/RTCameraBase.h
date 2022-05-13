@@ -100,7 +100,7 @@ protected:
        // chaos::common::thread::TLockFreeQueue<encoded_t,CAMERA_FRAME_BUFFERING> encodedImg;
         chaos::common::thread::TLockFreeQueue<Encoder*,CAMERA_FRAME_BUFFERING> encodedImg[ENCODE_THREADS];
 
-
+        
         //boost::lockfree::queue<::driver::sensor::camera::camera_buf_t*, boost::lockfree::fixed_sized<true> > captureImg;
         //boost::lockfree::queue<encoded_t, boost::lockfree::fixed_sized<true> > encodedImg;
         //boost::mutex mutex_io,mutex_encode;
