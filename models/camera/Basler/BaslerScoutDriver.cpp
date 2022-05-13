@@ -1056,7 +1056,7 @@ camera.GevHeartbeatTimeout.SetValue(5000);
      // setNode("GevSCPSPacketSize", 1500);
       
       //setNode("GevSCPD", 10000);
-
+      setNode("HeartbeatTimeout", 30000);
       setNode("AcquisitionFrameRateEnable", true);
       CREATE_VALUE_PROP("Width", "WIDTH", int32_t)
       CREATE_VALUE_PROP("Height", "HEIGHT", int32_t)
@@ -1069,6 +1069,8 @@ camera.GevHeartbeatTimeout.SetValue(5000);
       CREATE_VALUE_PROP("ExposureTimeRaw", "SHUTTER", int32_t);
       CREATE_VALUE_PROP("GevSCPSPacketSize", "",int32_t);
       CREATE_VALUE_PROP("GevSCPD","",int32_t);
+      CREATE_VALUE_PROP("GevHeartbeatTimeout","",int32_t);
+
      // CREATE_VALUE_PROP("ExposureTimeAbs", "", double);
      // CREATE_VALUE_PROP("ExposureTimeBaseAbs", "", double);
      // CREATE_PROP("ExposureMode","",std::string);
