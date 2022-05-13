@@ -2,9 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(chaos_driver_sensors_basler)
 
 SET(sensors_src BaslerScoutDriver.cpp)
-IF(EXISTS /opt/pylon6)
-SET(PYLON_SOFT /opt/pylon6)
-
+IF(EXISTS /opt/pylon)
 SET(PYLON_VERSION 6.3.0)
 SET (pylon_gcc_api_basler  GenApi_gcc_v3_1_Basler_pylon)
 SET (pylon_gcc_base GCBase_gcc_v3_1_Basler_pylon)

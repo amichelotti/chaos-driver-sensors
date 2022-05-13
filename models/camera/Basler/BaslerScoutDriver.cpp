@@ -1055,7 +1055,7 @@ camera.GevHeartbeatTimeout.SetValue(5000);
       }
      // setNode("GevSCPSPacketSize", 1500);
       
-      setNode("GevSCPD", 10000);
+      //setNode("GevSCPD", 10000);
 
       setNode("AcquisitionFrameRateEnable", true);
       CREATE_VALUE_PROP("Width", "WIDTH", int32_t)
