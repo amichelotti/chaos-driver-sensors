@@ -64,6 +64,8 @@ class BaslerScoutDriver:public ::driver::sensor::camera::CameraDriverBridge {
 
     //int getNodeInPercentage(const std::string &node_name, Pylon::CInstantCamera*camera, float &percent,const std::string& pub="");
     int istrategy;
+    static std::atomic<int> pylon_initialization;
+
 public:
     int setNode(const std::string &node_name,bool val);
     int setNode(const std::string &node_name, std::string val);

@@ -126,6 +126,8 @@ CLOSE_REGISTER_PLUGIN
   if (restore_grab) {                                                          \
     startGrab(shots, NULL, fn);                                                \
   }
+  
+  std::atomic<int> BaslerScoutDriver::pylon_initialization(0);
 
 template <typename T> static T Adjust(T val, T minimum, T maximum, T inc) {
   // Check the input parameters.
@@ -192,7 +194,11 @@ namespace camera {
 int BaslerScoutDriver::setNode(const std::string &node_name, bool val) {
 
   try {
+    if(!camerap->IsPylonDeviceAttached()||camerap->IsCameraDeviceRemoved()){
+       return CAMERA_DRIVER_DISCONNECT;
+     }
     BaslerScoutDriverLDBG_ << "setting bool node:" << node_name << " to " << val;
+     
     INodeMap &control = camerap->GetNodeMap();
     GenApi::CBooleanPtr node = control.GetNode(node_name.c_str());
     if (node.IsValid() == false) {
@@ -213,8 +219,9 @@ int BaslerScoutDriver::setNode(const std::string &node_name, bool val) {
        << " msg:" << e.GetDescription();
     BaslerScoutDriverLERR_ << ss.str();
     setLastError(ss.str());
-     if(camerap->IsPylonDeviceAttached()){
-       camerap->Open();
+    if(!camerap->IsPylonDeviceAttached()){
+
+      // camerap->Open();
      }
 
     return -3;
@@ -228,8 +235,13 @@ int BaslerScoutDriver::setNode(const std::string &node_name, bool val) {
 int BaslerScoutDriver::setNode(const std::string &node_name, std::string val) {
 
   try {
+    if(!camerap->IsPylonDeviceAttached()||camerap->IsCameraDeviceRemoved()){
+     //  camerap->Open();
+       return CAMERA_DRIVER_DISCONNECT;
+     }
     BaslerScoutDriverLDBG_ << "setting enumeration node:" << node_name << " to "
                           << val;
+    
     INodeMap &control = camerap->GetNodeMap();
     GenApi::CEnumerationPtr node = control.GetNode(node_name.c_str());
     if (node.IsValid() == false) {
@@ -252,7 +264,7 @@ int BaslerScoutDriver::setNode(const std::string &node_name, std::string val) {
     BaslerScoutDriverLERR_ << ss.str();
     setLastError(ss.str());
     if(!camerap->IsPylonDeviceAttached()){
-       camerap->Open();
+      // camerap->Open();
      }
     return -3;
   } catch (...) {
@@ -267,7 +279,12 @@ int BaslerScoutDriver::setNode(const std::string &node_name, int32_t val) {
 
   try {
     bool stopped=false;
+    if(!camerap->IsPylonDeviceAttached()||camerap->IsCameraDeviceRemoved()){
+       //camerap->Open();
+       return CAMERA_DRIVER_DISCONNECT;
+     }
     BaslerScoutDriverLDBG_ << "setting int node:" << node_name << " to " << val;
+    
     INodeMap &control = camerap->GetNodeMap();
     GenApi::CIntegerPtr node = control.GetNode(node_name.c_str());
     if (node.IsValid() == false) {
@@ -315,7 +332,7 @@ int BaslerScoutDriver::setNode(const std::string &node_name, int32_t val) {
     BaslerScoutDriverLERR_ << ss.str();
     setLastError(ss.str());
     if(!camerap->IsPylonDeviceAttached()){
-       camerap->Open();
+     //  camerap->Open();
      }
     return -3;
   } catch (...) {
@@ -328,9 +345,13 @@ int BaslerScoutDriver::setNode(const std::string &node_name, int32_t val) {
 
 int BaslerScoutDriver::setNode(const std::string &node_name, double val) {
   try {
+    if(!camerap->IsPylonDeviceAttached()||camerap->IsCameraDeviceRemoved()){
+     //  camerap->Open();
+       return CAMERA_DRIVER_DISCONNECT;
+     }
     BaslerScoutDriverLDBG_ << "setting float node:" << node_name
                            << " to:" << val;
-
+    
     INodeMap &control = camerap->GetNodeMap();
     GenApi::CFloatPtr node = control.GetNode(node_name.c_str());
     if (node.IsValid() == false) {
@@ -375,7 +396,7 @@ int BaslerScoutDriver::setNode(const std::string &node_name, double val) {
     BaslerScoutDriverLERR_ << ss.str();
     setLastError(ss.str());
     if(!camerap->IsPylonDeviceAttached()){
-       camerap->Open();
+     //  camerap->Open();
      }
     return -3;
   } catch (...) {
@@ -389,9 +410,15 @@ int BaslerScoutDriver::setNode(const std::string &node_name, double val) {
 static int setNodeInPercentage(const std::string &node_name,
                                CInstantCamera &camera, float percent) {
   try {
-    BaslerScoutDriverLDBG << "setting int node:" << node_name
-                          << " to: " << percent * 100 << " %";
+    
+      if(!camera.IsPylonDeviceAttached()||camera.IsCameraDeviceRemoved()){
+       //camera.Open();
+        BaslerScoutDriverLERR << "DISCONNECTED";
 
+       return CAMERA_DRIVER_DISCONNECT;
+     }
+     BaslerScoutDriverLDBG << "setting int node:" << node_name
+                          << " to: " << percent * 100 << " %";
     INodeMap &control = camera.GetNodeMap();
     GenApi::CIntegerPtr node = control.GetNode(node_name.c_str());
     if (node.IsValid() == false) {
@@ -416,7 +443,7 @@ static int setNodeInPercentage(const std::string &node_name,
     BaslerScoutDriverLERR << "An exception occurred during SET of Node:"
                           << node_name;
     BaslerScoutDriverLERR << e.GetDescription();
-    if(camera.IsPylonDeviceAttached()){
+    if(!camera.IsPylonDeviceAttached()){
        camera.Open();
      }
     return -3;
@@ -430,7 +457,12 @@ static int setNodeInPercentage(const std::string &node_name,
 
 int BaslerScoutDriver::getNode(const std::string &node_name, std::string &val) {
   std::stringstream ss;
+  if(!camerap->IsPylonDeviceAttached()||camerap->IsCameraDeviceRemoved()){
+  //     camerap->Open();
+        BaslerScoutDriverLERR << "DISCONNECTED";
 
+       return CAMERA_DRIVER_DISCONNECT;
+     }
   try {
     BaslerScoutDriverLDBG_ << "getting string node:" << node_name;
     CEnumerationPtr eptr = camerap->GetNodeMap().GetNode(node_name.c_str());
@@ -465,6 +497,12 @@ int BaslerScoutDriver::getNode(const std::string &node_name, std::string &val) {
 int BaslerScoutDriver::getNode(const std::string &node_name, bool& val) {
   try {
     std::stringstream ss;
+    if(!camerap->IsPylonDeviceAttached()|| camerap->IsCameraDeviceRemoved()){
+     //  camerap->Open();
+        BaslerScoutDriverLERR << "DISCONNECTED";
+
+       return CAMERA_DRIVER_DISCONNECT;
+     }
     BaslerScoutDriverLDBG_ << "getting bool node:" << node_name;
     GenApi::CBooleanPtr node = camerap->GetNodeMap().GetNode(node_name.c_str());
     if (!node.IsValid()) {
@@ -484,6 +522,9 @@ int BaslerScoutDriver::getNode(const std::string &node_name, bool& val) {
        << " msg:" << e.GetDescription();
     BaslerScoutDriverLERR_ << ss.str();
     setLastError(ss.str());
+    if(!camerap->IsPylonDeviceAttached()){
+    //   camerap->Open();
+     }
     return -3;
   } catch (...) {
     BaslerScoutDriverLERR << "An exception occurre during GET of Node:"
@@ -498,7 +539,12 @@ int BaslerScoutDriver::getNode(const std::string &node_name, double &percent,
   try {
     BaslerScoutDriverLDBG_ << "getting double node:" << node_name;
     std::stringstream ss;
+if(!camerap->IsPylonDeviceAttached()||camerap->IsCameraDeviceRemoved()){
+     //  camerap->Open();
+        BaslerScoutDriverLERR << "DISCONNECTED";
 
+       return CAMERA_DRIVER_DISCONNECT;
+     }
     INodeMap &control = camerap->GetNodeMap();
     GenApi::CFloatPtr node = control.GetNode(node_name.c_str());
     if (node.IsValid() == false) {
@@ -529,7 +575,7 @@ int BaslerScoutDriver::getNode(const std::string &node_name, double &percent,
     BaslerScoutDriverLERR_ << ss.str();
     setLastError(ss.str());
     if(!camerap->IsPylonDeviceAttached()){
-       camerap->Open();
+     //  camerap->Open();
      }
     return -3;
   } catch (...) {
@@ -542,6 +588,11 @@ int BaslerScoutDriver::getNode(const std::string &node_name, double &percent,
 int BaslerScoutDriver::getNode(const std::string &node_name, int32_t &percent,
                                int32_t &max, int32_t &min, int32_t &inc) {
   try {
+    if(!camerap->IsPylonDeviceAttached()||camerap->IsCameraDeviceRemoved()){
+        BaslerScoutDriverLERR << "DISCONNECTED";
+
+       return CAMERA_DRIVER_DISCONNECT;
+     }
     BaslerScoutDriverLDBG_ << "getting node:" << node_name;
 
     INodeMap &control = camerap->GetNodeMap();
@@ -573,8 +624,8 @@ int BaslerScoutDriver::getNode(const std::string &node_name, int32_t &percent,
        << " msg:" << e.GetDescription();
     BaslerScoutDriverLERR_ << ss.str();
     setLastError(ss.str());
-if(!camerap->IsPylonDeviceAttached()){
-       camerap->Open();
+    if(!camerap->IsPylonDeviceAttached()){
+      // camerap->Open();
      }
     return -3;
   } catch (...) {
@@ -587,6 +638,11 @@ if(!camerap->IsPylonDeviceAttached()){
 static int getNodeInPercentage(const std::string &node_name,
                                CInstantCamera *camera, float &percent) {
   int64_t min, max, inc, val;
+   if(!camera->IsPylonDeviceAttached()||camera->IsCameraDeviceRemoved()){
+        BaslerScoutDriverLERR << "DISCONNECTED";
+
+       return CAMERA_DRIVER_DISCONNECT;
+     }
   try {
     BaslerScoutDriverLDBG << "getting node:" << node_name;
 
@@ -624,8 +680,8 @@ static int getNodeInPercentage(const std::string &node_name,
        << " msg:" << e.GetDescription();
     BaslerScoutDriverLERR << ss.str();
     // setLastError(ss.str());
-    if(camera->IsPylonDeviceAttached()){
-       camera->Open();
+    if(!camera->IsPylonDeviceAttached()){
+     //  camera->Open();
      }
     return -3;
   } catch (...) {
@@ -940,17 +996,16 @@ int BaslerScoutDriver::initializeCamera(
       camerap = NULL;
     }
     if (camerap == NULL) {
-      BaslerScoutDriverLDBG_ << "Initializing Pylon " BASLERVER;
 
-      PylonInitialize();
       BaslerScoutDriverLDBG_ << "Pylon driver initialized";
       // Create an instant camera object for the camera device found first.
       BaslerScoutDriverLDBG_ << "getting  camera informations ..";
       if (!serial.empty()) {
         CTlFactory &tlFactory = CTlFactory::GetInstance();
+       
         DeviceInfoList_t devices;
         // Get all attached devices and exit application if no device is found.
-        if (tlFactory.EnumerateDevices(devices) == 0) {
+        if (tlFactory.EnumerateDevices(devices,true) == 0) {
           BaslerScoutDriverLERR_ << " No camera present!!!";
           throw chaos::CException(-1,
                                   "Cannot initialize camera " +
@@ -1368,6 +1423,15 @@ BaslerScoutDriver::BaslerScoutDriver():camerap(NULL),shots(0),framebuf(NULL),fn(
 */
 
 BaslerScoutDriver::BaslerScoutDriver() {
+
+  if(pylon_initialization++==0){
+    BaslerScoutDriverLDBG_ << "Initializing Pylon " BASLERVER;
+
+    PylonInitialize();
+  }
+
+  BaslerScoutDriverLDBG_ << "Created BASLER Driver "<<pylon_initialization;
+
   camerap = NULL;
   istrategy = (int)GrabStrategy_LatestImageOnly;
 
@@ -1376,7 +1440,6 @@ BaslerScoutDriver::BaslerScoutDriver() {
   tmode = CAMERA_TRIGGER_CONTINOUS;
   gstrategy = CAMERA_LATEST_ONLY;
 
-  BaslerScoutDriverLDBG_ << "Created BASLER Driver";
   triggerHWSource = "Line1";
   stopGrabbing = true;
   restore_grab = false;
@@ -1389,6 +1452,12 @@ BaslerScoutDriver::~BaslerScoutDriver() {
 
     delete camerap;
     camerap = NULL;
+  }
+  pylon_initialization--;
+  if(pylon_initialization==0){
+    BaslerScoutDriverLDBG_ << "terminating pylon context";
+
+    PylonTerminate();
   }
 }
 int BaslerScoutDriver::changeTriggerMode(Pylon::CInstantCamera *camera,
@@ -1853,6 +1922,10 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
     return CAMERA_GRAB_STOP;
   }
   try {
+    if(camerap->IsCameraDeviceRemoved() || !camerap->IsPylonDeviceAttached()){
+              camerap->Open();
+              camerap->StartGrabbing((EGrabStrategy )istrategy);
+    }
     Pylon::CGrabResultPtr ptrGrabResult;
     if (tmode > CAMERA_TRIGGER_SINGLE) {
      // BaslerScoutDriverLDBG_ << "Wait for "<<timeout_ms<<" tmode:"<<tmode;
@@ -1948,8 +2021,6 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
             bool isremoved=camerap->IsCameraDeviceRemoved();
              BaslerScoutDriverLERR_ << "TRIGGER TIMEOUT AFTER Retrive WAIT: "<<timeout_ms<< " ms mode:"<<tmode<<" is removed:"<<isremoved << " is attached:"<<camerap->IsPylonDeviceAttached();
             if(isremoved || !camerap->IsPylonDeviceAttached()){
-              camerap->Open();
-              camerap->StartGrabbing((EGrabStrategy )istrategy);
               return CAMERA_DRIVER_DISCONNECT;
             }
 
@@ -1961,7 +2032,11 @@ int BaslerScoutDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
     ss << "An exception occurred during Wait:" << " msg:" << e.GetDescription();
     BaslerScoutDriverLERR_ << ss.str();
     setLastError(ss.str());
-    
+    bool isremoved=camerap->IsCameraDeviceRemoved();
+
+    if(isremoved || !camerap->IsPylonDeviceAttached()){
+              return CAMERA_DRIVER_DISCONNECT;
+    }
     // Error handling.
   
     return -300;
