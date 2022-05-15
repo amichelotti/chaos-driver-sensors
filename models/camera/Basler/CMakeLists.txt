@@ -59,7 +59,12 @@ SET(pylon pylonbase-${PYLON_VERSION} pylonutility-${PYLON_VERSION} ${pylon_gcc_a
 SET(DRIVERS_LIB ${DRIVERS_LIB} ${PROJECT_NAME} PARENT_SCOPE)
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_common  chaos_driver_sensors ${pylon} ${FrameworkLib} common_misc_data)
 FILE(GLOB pylon_libs ${PYLON_SOFT}/lib/*.so)
+if(${CMAKE_VERSION} VERSION_LESS "3.23.1") 
+FILE(COPY ${pylon_libs} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+ELSE()
 FILE(COPY ${pylon_libs} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib FOLLOW_SYMLINK_CHAIN)
+ENDIF()
+
 MESSAGE(STATUS "pylon libs ${pylon_libs}")
 
 #INSTALL(FILES ${pylon_libs} DESTINATION lib)

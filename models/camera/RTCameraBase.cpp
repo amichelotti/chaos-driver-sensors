@@ -984,7 +984,7 @@ void RTCameraBase::stopGrabbing() {
   setStateVariableSeverity(StateVariableTypeAlarmDEV, "error_setting_property", chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmDEV, "capture_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmDEV, "capture_timeout", chaos::common::alarm::MultiSeverityAlarmLevelClear);
-  setStateVariableSeverity(StateVariableTypeAlarmDEV, "device_disconnect", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+  setStateVariableSeverity(StateVariableTypeAlarmDEV, "camera_disconnect", chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmDEV, "camera_bandwidth", chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmCU, "encode_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmCU, "calibration_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
