@@ -24,6 +24,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#define ZERO_COPY
 #ifdef CERN_ROOT
 #include <driver/misc/models/cernRoot/rootGaussianImage2dFit.h>
 #endif
@@ -34,7 +35,7 @@
     IMWRITE_PNG_STRATEGY_RLE          = 3,
     IMWRITE_PNG_STRATEGY_FIXED        = 4,
 */
-#ifdef CERN_ROOTg
+#ifdef CERN_ROOT
 
 #include <driver/misc/models/cernRoot/rootGaussianImage2dFit.h>
 #endif
@@ -578,6 +579,8 @@ void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
       throw chaos::CException(-1, "cannot create driver for:" + getDeviceID(), __PRETTY_FUNCTION__);
     }
   }
+  useCustomHigResolutionTimestamp(true);
+
   addAttributeToDataSet("ROT", "Rotation angle (degree)", chaos::DataType::TYPE_INT32, chaos::DataType::Input);
   addAttributeToDataSet("REFABS", "Absolute(true)/Relative(false)", chaos::DataType::TYPE_BOOLEAN, chaos::DataType::Input);
 
@@ -720,7 +723,6 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   int     ret;
   int32_t itype;
   int32_t width, height;
-  useCustomHigResolutionTimestamp(true);
 
   AttributeSharedCacheWrapper *cc = getAttributeCache();
   performCalib                    = false;
