@@ -893,14 +893,14 @@ void RTCameraBase::startGrabbing() {
       pthread_attr_setschedparam(&thread_attr, &param); // Set attributes to priority 30
       pthread_create(&capture_th, &thread_attr, capture, (void*)this);
       char name[256];
-      sprintf(name,"capture_th_%s",getDeviceID());
+      sprintf(name,"capture_th_%s",getDeviceID().c_str());
       pthread_setname_np(capture_th, name);
 
       param.sched_priority = 99;
       pthread_attr_setschedpolicy(&thread_attr, SCHED_FIFO);  // must be yield by processor, no timeslice
       for(int cnt=0;cnt<ENCODE_THREADS;cnt++){
         pthread_create(&encode_th[cnt], &thread_attr, encode, (void*)this);
-        sprintf(name,"encode_th%d_%s",cnt,getDeviceID());
+        sprintf(name,"encode_th%d_%s",cnt,getDeviceID().c_str());
 
         pthread_setname_np(encode_th[cnt], name);
 
