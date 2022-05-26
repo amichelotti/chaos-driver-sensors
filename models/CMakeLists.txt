@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.9)
 project(sensor_models)
 add_subdirectory(LucidControl)
 add_subdirectory(Simulator)

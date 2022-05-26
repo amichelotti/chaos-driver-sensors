@@ -395,8 +395,9 @@ int MemCacheCam::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
   // img.zeros(cv::Size(height,width),  CV_8UC3);
   // img.setTo(cv::Scalar::all(0));
   size_t value_length = 0;
+  uint64_t now        = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
+
   if (framerate > 0) {
-    uint64_t now        = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
     double   diff       = (1000000.0 / framerate) - (now - last_acquisition_ts);
     last_acquisition_ts = now;
     if (diff > 0) {
@@ -420,7 +421,6 @@ int MemCacheCam::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
     }
     int siz=value_length - 2 * sizeof(uint32_t);
     *buf          = new camera_buf_t(siz*sizeof(uint16_t) , width, height);
-
     if((pixelEncoding==CV_16UC1)||(pixelEncoding==CV_16SC1)){
       const uint16_t*src=(const uint16_t*)&ptr[2];
       uint16_t max=0,min=65535;
@@ -456,6 +456,8 @@ int MemCacheCam::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
         MemCacheCamLDBG_ << "Acquired \"" << key << "\" size:" << value_length << " " << width << "x" << height << " encoding:" << pixelEncoding_str<<"("<<pixelEncoding<<")" <<" MAX:"<<max<<" MIN:"<<min;
 
     }
+    (*buf)->ts = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
+
     free(value);
     return siz;
   } else {
