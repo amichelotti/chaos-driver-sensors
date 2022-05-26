@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.0)
 project(chaos_driver_sensors_ZB)
 
 SET(sensors_src ZBSensorCollector.cpp ZBSensorNode.cpp ZBSensorNodeC.cpp ZBSensorNodeD.cpp ZBSensorNodeS.cpp)

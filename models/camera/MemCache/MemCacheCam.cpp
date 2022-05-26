@@ -423,23 +423,39 @@ int MemCacheCam::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
     *buf          = new camera_buf_t(siz*sizeof(uint16_t) , width, height);
     if((pixelEncoding==CV_16UC1)||(pixelEncoding==CV_16SC1)){
       const uint16_t*src=(const uint16_t*)&ptr[2];
-      uint16_t max=0,min=65535;
+      const int16_t*ssrc=(const int16_t*)&ptr[2];
+
       uint16_t*pu=(uint16_t*)(*buf)->buf;
+      int16_t*pus=(int16_t*)(*buf)->buf;
+
       for(int cnt=0;cnt<siz/sizeof(uint16_t);cnt++){
         if(bigendian){
-          uint16_t val=chaos::common::utility::byte_swap<chaos::common::utility::host_endian,
+          if(pixelEncoding==CV_16SC1){
+
+            int16_t val=chaos::common::utility::byte_swap<chaos::common::utility::host_endian,
+                                                                             chaos::common::utility::big_endian, int16_t>(ssrc[cnt]);
+                                                                           
+            pus[cnt]=val* gain_raw + brightness_raw;
+      //    printf("%d ",pu[cnt]);
+          } else {
+
+            uint16_t val=chaos::common::utility::byte_swap<chaos::common::utility::host_endian,
                                                                              chaos::common::utility::big_endian, uint16_t>(src[cnt]);
                                                                            
-          pu[cnt]=val* gain_raw + brightness_raw;
+            pu[cnt]=val* gain_raw + brightness_raw;
       //    printf("%d ",pu[cnt]);
-          max=std::max(pu[cnt],max);
-          min=std::min(pu[cnt],min);   
+          } 
         } else {
-           pu[cnt]=src[cnt]* gain_raw + brightness_raw;
+           if(pixelEncoding==CV_16SC1){
+            pus[cnt]=ssrc[cnt]* gain_raw + brightness_raw;
+
+           } else {
+            pu[cnt]=src[cnt]* gain_raw + brightness_raw;
+           }
         }
       }
     //  printf("\n");
-        MemCacheCamLDBG_ << "Acquired \"" << key << "\" size:" << value_length << " " << width << "x" << height << " encoding:" << pixelEncoding_str<<"("<<pixelEncoding<<")" <<" MAX:"<<max<<" MIN:"<<min;
+        MemCacheCamLDBG_ << "Acquired \"" << key << "\" size:" << value_length << " " << width << "x" << height << " encoding:" << pixelEncoding_str<<"("<<pixelEncoding<<")";
 
     }
     if((pixelEncoding==CV_8UC1)||(pixelEncoding==CV_8SC1)){

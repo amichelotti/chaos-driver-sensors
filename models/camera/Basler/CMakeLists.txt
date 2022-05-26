@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 project(chaos_driver_sensors_basler)
 SET(PYLON_MAJOR 5)
 SET(PYLON_SOFT ${CMAKE_CURRENT_SOURCE_DIR}/pylon5)

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 project(chaos_driver_sensors_mc_cam)
 include_directories(${OPENCV}/include)
 link_directories(${OPENCV}/lib)

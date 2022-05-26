@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.9)
 project(chaos_driver_sensors_ids)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_LIST_DIR}/${IDS}/include)
 LINK_DIRECTORIES(${CMAKE_CURRENT_LIST_DIR}/${IDS}/lib)
