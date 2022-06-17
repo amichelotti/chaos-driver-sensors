@@ -1603,12 +1603,19 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
    // std::vector<unsigned char> *a;
     Encoder*ele=NULL;
     // RTCameraBaseLDBG_ << "popping encode queue:"<<encodedImg[0].length();
+    
+    int ret;
+    ret = encodedImg[encode_cnt].wait_and_pop(ele, 0);
 
-    int ret = encodedImg[encode_cnt].wait_and_pop(ele, trigger_timeout);
     if(ret<0){
+      RTCameraBaseLDBG_ << "popping encode queue "<<encode_cnt<<":"<<encodedImg[encode_cnt].length();
+      encode_cnt=((encode_cnt+1)%ENCODE_THREADS);
+
       return;
     }
     encode_cnt=((encode_cnt+1)%ENCODE_THREADS);
+
+    
 
     //if ((ret >= 0) && ele.img) {
     if (ele->data()) {
