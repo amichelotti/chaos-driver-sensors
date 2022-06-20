@@ -119,7 +119,7 @@ RTCameraBase::RTCameraBase(const string                &_control_unit_id,
                            const string                &_control_unit_param,
                            const ControlUnitDriverList &_control_unit_drivers,
                            const int                    _buffering)
-    : RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers), driver(NULL), streamer(NULL),capture_exited(true),capture_cnt(0),encode_cnt(0),framebuf_encoding(CV_8UC3), buffering(_buffering), png_strategy(IMWRITE_PNG_STRATEGY_DEFAULT ),encode_time(0), capture_time(0), network_time(0), hw_trigger_timeout_us(5000000), sw_trigger_timeout_us(0), imagesizex(0), imagesizey(0), apply_resize(false), trigger_timeout(5000), bpp(3), stopCapture(true), subImage(NULL), performCalib(false), applyCalib(false),cameraStreamEnable(true), calibrationImages(1), applyReference(false), refenceThick(2), refenceR(0), refenceG(255), refenceB(0) {
+    : RTAbstractControlUnit(_control_unit_id, _control_unit_param, _control_unit_drivers), encode_thds(ENCODE_THREADS),driver(NULL), streamer(NULL),capture_exited(true),capture_cnt(0),encode_cnt(0),framebuf_encoding(CV_8UC3), buffering(_buffering), png_strategy(IMWRITE_PNG_STRATEGY_DEFAULT ),encode_time(0), capture_time(0), network_time(0), hw_trigger_timeout_us(5000000), sw_trigger_timeout_us(0), imagesizex(0), imagesizey(0), apply_resize(false), trigger_timeout(5000), bpp(3), stopCapture(true), subImage(NULL), performCalib(false), applyCalib(false),cameraStreamEnable(true), calibrationImages(1), applyReference(false), refenceThick(2), refenceR(0), refenceG(255), refenceB(0) {
   RTCameraBaseLDBG_ << "Creating " << _control_unit_id
                     << " params:" << _control_unit_param;
 
@@ -198,6 +198,22 @@ RTCameraBase::RTCameraBase(const string                &_control_unit_id,
     
     LDBG_ << "using '"<<t->encoding<<"', parameter:" << p.getInt32Value(PROPERTY_VALUE_KEY);
     return p.clone();
+  });
+  createProperty("encode_threads", encode_thds, "encode_threads", [](AbstractControlUnit *thi, const std::string &name, const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
+        ret->addInt32Value(PROPERTY_VALUE_KEY,((RTCameraBase*)thi)->encode_thds);
+        return ret; }, [](AbstractControlUnit *thi, const std::string &name, const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
+        RTCameraBase *t = (RTCameraBase *)thi;
+        if (t->hasStopped() == false) {
+            LERR_ << "cannot change encoding if not stopped";
+            return p.clone();
+        }
+        t->encode_thds=p.getInt32Value(PROPERTY_VALUE_KEY);
+        chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
+        ret->addInt32Value(PROPERTY_VALUE_KEY,((RTCameraBase*)thi)->encode_thds);
+        LDBG_ << t->getDeviceID()<< " setting encode_threads to '"<<t->encode_thds;
+
+        return ret; 
   });
 createProperty("png_strategy", png_strategy, "png_strategy", [](AbstractControlUnit *thi, const std::string &name, const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
         chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
@@ -898,7 +914,7 @@ void RTCameraBase::startGrabbing() {
 
       param.sched_priority = 99;
       pthread_attr_setschedpolicy(&thread_attr, SCHED_FIFO);  // must be yield by processor, no timeslice
-      for(int cnt=0;cnt<ENCODE_THREADS;cnt++){
+      for(int cnt=0;cnt<encode_thds;cnt++){
         pthread_create(&encode_th[cnt], &thread_attr, encode, (void*)this);
         sprintf(name,"encode_th%d_%s",cnt,getDeviceID().c_str());
 
@@ -927,7 +943,7 @@ void RTCameraBase::haltThreads() {
   if (buffering > 0) {
    
     do {
-        for(int cnt=0;cnt<ENCODE_THREADS;cnt++){
+        for(int cnt=0;cnt<encode_thds;cnt++){
             captureImg[cnt].unblock();
             encodedImg[cnt].unblock();
       }
@@ -942,7 +958,7 @@ void RTCameraBase::haltThreads() {
      //   RTCameraBaseLDBG_ << "Joining capture thread OK";
 
     }
-    for(int cnt=0;cnt<ENCODE_THREADS;cnt++){
+    for(int cnt=0;cnt<encode_thds;cnt++){
 
     if(pthread_self()!=encode_th[cnt]){
       RTCameraBaseLDBG_ << "Joining encode thread "<<cnt<<" pid:"<<std::hex<<encode_th[cnt];
@@ -977,7 +993,8 @@ void RTCameraBase::haltThreads() {
 void RTCameraBase::stopGrabbing() {
   RTCameraBaseLDBG_ << "Stop Grabbing..." << stopCapture;
   haltThreads();
-
+  
+    
   /* metadataLogging(
         chaos::common::metadata_logging::StandardLoggingChannel::LogLevelInfo,
         "Stop grabbing");
@@ -991,7 +1008,19 @@ void RTCameraBase::stopGrabbing() {
         framebuf_out[cnt].size=0;
         framebuf_out[cnt].buf=NULL;
     }*/
+  for(int cnt=0;cnt<encode_thds;cnt++){
+    captureImg[cnt].get().consume_all([this,cnt](camera_buf_t *i) {
+    RTCameraBaseLDBG_ << cnt<< "] Capture frames deleted :" << static_cast<void*>(i);
 
+    delete (i);
+   
+  });
+    encodedImg[cnt].get().consume_all([this,cnt](Encoder* i) {
+     RTCameraBaseLDBG_ << cnt<< "] Encode frames deleted :" << static_cast<void*>(i);
+
+    delete (i);
+  });
+  }
   setStateVariableSeverity(StateVariableTypeAlarmDEV, "error_setting_property", chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmDEV, "capture_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
   setStateVariableSeverity(StateVariableTypeAlarmDEV, "capture_timeout", chaos::common::alarm::MultiSeverityAlarmLevelClear);
@@ -1074,7 +1103,7 @@ StateVariableTypeAlarmCU, "captureQueue", chaos::common::alarm::MultiSeverityAla
                 StateVariableTypeAlarmCU, "captureQueue", chaos::common::alarm::MultiSeverityAlarmLevelHigh);
         continue;
       }
-      capture_cnt=((capture_cnt+1)%ENCODE_THREADS);
+      capture_cnt=((capture_cnt+1)%encode_thds);
       capture_time +=
           (chaos::common::utility::TimingUtil::getTimeStampInMicroseconds() -
            start);
@@ -1120,7 +1149,7 @@ StateVariableTypeAlarmCU, "captureQueue", chaos::common::alarm::MultiSeverityAla
     }
   }
   RTCameraBaseLDBG_ << "Capture thread ENDED";
-  for(int cnt=0;cnt<ENCODE_THREADS;cnt++){
+  for(int cnt=0;cnt<encode_thds;cnt++){
     RTCameraBaseLDBG_ << "Queue " <<cnt<<":"<< captureImg[cnt].length() << " has Stopped:" << hasStopped();
   }
   capture_exited=true;
@@ -1584,7 +1613,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
   if (buffering > 0) {
     // get the output attribute pointer form the internal cache
     if ((encode_time > 0) && (capture_time > 0)) {
-      *enc_frame_rate     = (1000000 * counter_encode / encode_time)*ENCODE_THREADS;
+      *enc_frame_rate     = (1000000 * counter_encode / encode_time)*encode_thds;
       *capture_frame_rate = (1000000 * counter_capture / capture_time);
     }
 
@@ -1609,11 +1638,11 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
 
     if(ret<0){
       RTCameraBaseLDBG_ << "popping encode queue "<<encode_cnt<<":"<<encodedImg[encode_cnt].length();
-      encode_cnt=((encode_cnt+1)%ENCODE_THREADS);
+      encode_cnt=((encode_cnt+1)%encode_thds);
 
       return;
     }
-    encode_cnt=((encode_cnt+1)%ENCODE_THREADS);
+    encode_cnt=((encode_cnt+1)%encode_thds);
 
     
 
@@ -1767,25 +1796,14 @@ void RTCameraBase::unitStop() throw(chaos::CException) {
 //! Deinit the Control Unit
 void RTCameraBase::unitDeinit() throw(chaos::CException) {
   stopGrabbing();
-  for(int cnt=0;cnt<ENCODE_THREADS;cnt++){
-    captureImg[cnt].get().consume_all([this,cnt](camera_buf_t *i) {
-    RTCameraBaseLDBG_ << cnt<< "] Capture frames deleted :" << static_cast<void*>(i);
-
-    delete (i);
-   
-  });
+  
   
   /*
   encodedImg[0].get().consume_all([this](encoded_t i) {
     delete (i.img);
   });
   */
- encodedImg[cnt].get().consume_all([this,cnt](Encoder* i) {
-     RTCameraBaseLDBG_ << cnt<< "] Encode frames deleted :" << static_cast<void*>(i);
-
-    delete (i);
-  });
-  }
+ 
   
   driver->cameraDeinit();
 }

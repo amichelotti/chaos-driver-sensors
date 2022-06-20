@@ -26,7 +26,7 @@
 #include <chaos/common/direct_io/HttpStreamManager.h>
 #define DEFAULT_RESOLUTION 640*480*3
 #define CAMERA_FRAME_BUFFERING 10
-#define ENCODE_THREADS 2
+#define ENCODE_THREADS 1
 namespace cv {class Mat;}
 namespace driver{
     
@@ -50,7 +50,7 @@ public:
         void cameraGrabCallBack(const void*buf,uint32_t blen,uint32_t width,uint32_t heigth, uint32_t error);
         void encodeThread(int indx);
         void captureThread();
-        int encode_id;
+        int encode_id,encode_thds;
 protected:
         const int buffering;
         cv::Mat* subImage;
