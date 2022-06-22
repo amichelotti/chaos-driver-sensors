@@ -183,7 +183,7 @@ public:
 private:
   inline void checkError(INT err) const {
     INT err2 = IS_SUCCESS;
-    IS_CHAR* msg;
+    IS_CHAR* msg=NULL;
     if (err != IS_SUCCESS) {
       if (cam_ != 0) {
         is_GetError(cam_, &err2, &msg);
@@ -192,7 +192,12 @@ private:
         }
       } else {
         std::stringstream ss;
-        ss<<"Camera failed to initialize:"<<msg;
+        if(msg){
+          ss<<"Camera failed to initialize, error:\""<<msg<<"\"";
+        } else {
+          ss<<"Cannot initialize camera";
+
+        }
         throw ueye::uEyeException(err, ss.str().c_str());
       }
     }
