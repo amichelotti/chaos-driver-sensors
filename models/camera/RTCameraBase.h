@@ -27,6 +27,8 @@
 #define DEFAULT_RESOLUTION 640*480*3
 #define CAMERA_FRAME_BUFFERING 10
 #define ENCODE_THREADS 1
+#define MAX_ENCODE_THREADS 8
+
 namespace cv {class Mat;}
 namespace driver{
     
@@ -93,12 +95,15 @@ protected:
         std::vector<int> encode_params;
 
         bool stopCapture,capture_exited;
-        pthread_t capture_th,encode_th[ENCODE_THREADS];
+        pthread_t capture_th,encode_th[MAX_ENCODE_THREADS];
 
       //  std::vector<unsigned char> encbuf[CAMERA_FRAME_BUFFERING];//encode stage
-        chaos::common::thread::TLockFreeQueue< ::driver::sensor::camera::camera_buf_t*,CAMERA_FRAME_BUFFERING> captureImg[ENCODE_THREADS];
+        chaos::common::thread::TLockFreeQueue< ::driver::sensor::camera::camera_buf_t*,CAMERA_FRAME_BUFFERING> captureImg[MAX_ENCODE_THREADS];
        // chaos::common::thread::TLockFreeQueue<encoded_t,CAMERA_FRAME_BUFFERING> encodedImg;
-        chaos::common::thread::TLockFreeQueue<Encoder*,CAMERA_FRAME_BUFFERING> encodedImg[ENCODE_THREADS];
+        chaos::common::thread::TLockFreeQueue<Encoder*,CAMERA_FRAME_BUFFERING> encodedImg[MAX_ENCODE_THREADS];
+        
+        chaos::common::thread::TLockFreeQueue<int,CAMERA_FRAME_BUFFERING*MAX_ENCODE_THREADS> encoded_queue;
+
 
         
         //boost::lockfree::queue<::driver::sensor::camera::camera_buf_t*, boost::lockfree::fixed_sized<true> > captureImg;
@@ -106,7 +111,7 @@ protected:
         //boost::mutex mutex_io,mutex_encode;
 
         uint32_t hw_trigger_timeout_us,sw_trigger_timeout_us,trigger_timeout; // 0 =wait indefinitively
-        int capture_cnt,encode_cnt;
+        int capture_cnt;
         uint64_t encode_time,capture_time,network_time,counter_capture,counter_encode;
         int bufinuse;
         const int32_t*rot;
