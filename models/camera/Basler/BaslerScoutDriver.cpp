@@ -1162,8 +1162,8 @@ camera.GevHeartbeatTimeout.SetValue(5000);
       CREATE_VALUE_PROP("MaxRetryCountWrite","",int32_t);
       CREATE_VALUE_PROP("ReadTimeout","",int32_t);
       CREATE_VALUE_PROP("WriteTimeout","",int32_t);
-     // CREATE_VALUE_PROP("ExposureTimeAbs", "", double);
-     // CREATE_VALUE_PROP("ExposureTimeBaseAbs", "", double);
+      CREATE_VALUE_PROP("ExposureTimeAbs", "", double);
+      CREATE_VALUE_PROP("ExposureTimeBaseAbs", "", double);
      // CREATE_PROP("ExposureMode","",std::string);
      // CREATE_PROP("ShutterMode","",std::string);
 

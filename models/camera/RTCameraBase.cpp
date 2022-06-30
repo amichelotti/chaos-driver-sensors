@@ -137,7 +137,6 @@ RTCameraBase::RTCameraBase(const string                &_control_unit_id,
       RTCameraBaseLDBG_<<"Publishing on "<<HttpStreamManager::getInstance()->getRoot()+streamName;
     }
     chaos::common::data::CDataWrapper p;
-    chaos::common::data::CDWUniquePtr calibrazione = loadData("calibration_image");
     p.setSerializedJsonData(_control_unit_param.c_str());
     compression_factor=1;
 
@@ -161,24 +160,7 @@ RTCameraBase::RTCameraBase(const string                &_control_unit_id,
     if (p.hasKey("IMAGESIZEY")) {
       imagesizey = p.getInt32Value("IMAGESIZEY");
     }
-    if (p.hasKey("APPLY_CALIB") && calibrazione.get()) {
-      uint32_t    size;
-      const char *buf = calibrazione->getBinaryValue("FRAMEBUFFER", size);
-      if (buf && size) {
-        std::vector<uchar> data = std::vector<uchar>(buf, buf + size);
-        cv::Mat            sub  = cv::imdecode(data, IMREAD_ANYCOLOR | IMREAD_ANYDEPTH);
-        if (sub.data) {
-          if (subImage) {
-            delete subImage;
-          }
-          subImage = new cv::Mat(sub);
-          RTCameraBaseLDBG_ << " Loading CALIB DATA:" << ss.str();
-          applyCalib = true;
-        } else {
-          RTCameraBaseLERR_ << " CALIB DATA does not exists:" << ss.str();
-        }
-      }
-    }
+    
     if (imagesizex > 0 && imagesizey > 0) {
       apply_resize = true;
       RTCameraBaseLDBG_ << "Camera will resize image to fit into: "
@@ -267,7 +249,7 @@ createProperty("png_strategy", png_strategy, "png_strategy", [](AbstractControlU
                   if(t){
                      delete t;
                   }
-                  LDBG_ << " Loading CALIB DATA";
+                  LDBG_ << "Apply Calib  Loading CALIB DATA "<<size;
                 } else {
                   LERR_ << " CALIB DATA does not exists";
                 }
@@ -479,12 +461,12 @@ bool RTCameraBase::setDrvProp(const std::string &name, int32_t value, uint32_t s
           ((name == TRIGGER_MODE_KEY)));
 
   // bool stopgrab = ((name == TRIGGER_MODE_KEY) && (value == CAMERA_DISABLE_ACQUIRE));
-  if(((name == WIDTH_KEY) ) ||
+ /* if(((name == WIDTH_KEY) ) ||
        ((name == HEIGHT_KEY) ) ||
        ((name == OFFSETX_KEY) ) ||
        ((name == OFFSETY_KEY))){
          applyCalib=false;
-       }
+       }*/
   if (stopgrab && (hasStopped() == false)) {
     stopGrabbing();
   }
@@ -782,6 +764,24 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   *ptrigger = false;
   *ppulse   = false;
 
+  chaos::common::data::CDWUniquePtr calibrazione = loadData("calibration_image");
+  if (applyCalib&& calibrazione.get()) {
+      uint32_t    size;
+      const char *buf = calibrazione->getBinaryValue("FRAMEBUFFER", size);
+      if (buf && size) {
+        std::vector<uchar> data = std::vector<uchar>(buf, buf + size);
+        cv::Mat            sub  = cv::imdecode(data, IMREAD_ANYCOLOR | IMREAD_ANYDEPTH);
+        if (sub.data) {
+          if (subImage) {
+            delete subImage;
+          }
+          subImage = new cv::Mat(sub);
+          RTCameraBaseLDBG_ << " Loading CALIB DATA:" << size << " bytes";
+        } else {
+          RTCameraBaseLERR_ << " Invalid calibration data " << size << " bytes";
+        }
+      }
+    }
   if (buffering > 0) {
     capture_frame_rate =
         cc->getRWPtr<int32_t>(DOMAIN_OUTPUT, "CAPTURE_FRAMERATE");
