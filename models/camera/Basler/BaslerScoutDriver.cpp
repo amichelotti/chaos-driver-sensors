@@ -1143,6 +1143,7 @@ camera.GevHeartbeatTimeout.SetValue(5000);
       setNode("WriteTimeout", 5000);
       setNode("MaxRetryCountRead", 4);
       setNode("MaxRetryCountWrite", 4);
+      setNode("ExposureMode",std::string("Timed"));
 
       setNode("AcquisitionFrameRateEnable", true);
       CREATE_VALUE_PROP("Width", "WIDTH", int32_t)
@@ -1153,7 +1154,8 @@ camera.GevHeartbeatTimeout.SetValue(5000);
       //CREATE_PROP("ReverseY", "", bool);
       CREATE_VALUE_PROP("AcquisitionFrameRateAbs", "FRAMERATE", double);
       CREATE_VALUE_PROP("GainRaw", "GAIN", int32_t);
-      CREATE_VALUE_PROP("ExposureTimeRaw", "SHUTTER", int32_t);
+      //CREATE_VALUE_PROP("ExposureTimeRaw", "SHUTTER", int32_t);
+      CREATE_VALUE_PROP("ExposureTimeRaw", "", int32_t);
       CREATE_VALUE_PROP("GevSCPSPacketSize", "",int32_t);
       CREATE_VALUE_PROP("GevSCPD","",int32_t);
       CREATE_VALUE_PROP("GevHeartbeatTimeout","",int32_t);
@@ -1162,7 +1164,7 @@ camera.GevHeartbeatTimeout.SetValue(5000);
       CREATE_VALUE_PROP("MaxRetryCountWrite","",int32_t);
       CREATE_VALUE_PROP("ReadTimeout","",int32_t);
       CREATE_VALUE_PROP("WriteTimeout","",int32_t);
-      CREATE_VALUE_PROP("ExposureTimeAbs", "", double);
+      CREATE_VALUE_PROP("ExposureTimeAbs", "SHUTTER", double);
       CREATE_VALUE_PROP("ExposureTimeBaseAbs", "", double);
      // CREATE_PROP("ExposureMode","",std::string);
      // CREATE_PROP("ShutterMode","",std::string);
@@ -1183,6 +1185,7 @@ camera.GevHeartbeatTimeout.SetValue(5000);
       CREATE_VALUE_PROP("BinningVertical", "", int32_t);
       CREATE_PROP("BinningHorizontalMode", "", std::string);
       CREATE_PROP("BinningVerticalMode", "", std::string);
+      CREATE_PROP("ExposureMode", "", std::string);
 
       CREATE_PROP("TriggerMode", "", std::string);
       CREATE_PROP("TriggerSelector", "", std::string);
@@ -2154,10 +2157,4 @@ int BaslerScoutDriver::getCameraProperties(
 
   return ret;
 }
-/*
-chaos::common::data::CDWUniquePtr
-BaslerScoutDriver::setDrvProperties(chaos::common::data::CDWUniquePtr drv){
-    return setProperties(*drv.get(),true);
 
-}
-I*/
