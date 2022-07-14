@@ -10,7 +10,7 @@ IF(OPENCV)
   include_directories(../../ ${chaos_INCLUDE_DIRS} ${CMAKE_INSTALL_PREFIX}/include ${OPENCV}/include )
 
   link_directories(${OPENCV}/lib ${CMAKE_INSTALL_PREFIX}/lib)
-  FILE(GLOB camera_src models/camera/RTCameraBase.cpp models/camera/Encoder.cpp models/camera/RTCameraFilter.cpp )
+  FILE(GLOB camera_src models/camera/RTCameraBase.cpp models/camera/Encoder.cpp models/camera/RTCameraFilter.cpp models/camera/RTCameraProcess.cpp)
   FILE(REMOVE models/camera/UnitServerIgnore)
   SET(camera_lib   opencv_highgui opencv_imgproc opencv_videoio opencv_imgcodecs opencv_core)
   ADD_DEFINITIONS(-DCAMERA -DOPENCV)
