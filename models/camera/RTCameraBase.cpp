@@ -1030,18 +1030,10 @@ void RTCameraBase::stopGrabbing() {
 
    });
   }
-  setStateVariableSeverity(StateVariableTypeAlarmDEV, "error_setting_property", chaos::common::alarm::MultiSeverityAlarmLevelClear);
-  setStateVariableSeverity(StateVariableTypeAlarmDEV, "capture_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
-  setStateVariableSeverity(StateVariableTypeAlarmDEV, "capture_timeout", chaos::common::alarm::MultiSeverityAlarmLevelClear);
-  setStateVariableSeverity(StateVariableTypeAlarmDEV, "camera_disconnect", chaos::common::alarm::MultiSeverityAlarmLevelClear);
-  setStateVariableSeverity(StateVariableTypeAlarmDEV, "camera_bandwidth", chaos::common::alarm::MultiSeverityAlarmLevelClear);
-  setStateVariableSeverity(StateVariableTypeAlarmCU, "encode_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
-  setStateVariableSeverity(StateVariableTypeAlarmCU, "calibration_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
-
-  setStateVariableSeverity(StateVariableTypeAlarmCU, "auto_reference_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
-  setStateVariableSeverity(StateVariableTypeAlarmCU, "encodeQueue", chaos::common::alarm::MultiSeverityAlarmLevelClear);
-  setStateVariableSeverity(StateVariableTypeAlarmCU, "captureQueue", chaos::common::alarm::MultiSeverityAlarmLevelClear);
+  setStateVariableSeverity(StateVariableTypeAlarmDEV,chaos::common::alarm::MultiSeverityAlarmLevelClear);
+  setStateVariableSeverity(StateVariableTypeAlarmCU,chaos::common::alarm::MultiSeverityAlarmLevelClear);
 }
+
 //! Execute the work, this is called with a determinated delay, it must be as
 //! fast as possible
 void RTCameraBase::unitStart() throw(chaos::CException) {
@@ -1052,6 +1044,8 @@ void RTCameraBase::unitStart() throw(chaos::CException) {
   performAutoReference = false;
   pushCustomDataset();
   startGrabbing();
+  setStateVariableSeverity(StateVariableTypeAlarmDEV,chaos::common::alarm::MultiSeverityAlarmLevelClear);
+  setStateVariableSeverity(StateVariableTypeAlarmCU,chaos::common::alarm::MultiSeverityAlarmLevelClear);
 }
 
 void RTCameraBase::captureThread() {
@@ -1803,6 +1797,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
 
 //! Execute the Control Unit work
 void RTCameraBase::unitStop() throw(chaos::CException) {
+  
   RTCameraBaseLDBG_ << "Stop:" << hasStopped();
   stopGrabbing();
 }
