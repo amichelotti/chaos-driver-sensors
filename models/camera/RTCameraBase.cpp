@@ -1075,7 +1075,7 @@ void RTCameraBase::captureThread() {
           StateVariableTypeAlarmDEV, "camera_disconnect", chaos::common::alarm::MultiSeverityAlarmLevelClear);
       int pushret;
       int  retry = 3;
-      if(captureImg[capture_cnt].length()==CAMERA_FRAME_BUFFERING/2){
+      if((captureImg[capture_cnt].length())&&(captureImg[capture_cnt].length()<CAMERA_FRAME_BUFFERING-1)){
        // boost::this_thread::yield();
         setStateVariableSeverity(
                 StateVariableTypeAlarmCU, "captureQueue", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
@@ -1401,7 +1401,7 @@ void RTCameraBase::encodeThread(int indx) {
             if(stopCapture){
                  continue;
           }
-        } else if(encodedImg[indx].length()==CAMERA_FRAME_BUFFERING/2){
+        } else if((encodedImg[indx].length()>0) && (encodedImg[indx].length()<(CAMERA_FRAME_BUFFERING-1))){
            setStateVariableSeverity(
                    StateVariableTypeAlarmCU, "encodeQueue",
                    chaos::common::alarm::MultiSeverityAlarmLevelWarning);
