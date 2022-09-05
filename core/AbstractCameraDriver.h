@@ -98,15 +98,16 @@ struct camera_buf_t {
             int32_t offsetx;
             int32_t offsety;
             uint64_t ts;
+            int32_t frame_encoding;
 
-            camera_buf_t(int32_t _size,int32_t _width,int32_t _height,int32_t _offsetx=0,int32_t _offsety=0):width(_width),height(_height),offsetx(_offsetx),offsety(_offsety){
+            camera_buf_t(int32_t _size,int32_t _width,int32_t _height,int32_t _offsetx=0,int32_t _offsety=0,int32_t fencode=-1):width(_width),height(_height),offsetx(_offsetx),offsety(_offsety),frame_encoding(fencode){
                 buf=(uint8_t*)malloc(_size);
                 
                 if(buf){
                     size=_size;
                 }
             }
-            camera_buf_t(const uint8_t*ptr, int32_t _size,int32_t _width,int32_t _height,int32_t _offsetx=0,int32_t _offsety=0):width(_width),height(_height),offsetx(_offsetx),offsety(_offsety){
+            camera_buf_t(const uint8_t*ptr, int32_t _size,int32_t _width,int32_t _height,int32_t _offsetx=0,int32_t _offsety=0,int32_t fencode=-1):width(_width),height(_height),offsetx(_offsetx),offsety(_offsety),frame_encoding(fencode){
                 buf=(uint8_t*)malloc(_size);
                 if(buf){
                     size=_size;

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.9)
 project(chaos_driver_sensors)
 find_package(chaos MODULE REQUIRED)
-include_directories(../../ ${chaos_INCLUDE_DIRS})
+INCLUDE_DIRECTORIES(../../ ${chaos_INCLUDE_DIRS} ${CMAKE_INSTALL_PREFIX}/include/driver/sensors/core/aravis)
 add_definitions(-Wno-ignored-attributes -Wno-deprecated-declarations)
 FILE(GLOB sensors_src core/*.cpp)
 SET(camera_src )
@@ -11,8 +11,10 @@ IF(OPENCV)
 
   link_directories(${OPENCV}/lib ${CMAKE_INSTALL_PREFIX}/lib)
   FILE(GLOB camera_src models/camera/RTCameraBase.cpp models/camera/Encoder.cpp models/camera/RTCameraFilter.cpp models/camera/RTCameraProcess.cpp)
-  FILE(REMOVE models/camera/UnitServerIgnore)
   SET(camera_lib   opencv_highgui opencv_imgproc opencv_videoio opencv_imgcodecs opencv_core)
+
+  
+  FILE(REMOVE models/camera/UnitServerIgnore)
   ADD_DEFINITIONS(-DCAMERA -DOPENCV)
 ELSE()
   link_directories(${CMAKE_INSTALL_PREFIX}/lib)
