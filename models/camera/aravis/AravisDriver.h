@@ -20,12 +20,11 @@
  */
 #ifndef ARAVISDRIVER_h
 #define ARAVISDRIVER_h
-
+extern "C" {
+  #include <arv.h>
+}
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <driver/sensors/core/CameraDriverBridge.h>
-#include <chaos/common/data/DatasetDB.h>
-#include <stdint.h>
-#include <arv.h>
 
 namespace cu_driver = chaos::cu::driver_manager::driver;
 
@@ -40,9 +39,6 @@ namespace driver
   {
     namespace camera
     {
-
-#define CAM_DEFAULT_WIDTH 659
-#define CAM_DEFAULT_HEIGTH 494
 
       class AravisDriver : public ::driver::sensor::camera::CameraDriverBridge
       {

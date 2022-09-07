@@ -19,8 +19,6 @@
  */
 #include "AravisDriver.h"
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
-#include <stdlib.h>
-#include <string>
 
 namespace cu_driver = chaos::cu::driver_manager::driver;
 using namespace ::driver::sensor::camera;
@@ -306,7 +304,7 @@ int AravisDriver::initializeCamera(
 
   arv_update_device_list();
   unsigned int ndev=arv_get_n_devices ();
-  AravisDriverLDBG_ << "Found "<<ndev<<" Aravis cameras";
+  AravisDriverLDBG_ << "Found "<<ndev<<" Aravis cameras, searching :\""<<serial<<"\"";
  if (camerap&&ARV_IS_CAMERA(camerap)) {
       AravisDriverLDBG_ << "Deleting camera before";
 		  g_clear_object (&camerap);
@@ -316,24 +314,48 @@ int AravisDriver::initializeCamera(
   if (serial.empty()) {
     camerap= arv_camera_new (NULL, &error);
   } else{
+    AravisDriverLDBG_ << "Searching serial:"<<serial;
 
     for(int cnt=0;(cnt<ndev)&&(camerap==NULL);cnt++){
       const char*name=arv_get_device_serial_nbr(cnt);
-      if(name&&(std::string(name)==serial)){
-        ArvDevice*device=arv_open_device(arv_get_device_id(cnt),&error);
-        if(device&&(!error)){
-          camerap=arv_camera_new_with_device (device,&error);
+      const char*id=arv_get_device_id(cnt);
+      const char*deva=arv_get_device_address(cnt);
+      const char*minfo=arv_get_device_manufacturer_info(cnt);
+      const char*devp=arv_get_device_protocol(cnt);
+      AravisDriverLDBG_ << cnt<<"] Serial "<<name<<" id:"<<id;
+
+      if(name&&(std::string(name).find(serial)!=std::string::npos)){
+        AravisDriverLDBG_ << cnt<<"] Found Serial \""<<name<<"\" id:\""<<id<<"\" address:\""<<deva<<"\" Manufacture info:\""<<minfo<<"\" device protocol:\""<<devp<<"\"";
+
+     /*   ArvDevice*device=arv_open_device(id,&error);
+        if((device==NULL) || (error)){
+          AravisDriverLERR_ << cnt<<"] Error creating device Serial \""<<name<<"\" error:" <<error->message ;
+          break;
+        } else {
+          AravisDriverLDBG_ << cnt<<"] opening device";
+
+          camerap = arv_camera_new_with_device(device,&error);
         }
-        
+      */
+        camerap=arv_camera_new(id,&error);
+        if((camerap==NULL)||error){
+          
+         AravisDriverLERR_ << cnt<<"] Error creating camera Serial \""<<name<<"\" error:" <<error->message ;
+        if(error)
+		      g_clear_error (&error);
+         break;
+        }
+      
       }
     }
     if(error){
-        setLastError(std::string(error->message));
-
+        std::string errs=std::string(error->message);
+        setLastError(errs);
+		    g_clear_error (&error);
         throw chaos::CException(-1,
                                   "Cannot initialize camera " +
                                       json.getCompliantJSONString() +
-                                      ": " + std::string(error->message),
+                                      ": " + errs,
                                   __PRETTY_FUNCTION__);
         return -1;
     }
@@ -756,6 +778,8 @@ createProperty(
                       
                       AravisDriverLERR << error->message;
                       t->setLastError(error->message);
+                      g_clear_error (&error);
+
                     }
                     return p.clone();                                                       
                  }
@@ -889,11 +913,21 @@ AravisDriver::AravisDriver():camerap(NULL),shots(0),framebuf(NULL),fn(NULL),prop
 
 }
 */
-
+extern "C"{
+ArvCamera *arv_camera_new (const char *name, GError **error);
+}
 AravisDriver::AravisDriver():camerap(NULL) {
 
+	GError *error = NULL;
 
   AravisDriverLDBG_ << "Created ARAVIS Driver ";
+	ArvCamera *camera;
+	camera = arv_camera_new (NULL, &error);
+  if(error||(camera==NULL)){
+    throw chaos::CException(
+      -3, "ARAVIS NOT WORKING:"+std::string(error->message),
+      __PRETTY_FUNCTION__);
+  }
 
 
   shots = 0;

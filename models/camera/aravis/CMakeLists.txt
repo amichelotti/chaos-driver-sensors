@@ -14,7 +14,8 @@ ENDIF()
     INCLUDE_DIRECTORIES(${ARAVIS}/include/aravis-0.8 /usr/include/glib-2.0 /usr/lib/x86_64-linux-gnu/glib-2.0/include)
     link_directories(${ARAVIS_LIB})
     SET(camera_lib ${camera_lib} aravis-0.8)
-    SET(camera_src models/camera/aravis/AravisDriver.cpp)
+    ADD_DEFINITIONS(-D_FILE_OFFSET_BITS=64)
+    SET(camera_src AravisDriver.cpp)
     # FILE(GLOB aravis_h "${ARAVIS_INCLUDE}/*.h")
     # FILE(COPY ${aravis_h} DESTINATION include/driver/sensors/core)
     # INSTALL(FILES ${aravis_h} DESTINATION include/driver/sensors/core)
@@ -27,8 +28,12 @@ ELSE()
 ENDIF()
 
 SET(DRIVERS_LIB ${DRIVERS_LIB} ${PROJECT_NAME} PARENT_SCOPE)
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_common  chaos_driver_sensors aravis-0.8 ${FrameworkLib} )
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit chaos_common  chaos_driver_sensors aravis-0.8 glib-2.0 gobject-2.0)
+add_executable(testaravis arvexample.cpp)
+add_executable(aravisUS aravisUS.cpp AravisDriver.cpp)
 
+TARGET_LINK_LIBRARIES(testaravis aravis-0.8 glib-2.0 gobject-2.0)
+TARGET_LINK_LIBRARIES(aravisUS chaos_driver_sensors aravis-0.8 glib-2.0 gobject-2.0)
 
 #INSTALL(FILES ${pylon_libs} DESTINATION lib)
 FILE(GLOB files "*.h")
@@ -37,4 +42,7 @@ INSTALL(FILES ${files} DESTINATION include/driver/sensors/models/camera/aravis)
 #INSTALL_TARGETS(/lib ${PROJECT_NAME})
 INSTALL(TARGETS ${PROJECT_NAME}
         DESTINATION "lib"
+        PERMISSIONS OWNER_WRITE OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+INSTALL(TARGETS aravisUS
+        DESTINATION "bin"
         PERMISSIONS OWNER_WRITE OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
