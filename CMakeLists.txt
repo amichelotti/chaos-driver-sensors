@@ -14,7 +14,7 @@ IF(OPENCV)
 
   link_directories(${OPENCV}/lib ${CMAKE_INSTALL_PREFIX}/lib)
   # 
-  FILE(GLOB camera_src models/camera/Encoder.cpp  models/camera/RTCameraFilter.cpp models/camera/RTCameraBase.cpp models/camera/CameraDriverInterface.cpp  core/AbstractCameraDriver.cpp models/camera/CameraDriverBridge.cpp odels/camera/RTCameraProcess.cpp)
+  FILE(GLOB camera_src models/camera/Encoder.cpp  models/camera/RTCameraFilter.cpp models/camera/RTCameraBase.cpp models/camera/CameraDriverInterface.cpp  core/AbstractCameraDriver.cpp models/camera/CameraDriverBridge.cpp models/camera/RTCameraProcess.cpp)
 
 IF(CERN_ROOT)  
   FILE(GLOB camera_src ${camera_src} core/rootGaussianImage2dFit.cpp)
