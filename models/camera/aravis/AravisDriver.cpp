@@ -1023,11 +1023,11 @@ int AravisDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
   }
   ArvBuffer *buffer;
   GError *error = NULL;
+  size_t size=0;
 
   buffer = arv_camera_acquisition (camerap, timeout_ms*1000, &error);
   if (ARV_IS_BUFFER (buffer)) {
     int32_t x,y,w,h;
-    size_t size;
     const void*pImageBuffer=arv_buffer_get_data(buffer,&size);
     arv_buffer_get_image_region(buffer,&x,&y,&w,&h);
 
@@ -1052,10 +1052,10 @@ int AravisDriver::waitGrab(camera_buf_t **img, uint32_t timeout_ms) {
       AravisDriverLERR_ << "Error :"<<e<< " ret:"<<error->code;
 
       setLastError(e);
-      return error->code;
+      return -error->code;
     }
 
-  return 0;
+  return size;
 }
 
 int AravisDriver::waitGrab(uint32_t timeout_ms) {

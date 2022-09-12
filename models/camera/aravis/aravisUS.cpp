@@ -19,31 +19,27 @@
 */
 
 
-//#include "AravisDriver.h"
-//#include "../RTCameraBase.h"
+#include "AravisDriver.h"
+#include "../RTCameraBase.h"
 #include <arv.h>
 #include <stdio.h>
 
-//#include <chaos/cu_toolkit/ChaosCUToolkit.h>
-typedef struct {
+#include <chaos/cu_toolkit/ChaosCUToolkit.h>
+/*typedef struct {
 	GMainLoop *main_loop;
 	int buffer_count;
 } ApplicationData;
 
 static gboolean cancel = FALSE;
-
+*/
 int main(int argc, const char **argv)
 {
-    ApplicationData data;
 
     ArvCamera *camera;
-	ArvStream *stream;
 	GError *error = NULL;
 	int i;
 
-	data.buffer_count = 0;
 
-	/* Instantiation of the first available camera */
 	camera = arv_camera_new (NULL, &error);
     if (!ARV_IS_CAMERA (camera)) {
         printf ("No camera found%s%s\n",
@@ -51,8 +47,10 @@ int main(int argc, const char **argv)
 			error != NULL ? error->message : "");
 		g_clear_error (&error);
         exit(1);
+    } else {
+       std::cout<<"DEVICE:"<<arv_camera_get_device_id(camera,NULL);
     }
-    /*
+    
 
     try {
         // initialize the control unit toolkit
@@ -71,6 +69,6 @@ int main(int argc, const char **argv)
         std::cerr << "Unable to parse command line: " << e.what() << std::endl;
     } catch (...){
         std::cerr << "unexpected exception caught.. " << std::endl;
-    }*/
+    }
     return 0;
 }

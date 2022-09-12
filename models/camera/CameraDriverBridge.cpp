@@ -17,15 +17,11 @@
  *    	See the License for the specific language governing permissions and
  *    	limitations under the License.
  */
-#include <stdlib.h>
-#include <string>
-#include <driver/sensors/core/CameraDriverBridge.h>
-#include <chaos/common/data/CDataWrapper.h>
+#include "CameraDriverBridge.h"
 
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 
-#include <boost/lexical_cast.hpp>
-#include <driver/sensors/core/CameraDriverInterface.h>
+#include "CameraDriverInterface.h"
 
 namespace cu_driver = chaos::cu::driver_manager::driver;
 using namespace ::driver::sensor::camera;
@@ -55,6 +51,8 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
   // boost::mutex::scoped_lock lock(io_mux);
 
     cu_driver::MsgManagmentResultType::MsgManagmentResult result = cu_driver::MsgManagmentResultType::MMR_EXECUTED;
+    return result;
+    /*
     CHAOS_ASSERT(cmd);
     camera_params_t *in = (camera_params_t *)cmd->inputData;
     camera_params_t *out = (camera_params_t *)cmd->resultData;
@@ -150,6 +148,6 @@ cu_driver::MsgManagmentResultType::MsgManagmentResult CameraDriverBridge::execOp
         break;
     }
     }
-    return result;
+    return result;*/
 }
 
