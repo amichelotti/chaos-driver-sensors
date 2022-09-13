@@ -20,8 +20,8 @@
 
 #include "RTCameraFilter.h"
 #include <chaos/cu_toolkit/control_manager/AttributeSharedCacheWrapper.h>
-#include <driver/sensors/core/AbstractSensorDriver.h>
-#include <driver/sensors/core/CameraDriverInterface.h>
+#include "../../core/AbstractSensorDriver.h"
+#include "CameraDriverInterface.h"
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <math.h>

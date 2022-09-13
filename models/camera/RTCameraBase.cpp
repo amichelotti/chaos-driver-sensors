@@ -19,14 +19,14 @@
  */
 #include "RTCameraBase.h"
 #include <chaos/cu_toolkit/control_manager/AttributeSharedCacheWrapper.h>
-#include <driver/sensors/core/AbstractSensorDriver.h>
-#include <driver/sensors/core/CameraDriverInterface.h>
+#include "../../core/AbstractSensorDriver.h"
+#include "CameraDriverInterface.h"
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #define ZERO_COPY
 #ifdef CERN_ROOT
-#include <driver/misc/models/cernRoot/rootGaussianImage2dFit.h>
+#include "../../core/rootGaussianImage2dFit.h"
 #endif
 /*
    IMWRITE_PNG_STRATEGY_DEFAULT      = 0,
