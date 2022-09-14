@@ -54,7 +54,7 @@ ADD_SUBDIRECTORY(models)
 ADD_EXECUTABLE(sensorsServer test/sensorsServer)
 # ADD_EXECUTABLE(sensorsClient test/sensorsClient)
 
- TARGET_LINK_LIBRARIES(sensorsServer ${PROJECT_NAME} ${DRIVERS_LIB} chaos_cutoolkit chaos_common common_serial chaos_driver_epics pthread)
+ TARGET_LINK_LIBRARIES(sensorsServer ${PROJECT_NAME} ${DRIVERS_LIB} chaos_cutoolkit chaos_common common_serial pthread)
  # TARGET_LINK_LIBRARIES(sensorsClient ${PROJECT_NAME} chaos_common pthread ${DRIVERS_LIB})
 
  FILE(GLOB files "core/*.h")
