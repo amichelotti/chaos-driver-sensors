@@ -35,10 +35,6 @@
     IMWRITE_PNG_STRATEGY_RLE          = 3,
     IMWRITE_PNG_STRATEGY_FIXED        = 4,
 */
-#ifdef CERN_ROOT
-
-#include <driver/misc/models/cernRoot/rootGaussianImage2dFit.h>
-#endif
 
 #define DECODE_CVENCODING(e, cvenc)                   \
   if (e == #cvenc) {                                  \
