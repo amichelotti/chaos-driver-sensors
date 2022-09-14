@@ -24,7 +24,7 @@ extern "C" {
   #include <arv.h>
 }
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
-#include <driver/sensors/core/CameraDriverBridge.h>
+#include "../CameraDriverBridge.h"
 
 namespace cu_driver = chaos::cu::driver_manager::driver;
 

@@ -22,7 +22,7 @@
 #define ShapeSim_H
 
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
-#include <driver/sensors/core/CameraDriverBridge.h>
+#include "../CameraDriverBridge.h"
 #include <chaos/common/data/DatasetDB.h>
 #include <stdint.h>
 #include <opencv2/highgui/highgui.hpp>
