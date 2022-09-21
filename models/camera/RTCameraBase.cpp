@@ -938,9 +938,10 @@ void RTCameraBase::haltThreads() {
   if(stopCapture ){
     return;
   }
-  RTCameraBaseLDBG_ << "Stop Grab low level:" << stopCapture<<" capture exited:"<<capture_exited<<" buffering:"<<buffering;
+    stopCapture = true;
 
-  stopCapture = true;
+  RTCameraBaseLDBG_ << " capture exited:"<<capture_exited<<" buffering:"<<buffering;
+
   if (buffering > 0) {
    
     do {
@@ -950,6 +951,9 @@ void RTCameraBase::haltThreads() {
       }
       encoded_queue.unblock();
       RTCameraBaseLDBG_ << "unblocking fifo ";
+      if(capture_exited==false){
+        usleep(1000);
+      }
     } while(capture_exited==false);
     
      if(pthread_self()!=capture_th){
@@ -1071,14 +1075,7 @@ void RTCameraBase::captureThread() {
           StateVariableTypeAlarmDEV, "camera_disconnect", chaos::common::alarm::MultiSeverityAlarmLevelClear);
       int pushret;
       int  retry = 3;
-      if((captureImg[capture_cnt].length())&&(captureImg[capture_cnt].length()<CAMERA_FRAME_BUFFERING-1)){
-       // boost::this_thread::yield();
-        setStateVariableSeverity(
-                StateVariableTypeAlarmCU, "captureQueue", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
-        RTCameraBaseLERR_ << "Warning Capture queue "<<capture_cnt<<":" << captureImg[capture_cnt].length();
-
-
-      } else if(captureImg[capture_cnt].length()==CAMERA_FRAME_BUFFERING){
+      if(captureImg[capture_cnt].length()==CAMERA_FRAME_BUFFERING){
         RTCameraBaseLERR_ << "Error Capture queue "<<capture_cnt<<" :" << captureImg[capture_cnt].length();
       //  boost::this_thread::yield();
 
@@ -1087,6 +1084,13 @@ setStateVariableSeverity(
         if(stopCapture){
           continue;
         }
+      } else if((captureImg[capture_cnt].length()>1)){
+       // boost::this_thread::yield();
+        setStateVariableSeverity(
+                StateVariableTypeAlarmCU, "captureQueue", chaos::common::alarm::MultiSeverityAlarmLevelWarning);
+        RTCameraBaseLERR_ << "Warning Capture queue "<<capture_cnt<<":" << captureImg[capture_cnt].length();
+
+
       } else {
           setStateVariableSeverity(
 StateVariableTypeAlarmCU, "captureQueue", chaos::common::alarm::MultiSeverityAlarmLevelClear);

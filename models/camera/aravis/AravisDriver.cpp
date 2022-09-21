@@ -253,42 +253,42 @@ int AravisDriver::getNode(const std::string &node_name, int32_t &percent,
 
 static int cv2ARAVIS(const std::string &fmt) {
   if (fmt == "CV_8UC1")
-    return 0;//Pylon::EPixelType::PixelType_Mono8;
+    return ARV_PIXEL_FORMAT_MONO_8;//Pylon::EPixelType::PixelType_Mono8;
   if (fmt == "CV_8SC1")
-    return 1;//Pylon::EPixelType::PixelType_Mono8signed;
+    return ARV_PIXEL_FORMAT_MONO_8_SIGNED;//Pylon::EPixelType::PixelType_Mono8signed;
   if (fmt == "CV_16UC1")
-    return 2;//Pylon::EPixelType::PixelType_Mono16;
+    return ARV_PIXEL_FORMAT_MONO_16;//Pylon::EPixelType::PixelType_Mono16;
   if (fmt == "CV_8UC3")
-    return 3;//Pylon::EPixelType::PixelType_RGB8packed;
-  return  0;//Pylon::EPixelType::PixelType_Mono8;
+    return ARV_PIXEL_FORMAT_RGB_8_PACKED;//Pylon::EPixelType::PixelType_RGB8packed;
+  return ARV_PIXEL_FORMAT_MONO_8;/*Pylon::EPixelType::PixelType_Mono8:*/
 }
 static std::string ARAVIS2cv(int fmt) {
   switch (fmt) {
-  case 0/*Pylon::EPixelType::PixelType_BayerBG16*/: {
+  case ARV_PIXEL_FORMAT_BAYER_BG_16/*Pylon::EPixelType::PixelType_BayerBG16*/: {
     return "BAYERBG16";
   }
-  case 1:/*Pylon::EPixelType::PixelType_BayerGB16:*/ {
+  case ARV_PIXEL_FORMAT_BAYER_GB_16:/*Pylon::EPixelType::PixelType_BayerGB16:*/ {
     return "BAYERGB16";
   }
-  case 2:/*Pylon::EPixelType::PixelType_YUV422packed:*/ {
+  case ARV_PIXEL_FORMAT_YUV_422_PACKED:/*Pylon::EPixelType::PixelType_YUV422packed:*/ {
     return "YUV422packed";
   }
-  case 3:/*Pylon::EPixelType::PixelType_BayerBG8:*/ {
+  case ARV_PIXEL_FORMAT_BAYER_BG_8:/*Pylon::EPixelType::PixelType_BayerBG8:*/ {
     return "BAYERBG8";
   }
-  case 4:/*Pylon::EPixelType::PixelType_BayerGR16:*/ {
+  case ARV_PIXEL_FORMAT_BAYER_GR_16:/*Pylon::EPixelType::PixelType_BayerGR16:*/ {
     return "BAYERGR16";
   }
-  case 5:/*Pylon::EPixelType::PixelType_BayerRG16:*/ {
+  case ARV_PIXEL_FORMAT_BAYER_RG_16:/*Pylon::EPixelType::PixelType_BayerRG16:*/ {
     return "BAYERRG16";
   }
-  case 6:/*Pylon::EPixelType::PixelType_Mono8:*/
+  case ARV_PIXEL_FORMAT_MONO_8:/*Pylon::EPixelType::PixelType_Mono8:*/
     return "CV_8UC1";
-  case 7:/*Pylon::EPixelType::PixelType_Mono8signed:*/
+  case ARV_PIXEL_FORMAT_MONO_8_SIGNED:/*Pylon::EPixelType::PixelType_Mono8signed:*/
     return "CV_8SC1";
-  case 8:/*Pylon::EPixelType::PixelType_Mono16:*/
+  case ARV_PIXEL_FORMAT_MONO_16:/*Pylon::EPixelType::PixelType_Mono16:*/
     return "CV_16UC1";
-  case 9:/*Pylon::EPixelType::PixelType_RGB8packed:*/
+  case ARV_PIXEL_FORMAT_RGB_8_PACKED:/*Pylon::EPixelType::PixelType_RGB8packed:*/
     return "CV_8UC3";
   default: { return "NOT SUPPORTED"; }
   }
@@ -419,6 +419,16 @@ int AravisDriver::initializeCamera(
 
             if (p.hasKey(PROPERTY_VALUE_KEY)) {
               int32_t value = p.getInt32Value(PROPERTY_VALUE_KEY);
+              int32_t max, min=0;
+              arv_camera_get_width_bounds(t->camerap,&min,&max,NULL);
+              if(value>max){
+                  LDBG_ <<" Max \""<< name <<"\" is "<<max ;
+                  value=max;
+              }
+              if(value<min){
+                  LDBG_ <<" Min \""<< name <<"\" is "<<min ;
+                  value=min;
+              }
               LDBG_ <<" Write \""<< name <<"\""<<value ;
               if(t->camerap){
                   arv_camera_set_region (t->camerap,-1,-1,value,0,NULL);
@@ -463,6 +473,16 @@ createProperty(
 
             if (p.hasKey(PROPERTY_VALUE_KEY)) {
               int32_t value = p.getInt32Value(PROPERTY_VALUE_KEY);
+              int32_t max, min=0;
+              arv_camera_get_height_bounds(t->camerap,&min,&max,NULL);
+              if(value>max){
+                  LDBG_ <<" Max \""<< name <<"\" is "<<max ;
+                  value=max;
+              }
+              if(value<min){
+                  LDBG_ <<" Min \""<< name <<"\" is "<<min ;
+                  value=min;
+              }
               LDBG_ <<" Write \""<< name <<"\""<<value ;
               if(t->camerap){
                   arv_camera_set_region (t->camerap,-1,-1,0,value,NULL);
@@ -801,8 +821,12 @@ createProperty(
             const char* trigger_source= arv_camera_get_trigger_source(t->camerap,NULL);
             if(trigger_source){
               std::string tsource(trigger_source);
+              ret->addStringValue("source", tsource);
+
               if (tsource.find("Line") != std::string::npos) {
                 const char* level=arv_camera_get_string (t->camerap, "TriggerActivation",NULL);
+                ret->addStringValue("activate", level);
+
                 if(level){
                   if(!strcmp(level,"RisingEdge")){
                     t->tmode= CAMERA_TRIGGER_HW_HI;
