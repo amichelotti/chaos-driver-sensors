@@ -529,6 +529,12 @@ bool RTCameraBase::setDrvProp(const std::string &name, int32_t value, uint32_t s
 
     mode = *pmode = ((value != CAMERA_TRIGGER_SINGLE) ? valuer : CAMERA_TRIGGER_SINGLE);
   }
+  *pacquire = (mode != CAMERA_DISABLE_ACQUIRE);
+  *ptrigger =(mode != CAMERA_DISABLE_ACQUIRE) && (mode != CAMERA_TRIGGER_CONTINOUS);
+  // *ppulse = ((mode == CAMERA_TRIGGER_SINGLE) || (mode == CAMERA_TRIGGER_SOFT));
+  *omode = mode;
+  RTCameraBaseLDBG_ <<" OMODE: "<<*omode;
+  getAttributeCache()->setOutputDomainAsChanged();
 
   pushOutputDataset();
   return (ret == 0);
@@ -866,9 +872,9 @@ static void* capture(void*ptr){
 void RTCameraBase::cameraGrabCallBack(const void *buf, uint32_t blen, uint32_t width, uint32_t heigth, uint32_t error) {}
 void RTCameraBase::startGrabbing() {
   RTCameraBaseLDBG_ << "Start Grabbing";
-  metadataLogging(
+  /*metadataLogging(
       chaos::common::metadata_logging::StandardLoggingChannel::LogLevelInfo,
-      "Start grabbing");
+      "Start grabbing");*/
 
   // allocate buffers;
 
@@ -952,7 +958,7 @@ void RTCameraBase::haltThreads() {
       encoded_queue.unblock();
       RTCameraBaseLDBG_ << "unblocking fifo ";
       if(capture_exited==false){
-        usleep(1000);
+        usleep(schedule_delay);
       }
     } while(capture_exited==false);
     
@@ -1030,8 +1036,7 @@ void RTCameraBase::stopGrabbing() {
 
    });
   }
-  setStateVariableSeverity(StateVariableTypeAlarmDEV,chaos::common::alarm::MultiSeverityAlarmLevelClear);
-  setStateVariableSeverity(StateVariableTypeAlarmCU,chaos::common::alarm::MultiSeverityAlarmLevelClear);
+  
 }
 
 //! Execute the work, this is called with a determinated delay, it must be as
@@ -1647,7 +1652,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
     ret = encodedImg[encode_cnt].wait_and_pop(ele, 0);
 
     if(ret<0){
-      RTCameraBaseLDBG_ << "popping encode queue "<<encode_cnt<<":"<<encodedImg[encode_cnt].length();
+       RTCameraBaseLDBG_ << "popping encode queue "<<encode_cnt<<":"<<encodedImg[encode_cnt].length();
 
       return;
     }
@@ -1800,6 +1805,8 @@ void RTCameraBase::unitStop() throw(chaos::CException) {
   
   RTCameraBaseLDBG_ << "Stop:" << hasStopped();
   stopGrabbing();
+  //setStateVariableSeverity(StateVariableTypeAlarmDEV,chaos::common::alarm::MultiSeverityAlarmLevelClear);
+  //setStateVariableSeverity(StateVariableTypeAlarmCU,chaos::common::alarm::MultiSeverityAlarmLevelClear);
 }
 
 //! Deinit the Control Unit
