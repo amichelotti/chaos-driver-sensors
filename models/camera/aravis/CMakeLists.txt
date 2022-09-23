@@ -12,7 +12,6 @@ ENDIF()
 
     FILE(COPY ${aravis_l} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
-    INCLUDE_DIRECTORIES(${ARAVIS}/include/aravis-0.8 /usr/include/glib-2.0 /usr/lib/x86_64-linux-gnu/glib-2.0/include)
     link_directories(${ARAVIS_LIB})
     SET(camera_lib ${camera_lib} aravis-0.8)
     ADD_DEFINITIONS(-D_FILE_OFFSET_BITS=64)

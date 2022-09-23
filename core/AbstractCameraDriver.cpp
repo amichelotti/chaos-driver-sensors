@@ -80,7 +80,6 @@ int fmt2cv(const std::string& enc){
       CVENCODING(enc, CV_32SC2);
       CVENCODING(enc, CV_32SC3);
       CVENCODING(enc, CV_32SC4);
-#ifdef CAMERA
       if(enc=="BAYERBG8"){
           return cv::COLOR_BayerBG2RGB ;
       } else if(enc== "BayerBG16"){
@@ -90,12 +89,10 @@ int fmt2cv(const std::string& enc){
       if(enc=="YUV422packed"){
           return cv::COLOR_YUV2RGB_NV21;
       }
-#endif
       return CV_8UC1;
 }
 int cv2fmt(int cvenc, std::string& enc){
     int bpp=1;
-#ifdef CAMERA    
     switch(cvenc){
         case cv::COLOR_YUV2RGB_NV21:
             bpp=2;enc="YUV422packed";
@@ -178,7 +175,6 @@ int cv2fmt(int cvenc, std::string& enc){
         enc="UKNOWN";
 
         }
-#endif
     return bpp;
 }
 void AbstractCameraDriver::parseInitCommonParams(const chaos::common::data::CDataWrapper& config){

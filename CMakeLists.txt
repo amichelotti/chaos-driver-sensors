@@ -1,19 +1,19 @@
 cmake_minimum_required(VERSION 2.9)
 project(chaos_driver_sensors)
+SET(camera_src )
+SET(camera_lib )
 find_package(chaos MODULE REQUIRED)
 INCLUDE_DIRECTORIES(../../ ${chaos_INCLUDE_DIRS} ${CMAKE_INSTALL_PREFIX}/include/driver/sensors/core/aravis)
 add_definitions(-Wno-ignored-attributes -Wno-deprecated-declarations)
 FILE(GLOB sensors_src core/BasicSensorProperty.cpp    core/CmdUTADefault.cpp   core/SensorDriverInterface.cpp core/AbstractSensorDriver.cpp   core/CmdUTAShutter.cpp    
 core/BasicSensor.cpp  core/SCUTA.cpp)
-SET(camera_src )
-SET(camera_lib )
-
 IF(OPENCV)
   MESSAGE("Enable Camera support")
   include_directories(../../ ${chaos_INCLUDE_DIRS} ${CMAKE_INSTALL_PREFIX}/include ${OPENCV}/include )
 
   link_directories(${OPENCV}/lib ${CMAKE_INSTALL_PREFIX}/lib)
-  # 
+  ADD_DEFINITIONS(-DCAMERA -DOPENCV)
+
   FILE(GLOB camera_src models/camera/Encoder.cpp  models/camera/RTCameraFilter.cpp models/camera/RTCameraBase.cpp models/camera/CameraDriverInterface.cpp  core/AbstractCameraDriver.cpp models/camera/CameraDriverBridge.cpp models/camera/RTCameraProcess.cpp)
 
 IF(CERN_ROOT)  
@@ -22,13 +22,11 @@ ENDIF()
 
   SET(camera_lib   opencv_highgui opencv_imgproc opencv_videoio opencv_imgcodecs opencv_core)
   FILE(REMOVE models/camera/UnitServerIgnore)
-  ADD_DEFINITIONS(-DCAMERA -DOPENCV)
 ELSE()
   link_directories(${CMAKE_INSTALL_PREFIX}/lib)
   FILE(WRITE models/camera/UnitServerIgnore "disabled ${PROJECT_NAME}")
 ENDIF()
 
-# SET(sensors_src core/BasicSensor.cpp core/AbstractSensorDriver.cpp core/SensorDriverInterface.cpp core/SCUTA.cpp core/CmdUTAShutter.cpp core/CmdUTADefault.cpp models/plugins.cpp)
 
 SET(BasicSensorClient_src test/sensorsClient.cpp)
 
