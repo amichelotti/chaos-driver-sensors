@@ -53,22 +53,10 @@ static gboolean cancel = FALSE;
 int main(int argc, const char **argv)
 {
 
-    ArvCamera *camera;
-	GError *error = NULL;
+    
 	int i;
 
 
-	camera = arv_camera_new (NULL, &error);
-    if (!ARV_IS_CAMERA (camera)) {
-        printf ("No camera found%s%s\n",
-			error != NULL ? ": " : "",
-			error != NULL ? error->message : "");
-		g_clear_error (&error);
-        exit(1);
-    } else {
-       std::cout<<"DEVICE:"<<arv_camera_get_device_id(camera,NULL);
-    }
-    
 
     try {
         // initialize the control unit toolkit
