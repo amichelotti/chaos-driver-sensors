@@ -62,7 +62,7 @@ namespace driver
         int istrategy;
 
       public:
-        int32_t sizex,sizey,offx,offy,size_image,dataype,colormode,cam_sizex,cam_sizey;
+        int32_t sizex,sizey,offx,offy,size_image,datatype,colormode,cam_sizex,cam_sizey;
 
         int setNode(const std::string &node_name, bool val);
         int setNode(const std::string &node_name, std::string val);
