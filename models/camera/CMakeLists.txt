@@ -26,6 +26,16 @@ ELSE()
   FILE(WRITE Basler/UnitServerIgnore "disabled ${PROJECT_NAME}")
 ENDIF()
 
+IF (CHAOS_EPICS_SUPPORT)
+  MESSAGE(STATUS "Adding Area Detector Epics Support")
+  add_definitions(-DEPICS_DRIVER)
+
+  add_subdirectory(EpicsAreaDetector)
+  FILE(REMOVE Basler/UnitServerIgnore)
+ELSE()
+  FILE(WRITE Basler/UnitServerIgnore "disabled ${PROJECT_NAME}")
+ENDIF()
+
 IF(ARAVIS)
 MESSAGE(STATUS "Adding Aravis Support")
   add_definitions(-UCERN_ROOT)

@@ -22,6 +22,10 @@
 #include "aravis/AravisDriver.h"
 #endif
 
+#ifdef EPICS_DRIVER
+#include "EpicsAreaDetector/EpicsAreaDetector.h"
+#endif
+
 #ifdef BASLER_DRIVER
 #include "Basler/BaslerScoutDriver.h"
 #endif
@@ -76,6 +80,11 @@ int main(int argc, const char **argv)
         REGISTER_DRIVER(::driver::sensor::camera,ShapeSim);
 #ifdef  MC_CAMERA_DRIVER
         REGISTER_DRIVER(::driver::sensor::camera,MemCacheCam);
+#endif
+
+#ifdef EPICS_DRIVER
+        REGISTER_DRIVER(::driver::sensor::camera,EpicsAreaDetector);
+
 #endif
         REGISTER_CU(::driver::sensor::camera::RTCameraBase);
 

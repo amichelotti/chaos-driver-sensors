@@ -805,16 +805,16 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
       std::string enc;
       bpp = cv2fmt(framebuf_encoding, enc);
     }
-    if (cam_prop.hasKey(OFFSETX_KEY) && cam_prop.isInt32Value(OFFSETX_KEY)) {
+    if (cam_prop.hasKey(OFFSETX_KEY) && cam_prop.isInt32Value(OFFSETX_KEY)&& ooffsetx) {
       *ooffsetx = cam_prop.getInt32Value(OFFSETX_KEY);
     }
-    if (cam_prop.hasKey(OFFSETY_KEY) && cam_prop.isInt32Value(OFFSETY_KEY)) {
+    if (cam_prop.hasKey(OFFSETY_KEY) && cam_prop.isInt32Value(OFFSETY_KEY) && ooffsety) {
       *ooffsety = cam_prop.getInt32Value(OFFSETY_KEY);
     }
-    if (cam_prop.hasKey(WIDTH_KEY) && cam_prop.isInt32Value(WIDTH_KEY)) {
+    if (cam_prop.hasKey(WIDTH_KEY) && cam_prop.isInt32Value(WIDTH_KEY)&& osizex) {
       *osizex = cam_prop.getInt32Value(WIDTH_KEY);
     }
-    if (cam_prop.hasKey(HEIGHT_KEY) && cam_prop.isInt32Value(HEIGHT_KEY)) {
+    if (cam_prop.hasKey(HEIGHT_KEY) && cam_prop.isInt32Value(HEIGHT_KEY)&&osizey) {
       *osizey = cam_prop.getInt32Value(HEIGHT_KEY);
     }
   }
@@ -1668,8 +1668,12 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
      // ptr       = ;//reinterpret_cast<uchar *>(&((*a)[0]));
       *osizex   = ele->sizex;
       *osizey   = ele->sizey;
-      *ooffsetx = ele->offsetx;
-      *ooffsety = ele->offsety;
+      if(ooffsetx){
+        *ooffsetx = ele->offsetx;
+      }
+      if(ooffsety){
+        *ooffsety = ele->offsety;
+      }
       setOutputTimestamp(chaos::common::utility::TimingUtil::getTimeStamp());
 #ifdef ZERO_COPY
       getAttributeCache()->setOutputAttributeValue("FRAMEBUFFER", ele,chaos::CHAOS_BUFFER_OWN_CALLEE);
