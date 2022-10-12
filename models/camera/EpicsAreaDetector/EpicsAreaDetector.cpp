@@ -202,6 +202,7 @@ void EpicsAreaDetector::driverInit(const chaos::common::data::CDataWrapper &json
   //::driver::epics::common::EpicsGenericDriver::addPVListConfig(*(newconf.get()), pvlist);
 
   std::map<std::string, std::string> pvprprop = {
+      {"cam1:Acquire", ""},
       {"cam1:SizeX_RBV", ""},
       {"cam1:SizeY_RBV", ""},
       {"cam1:ArraySizeX_RBV", ""},
@@ -1644,7 +1645,7 @@ int EpicsAreaDetector::startGrab(uint32_t _shots, void *_framebuf,
   }
   devicedriver->read("cam1:MaxSizeX_RBV", cam_sizex);
   devicedriver->read("cam1:MaxSizeY_RBV", cam_sizey);
-
+  devicedriver->write("cam1:Acquire",1);
   EpicsAreaDetectorLDBG_ << "Start grabbing " << sizex << " x " << sizey << " off:" << offx << "," << offy << " cam " << cam_sizex << " x " << cam_sizey;
 
   stopGrabbing = false;
@@ -1689,6 +1690,7 @@ int EpicsAreaDetector::waitGrab(uint32_t timeout_ms)
 int EpicsAreaDetector::stopGrab()
 {
   EpicsAreaDetectorLDBG_ << "Stop  Grabbing, unblock waiting";
+  devicedriver->write("cam1:Acquire",0);
 
   stopGrabbing = true;
 
