@@ -217,7 +217,6 @@ void EpicsAreaDetector::driverInit(const chaos::common::data::CDataWrapper &json
       {"cam1:MinY", ""},
       {"cam1:TriggerMode", ""},
       {"cam1:TriggerMode_RBV", ""},
-
       {IMAGE_ARRAY, ""},
       {"cam1:DataType_RBV", ""},
       {"cam1:ColorMode_RBV", ""},
