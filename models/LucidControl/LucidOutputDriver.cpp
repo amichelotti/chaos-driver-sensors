@@ -65,8 +65,8 @@ int LucidOutputDriver::writeChannel(void *buffer,int addr,int bcount){
   //add more
   if(addr<4){
     int canale,ret;
-    char ch[8];
-    sprintf(ch,"CH%d:",addr);
+    char ch[16];
+    snprintf(ch,sizeof(ch),"CH%.2d:",addr);
     snprintf(cmd,sizeof(cmd),"/usr/bin/LucidIoCtrl -d%s -tV -c%d -w%f",dev.c_str(),addr,*pnt);
     LucidOutputDriverLDBG_<<"LucidControl command:"<<cmd;
     return 1;

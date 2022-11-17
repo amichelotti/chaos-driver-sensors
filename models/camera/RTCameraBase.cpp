@@ -1733,7 +1733,10 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
         filtering(image);
      //   std::vector<unsigned char> encbuf;
           Encoder* enc=new Encoder();
-          bool code= enc->encode(encoding,image,encode_params);
+          bool code=false;
+          if(!image.empty()){
+              code=enc->encode(encoding,image,encode_params);
+          }
        // bool code = cv::imencode(encoding, image, encbuf);
         if (code == false) {
           setStateVariableSeverity(
