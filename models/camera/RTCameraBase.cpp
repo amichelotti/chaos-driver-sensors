@@ -1380,7 +1380,10 @@ void RTCameraBase::encodeThread(int indx) {
         video.write(image);
 #endif
        // bool code = cv::imencode(encoding, image, *encbuf, encode_params);
-       bool code=ele->encode(encoding,image,encode_params);
+       bool code=false;
+       if(!image.empty()){
+          code=ele->encode(encoding,image,encode_params);
+       }
         delete (framebuf);
         // image.deallocate();
         if (code == false) {

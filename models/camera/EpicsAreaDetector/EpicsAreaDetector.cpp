@@ -19,7 +19,9 @@
  */
 #include "EpicsAreaDetector.h"
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
-#include <driver/epics/driver/EpicsCAccessDriver.h>
+//#include <driver/epics/driver/EpicsCAccessDriver.h>
+#include <driver/epics/driver/EpicsPVAccessDriver.h>
+
 #define MAX_RETRY 3
 namespace cu_driver = chaos::cu::driver_manager::driver;
 using namespace ::driver::sensor::camera;
@@ -28,6 +30,7 @@ using namespace ::driver::sensor::camera;
 #define EpicsAreaDetectorLERR LERR_ << "[EpicsAreaDetector] "
 
 #define IMAGE_ARRAY "image1:ArrayData" //"Pva1:Image"
+//#define IMAGE_ARRAY "Pva1:Image"
 #define EpicsAreaDetectorLDBG_                                          \
   LDBG_ << "[EpicsAreaDetector (" << serial_dev << "," << friendly_name \
         << "):" << __FUNCTION__ << "] "
@@ -79,7 +82,7 @@ CLOSE_REGISTER_PLUGIN
     {                                                                      \
       p->addInt32Value(y, (int32_t)val);                                   \
     }                                                                      \
-    "image1:ArrayData" else                                                \
+    else                                                \
     {                                                                      \
       EpicsAreaDetectorLERR << "cannot read ARAVIS node \"" << #x << "\""; \
     }                                                                      \
@@ -217,7 +220,6 @@ void EpicsAreaDetector::driverInit(const chaos::common::data::CDataWrapper &json
       {"cam1:MinY", ""},
       {"cam1:TriggerMode", ""},
       {"cam1:TriggerMode_RBV", ""},
-      {IMAGE_ARRAY, ""},
       {"cam1:DataType_RBV", ""},
       {"cam1:ColorMode_RBV", ""},
       {"cam1:AcquireTime", ""},
@@ -233,9 +235,15 @@ void EpicsAreaDetector::driverInit(const chaos::common::data::CDataWrapper &json
       {"cam1:DriverVersion_RBV", ""}
 
   };
+  std::string image_array=IMAGE_ARRAY;
+  if(json.hasKey("PVIMAGE")){
+    image_array=json.getStringValue("PVIMAGE");
+  }
+  pvprprop[image_array]="";
+  EpicsAreaDetectorLDBG_ << "Using \"" << image_array << "\" as PV image array";
   ::driver::epics::common::EpicsGenericDriver::addPVListConfig(*(newconf.get()), pvprprop);
 
-  devicedriver = new ::driver::epics::common::EpicsCAccessDriver(*(newconf.get()));
+  devicedriver = new ::driver::epics::common::EpicsPVAccessDriver(*(newconf.get()));
 
   createProperty(
       "SizeX",
@@ -1652,25 +1660,22 @@ int EpicsAreaDetector::startGrab(uint32_t _shots, void *_framebuf,
 }
 int EpicsAreaDetector::waitGrab(camera_buf_t **img, uint32_t timeout_ms)
 {
-  uint32_t tim;
   if (stopGrabbing)
   {
     EpicsAreaDetectorLERR_ << "Grabbing is stopped ";
     return CAMERA_GRAB_STOP;
   }
   size_t size = 0;
-  int ret = devicedriver->waitChange(IMAGE_ARRAY);
-  if (ret != 0)
-  {
-    return ret;
-  }
   *img = new camera_buf_t(sizex * sizey,
                           sizex,
                           sizey,
                           offx,
                           offy);
-  ret = devicedriver->readArray(IMAGE_ARRAY, (*img)->buf, sizex * sizey, 2);
-  (*img)->ts = chaos::common::utility::TimingUtil::getTimeStampInMicroseconds();
+ // ret = devicedriver->readArray(IMAGE_ARRAY, (*img)->buf, sizex * sizey, 2);
+  ::driver::epics::common::epics_ts_t ts;
+  ::driver::epics::common::epics_stats_t stats;
+  int ret = devicedriver->read(IMAGE_ARRAY,(void*) (*img)->buf, sizex * sizey,timeout_ms,&ts,&stats);
+  (*img)->ts = ::driver::epics::common::epicsTS2US(ts);
 
   if (ret <= 0)
   {
@@ -1679,6 +1684,12 @@ int EpicsAreaDetector::waitGrab(camera_buf_t **img, uint32_t timeout_ms)
     EpicsAreaDetectorLERR_ << "Error reading array image PV:\"" << IMAGE_ARRAY << "\" ret:" << ret;
     return ret;
   }
+  if(stats.sev!=0){
+    setLastError(stats.msg);
+    EpicsAreaDetectorLERR_ << "Severity "<<stats.sev<<" msg:\"" << stats.msg << "\" ret:" << ret;
+
+    return stats.sev+chaos::ErrorCode::EC_EPICS_SEVERITY;
+  } 
   return ret;
 }
 

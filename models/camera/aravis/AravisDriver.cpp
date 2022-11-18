@@ -882,7 +882,7 @@ int AravisDriver::initializeCamera(
             }
             return ret;
           }
-          AravisDriverLERR << " cannot get " << name;
+          AravisDriverLERR << " Reading Pixel Clock cannot get " << name;
           return chaos::common::data::CDWUniquePtr();
         },
         [](AbstractDriver *thi, const std::string &name,
@@ -898,7 +898,7 @@ int AravisDriver::initializeCamera(
           if (error)
           {
 
-            AravisDriverLERR << error->message;
+            AravisDriverLERR << "Setting Pixel Clock to:\""<<cv<<"\"="<<format<<" Error:"<<error->message;
             t->setLastError(error->message);
             g_clear_error(&error);
           }
@@ -1169,6 +1169,7 @@ int AravisDriver::startGrab(uint32_t _shots, void *_framebuf,
                             cameraGrabCallBack _fn)
 {
   AravisDriverLDBG_ << "Start Grabbing";
+  arv_camera_set_acquisition_mode (camerap, ARV_ACQUISITION_MODE_CONTINUOUS, NULL);
 
   stopGrabbing = false;
   return 0;
