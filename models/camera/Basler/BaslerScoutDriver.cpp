@@ -1018,11 +1018,22 @@ int BaslerScoutDriver::initializeCamera(
         CInstantCameraArray cameras(devices.size());
         BaslerScoutDriverLDBG_ << "Found " << cameras.GetSize()
                                << " cameras, looking for serial:" << serial;
-        for (size_t i = 0; (i < cameras.GetSize());i++) {
-            BaslerScoutDriverLDBG_ << "Retrive information " << devices[i].GetSerialNumber()<<" name:"<<devices[i].GetFriendlyName()<<" Model:"<<devices[i].GetModelName();
+        for (size_t i = 0; (i < cameras.GetSize())&&(camerap==NULL);i++) {
+            BaslerScoutDriverLDBG_ << "Retrive information " << devices[i].GetSerialNumber()<<" name:"<<devices[i].GetFriendlyName()<<" Model:"<<devices[i].GetModelName()<<" IP:"<<devices[i].GetAddress();
             if(devices[i].GetSerialNumber().c_str() == serial){
               BaslerScoutDriverLDBG_<<serial<<" FOUND: "<<devices[i].GetModelName();
+              
               pdev = tlFactory.CreateDevice(devices[i]);
+              if(pdev==NULL){
+                 throw chaos::CException(-1,
+                                  "Failing create Device Factory " +
+                                      json.getCompliantJSONString() +
+                                      ": "+ serial,
+                                  __PRETTY_FUNCTION__);
+
+              }
+              BaslerScoutDriverLDBG_<<serial<<" Create Device "<<devices[i].GetDeviceID()<<" IPYLON : @"<<std::hex<<(void*)pdev;
+           
               camerap = new CInstantCamera(pdev);
 
             }
@@ -2157,4 +2168,14 @@ int BaslerScoutDriver::getCameraProperties(
 
   return ret;
 }
+int BaslerScoutDriver::cameraRoi(int sizex,int sizey,int x, int y){
+  BaslerScoutDriverLDBG_ << "Performing ROI" << sizex << "x" << sizey << "("<< x << "," << y << ")";
+
+  setPropertyValue("WIDTH", sizex);
+  setPropertyValue("HEIGHT", sizey);
+  setPropertyValue("OFFSETX", x);
+  setPropertyValue("OFFSETY", y);
+  return 0;
+}
+
 

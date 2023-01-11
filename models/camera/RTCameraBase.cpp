@@ -450,7 +450,7 @@ bool RTCameraBase::setDrvProp(const std::string &name, int32_t value, uint32_t s
   RTCameraBaseLDBG_ << "SETTING IPROP:" << name << " VALUE:" << value;
   bool stopgrab =
       (
-       /* ((name == WIDTH_KEY) ) ||
+      /*  ((name == WIDTH_KEY) ) ||
        ((name == HEIGHT_KEY) ) ||
        ((name == OFFSETX_KEY) ) ||
        ((name == OFFSETY_KEY) ) ||*/
@@ -795,14 +795,18 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
   if ((ret = driver->cameraInit(0, 0)) != 0) {
     throw chaos::CException(ret, "cannot initialize camera:" + driver->getLastError(), __PRETTY_FUNCTION__);
   }
-
+  if(sizex == NULL || sizey==NULL){
+    throw chaos::CException(-5, "Malformed Dataset missing WIDHT or HEIGHT key (cannot access device?) ", __PRETTY_FUNCTION__);
+  
+  }
   chaos::common::data::CDataWrapper cam_prop;
   if (driver->getCameraProperties(cam_prop) == 0) {
     if (cam_prop.hasKey(FRAMEBUFFER_ENCODING_KEY) &&
-        cam_prop.isStringValue(FRAMEBUFFER_ENCODING_KEY)) {
+        cam_prop.isStringValue(FRAMEBUFFER_ENCODING_KEY)&&(framebuf_encoding_s.size()==0)) {
       framebuf_encoding_s = cam_prop.getStringValue(FRAMEBUFFER_ENCODING_KEY);
       framebuf_encoding   = fmt2cv(framebuf_encoding_s);
       std::string enc;
+      RTCameraBaseLDBG_<<"Camera encoding "<<framebuf_encoding_s<<" ("<<framebuf_encoding<<")";
       bpp = cv2fmt(framebuf_encoding, enc);
     }
     if (cam_prop.hasKey(OFFSETX_KEY) && cam_prop.isInt32Value(OFFSETX_KEY)&& ooffsetx) {
@@ -818,11 +822,12 @@ void RTCameraBase::unitInit() throw(chaos::CException) {
       *osizey = cam_prop.getInt32Value(HEIGHT_KEY);
     }
   }
-  if (*sizex == 0) {
+  
+  if (sizex == 0) {
     *sizex = *osizex;
     RTCameraBaseLERR_ << "INVALID SET SIZEX 0 force to:" << *osizex;
   }
-  if (*sizey == 0) {
+  if ((*sizey == 0)) {
     *sizey = *osizey;
     RTCameraBaseLDBG_ << "INVALID SET SIZEY 0 force to:" << *osizey;
   }
@@ -949,19 +954,20 @@ void RTCameraBase::haltThreads() {
   RTCameraBaseLDBG_ << " capture exited:"<<capture_exited<<" buffering:"<<buffering;
 
   if (buffering > 0) {
-   
+    RTCameraBaseLDBG_ << "unblocking fifo...";
+
     do {
         for(int cnt=0;cnt<encode_thds;cnt++){
             captureImg[cnt].unblock();
             encodedImg[cnt].unblock();
       }
       encoded_queue.unblock();
-      RTCameraBaseLDBG_ << "unblocking fifo ";
       if(capture_exited==false){
         usleep(schedule_delay);
       }
     } while(capture_exited==false);
-    
+    RTCameraBaseLDBG_ << "unblocking fifo... done";
+
      if(pthread_self()!=capture_th){
       //  pthread_cancel(capture_th);
         RTCameraBaseLDBG_ << "Joining capture thread pid:"<<std::hex<<capture_th;
@@ -1257,12 +1263,12 @@ void RTCameraBase::encodeThread(int indx) {
           }
 
         } else if (framebuf_encoding == cv::COLOR_YUV2RGB_NV21) {
-          cv::Mat mat16uc1 = cv::Mat(isizey, isizex, CV_8UC2, framebuf->buf);
+          cv::Mat matuc1 = cv::Mat(*sizey, *sizex, CV_8UC2, framebuf->buf);
           // cv::Mat mat16uc3_rgb(*sizey, *sizex, CV_16UC3);
 
-          cv::Mat mat8uc3_rgb(isizey, isizex, CV_8UC3);
+          cv::Mat mat8uc3_rgb;
           // cv::cvtColor(mat16uc1, mat8uc3_rgb, cv::COLOR_YUV2RGB );//
-          cv::cvtColor(mat16uc1, mat8uc3_rgb, cv::COLOR_YUV2RGB_UYVY);  //
+          cv::cvtColor(matuc1, mat8uc3_rgb, cv::COLOR_YUV2BGR_UYVY);  //COLOR_YUV2RGB_UYVY
 
           if (applyCalib && subImage) {
             image = (mat8uc3_rgb - *subImage);
@@ -1655,7 +1661,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
     ret = encodedImg[encode_cnt].wait_and_pop(ele, 0);
 
     if(ret<0){
-       RTCameraBaseLDBG_ << "popping encode queue "<<encode_cnt<<":"<<encodedImg[encode_cnt].length();
+      // RTCameraBaseLDBG_ << "popping encode queue "<<encode_cnt<<":"<<encodedImg[encode_cnt].length();
 
       return;
     }
@@ -1869,8 +1875,10 @@ bool RTCameraBase::unitRestoreToSnapshot(chaos::cu::control_manager::AbstractSha
 bool RTCameraBase::unitInputAttributePreChangeHandler(chaos::common::data::CDWUniquePtr &prop) {
   // in case of roi we must be assure that before the resize and then the offset.
 
-  /*
+  
   if(prop->hasKey("WIDTH")&&prop->hasKey("HEIGHT")&&prop->hasKey("OFFSETX")&&prop->hasKey("OFFSETY")){
+    // is a ROI
+
     int ret = driver->setCameraProperty("WIDTH", prop->getInt32Value("WIDTH"));
       usleep(200000);
      ret |= driver->setCameraProperty("HEIGHT", prop->getInt32Value("HEIGHT"));
@@ -1884,14 +1892,14 @@ bool RTCameraBase::unitInputAttributePreChangeHandler(chaos::common::data::CDWUn
 
     RTCameraBaseLDBG_ << "ROI " << ret;
 
-      prop->removeKey("HEIGHT");
+    prop->removeKey("HEIGHT");
     prop->removeKey("WIDTH");
     prop->removeKey("OFFSETX");
     prop->removeKey("OFFSETY");
 
-
+    return false;
   }
-  */
+  
 
   return true;
 }

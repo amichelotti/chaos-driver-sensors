@@ -827,6 +827,42 @@ int ShapeSim::getCameraProperty(const std::string& propname, int32_t& val) {
   }
   return -1;
 }
+int ShapeSim::cameraRoi(int sizex,int sizey,int x, int y){
+  if((sizex>original_width)||(sizex<0)){
+    width=original_width;
+
+  }
+  if((sizey>original_height)||(sizey<0)){
+    height=original_height;
+  }
+  if((x>original_width)||(x<0)){
+    offsetx=0;
+  }
+  if((x>original_height)||(y<0)){
+    offsety=0;
+  }
+  if(sizey>original_height){
+    height=original_height;
+  }
+  if(sizex+x<original_width){
+    width=sizex;
+    offsetx=x;
+  } else {
+      ShapeSimLERR_ << " cannot perform ROIX ("<<width<<"->"<<sizex<<") offx ("<<offsetx<<"->"<<x<<")" ;
+
+    return -1;
+  }
+  if(sizey+y<original_height){
+    height=sizey;
+    offsety=y;
+  } else {
+      ShapeSimLERR_ << " cannot perform ROIY ("<<height<<"->"<<sizey<<") offy ("<<offsety<<"->"<<y<<")" ;
+
+    return -2;
+  }
+  
+  return 0;
+}
 
 int ShapeSim::getCameraProperty(const std::string& propname, double& val) {
   ChaosUniquePtr<chaos::common::data::CDataWrapper> cw(new chaos::common::data::CDataWrapper());

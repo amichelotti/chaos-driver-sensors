@@ -115,7 +115,7 @@ namespace Pylon
 
         ///Retrieves the identifier for the transport layer able to create this device.
         ///This property is identified by Key::DeviceFactoryKey.
-        String_t GetDeviceFactory() const;
+        String_t GetDeviceFacctory() const;
         ///Sets the above property.
         CDeviceInfo& SetDeviceFactory(const String_t& DeviceFactoryValue);
         ///Returns true if the above property is available.

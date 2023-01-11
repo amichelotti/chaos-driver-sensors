@@ -242,6 +242,10 @@ public:
      */
     virtual int cameraDeinit()=0;
 
+
+    virtual int cameraRoi(int sizex,int sizey,int x, int y)=0;
+
+
 };
 }
 }

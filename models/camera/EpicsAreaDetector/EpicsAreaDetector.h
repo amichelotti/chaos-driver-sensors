@@ -106,6 +106,8 @@ namespace driver
 
         friend class CConfigurationEvent;
         //    chaos::common::data::CDWUniquePtr setDrvProperties(chaos::common::data::CDWUniquePtr);
+        int cameraRoi(int sizex,int sizey,int x, int y);
+
       };
     }
   }

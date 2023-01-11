@@ -43,6 +43,16 @@ OPEN_REGISTER_PLUGIN
 REGISTER_PLUGIN(::driver::sensor::camera::AravisDriver)
 CLOSE_REGISTER_PLUGIN
 
+
+#define HANDLE_ERROR(mm) \
+if(error){\
+     std::string e(error->message);\
+      AravisDriverLERR_ << mm<<" error :" << e << " ret:" << error->code;\
+      setLastError(error->message);\
+      g_clear_error(&error);\
+      return -1;\
+  }
+
 #define GETINTNODE(x, camp, pub)                                      \
   {                                                                   \
     int32_t val;                                                      \
@@ -300,6 +310,14 @@ static int cv2ARAVIS(const std::string &fmt)
     return ARV_PIXEL_FORMAT_MONO_16; // Pylon::EPixelType::PixelType_Mono16;
   if (fmt == "CV_8UC3")
     return ARV_PIXEL_FORMAT_RGB_8_PACKED; // Pylon::EPixelType::PixelType_RGB8packed;
+  if(fmt=="YUV422packed"){
+    return ARV_PIXEL_FORMAT_YUV_422_PACKED;
+
+  }
+  if(fmt=="BAYERBG8"){
+    return ARV_PIXEL_FORMAT_BAYER_BG_8;
+  }
+  
   return ARV_PIXEL_FORMAT_MONO_8;         /*Pylon::EPixelType::PixelType_Mono8:*/
 }
 static std::string ARAVIS2cv(int fmt)
@@ -443,6 +461,7 @@ int AravisDriver::initializeCamera(
     // setNode("GevSCPD", 10000);
 
     setNode("AcquisitionFrameRateEnable", true);
+
     createProperty(
         "Width",
         [](AbstractDriver *thi, const std::string &name,
@@ -489,10 +508,18 @@ int AravisDriver::initializeCamera(
               LDBG_ << " Min \"" << name << "\" is " << min;
               value = min;
             }
-            LDBG_ << " Write \"" << name << "\"" << value;
+            LDBG_ << " Writing \"" << name << "\" " << value;
             if (t->camerap)
             {
-              arv_camera_set_region(t->camerap, -1, -1, value, 0, NULL);
+              GError *error = NULL;
+
+              arv_camera_set_region(t->camerap, -1, -1, value, -1, &error);
+              if(error){
+                AravisDriverLERR << "Setting \""<<name <<"\" = "<<value<<" Error:"<<error->message;
+                t->setLastError(error->message);
+                g_clear_error(&error);
+
+              }
             }
 
             return p.clone();
@@ -549,10 +576,18 @@ int AravisDriver::initializeCamera(
               LDBG_ << " Min \"" << name << "\" is " << min;
               value = min;
             }
-            LDBG_ << " Write \"" << name << "\"" << value;
+            LDBG_ << " Writing \"" << name << "\" " << value;
             if (t->camerap)
             {
-              arv_camera_set_region(t->camerap, -1, -1, 0, value, NULL);
+              GError *error = NULL;
+
+              arv_camera_set_region(t->camerap, -1, -1, -1, value, &error);
+              if(error){
+                AravisDriverLERR << "Setting \""<<name <<"\""<<value<<" Error:"<<error->message;
+                t->setLastError(error->message);
+                g_clear_error(&error);
+
+              }
             }
 
             return p.clone();
@@ -597,10 +632,17 @@ int AravisDriver::initializeCamera(
           if (p.hasKey(PROPERTY_VALUE_KEY))
           {
             int32_t value = p.getInt32Value(PROPERTY_VALUE_KEY);
-            LDBG_ << " Write \"" << name << "\"" << value;
+            LDBG_ << " Writing \"" << name << "\" " << value;
             if (t->camerap)
             {
-              arv_camera_set_region(t->camerap, value, -1, 0, 0, NULL);
+              GError *error = NULL;
+              arv_camera_set_region(t->camerap, value, -1, -1, -1, &error);
+              if(error){
+                AravisDriverLERR << "Setting \""<<name <<"\""<<value<<" Error:"<<error->message;
+                t->setLastError(error->message);
+                g_clear_error(&error);
+
+              }
             }
 
             return p.clone();
@@ -645,10 +687,18 @@ int AravisDriver::initializeCamera(
           if (p.hasKey(PROPERTY_VALUE_KEY))
           {
             int32_t value = p.getInt32Value(PROPERTY_VALUE_KEY);
-            LDBG_ << " Write \"" << name << "\"" << value;
+            LDBG_ << " Writing \"" << name << "\" " << value;
             if (t->camerap)
             {
-              arv_camera_set_region(t->camerap, -1, value, 0, 0, NULL);
+              GError *error = NULL;
+
+              arv_camera_set_region(t->camerap, -1, value, -1, -1, &error);
+               if(error){
+                AravisDriverLERR << "Setting \""<<name <<"\""<<value<<" Error:"<<error->message;
+                t->setLastError(error->message);
+                g_clear_error(&error);
+
+              }
             }
 
             return p.clone();
@@ -691,10 +741,17 @@ int AravisDriver::initializeCamera(
           if (p.hasKey(PROPERTY_VALUE_KEY))
           {
             double value = p.getDoubleValue(PROPERTY_VALUE_KEY);
-            LDBG_ << " Write \"" << name << "\"" << value;
+            LDBG_ << " Writing \"" << name << "\" " << value;
             if (t->camerap)
             {
-              arv_camera_set_frame_rate(t->camerap, value, NULL);
+               GError *error = NULL;
+              arv_camera_set_frame_rate(t->camerap, value, &error);
+               if(error){
+                AravisDriverLERR << "Setting \""<<name <<"\""<<value<<" Error:"<<error->message;
+                t->setLastError(error->message);
+                g_clear_error(&error);
+
+              }
             }
 
             return p.clone();
@@ -752,7 +809,7 @@ int AravisDriver::initializeCamera(
           if (p.hasKey(PROPERTY_VALUE_KEY))
           {
             double value = p.getDoubleValue(PROPERTY_VALUE_KEY);
-            LDBG_ << " Write \"" << name << "\"" << value;
+            LDBG_ << " Writing \"" << name << "\" " << value;
             if (t->camerap)
             {
               if (value > 0)
@@ -830,7 +887,7 @@ int AravisDriver::initializeCamera(
           if (p.hasKey(PROPERTY_VALUE_KEY))
           {
             double value = p.getDoubleValue(PROPERTY_VALUE_KEY);
-            LDBG_ << " Write \"" << name << "\"" << value;
+            LDBG_ << " Writing \"" << name << "\" " << value;
             if (t->camerap)
             {
               if (value > 0)
@@ -876,13 +933,17 @@ int AravisDriver::initializeCamera(
             std::string cv = ARAVIS2cv(px);
             ret->append(PROPERTY_VALUE_KEY, cv);
             const char *r = arv_camera_get_pixel_format_as_string(t->camerap, NULL);
+            LDBG_ << " Reading \"" << name << " VAL:" << r << " CV VAL:"<<cv;
+
             if (r)
             {
               ret->append("raw", std::string(r));
+              ret->append(PROPERTY_VALUE_KEY, cv);
+
             }
             return ret;
           }
-          AravisDriverLERR << " Reading Pixel Clock cannot get " << name;
+          AravisDriverLERR << " Reading Pixel Format cannot get " << name;
           return chaos::common::data::CDWUniquePtr();
         },
         [](AbstractDriver *thi, const std::string &name,
@@ -893,14 +954,23 @@ int AravisDriver::initializeCamera(
           GError *error = NULL;
 
           std::string cv = p.getStringValue(PROPERTY_VALUE_KEY);
-          ArvPixelFormat format = cv2ARAVIS(cv);
-          arv_camera_set_pixel_format(t->camerap, format, &error);
-          if (error)
-          {
 
-            AravisDriverLERR << "Setting Pixel Clock to:\""<<cv<<"\"="<<format<<" Error:"<<error->message;
-            t->setLastError(error->message);
-            g_clear_error(&error);
+          if(cv.size()){
+            ArvPixelFormat format = cv2ARAVIS(cv);
+            arv_camera_set_pixel_format(t->camerap, format, &error);
+            if (error)
+            {
+
+              AravisDriverLERR << "Setting \""<<name<<"\" to:\""<<cv<<"\"="<<format<<" Error:"<<error->message;
+              t->setLastError(error->message);
+              g_clear_error(&error);
+            } else {
+                LDBG_ << " Writing \"" << name << " CV VAL:" << cv<< " Read:" <<arv_camera_get_pixel_format_as_string(t->camerap, NULL);
+
+            }
+          } else {
+            AravisDriverLERR << "Setting \""<<name<<"\" to:\""<<cv<<"\" not valid value";
+
           }
           return p.clone();
         });
@@ -984,7 +1054,7 @@ int AravisDriver::initializeCamera(
             -> chaos::common::data::CDWUniquePtr
         {
           AravisDriver *t = (AravisDriver *)thi;
-          LDBG_ << name << " Trigger Mode WRITE" << p.getJSONString();
+          LDBG_ << name << " Trigger Mode WRITE " << p.getJSONString();
 
           if (p.hasKey(PROPERTY_VALUE_KEY))
           {
@@ -1233,8 +1303,13 @@ int AravisDriver::waitGrab(uint32_t timeout_ms)
 }
 int AravisDriver::stopGrab()
 {
+  GError *error=NULL;
   AravisDriverLDBG_ << "Stop  Grabbing, unblock waiting";
-
+  arv_camera_stop_acquisition(camerap,&error);
+  if(error){
+     std::string e(error->message);
+      AravisDriverLERR_ << "Error :" << e << " ret:" << error->code;
+  }
   stopGrabbing = true;
 
   return 0;
@@ -1335,6 +1410,44 @@ int AravisDriver::getCameraProperty(const std::string &propname,
     return 0;
   }
   return -1;
+}
+int AravisDriver::cameraRoi(int sizex,int sizey,int x, int y){
+  int cw,ch,cx,cy;
+  GError *error=NULL;
+  int min,max;
+  arv_camera_get_region(camerap, &cx, &cy, &cw, &ch, &error);
+  HANDLE_ERROR("getting region");
+  arv_camera_get_width_bounds(camerap, &min, &max, &error);
+  HANDLE_ERROR("getting width bounds");
+  if((sizex>max)||(sizex<0)){
+    sizex=max;
+  }
+  arv_camera_get_height_bounds(camerap, &min, &max, &error);
+  HANDLE_ERROR("getting height bounds");
+  if((sizey>max)||(sizey<0)){
+    sizey=max;
+  }
+  arv_camera_get_height_bounds(camerap, &min, &max, &error);
+  HANDLE_ERROR("getting height bounds");
+  if((sizey>max)||(sizey<0)){
+    sizey=max;
+  }
+  arv_camera_get_x_offset_bounds(camerap, &min, &max, &error);
+  HANDLE_ERROR("getting x bounds");
+  if((x>max)||(x<0)){
+    x=max;
+  }
+  arv_camera_get_y_offset_bounds(camerap, &min, &max, &error);
+  HANDLE_ERROR("getting y bounds");
+  if((y>max)||(y<0)){
+    y=max;
+  }
+  arv_camera_set_region(camerap, x, y, sizex, sizey, &error);
+  HANDLE_ERROR("setting ROI");
+  AravisDriverLDBG_ << "ROI:" <<sizex<<"x"<<sizey<<"("<<x<<","<<y<<")"; 
+                    
+  return 0;
+
 }
 
 int AravisDriver::getCameraProperties(

@@ -1379,6 +1379,38 @@ int IDSGEXXDriver::getCameraProperties(
 
   return cameraToProps(&proplist);
 }
+int IDSGEXXDriver::cameraRoi(int w,int h,int x, int y){
+  if ((w > camera->getWidthMax())||(w<0)) {
+        w = camera->getWidthMax();
+        x = 0;
+      } else {
+        w = w - (w % 2);
+      }
+      if ((h > camera->getHeightMax())||(h<0)) {
+        h = camera->getHeightMax();
+        y = 0;
+      } else {
+        h = h - (h % 2);
+      }
+      if((x<0 )|| (x>camera->getWidthMax())){
+        x=0;
+      }
+      if((y<0 )|| (x>camera->getHeightMax())){
+        y=0;
+      }
+      // multiple of 4
+      x = x - (x % 2);
+      y = y - (y % 2);
+  if (camera->setAOI(x, y, w, h) == 0) {
+      IDSGEXXDriverLDBG_ << "Performing AOI (rounded )" << w << "x" << h << "("<< x << "," << y << ")";
+      return 0; 
+  } 
+  IDSGEXXDriverLERR_ << "Error Performing AOI (rounded )" << w << "x" << h << "("
+                         << x << "," << y << ")";
+  return -1;
+
+}
+
 chaos::common::data::CDWUniquePtr
 IDSGEXXDriver::setDrvProperties(chaos::common::data::CDWUniquePtr prop) {
   if (prop.get()) {

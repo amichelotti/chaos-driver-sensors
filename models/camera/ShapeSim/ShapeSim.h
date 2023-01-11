@@ -123,6 +123,8 @@ public:
       cu_driver::MsgManagmentResultType::MsgManagmentResult execOpcode(cu_driver::DrvMsgPtr cmd){return CameraDriverBridge::execOpcode(cmd);}
 
       chaos::common::data::CDWUniquePtr setDrvProperties(chaos::common::data::CDWUniquePtr);  
+    int cameraRoi(int sizex,int sizey,int x, int y);
+
 };
         }}}
 #endif /* defined(__ControlUnitTest__DummyDriver__) */

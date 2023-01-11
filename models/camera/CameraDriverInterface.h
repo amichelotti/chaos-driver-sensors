@@ -184,6 +184,7 @@ public:
     virtual int cameraDeinit();
 
 
+    virtual int cameraRoi(int sizex,int sizey,int x, int y);
 
 };
 }

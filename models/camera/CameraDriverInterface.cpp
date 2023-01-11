@@ -340,4 +340,8 @@ int CameraDriverInterface::cameraDeinit(){
 
 }
 
+int CameraDriverInterface::cameraRoi(int sizex,int sizey,int x, int y){
+    return impl->cameraRoi(sizex,sizey,x,y);
+}
+
 #endif

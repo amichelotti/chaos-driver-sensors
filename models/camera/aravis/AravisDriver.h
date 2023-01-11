@@ -97,6 +97,8 @@ namespace driver
         cu_driver::MsgManagmentResultType::MsgManagmentResult execOpcode(cu_driver::DrvMsgPtr cmd) { return CameraDriverBridge::execOpcode(cmd); }
 
         friend class CConfigurationEvent;
+        int cameraRoi(int sizex,int sizey,int x, int y);
+
         //    chaos::common::data::CDWUniquePtr setDrvProperties(chaos::common::data::CDWUniquePtr);
       };
     }
