@@ -566,6 +566,9 @@ int MemCacheCam::getCameraProperty(const std::string& propname, double& val) {
   }
   return -1;
 }
+int MemCacheCam::cameraRoi(int sizex,int sizey,int x, int y){
+  return -1;
+}
 
 int MemCacheCam::getCameraProperties(chaos::common::data::CDataWrapper& proplist) {
   return cameraToProps(&proplist);

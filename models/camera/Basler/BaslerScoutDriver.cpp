@@ -1019,7 +1019,7 @@ int BaslerScoutDriver::initializeCamera(
         BaslerScoutDriverLDBG_ << "Found " << cameras.GetSize()
                                << " cameras, looking for serial:" << serial;
         for (size_t i = 0; (i < cameras.GetSize())&&(camerap==NULL);i++) {
-            BaslerScoutDriverLDBG_ << "Retrive information " << devices[i].GetSerialNumber()<<" name:"<<devices[i].GetFriendlyName()<<" Model:"<<devices[i].GetModelName()<<" IP:"<<devices[i].GetAddress();
+            BaslerScoutDriverLDBG_ << "Retrive information " << devices[i].GetSerialNumber()<<" name:"<<devices[i].GetFriendlyName()<<" Model:"<<devices[i].GetModelName();
             if(devices[i].GetSerialNumber().c_str() == serial){
               BaslerScoutDriverLDBG_<<serial<<" FOUND: "<<devices[i].GetModelName();
               
@@ -1032,7 +1032,7 @@ int BaslerScoutDriver::initializeCamera(
                                   __PRETTY_FUNCTION__);
 
               }
-              BaslerScoutDriverLDBG_<<serial<<" Create Device "<<devices[i].GetDeviceID()<<" IPYLON : @"<<std::hex<<(void*)pdev;
+              BaslerScoutDriverLDBG_<<serial<<" Creating Device "<<std::hex<<(void*)pdev;
            
               camerap = new CInstantCamera(pdev);
 

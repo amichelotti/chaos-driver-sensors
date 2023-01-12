@@ -418,6 +418,9 @@ int  CameraShared::getCameraProperty(const std::string& propname,double& val){
     }
     return -1;
 }
+int CameraShared::cameraRoi(int sizex,int sizey,int x, int y){
+    return -1;
+}
 
 int  CameraShared::getCameraProperties(chaos::common::data::CDataWrapper& proplist){
 
