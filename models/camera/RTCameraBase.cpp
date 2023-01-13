@@ -1879,7 +1879,7 @@ bool RTCameraBase::unitInputAttributePreChangeHandler(chaos::common::data::CDWUn
   if(prop->hasKey("WIDTH")&&prop->hasKey("HEIGHT")&&prop->hasKey("OFFSETX")&&prop->hasKey("OFFSETY")){
     // is a ROI
 
-    int ret = driver->setCameraProperty("WIDTH", prop->getInt32Value("WIDTH"));
+   /* int ret = driver->setCameraProperty("WIDTH", prop->getInt32Value("WIDTH"));
       usleep(200000);
      ret |= driver->setCameraProperty("HEIGHT", prop->getInt32Value("HEIGHT"));
       usleep(200000);
@@ -1889,7 +1889,8 @@ bool RTCameraBase::unitInputAttributePreChangeHandler(chaos::common::data::CDWUn
 
      ret |= driver->setCameraProperty("OFFSETY", prop->getInt32Value("OFFSETY"));
       usleep(200000);
-
+    */
+   int ret=driver->cameraRoi(prop->getInt32Value("WIDTH"),prop->getInt32Value("HEIGHT"),prop->getInt32Value("OFFSETX"),prop->getInt32Value("OFFSETY"));
     RTCameraBaseLDBG_ << "ROI " << ret;
 
     prop->removeKey("HEIGHT");

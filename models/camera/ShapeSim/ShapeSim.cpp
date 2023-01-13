@@ -828,6 +828,8 @@ int ShapeSim::getCameraProperty(const std::string& propname, int32_t& val) {
   return -1;
 }
 int ShapeSim::cameraRoi(int sizex,int sizey,int x, int y){
+  ShapeSimLDBG_ << " performing ROI ("<<width<<"->"<<sizex<<") offx ("<<offsetx<<"->"<<x<<") "<< " ("<<height<<"->"<<sizey<<") offy ("<<offsety<<"->"<<y<<")";
+
   if((sizex>original_width)||(sizex<0)){
     width=original_width;
 
