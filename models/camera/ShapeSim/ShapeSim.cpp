@@ -660,7 +660,7 @@ int ShapeSim::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
 
     // fs << img.cols << "x" << img.rows << " orig [" << original_width << "x" << original_height << " " << shape_type << ":(" << tmp_centerx << "," << tmp_centery << ") " << tmp_sizex << "x" << tmp_sizey << "," << tmp_rotangle << "," << tmp_tickness;
 
-    rectangle(img, Point(0, 0), Point(width - 1, height - 1), Scalar(colr, colg, colb));
+    rectangle(img, Point(0, 0), Point(original_width - 1, original_height - 1), Scalar(colr, colg, colb));
 
     ellipse(img,
             Point(tmp_centerx, tmp_centery),
@@ -675,7 +675,7 @@ int ShapeSim::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
 
     putText(img, ss.str(), Point(10, 25), FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255, 255, 255), 2, LINE_AA);
     std::string ts_s = chaos::common::utility::TimingUtil::toString(ts, std::string("%H:%M:%S%F"));
-    putText(img, ts_s, Point(1, height / 2), FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(255, 255, 255), 3, LINE_AA);
+    putText(img, ts_s, Point(1, original_height / 2), FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(255, 255, 255), 3, LINE_AA);
 
     // putText(img,fs.str(),Point(10,height-25),FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,LINE_AA);
   } else if (shape_type.size()) {
@@ -704,12 +704,12 @@ int ShapeSim::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
     return -1;
   }
   cv::Mat cropped;
-  if ((width>0)&&((offsetx + width) < img.cols) && (height>0)&&((offsety + height) < img.rows)) {
+  if ((width>0)&&((offsetx + width) < original_width) && (height>0)&&((offsety + height) < original_height)) {
     Rect region_of_interest = Rect(offsetx, offsety, width, height);
     Mat  image_roi          = img(region_of_interest);
     image_roi.copyTo(cropped);
     ShapeSimLDBG_ << "Apply ROI:"
-                  << "(" << offsetx << "," << offsety << ") " << width << "x" << height << " new image:" << cropped.cols << "x" << cropped.rows;
+                  << "(" << offsetx << "," << offsety << ") " << original_width << "x" << original_height << " new image:" << cropped.cols << "x" << cropped.rows;
 
   } else {
     cropped = img;

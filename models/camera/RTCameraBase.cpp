@@ -1875,10 +1875,15 @@ bool RTCameraBase::unitRestoreToSnapshot(chaos::cu::control_manager::AbstractSha
 bool RTCameraBase::unitInputAttributePreChangeHandler(chaos::common::data::CDWUniquePtr &prop) {
   // in case of roi we must be assure that before the resize and then the offset.
 
-  
-  if(prop->hasKey("WIDTH")&&prop->hasKey("HEIGHT")&&prop->hasKey("OFFSETX")&&prop->hasKey("OFFSETY")){
-    // is a ROI
+  if(prop->hasKey("_ROI_")){
+    chaos::common::data::CDWUniquePtr p=prop->getCSDataValue("_ROI_");
+    RTCameraBaseLDBG_ << "ROI " <<p->getJSONString();
 
+    if(p->hasKey("WIDTH")&&p->hasKey("HEIGHT")&&p->hasKey("OFFSETX")&&p->hasKey("OFFSETY")){
+    // is a ROI
+   if(hasStopped() == false) {
+      stopGrabbing();
+    }
    /* int ret = driver->setCameraProperty("WIDTH", prop->getInt32Value("WIDTH"));
       usleep(200000);
      ret |= driver->setCameraProperty("HEIGHT", prop->getInt32Value("HEIGHT"));
@@ -1890,16 +1895,15 @@ bool RTCameraBase::unitInputAttributePreChangeHandler(chaos::common::data::CDWUn
      ret |= driver->setCameraProperty("OFFSETY", prop->getInt32Value("OFFSETY"));
       usleep(200000);
     */
-   int ret=driver->cameraRoi(prop->getInt32Value("WIDTH"),prop->getInt32Value("HEIGHT"),prop->getInt32Value("OFFSETX"),prop->getInt32Value("OFFSETY"));
-    RTCameraBaseLDBG_ << "ROI " << ret;
-
-    prop->removeKey("HEIGHT");
-    prop->removeKey("WIDTH");
-    prop->removeKey("OFFSETX");
-    prop->removeKey("OFFSETY");
-
-    return false;
+    int ret=driver->cameraRoi(p->getInt32Value("WIDTH"),p->getInt32Value("HEIGHT"),abs(p->getInt32Value("OFFSETX")),abs(p->getInt32Value("OFFSETY")));
+    RTCameraBaseLDBG_ << "PERFORMED ROI ret:" << ret;
+    startGrabbing();
   }
+      return false; // dont execute handlers
+
+  }
+
+
   
 
   return true;
