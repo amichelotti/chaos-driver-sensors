@@ -704,7 +704,7 @@ int ShapeSim::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
     return -1;
   }
   cv::Mat cropped;
-  if (((offsetx + width) < img.cols) && ((offsety + height) < img.rows)) {
+  if ((width>0)&&((offsetx + width) < img.cols) && (height>0)&&((offsety + height) < img.rows)) {
     Rect region_of_interest = Rect(offsetx, offsety, width, height);
     Mat  image_roi          = img(region_of_interest);
     image_roi.copyTo(cropped);
