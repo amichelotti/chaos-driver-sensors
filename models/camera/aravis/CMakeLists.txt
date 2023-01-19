@@ -34,7 +34,8 @@ add_executable(testaravis arvexample.cpp)
 add_executable(aravisUS aravisUS.cpp AravisDriver.cpp ../Encoder.cpp ../RTCameraBase.cpp ../../../core/AbstractCameraDriver.cpp ../CameraDriverBridge.cpp ../CameraDriverInterface.cpp)
 
 TARGET_LINK_LIBRARIES(testaravis aravis-0.8 glib-2.0 gobject-2.0)
-TARGET_LINK_LIBRARIES(aravisUS chaos_cutoolkit chaos_common aravis-0.8 glib-2.0 gobject-2.0 opencv_highgui opencv_imgproc opencv_videoio opencv_imgcodecs opencv_core common_misc_data)
+# TARGET_LINK_LIBRARIES(aravisUS chaos_cutoolkit chaos_common aravis-0.8 glib-2.0 gobject-2.0 opencv_highgui opencv_imgproc opencv_videoio opencv_imgcodecs opencv_core common_misc_data)
+TARGET_LINK_LIBRARIES(aravisUS chaos_cutoolkit chaos_common aravis-0.8 glib-2.0 gobject-2.0 opencv_highgui opencv_world  common_misc_data)
 
 #INSTALL(FILES ${pylon_libs} DESTINATION lib)
 FILE(GLOB files "*.h")
