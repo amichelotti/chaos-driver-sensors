@@ -44,13 +44,13 @@ AbstractSensorDriver::~AbstractSensorDriver() {
 
 }
 
-void AbstractSensorDriver::driverInit(const char *initParameter) throw(chaos::CException) {
+void AbstractSensorDriver::driverInit(const char *initParameter)  {
 	AbstractSensorDriverLAPP_ << "Init driver";
     sensorInit((void*)initParameter,(int)strlen(initParameter));
 	
 }
 
-void AbstractSensorDriver::driverDeinit() throw(chaos::CException) {
+void AbstractSensorDriver::driverDeinit()  {
 	AbstractSensorDriverLAPP_ << "Deinit driver";
     sensorDeinit();
 

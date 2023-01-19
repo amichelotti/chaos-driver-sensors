@@ -155,7 +155,7 @@ void LeyboldCenterOne::driverInit(const char *initParameter) {
     
 }
 
-void LeyboldCenterOne::driverInit(const chaos::common::data::CDataWrapper& s) throw (chaos::CException){
+void LeyboldCenterOne::driverInit(const chaos::common::data::CDataWrapper& s) {
     LeyboldCenterOneLDBG_<<"JSON PARAMS:"<<s.getJSONString();
 
 

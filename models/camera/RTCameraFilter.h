@@ -73,10 +73,10 @@ protected:
   /*!
   Define the Control Unit Dataset and Actions
   */
-  void unitDefineActionAndDataset() throw(chaos::CException);
+  void unitDefineActionAndDataset() ;
 
   int filtering(cv::Mat &image);
-  void unitInit() throw(chaos::CException);
+  void unitInit() ;
 };
 } // namespace camera
 } // namespace sensor

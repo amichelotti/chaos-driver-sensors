@@ -161,15 +161,14 @@ template <typename T> static T Adjust(T val, T minimum, T maximum, T inc) {
   }
 }
 
-void BaslerScoutDriver::driverInit(const char *initParameter) throw(
-    chaos::CException) {
+void BaslerScoutDriver::driverInit(const char *initParameter)  {
   throw chaos::CException(
       -3, "You should provide a valid JSON initialization string",
       __PRETTY_FUNCTION__);
 }
 
 void BaslerScoutDriver::driverInit(
-    const chaos::common::data::CDataWrapper &json) throw(chaos::CException) {
+    const chaos::common::data::CDataWrapper &json)  {
   BaslerScoutDriverLDBG_ << "Initializing BASLER json driver:"
                          << json.getCompliantJSONString();
   // props->appendAllElement((chaos::common::data::CDataWrapper &)json);
@@ -181,7 +180,7 @@ void BaslerScoutDriver::driverInit(
   }
 }
 
-void BaslerScoutDriver::driverDeinit() throw(chaos::CException) {
+void BaslerScoutDriver::driverDeinit()  {
   BaslerScoutDriverLAPP_ << "Deinit BASLER driver";
 }
 using namespace GenApi;

@@ -75,7 +75,7 @@ The api that can be called withi this method are listed into
 "Control Unit Definition Public API" module into html documentation
 (chaosframework/Documentation/html/group___control___unit___definition___api.html)
 */
-void BasicSensor::unitDefineActionAndDataset() throw(chaos::CException) {
+void BasicSensor::unitDefineActionAndDataset()  {
     int ret;
     BasicSensorLAPP_ << "UnitDefine";
     driver=new chaos::cu::driver_manager::driver::BasicIODriverInterface(getAccessoInstanceByIndex(0));
@@ -118,20 +118,20 @@ void BasicSensor::unitDefineCustomAttribute() {
 }
 
 //!Initialize the Custom Control Unit
-void BasicSensor::unitInit() throw(chaos::CException) {
+void BasicSensor::unitInit()  {
 getAttributeCache()->resetChangedInputIndex();
 
 }
 
 //!Execute the work, this is called with a determinated delay, it must be as fast as possible
-void BasicSensor::unitStart() throw(chaos::CException) {
+void BasicSensor::unitStart()  {
     //setDefaultScheduleDelay(1000000);
     //setStateVariableSeverity(StateVariableTypeAlarmCU,"timeout_sensor_readout", chaos::common::alarm::MultiSeverityAlarmLevelClear);
 
 }
 
 //!Execute the Control Unit work
-void BasicSensor::unitRun() throw(chaos::CException) {
+void BasicSensor::unitRun()  {
   //get the output attribute pointer form the internal cache
     std::vector<int>::iterator i;
     int cnt,ret,changed=0;
@@ -163,12 +163,12 @@ void BasicSensor::unitRun() throw(chaos::CException) {
 }
 
 //!Execute the Control Unit work
-void BasicSensor::unitStop() throw(chaos::CException) {
+void BasicSensor::unitStop()  {
 
 }
 
 //!Deinit the Control Unit
-void BasicSensor::unitDeinit() throw(chaos::CException) {
+void BasicSensor::unitDeinit()  {
 
 }
 

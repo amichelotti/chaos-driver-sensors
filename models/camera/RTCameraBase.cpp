@@ -570,7 +570,7 @@ The api that can be called withi this method are listed into
 "Control Unit Definition Public API" module into html documentation
 (chaosframework/Documentation/html/group___control___unit___definition___api.html)
 */
-void RTCameraBase::unitDefineActionAndDataset() throw(chaos::CException) {
+void RTCameraBase::unitDefineActionAndDataset()  {
   chaos::common::data::CDataWrapper camera_props;
   if (driver == NULL) {
     chaos::cu::driver_manager::driver::DriverAccessor *acc =
@@ -724,7 +724,7 @@ void RTCameraBase::updateStreamLink(){
 }
 
 //! Initialize the Custom Control Unit
-void RTCameraBase::unitInit() throw(chaos::CException) {
+void RTCameraBase::unitInit()  {
   int     ret;
   int32_t itype;
   int32_t width, height;
@@ -1047,7 +1047,7 @@ void RTCameraBase::stopGrabbing() {
 
 //! Execute the work, this is called with a determinated delay, it must be as
 //! fast as possible
-void RTCameraBase::unitStart() throw(chaos::CException) {
+void RTCameraBase::unitStart()  {
   RTCameraBaseLDBG_ << "Start - stopped flag:" << hasStopped();
   getAttributeCache()->setInputDomainAsChanged();
   getAttributeCache()->setOutputDomainAsChanged();
@@ -1614,7 +1614,7 @@ RTCameraBase::unitPerformCalibration(chaos::common::data::CDWUniquePtr data) {
 }
 
 //! Execute the Control Unit work
-void RTCameraBase::unitRun() throw(chaos::CException) {
+void RTCameraBase::unitRun()  {
   //uchar *ptr;
   int encode_cnt=0;
   *pacquire = (mode != CAMERA_DISABLE_ACQUIRE);
@@ -1817,7 +1817,7 @@ void RTCameraBase::unitRun() throw(chaos::CException) {
 }
 
 //! Execute the Control Unit work
-void RTCameraBase::unitStop() throw(chaos::CException) {
+void RTCameraBase::unitStop()  {
   
   RTCameraBaseLDBG_ << "Stop:" << hasStopped();
   stopGrabbing();
@@ -1826,7 +1826,7 @@ void RTCameraBase::unitStop() throw(chaos::CException) {
 }
 
 //! Deinit the Control Unit
-void RTCameraBase::unitDeinit() throw(chaos::CException) {
+void RTCameraBase::unitDeinit()  {
   stopGrabbing();
   
   
@@ -1854,7 +1854,7 @@ chaos::common::data::CDWUniquePtr RTCameraBase::setAction(chaos::common::data::C
 void RTCameraBase::fatalErrorHandler(const chaos::CException &r) {
   stopGrabbing();
 }
-bool RTCameraBase::unitRestoreToSnapshot(chaos::cu::control_manager::AbstractSharedDomainCache *const snapshot_cache) throw(chaos::CException) {
+bool RTCameraBase::unitRestoreToSnapshot(chaos::cu::control_manager::AbstractSharedDomainCache *const snapshot_cache)  {
   // check if in the restore cache we have all information we need
   /*  if (!snapshot_cache->getSharedDomain(DOMAIN_OUTPUT).hasAttribute("local")) {
         RESTORE_LERR << " missing 'local' to restore";

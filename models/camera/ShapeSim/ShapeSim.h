@@ -50,11 +50,11 @@ class ShapeSim:public ::driver::sensor::camera::CameraDriverBridge {
 
  protected:
 
- void driverInit(const char *initParameter) throw(chaos::CException);
- void driverInit(const chaos::common::data::CDataWrapper& json) throw(chaos::CException);
+ void driverInit(const char *initParameter) ;
+ void driverInit(const chaos::common::data::CDataWrapper& json) ;
 
   int initializeCamera(const chaos::common::data::CDataWrapper& json) ;
-  void driverDeinit() throw(chaos::CException) ;
+  void driverDeinit()  ;
     // This smart pointer will receive the grab result data.
      int32_t tmode; //0 continous, 1 software,2 hw,3 singleshot
      int32_t gstrategy;

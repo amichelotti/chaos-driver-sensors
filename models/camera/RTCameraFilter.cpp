@@ -129,7 +129,7 @@ The api that can be called withi this method are listed into
 (chaosframework/Documentation/html/group___control___unit___definition___api.html)
 */
 
-void RTCameraFilter::unitInit() throw(chaos::CException) {
+void RTCameraFilter::unitInit()  {
 
   AttributeSharedCacheWrapper *cc = getAttributeCache();
   
@@ -141,7 +141,7 @@ void RTCameraFilter::unitInit() throw(chaos::CException) {
   REFRHO = cc->getRWPtr<double>(DOMAIN_INPUT, "REFRHO");
   RTCameraBase::unitInit();
 }
-void RTCameraFilter::unitDefineActionAndDataset() throw(chaos::CException) {
+void RTCameraFilter::unitDefineActionAndDataset()  {
 
   
     

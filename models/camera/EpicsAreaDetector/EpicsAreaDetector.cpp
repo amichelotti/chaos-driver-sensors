@@ -196,7 +196,7 @@ void EpicsAreaDetector::createProperties()
     }
   }
 }
-void EpicsAreaDetector::driverInit(const chaos::common::data::CDataWrapper &json) throw(chaos::CException)
+void EpicsAreaDetector::driverInit(const chaos::common::data::CDataWrapper &json) 
 {
   EpicsAreaDetectorLDBG_ << "Configuration:" << json.getJSONString();
   // std::vector<std::string> pvlist ={"Pva1:Image"};
@@ -647,7 +647,7 @@ void EpicsAreaDetector::driverDeinit()
   }
 }
 
-void EpicsAreaDetector::driverInit(const char *initParameter) throw(chaos::CException)
+void EpicsAreaDetector::driverInit(const char *initParameter) 
 {
   if (initParameter != NULL)
   {

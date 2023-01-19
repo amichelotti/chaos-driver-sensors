@@ -78,7 +78,7 @@ PUBLISHABLE_CONTROL_UNIT_IMPLEMENTATION(::driver::sensor::SCUTA)
 /*
  Return the default configuration
  */
-void ::driver::sensor::SCUTA::unitDefineActionAndDataset() throw(chaos::CException) {
+void ::driver::sensor::SCUTA::unitDefineActionAndDataset()  {
   //install all command
   installCommand(BATCH_COMMAND_GET_DESCRIPTION(CmdUTADefault), true);
   installCommand(BATCH_COMMAND_GET_DESCRIPTION(CmdUTAShutter));
@@ -112,7 +112,7 @@ void ::driver::sensor::SCUTA::unitDefineCustomAttribute() {
 }
 
 // Abstract method for the initialization of the control unit
-void ::driver::sensor::SCUTA::unitInit() throw(CException) {
+void ::driver::sensor::SCUTA::unitInit() {
   int cnt;
   DPRINT("initializing");
   
@@ -132,7 +132,7 @@ void ::driver::sensor::SCUTA::unitInit() throw(CException) {
 }
 
 // Abstract method for the start of the control unit
-void ::driver::sensor::SCUTA::unitStart() throw(CException) {
+void ::driver::sensor::SCUTA::unitStart() {
       double *shutter;
       double val=5;
   DPRINT("initializing shutters to 50%%");
@@ -148,12 +148,12 @@ shutter= getAttributeCache()->getRWPtr<double>(DOMAIN_OUTPUT, "I_SHUTTER");
 }
 
 // Abstract method for the stop of the control unit
-void ::driver::sensor::SCUTA::unitStop() throw(CException) {
+void ::driver::sensor::SCUTA::unitStop() {
 
 }
 
 // Abstract method for the deinit of the control unit
-void ::driver::sensor::SCUTA::unitDeinit() throw(CException) {
+void ::driver::sensor::SCUTA::unitDeinit() {
 
 }
 
