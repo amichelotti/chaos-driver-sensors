@@ -1414,37 +1414,76 @@ int AravisDriver::cameraRoi(int sizex,int sizey,int x, int y){
   int cw,ch,cx,cy;
   GError *error=NULL;
   int min,max;
+  arv_camera_stop_acquisition(camerap,&error);
+
+
   arv_camera_get_region(camerap, &cx, &cy, &cw, &ch, &error);
+  AravisDriverLDBG_ << "1- current ROI:" <<cw<<"x"<<ch<<"("<<cx<<","<<cy<<")";          
+
   HANDLE_ERROR("getting region");
+  if((x==0) && (y==0)){
+    arv_camera_set_region(camerap,0 , -1, -1, -1, &error);
+    usleep(100000);
+    arv_camera_set_region(camerap,-1 , 0, -1, -1, &error);
+    usleep(100000);
+
+  }
   arv_camera_get_width_bounds(camerap, &min, &max, &error);
   HANDLE_ERROR("getting width bounds");
+  sizex=sizex-(sizex%2);
+
   if((sizex>max)||(sizex<0)){
     sizex=max;
   }
+  arv_camera_set_region(camerap, -1, -1, sizex, -1, &error);
+  HANDLE_ERROR("setting ROI sizex");
+  usleep(100000);
+  arv_camera_get_region(camerap, &cx, &cy, &cw, &ch, &error);
+  AravisDriverLDBG_ << "2 - current ROI:" <<cw<<"x"<<ch<<"("<<cx<<","<<cy<<")";          
+
   arv_camera_get_height_bounds(camerap, &min, &max, &error);
   HANDLE_ERROR("getting height bounds");
+  sizey=sizey-(sizey%2);
+
   if((sizey>max)||(sizey<0)){
     sizey=max;
   }
-  arv_camera_get_height_bounds(camerap, &min, &max, &error);
-  HANDLE_ERROR("getting height bounds");
-  if((sizey>max)||(sizey<0)){
-    sizey=max;
-  }
+  arv_camera_set_region(camerap, -1, -1, -1, sizey, &error);
+  HANDLE_ERROR("setting ROI sizey");
+  usleep(100000);
+  arv_camera_get_region(camerap, &cx, &cy, &cw, &ch, &error);
+  AravisDriverLDBG_ << "3 - current ROI:" <<cw<<"x"<<ch<<"("<<cx<<","<<cy<<")";          
+
   arv_camera_get_x_offset_bounds(camerap, &min, &max, &error);
   HANDLE_ERROR("getting x bounds");
-  if((x>max)||(x<0)){
+  x=x-(x%2);
+  y=y-(y%2);
+
+  if((x>max)){
     x=max;
   }
+  arv_camera_set_region(camerap, x, -1, -1, -1, &error);
+  HANDLE_ERROR("setting ROIx position");
+  usleep(100000);
+  arv_camera_get_region(camerap, &cx, &cy, &cw, &ch, &error);
+  AravisDriverLDBG_ << "4 - current ROI:" <<cw<<"x"<<ch<<"("<<cx<<","<<cy<<")";          
+
   arv_camera_get_y_offset_bounds(camerap, &min, &max, &error);
   HANDLE_ERROR("getting y bounds");
-  if((y>max)||(y<0)){
+  if((y>max)){
     y=max;
   }
-  arv_camera_set_region(camerap, x, y, sizex, sizey, &error);
-  HANDLE_ERROR("setting ROI");
-  AravisDriverLDBG_ << "ROI:" <<sizex<<"x"<<sizey<<"("<<x<<","<<y<<")"; 
-                    
+  arv_camera_set_region(camerap, -1, y, -1, -1, &error);
+  HANDLE_ERROR("setting ROIy position");
+
+  //AravisDriverLDBG_ << "setting ROI:" <<sizex<<"x"<<sizey<<"("<<x<<","<<y<<")";          
+  
+
+  //arv_camera_set_region(camerap, -1, -1, sizex, sizey, &error);
+  //HANDLE_ERROR("setting ROI size");
+  arv_camera_get_region(camerap, &cx, &cy, &cw, &ch, &error);
+  AravisDriverLDBG_ << "ROI END- current ROI:" <<cw<<"x"<<ch<<"("<<cx<<","<<cy<<")";          
+
   return 0;
 
 }
