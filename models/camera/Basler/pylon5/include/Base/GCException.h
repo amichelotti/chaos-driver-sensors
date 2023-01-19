@@ -83,7 +83,7 @@ namespace GENICAM_NAMESPACE
         //! Get error description (overwrite from std:exception)
         virtual const char *what() const throw();
 
-        virtual ~GenericException() throw();
+        virtual ~GenericException();
 
     private:
 
