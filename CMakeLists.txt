@@ -16,10 +16,6 @@ IF(OPENCV)
 
   FILE(GLOB camera_src models/camera/Encoder.cpp  models/camera/RTCameraFilter.cpp models/camera/RTCameraBase.cpp models/camera/CameraDriverInterface.cpp  core/AbstractCameraDriver.cpp models/camera/CameraDriverBridge.cpp models/camera/RTCameraProcess.cpp)
 
- IF(CERN_ROOT)
-   
-  FILE(GLOB camera_src ${camera_src} core/rootGaussianImage2dFit.cpp)
-ENDIF()
   SET(camera_lib   opencv_world)
   # SET(camera_lib   opencv_highgui opencv_imgproc opencv_videoio opencv_imgcodecs opencv_core)
   FILE(REMOVE models/camera/UnitServerIgnore)
@@ -41,9 +37,8 @@ ELSE()
 
 ENDIF()
 if(CERN_ROOT)
-  SET(CERNLIBS Core Hist)
+  SET(CERNLIBS Core Hist chaos_driver_misc_cernroot)
   
-  target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 ELSE()
  SET(CERNLIBS )
 ENDIF()

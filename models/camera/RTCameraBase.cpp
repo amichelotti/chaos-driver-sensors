@@ -26,7 +26,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #define ZERO_COPY
 #ifdef CERN_ROOT
-#include "../../core/rootGaussianImage2dFit.h"
+#include <driver/misc/models/cernRoot/rootGaussianImage2dFit.h>
 #endif
 /*
    IMWRITE_PNG_STRATEGY_DEFAULT      = 0,

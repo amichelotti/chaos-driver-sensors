@@ -22,12 +22,6 @@
 #include <boost/lockfree/queue.hpp>
 #include <chaos/cu_toolkit/control_manager/RTAbstractControlUnit.h>
 #include <common/misc/data/core/SharedMem.h>
-#ifdef CERN_ROOT
-
-class TH2F;
-class TF2;
-
-#endif
 
 
 #include "RTCameraBase.h"
@@ -66,8 +60,7 @@ protected:
   double Amplitude, X_m, S_x, Y_m, S_y, rho;
 #ifdef CERN_ROOT
 
-  TH2F *h;
-  TF2 *g2d;
+ 
   int gauss_fit_level;
 #endif
   /*!
