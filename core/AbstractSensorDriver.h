@@ -47,6 +47,8 @@ typedef enum AbstractSensorDriverOpcode{
 #define SENSOR_STATE_OFF 0x8
 #define SENSOR_STATE_NOSENSOR 0x10
 #define SENSOR_STATE_IDERROR 0x20
+#define SENSOR_STATE_CONN_ERROR 0x40
+
 
 
 

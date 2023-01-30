@@ -75,6 +75,8 @@ void BasicSensorProperty::unitDefineActionAndDataset() {
 
   addStateVariable( chaos::cu::control_manager::StateVariableTypeAlarmDEV, "iderror",
                    "cannot identify sensor ID");
+  addStateVariable( chaos::cu::control_manager::StateVariableTypeAlarmDEV, "communication_error",
+                   "serial communication error");
 }
 
 //! Define custom control unit attribute
@@ -115,6 +117,10 @@ void BasicSensorProperty::unitRun() {
     setStateVariableSeverity(
          chaos::cu::control_manager::StateVariableTypeAlarmDEV, "iderror",
         chaos::common::alarm::MultiSeverityAlarmLevelClear);
+    setStateVariableSeverity(
+         chaos::cu::control_manager::StateVariableTypeAlarmDEV, "communication_error",
+        chaos::common::alarm::MultiSeverityAlarmLevelClear);
+        
   }
   if (state & SENSOR_STATE_UNDERFLOW) {
     setStateVariableSeverity(
@@ -143,6 +149,10 @@ void BasicSensorProperty::unitRun() {
   }
   if (state & SENSOR_STATE_IDERROR) {
     setStateVariableSeverity( chaos::cu::control_manager::StateVariableTypeAlarmDEV, "iderror",
+                             chaos::common::alarm::MultiSeverityAlarmLevelHigh);
+  }
+  if (state & SENSOR_STATE_CONN_ERROR) {
+    setStateVariableSeverity( chaos::cu::control_manager::StateVariableTypeAlarmDEV, "communication_error",
                              chaos::common::alarm::MultiSeverityAlarmLevelHigh);
   }
 
