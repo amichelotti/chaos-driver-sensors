@@ -20,7 +20,7 @@ IF(CERN_ROOT)
   FILE(GLOB camera_src ${camera_src} core/rootGaussianImage2dFit.cpp)
 ENDIF()
 
-  SET(camera_lib   opencv_highgui opencv_imgproc opencv_videoio opencv_imgcodecs opencv_core)
+  SET(camera_lib   opencv_world)
   FILE(REMOVE models/camera/UnitServerIgnore)
 ELSE()
   link_directories(${CMAKE_INSTALL_PREFIX}/lib)

@@ -597,6 +597,7 @@ bool RTCameraBase::setDrvProp(const std::string &name, int32_t value, uint32_t s
 
     mode = *pmode = ((value != CAMERA_TRIGGER_SINGLE) ? valuer : CAMERA_TRIGGER_SINGLE);
   }
+  
   *pacquire = (mode != CAMERA_DISABLE_ACQUIRE);
   *ptrigger = (mode != CAMERA_DISABLE_ACQUIRE) && (mode != CAMERA_TRIGGER_CONTINOUS);
   // *ppulse = ((mode == CAMERA_TRIGGER_SINGLE) || (mode == CAMERA_TRIGGER_SOFT));
