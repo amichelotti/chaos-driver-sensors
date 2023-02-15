@@ -81,11 +81,11 @@ OPEN_REGISTER_PLUGIN
 REGISTER_PLUGIN(::driver::sensor::camera::ShapeSim)
 CLOSE_REGISTER_PLUGIN
 
-void ShapeSim::driverInit(const char* initParameter) throw(chaos::CException) {
+void ShapeSim::driverInit(const char* initParameter)  {
   throw chaos::CException(-1, "cannot intialize camera expected bad JSON parameters" + std::string(initParameter), __PRETTY_FUNCTION__);
 }
 
-void ShapeSim::driverInit(const chaos::common::data::CDataWrapper& json) throw(chaos::CException) {
+void ShapeSim::driverInit(const chaos::common::data::CDataWrapper& json)  {
   ShapeSimLDBG_ << "Initializing  driver:" << json.getCompliantJSONString();
   ShapeSimLDBG_ << "Inital properties" << getProperties()->getJSONString();
   if (initializeCamera(json) != 0) {
@@ -93,7 +93,7 @@ void ShapeSim::driverInit(const chaos::common::data::CDataWrapper& json) throw(c
   }
 }
 
-void ShapeSim::driverDeinit() throw(chaos::CException) {
+void ShapeSim::driverDeinit()  {
   ShapeSimLAPP_ << "Deinit driver";
 }
 

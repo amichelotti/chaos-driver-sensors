@@ -47,7 +47,7 @@ OPEN_REGISTER_PLUGIN
 REGISTER_PLUGIN(::driver::sensor::camera::CameraShared)
 CLOSE_REGISTER_PLUGIN
 
-void CameraShared::driverInit(const char *initParameter) throw(chaos::CException){
+void CameraShared::driverInit(const char *initParameter) {
     if(initParameter==NULL || (*initParameter==0)){
         throw chaos::CException(-1,"expected JSON init parameter, nothing is given ",__PRETTY_FUNCTION__);
 
@@ -64,13 +64,13 @@ void CameraShared::driverInit(const char *initParameter) throw(chaos::CException
 }
 
 
-void CameraShared::driverInit(const chaos::common::data::CDataWrapper& json) throw(chaos::CException){
+void CameraShared::driverInit(const chaos::common::data::CDataWrapper& json) {
     CameraSharedLAPP_ << "Initializing  driver parameters:"<<json.getCompliantJSONString();
     driver_params=json;
 
 }
 
-void CameraShared::driverDeinit() throw(chaos::CException) {
+void CameraShared::driverDeinit()  {
     CameraSharedLAPP_ << "Deinit driver";
 
 }

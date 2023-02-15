@@ -124,7 +124,7 @@ int VTemperatureDriver::deinitIO(){
     return 1;
 }
 
-void VTemperatureDriver::driverInit(const chaos::common::data::CDataWrapper& s) throw (chaos::CException){
+void VTemperatureDriver::driverInit(const chaos::common::data::CDataWrapper& s) {
     VTemperatureDriverLDBG_<<"JSON PARAMS:"<<s.getJSONString();
     temp=0;
     if(s.hasKey("type")){

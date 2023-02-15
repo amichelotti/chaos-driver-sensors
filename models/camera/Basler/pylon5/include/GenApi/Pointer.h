@@ -53,7 +53,7 @@ namespace GENAPI_NAMESPACE
 
     public:
         //! Default constructor.
-        CPointer(void) throw()
+        CPointer(void)
             : m_pT( NULL )
         {
         }
@@ -219,7 +219,7 @@ namespace GENAPI_NAMESPACE
     {
     public:
         //! Default constructor.
-        CFloatPtr() throw()
+        CFloatPtr()
             : CPointer<IFloat, IBase>(  )
         {
         }

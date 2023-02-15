@@ -56,7 +56,7 @@ public:
 	~LeyboldCenterOne();      
     void driverInit(const char *initParameter) ;
 
-    void driverInit(const chaos::common::data::CDataWrapper&) throw(chaos::CException) ;
+    void driverInit(const chaos::common::data::CDataWrapper&)  ;
         
 };
         }}}

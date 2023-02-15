@@ -75,7 +75,7 @@ public:
      */
     int initIO(void *buffer,int sizeb);
 
-    void driverInit(const chaos::common::data::CDataWrapper&) throw(chaos::CException) ;
+    void driverInit(const chaos::common::data::CDataWrapper&)  ;
     /**
      \brief deinit the sensor
      \param buffer[in] initialisation opaque parameter

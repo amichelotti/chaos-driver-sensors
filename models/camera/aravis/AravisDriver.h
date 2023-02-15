@@ -45,11 +45,11 @@ namespace driver
 
       protected:
         std::string serial_dev, friendly_name;
-        void driverInit(const char *initParameter) throw(chaos::CException);
-        void driverInit(const chaos::common::data::CDataWrapper &json) throw(chaos::CException);
+        void driverInit(const char *initParameter) ;
+        void driverInit(const chaos::common::data::CDataWrapper &json) ;
 
         int initializeCamera(const chaos::common::data::CDataWrapper &json);
-        void driverDeinit() throw(chaos::CException);
+        void driverDeinit() ;
         // This smart pointer will receive the grab result data.
         int propsToCamera(chaos::common::data::CDataWrapper *p);
         int cameraToProps(chaos::common::data::CDataWrapper *p);

@@ -47,6 +47,8 @@ typedef enum AbstractSensorDriverOpcode{
 #define SENSOR_STATE_OFF 0x8
 #define SENSOR_STATE_NOSENSOR 0x10
 #define SENSOR_STATE_IDERROR 0x20
+#define SENSOR_STATE_CONN_ERROR 0x40
+
 
 
 
@@ -73,8 +75,8 @@ typedef struct ddDataSet {
 
 class AbstractSensorDriver:ADD_CU_DRIVER_PLUGIN_SUPERCLASS {
 
-	void driverInit(const char *initParameter) throw(chaos::CException);
-	void driverDeinit() throw(chaos::CException);
+	void driverInit(const char *initParameter) ;
+	void driverDeinit() ;
 protected:
     ddDataSet_t *dataset;
     int datasetSize;

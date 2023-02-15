@@ -120,6 +120,10 @@ int LeyboldCenterOne::updateValue(){
             if(sscanf(buffer,"%d,%lf",&state,&pressure)==2){
                 return 0;
             }
+        } else{
+            LeyboldCenterOneLERR_<<"Error read returned ret:"<<ret;
+
+            return ret;
         }
     } else {
         std::string ans;
@@ -155,7 +159,7 @@ void LeyboldCenterOne::driverInit(const char *initParameter) {
     
 }
 
-void LeyboldCenterOne::driverInit(const chaos::common::data::CDataWrapper& s) throw (chaos::CException){
+void LeyboldCenterOne::driverInit(const chaos::common::data::CDataWrapper& s) {
     LeyboldCenterOneLDBG_<<"JSON PARAMS:"<<s.getJSONString();
 
 
@@ -208,34 +212,36 @@ void LeyboldCenterOne::driverInit(const chaos::common::data::CDataWrapper& s) th
       const chaos::common::data::CDataWrapper &p) -> chaos::common::data::CDWUniquePtr {
         LeyboldCenterOne *t=(LeyboldCenterOne *)thi;
             int32_t value=SENSOR_STATE_OK;
-            t->updateValue();
-
-            LeyboldCenterOneLDBG_<< "HW STATE:"<<t->state;
             chaos::common::data::CDWUniquePtr ret(new chaos::common::data::CDataWrapper());
-            switch(t->state){
-                case 1:
-                    value|=SENSOR_STATE_UNDERFLOW;
-                    break;
-                case 2:
-                    value|=SENSOR_STATE_OVERFLOW;
-                    break;
-                case 3:
-                    value|=SENSOR_STATE_ERROR;
-                    break;
-                case 4:
-                    value|=SENSOR_STATE_OFF;
-                    break;
-                case 5:
-                    value|=SENSOR_STATE_NOSENSOR;
-                    break;
-                case 6:
-                case 7:
-                    value|=SENSOR_STATE_IDERROR;
-                    break;
-                default:
-                    value=SENSOR_STATE_OK;
-            }
 
+            if(t->updateValue()<0){
+                value =SENSOR_STATE_CONN_ERROR;
+            } else {
+                LeyboldCenterOneLDBG_<< "HW STATE:"<<t->state;
+                switch(t->state){
+                    case 1:
+                        value|=SENSOR_STATE_UNDERFLOW;
+                        break;
+                    case 2:
+                        value|=SENSOR_STATE_OVERFLOW;
+                        break;
+                    case 3:
+                        value|=SENSOR_STATE_ERROR;
+                        break;
+                    case 4:
+                        value|=SENSOR_STATE_OFF;
+                        break;
+                    case 5:
+                        value|=SENSOR_STATE_NOSENSOR;
+                        break;
+                    case 6:
+                    case 7:
+                        value|=SENSOR_STATE_IDERROR;
+                        break;
+                    default:
+                        value=SENSOR_STATE_OK;
+                }
+            }
             ret->addInt32Value(PROPERTY_VALUE_KEY,value);
 
             return ret;

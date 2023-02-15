@@ -9,12 +9,11 @@
 
 #include <common/serial/core/SerialChannelFactory.h>
 #include <boost/program_options.hpp>
-#include <boost/regex.hpp>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <common/debug/core/debug.h>
-#include <boost/regex.hpp>
+#include <regex>
 #include <string>
 #ifdef CHAOS
 #include <chaos_metadata_service_client/ChaosMetadataServiceClient.h>
@@ -27,7 +26,6 @@ using namespace chaos::metadata_service_client;
 
 
 static int default_timeout = DEFAULT_TIMEOUT;
-using boost::regex;
 
 int main(int argc, const char *argv[])
 {

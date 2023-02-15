@@ -133,11 +133,11 @@ MemCacheCam::MemCacheCam()
 MemCacheCam::~MemCacheCam() {
 }
 
-void MemCacheCam::driverInit(const char* initParameter) throw(chaos::CException) {
+void MemCacheCam::driverInit(const char* initParameter)  {
   throw chaos::CException(-1, "cannot intialize camera expected bad JSON parameters" + std::string(initParameter), __PRETTY_FUNCTION__);
 }
 
-void MemCacheCam::driverInit(const chaos::common::data::CDataWrapper& json) throw(chaos::CException) {
+void MemCacheCam::driverInit(const chaos::common::data::CDataWrapper& json)  {
   MemCacheCamLDBG_ << "Initializing  driver:" << json.getCompliantJSONString();
   MemCacheCamLDBG_ << "Inital properties" << getProperties()->getJSONString();
   if (initializeCamera(json) != 0) {
@@ -145,7 +145,7 @@ void MemCacheCam::driverInit(const chaos::common::data::CDataWrapper& json) thro
   }
 }
 
-void MemCacheCam::driverDeinit() throw(chaos::CException) {
+void MemCacheCam::driverDeinit()  {
   MemCacheCamLAPP_ << "Deinit driver";
   if (mc_client) {
     memcached_free(mc_client);

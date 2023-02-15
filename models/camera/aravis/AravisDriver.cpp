@@ -145,8 +145,7 @@ if(error){\
     startGrab(shots, NULL, fn);  \
   }
 
-void AravisDriver::driverInit(const char *initParameter) throw(
-    chaos::CException)
+void AravisDriver::driverInit(const char *initParameter) 
 {
   throw chaos::CException(
       -3, "You should provide a valid JSON initialization string",
@@ -154,7 +153,7 @@ void AravisDriver::driverInit(const char *initParameter) throw(
 }
 
 void AravisDriver::driverInit(
-    const chaos::common::data::CDataWrapper &json) throw(chaos::CException)
+    const chaos::common::data::CDataWrapper &json) 
 {
   AravisDriverLDBG_ << "Initializing ARAVIS json driver:"
                     << json.getCompliantJSONString();
@@ -168,7 +167,7 @@ void AravisDriver::driverInit(
   }
 }
 
-void AravisDriver::driverDeinit() throw(chaos::CException)
+void AravisDriver::driverDeinit() 
 {
   AravisDriverLAPP_ << "Deinit ARAVIS driver";
 }
