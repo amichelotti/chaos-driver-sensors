@@ -47,7 +47,7 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} chaos_cutoolkit  chaos_common common_seria
 
 ADD_SUBDIRECTORY(models)
 
-ADD_EXECUTABLE(sensorsServer test/sensorsServer)
+ADD_EXECUTABLE(sensorsServer test/sensorsServer.cpp)
 # ADD_EXECUTABLE(sensorsClient test/sensorsClient)
 
  TARGET_LINK_LIBRARIES(sensorsServer ${PROJECT_NAME} ${DRIVERS_LIB} chaos_cutoolkit chaos_common common_serial pthread)
