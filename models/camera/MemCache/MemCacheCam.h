@@ -60,6 +60,7 @@ class MemCacheCam:public ::driver::sensor::camera::CameraDriverBridge {
      int32_t memID;
      cameraGrabCallBack fn;
      int pixelEncoding;
+     int raw_sizex,raw_sizey,raw_offset;
      std::string pixelEncoding_str,key,server;
      int propsToCamera(chaos::common::data::CDataWrapper*p);
      int cameraToProps(chaos::common::data::CDataWrapper*p);

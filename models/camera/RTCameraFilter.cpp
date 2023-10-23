@@ -68,9 +68,13 @@ RTCameraFilter::RTCameraFilter(
     apply_gauss_fit                         = true;
   } catch (...) {
   }
+  #ifdef CERN_ROOT
+
   gauss_fit_level = 0;
   CREATE_CU_INT_PROP(FILTER_MOMENT_KEY, "", gauss_fit_level, 0, 1024, 1, RTCameraFilter);
   CREATE_CU_BOOL_PROP("apply_gauss_fit", "", apply_gauss_fit, RTCameraFilter);
+  #endif
+
 }
 
 /*
@@ -191,6 +195,7 @@ int RTCameraFilter::filtering(cv::Mat &image) {
     if (!apply_gauss_fit) {
       // convert grayscale to binary image
       double a, X_m, Y_m, S_x, S_y, rho;
+  #ifdef CERN_ROOT
 
       if (root::image::rootGaussianImage2dFit(gray, 100, 1, a, X_m, Y_m, S_x, S_y, rho) == 0) {
         getAttributeCache()->setOutputAttributeValue("AMPLITUDE", a);
@@ -216,6 +221,7 @@ int RTCameraFilter::filtering(cv::Mat &image) {
           }
         }
       }
+  #endif
 
       setStateVariableSeverity(StateVariableTypeAlarmCU, "filtering_error", chaos::common::alarm::MultiSeverityAlarmLevelClear);
     }

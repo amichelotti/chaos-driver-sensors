@@ -87,6 +87,8 @@ CLOSE_REGISTER_PLUGIN
 MemCacheCam::MemCacheCam()
     : fn(NULL),bigendian(1), gain_raw(1.0),tmode(CAMERA_TRIGGER_CONTINOUS), pixelEncoding(CV_8UC3), pixelEncoding_str("CV_8UC3"), height(CAM_DEFAULT_HEIGTH), width(CAM_DEFAULT_WIDTH), framerate(1.0), offsetx(0), offsety(0), mc_client(NULL) {
   MemCacheCamLDBG_ << "Created Driver";
+  raw_sizex=raw_sizey=raw_offset=-1;
+
   brightness_raw = 0;
   shutter_raw    = 1;
   serial_id      = time(NULL);
@@ -170,6 +172,17 @@ int MemCacheCam::initializeCamera(const chaos::common::data::CDataWrapper& json)
     MemCacheCamLERR_ << "Missing 'KEY'" << json.getCompliantJSONString();
     return ret;
   }
+  if (json.hasKey("rawsizex")) {
+    raw_sizex = json.getInt32Value("rawsizex");
+  } 
+  if (json.hasKey("rawsizey")) {
+    raw_sizey = json.getInt32Value("rawsizey");
+  }
+  if (json.hasKey("rawoffset")) {
+    raw_offset = json.getInt32Value("rawoffset");
+  }
+  
+
   if (json.hasKey("SERVER")) {
     server = json.getStringValue("SERVER");
   } else {
@@ -179,6 +192,7 @@ int MemCacheCam::initializeCamera(const chaos::common::data::CDataWrapper& json)
   if (json.hasKey("BE")) {
     bigendian = json.getInt32Value("BE");
   }
+  
   /* if (json.hasKey("HEIGHT")) {
      height=json.getInt32Value("HEIGHT");
 
@@ -408,23 +422,39 @@ int MemCacheCam::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
   // check if we have something
   if ((value != NULL) && (rc == MEMCACHED_SUCCESS) && (value_length > 2 * sizeof(uint32_t))) {
     // we expect a 2D array first word= # of rows, second word= # number of column
-    uint32_t* ptr = (uint32_t*)value;
-    if(bigendian){
-
-      width         = chaos::common::utility::byte_swap<chaos::common::utility::host_endian,
-                                                                              chaos::common::utility::big_endian, uint32_t>(ptr[1]);  // cols
-      height        = chaos::common::utility::byte_swap<chaos::common::utility::host_endian,
-                                                                              chaos::common::utility::big_endian, uint32_t>(ptr[0]);  // row
-    } else {
-      width=ptr[1];
-      height=ptr[0];
+    if(raw_offset>0){
+      value+=raw_offset;
     }
-    int siz=value_length - 2 * sizeof(uint32_t);
+
+    uint32_t* ptr = (uint32_t*)value;
+    
+    int siz=value_length; 
+     uint16_t*src16=( uint16_t*)ptr;
+     int16_t*ssrc16=( int16_t*)ptr;
+     uint8_t*src8=( uint8_t*)ptr;
+    if((raw_sizex>0)&& (raw_sizey>0)){
+      width=raw_sizex;
+      height=raw_sizey;
+    } else {
+      siz-= 2 * sizeof(uint32_t);
+      if(bigendian){
+        src16=( uint16_t*)&ptr[2];
+        ssrc16=( int16_t*)&ptr[2];
+        src8=( uint8_t*)&ptr[2];
+        width         = chaos::common::utility::byte_swap<chaos::common::utility::host_endian,
+                                                                              chaos::common::utility::big_endian, uint32_t>(ptr[1]);  // cols
+        height        = chaos::common::utility::byte_swap<chaos::common::utility::host_endian,
+       
+                                                                      chaos::common::utility::big_endian, uint32_t>(ptr[0]);  // row
+      } else {
+        width=ptr[1];
+        height=ptr[0];
+      }
+    }
+    
     *buf          = new camera_buf_t(siz*sizeof(uint16_t) , width, height);
     if((pixelEncoding==CV_16UC1)||(pixelEncoding==CV_16SC1)){
-      const uint16_t*src=(const uint16_t*)&ptr[2];
-      const int16_t*ssrc=(const int16_t*)&ptr[2];
-
+      
       uint16_t*pu=(uint16_t*)(*buf)->buf;
       int16_t*pus=(int16_t*)(*buf)->buf;
 
@@ -433,24 +463,24 @@ int MemCacheCam::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
           if(pixelEncoding==CV_16SC1){
 
             int16_t val=chaos::common::utility::byte_swap<chaos::common::utility::host_endian,
-                                                                             chaos::common::utility::big_endian, int16_t>(ssrc[cnt]);
+                                                                             chaos::common::utility::big_endian, int16_t>(ssrc16[cnt]);
                                                                            
             pus[cnt]=val* gain_raw + brightness_raw;
       //    printf("%d ",pu[cnt]);
           } else {
 
             uint16_t val=chaos::common::utility::byte_swap<chaos::common::utility::host_endian,
-                                                                             chaos::common::utility::big_endian, uint16_t>(src[cnt]);
+                                                                             chaos::common::utility::big_endian, uint16_t>(src16[cnt]);
                                                                            
             pu[cnt]=val* gain_raw + brightness_raw;
       //    printf("%d ",pu[cnt]);
           } 
         } else {
            if(pixelEncoding==CV_16SC1){
-            pus[cnt]=ssrc[cnt]* gain_raw + brightness_raw;
+            pus[cnt]=ssrc16[cnt]* gain_raw + brightness_raw;
 
            } else {
-            pu[cnt]=src[cnt]* gain_raw + brightness_raw;
+            pu[cnt]=src16[cnt]* gain_raw + brightness_raw;
            }
         }
       }
@@ -459,12 +489,12 @@ int MemCacheCam::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
 
     }
     if((pixelEncoding==CV_8UC1)||(pixelEncoding==CV_8SC1)){
-      const uint8_t*src=(const uint8_t*)&ptr[2];
+      
       uint8_t max=0,min=255;
 
       uint8_t*pu=(uint8_t*)(*buf)->buf;
       for(int cnt=0;cnt<siz;cnt++){
-          pu[cnt]=src[cnt]* gain_raw + brightness_raw;
+          pu[cnt]=src8[cnt]* gain_raw + brightness_raw;
           max=std::max(pu[cnt],max);
           min=std::min(pu[cnt],min);
 
