@@ -22,8 +22,9 @@
 #include <chaos/cu_toolkit/driver_manager/driver/AbstractDriverPlugin.h>
 #include <math.h>
 #include <stdlib.h>
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
+//#include <boost/algorithm/string.hpp>
+//#include <boost/lexical_cast.hpp>
+#include <chaos/common/ChaosCommon.h>
 #include <string>
 #include <chaos/common/utility/endianess.h>
 
@@ -225,8 +226,8 @@ int MemCacheCam::initializeCamera(const chaos::common::data::CDataWrapper& json)
   }
   memcached_return_t       mc_result;
   std::vector<std::string> host_port_vec;
-  boost::split(host_port_vec, server, boost::is_any_of(":"));
-
+ // boost::split(host_port_vec, server, boost::is_any_of(":"));
+host_port_vec=chaos::split(server,":");
   if (host_port_vec.size() == 1) {
     host_port_vec.push_back("11211");
   }
