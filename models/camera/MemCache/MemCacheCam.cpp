@@ -423,11 +423,12 @@ int MemCacheCam::waitGrab(camera_buf_t** buf, uint32_t timeout_ms) {
   // check if we have something
   if ((value != NULL) && (rc == MEMCACHED_SUCCESS) && (value_length > 2 * sizeof(uint32_t))) {
     // we expect a 2D array first word= # of rows, second word= # number of column
+    char*ptrbuf=value;
     if(raw_offset>0){
-      value+=raw_offset;
+      ptrbuf+=raw_offset;
     }
 
-    uint32_t* ptr = (uint32_t*)value;
+    uint32_t* ptr = (uint32_t*)ptrbuf;
     
     int siz=value_length; 
      uint16_t*src16=( uint16_t*)ptr;
